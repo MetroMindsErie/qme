@@ -15,39 +15,191 @@
   -webkit-overflow-scrolling: touch;
 }
 
-/* Mobile Safari: ensure content is always visible */
+/* ============================================================
+ * TICKET PAGE - Compact layout to fit viewport without scrolling
+ * ============================================================ */
 @media (max-width: 480px) {
+  /* Make card fit viewport perfectly */
   body {
-    /* Fix for iOS Safari address bar */
     min-height: 100vh;
     min-height: -webkit-fill-available;
   }
   
   .card {
-    /* Allow card to scroll when content overflows */
-    max-height: calc(100vh - 40px);
-    max-height: calc(100svh - 40px);
+    /* No scrolling - fit everything in viewport */
+    max-height: calc(100vh - 20px);
+    max-height: calc(100svh - 20px);
+    min-height: unset;
+    overflow: hidden;
+    padding: 8px 14px 8px;
+    gap: 0;
+    justify-content: flex-start;
   }
   
-  /* Ensure metric boxes don't get squished */
+  /* Compact header */
+  .hdr {
+    margin: 2px 2px 4px;
+    gap: 6px;
+  }
+  
+  .hdrLogoBox {
+    width: 56px;
+    height: 56px;
+  }
+  
+  .titleLine {
+    font-size: clamp(11px, 3.5cqw, 16px);
+    letter-spacing: 1.5px;
+  }
+  
+  .hamburger {
+    width: 32px;
+    height: 32px;
+  }
+  
+  /* Compact headlines */
+  .headline {
+    margin: 4px 0 6px;
+    font-size: clamp(18px, 4.5vw, 26px);
+  }
+  
+  .headline2 {
+    margin: 4px 0 6px;
+    font-size: clamp(16px, 4.5vw, 24px);
+    letter-spacing: 2px;
+  }
+  
+  /* Compact rules */
+  .rule {
+    margin: 6px auto;
+    width: calc(100% - 12px);
+  }
+  
+  /* Compact metric boxes */
   .metric1 {
-    min-height: 120px !important;
+    height: 100px !important;
+    min-height: 100px !important;
+    margin: 6px auto 8px;
+    padding-inline: 14px;
     flex-shrink: 0;
+  }
+  
+  .metricInput1 {
+    font-size: clamp(58px, 15cqw, 68px) !important;
   }
   
   .metric2 {
-    min-height: 80px !important;
+    height: 70px !important;
+    min-height: 70px !important;
+    margin: 6px auto 8px;
+    padding-inline: 12px;
     flex-shrink: 0;
   }
   
-  /* Ensure action group is always visible at bottom */
+  .metricInput2 {
+    font-size: clamp(42px, 11cqw, 50px) !important;
+  }
+  
+  /* Compact inputs section */
+  .inputs {
+    padding: 2px 6px;
+    row-gap: 4px;
+    column-gap: 2px;
+    font-size: 5px;
+  }
+  
+  .inputs label {
+    font-size: 10px;
+  }
+  
+  .displayInput,
+  .displayInput2,
+  .displayInput3 {
+    height: 20px;
+    font-size: 11px;
+    padding: 0 3px;
+  }
+  
+  /* Compact action group - sticky at bottom */
   .actionGroup {
     position: sticky;
     bottom: 0;
     background: var(--card);
     z-index: 10;
-    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    padding: 6px 8px;
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
     margin-top: auto;
+    gap: 6px;
+  }
+  
+  .actionNote {
+    font-size: 10px;
+    line-height: 1.2;
+    max-width: 240px;
+  }
+  
+  .actionGroup .actionBtn {
+    min-height: 42px;
+    padding: 10px 8px;
+    font-size: clamp(13px, 3cqw, 16px);
+  }
+  
+  /* Hide bottom-left secret button on ticket page to save space */
+  .pinBL {
+    display: none;
+  }
+}
+
+/* Mid-range smartphones (361-480px) - slightly more space */
+@media (min-width: 361px) and (max-width: 480px) {
+  .card {
+    padding: 10px 16px 10px;
+  }
+  
+  .hdrLogoBox {
+    width: 60px;
+    height: 60px;
+  }
+  
+  .metric1 {
+    height: 110px !important;
+    min-height: 110px !important;
+  }
+  
+  .metricInput1 {
+    font-size: clamp(62px, 16cqw, 72px) !important;
+  }
+  
+  .metric2 {
+    height: 75px !important;
+    min-height: 75px !important;
+  }
+  
+  .metricInput2 {
+    font-size: clamp(46px, 12cqw, 54px) !important;
+  }
+  
+  .inputs label {
+    font-size: 11px;
+  }
+  
+  .displayInput,
+  .displayInput2,
+  .displayInput3 {
+    height: 22px;
+    font-size: 12px;
+  }
+  
+  .actionNote {
+    font-size: 11px;
+  }
+}
+
+/* Tablet and larger - allow some scrolling if needed */
+@media (min-width: 481px) {
+  .card {
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 }
 
@@ -67,12 +219,15 @@
   }
 }
 
-/* Ensure full-width touch targets on mobile */
+/* Ensure full-width touch targets on mobile - for non-ticket pages */
 @media (max-width: 480px) {
-  .actionGroup {
+  .card-scrollable .actionGroup {
     padding: 8px 8px;
+    position: relative;
   }
-  .actionGroup .actionBtn {
+  
+  .card-scrollable .actionGroup .actionBtn {
     min-height: 44px;
   }
 }
+

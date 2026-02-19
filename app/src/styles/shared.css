@@ -26,15 +26,22 @@ body {
 .card {
   width: min(360px, 92vw);
   aspect-ratio: 9/16;
+  min-height: 600px;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100svh - 40px); /* Safari dynamic viewport */
   background: var(--card);
   border: 3px solid var(--ink);
   border-radius: 6px;
   padding: 14px 18px 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
+  overscroll-behavior-y: contain;
   container-type: inline-size;
   position: relative;
 }
@@ -44,7 +51,11 @@ body {
   .card {
     width: min(480px, 88vw);
     padding: 18px 24px 24px;
+    padding-bottom: max(24px, env(safe-area-inset-bottom));
     border-radius: 10px;
+    min-height: 700px;
+    max-height: calc(100vh - 60px);
+    max-height: calc(100svh - 60px);
   }
 }
 /* ---- Desktop: 1025px+ ---- */
@@ -52,7 +63,10 @@ body {
   .card {
     width: min(520px, 50vw);
     padding: 20px 28px 28px;
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
     border-radius: 12px;
+    min-height: 800px;
+    max-height: calc(100vh - 80px);
   }
 }
 
@@ -404,11 +418,15 @@ body {
 }
 .metric1 {
   height: 150px;
+  min-height: 120px;
   width: clamp(200px, 60%, 320px);
+  flex-shrink: 0;
 }
 .metric2 {
   height: 100px;
+  min-height: 80px;
   width: clamp(160px, 50%, 240px);
+  flex-shrink: 0;
 }
 
 .metricInput1,
@@ -552,6 +570,9 @@ body {
   justify-items: center;
   align-items: center;
   padding: 8px 12px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+  flex-shrink: 0;
+  margin-top: auto;
 }
 
 .actionGroup:has(#leaveBtn[hidden]) #actionBtn {
@@ -576,12 +597,13 @@ body {
 
 .actionBtn {
   min-width: 0;
+  min-height: 44px;
   width: 100%;
   max-width: 260px;
   box-sizing: border-box;
   justify-self: center;
   margin: 0;
-  padding: 12px 0;
+  padding: 12px 8px;
   font-size: clamp(14px, 3.2cqw, 18px);
   font-weight: 700;
   color: #fff;
@@ -591,6 +613,9 @@ body {
   cursor: pointer;
   transition: background 0.25s ease, transform 0.15s ease;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .actionBtn:hover {
   background: #1e2a36;
@@ -602,6 +627,14 @@ body {
 .actionBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+/* Ensure buttons are touch-friendly on mobile */
+@media (max-width: 480px) {
+  .actionBtn {
+    min-height: 48px;
+    padding: 14px 12px;
+  }
 }
 
 @media (min-width: 481px) {
@@ -661,6 +694,15 @@ body {
     width: 90%;
     margin-left: auto;
     margin-right: auto;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  .card {
+    /* Fix for iOS Safari viewport units */
+    min-height: 600px;
+    max-height: -webkit-fill-available;
   }
 }
 

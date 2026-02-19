@@ -7,9 +7,48 @@
   border-top-width: 1px;
 }
 
-/* Guest card - remove aspect ratio for scrollable content */
+/* Guest card - ensure proper scrolling on all mobile browsers */
 .card.card-scrollable {
   aspect-ratio: unset !important;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile Safari: ensure content is always visible */
+@media (max-width: 480px) {
+  body {
+    /* Fix for iOS Safari address bar */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  .card {
+    /* Allow card to scroll when content overflows */
+    max-height: calc(100vh - 40px);
+    max-height: calc(100svh - 40px);
+  }
+  
+  /* Ensure metric boxes don't get squished */
+  .metric1 {
+    min-height: 120px !important;
+    flex-shrink: 0;
+  }
+  
+  .metric2 {
+    min-height: 80px !important;
+    flex-shrink: 0;
+  }
+  
+  /* Ensure action group is always visible at bottom */
+  .actionGroup {
+    position: sticky;
+    bottom: 0;
+    background: var(--card);
+    z-index: 10;
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 12px));
+    margin-top: auto;
+  }
 }
 
 /* Guest queue card items */

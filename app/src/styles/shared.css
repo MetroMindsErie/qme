@@ -413,19 +413,20 @@ body {
   display: grid;
   place-items: center;
   margin: 12px auto 16px;
-  padding-inline: 14px;
+  padding-inline: 16px;
   box-sizing: border-box;
+  overflow: visible;
 }
 .metric1 {
   height: 150px;
   min-height: 120px;
-  width: clamp(200px, 60%, 320px);
+  width: clamp(240px, 65%, 340px);
   flex-shrink: 0;
 }
 .metric2 {
   height: 100px;
   min-height: 80px;
-  width: clamp(160px, 50%, 240px);
+  width: clamp(180px, 52%, 260px);
   flex-shrink: 0;
 }
 
@@ -439,17 +440,19 @@ body {
   text-align: center;
   box-sizing: border-box;
   -moz-appearance: textfield;
+  padding: 0;
+  overflow: visible;
 }
 .metricInput1 {
-  font-size: 80px;
+  font-size: clamp(64px, 16cqw, 80px);
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: clamp(0px, 0.3cqw, 1px);
   color: #ff0000;
 }
 .metricInput2 {
-  font-size: 55px;
+  font-size: clamp(48px, 12cqw, 55px);
   font-weight: 800;
-  letter-spacing: 3px;
+  letter-spacing: clamp(1px, 0.5cqw, 3px);
   color: #00ff55;
 }
 
@@ -464,33 +467,39 @@ body {
 @media (min-width: 481px) {
   .metric1 {
     height: 170px;
-    width: clamp(220px, 55%, 360px);
+    width: clamp(260px, 58%, 380px);
+    padding-inline: 20px;
   }
   .metric2 {
     height: 120px;
-    width: clamp(180px, 45%, 280px);
+    width: clamp(200px, 48%, 300px);
+    padding-inline: 18px;
   }
   .metricInput1 {
-    font-size: 100px;
+    font-size: clamp(90px, 18cqw, 110px);
+    letter-spacing: 1px;
   }
   .metricInput2 {
-    font-size: 70px;
+    font-size: clamp(60px, 14cqw, 72px);
   }
 }
 @media (min-width: 1025px) {
   .metric1 {
     height: 190px;
-    width: clamp(240px, 50%, 400px);
+    width: clamp(280px, 52%, 420px);
+    padding-inline: 24px;
   }
   .metric2 {
     height: 130px;
-    width: clamp(200px, 40%, 320px);
+    width: clamp(220px, 42%, 340px);
+    padding-inline: 20px;
   }
   .metricInput1 {
-    font-size: 120px;
+    font-size: clamp(110px, 20cqw, 130px);
+    letter-spacing: 2px;
   }
   .metricInput2 {
-    font-size: 80px;
+    font-size: clamp(72px, 16cqw, 85px);
   }
 }
 
@@ -704,6 +713,33 @@ body {
     min-height: 600px;
     max-height: -webkit-fill-available;
   }
+  
+  /* Fix metric text rendering on iOS */
+  .metricInput1,
+  .metricInput2 {
+    -webkit-text-size-adjust: none;
+    text-size-adjust: none;
+  }
+}
+
+/* Mobile phones (361px-480px) - most common smartphone range */
+@media (min-width: 361px) and (max-width: 480px) {
+  .metric1 {
+    width: min(270px, 75%);
+    padding-inline: 18px;
+  }
+  .metricInput1 {
+    font-size: clamp(68px, 17cqw, 76px);
+    letter-spacing: 0;
+  }
+  .metric2 {
+    width: min(200px, 60%);
+    padding-inline: 14px;
+  }
+  .metricInput2 {
+    font-size: clamp(50px, 12cqw, 56px);
+    letter-spacing: 1px;
+  }
 }
 
 /* ================================================
@@ -725,17 +761,21 @@ body {
   }
   .metric1 {
     height: 120px;
-    width: 85%;
+    width: min(220px, 88%);
+    padding-inline: 12px;
   }
   .metricInput1 {
-    font-size: 60px;
+    font-size: clamp(56px, 14cqw, 64px);
+    letter-spacing: 0;
   }
   .metric2 {
     height: 80px;
-    width: 70%;
+    width: min(170px, 76%);
+    padding-inline: 10px;
   }
   .metricInput2 {
-    font-size: 42px;
+    font-size: clamp(40px, 10cqw, 48px);
+    letter-spacing: 0.5px;
   }
   .headline {
     font-size: clamp(20px, 5vw, 28px);

@@ -117,13 +117,15 @@ export default function AdminEventForm() {
     padding: '0.65rem 0.75rem',
     border: '1.5px solid #d1d5db',
     borderRadius: 8,
-    fontSize: '0.95rem',
+    fontSize: 'clamp(0.85rem, 2vw, 0.95rem)',
     transition: 'all 0.2s ease',
     outline: 'none',
+    width: '100%',
+    boxSizing: 'border-box' as const,
   };
 
   return (
-    <div className="card card-scrollable" style={{ maxWidth: 600, minHeight: '600px', maxHeight: '90vh' }}>
+    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
         logoSrc="/images/qmeFirstLogo.jpg"
         titleLine1="ADMIN"
@@ -189,7 +191,7 @@ export default function AdminEventForm() {
           />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
           <div style={fieldStyle}>
             <label style={labelStyle}>Event Date</label>
             <input
@@ -247,7 +249,7 @@ export default function AdminEventForm() {
           </select>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e0e0e0' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e0e0e0', flexWrap: 'wrap' as const }}>
           <button
             type="submit"
             className="actionBtn actionBtn-primary"

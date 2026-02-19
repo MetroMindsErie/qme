@@ -6,3 +6,34 @@
 .rule {
   border-top-width: 1px;
 }
+
+/* Guest card - remove aspect ratio for scrollable content */
+.card.card-scrollable {
+  aspect-ratio: unset !important;
+}
+
+/* Guest queue card items */
+@media (max-width: 480px) {
+  .guest-queue-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.5rem !important;
+  }
+  .guest-queue-item > div:last-child {
+    width: 100%;
+    display: flex;
+  }
+  .guest-queue-item > div:last-child .actionBtn {
+    flex: 1;
+  }
+}
+
+/* Ensure full-width touch targets on mobile */
+@media (max-width: 480px) {
+  .actionGroup {
+    padding: 8px 8px;
+  }
+  .actionGroup .actionBtn {
+    min-height: 44px;
+  }
+}

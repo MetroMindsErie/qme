@@ -120,11 +120,13 @@ export default function AdminQueueForm() {
     padding: '0.5rem',
     border: '1px solid #ccc',
     borderRadius: 6,
-    fontSize: '1rem',
+    fontSize: 'clamp(0.85rem, 2vw, 1rem)',
+    width: '100%',
+    boxSizing: 'border-box' as const,
   };
 
   return (
-    <div className="card" style={{ maxWidth: 550 }}>
+    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
         logoSrc="/images/qmeFirstLogo.jpg"
         titleLine1="ADMIN"
@@ -135,7 +137,7 @@ export default function AdminQueueForm() {
         {isEdit ? 'Edit Queue' : 'Add Queue'}
       </h1>
 
-      <form onSubmit={handleSubmit} style={{ padding: '0 1.5rem 1.5rem' }}>
+      <form onSubmit={handleSubmit} className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: 'clamp(0.75rem, 3vw, 1.5rem)' }}>
         <div style={fieldStyle}>
           <label style={labelStyle}>Queue Name *</label>
           <input

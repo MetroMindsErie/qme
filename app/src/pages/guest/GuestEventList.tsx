@@ -30,7 +30,7 @@ export default function GuestEventList() {
   }, [refresh]);
 
   return (
-    <div className="card card-scrollable" style={{ maxWidth: 600, minHeight: '600px', maxHeight: '90vh' }}>
+    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
         logoSrc="/images/qmeFirstLogo.jpg"
         titleLine1="qME"

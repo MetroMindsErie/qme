@@ -95,7 +95,7 @@ export default function GuestEventDetail() {
   };
 
   return (
-    <div className="card card-scrollable" style={{ maxWidth: 600, minHeight: '600px', maxHeight: '90vh' }}>
+    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
         logoSrc={event.image_url || '/images/qmeFirstLogo.jpg'}
         titleLine1=""

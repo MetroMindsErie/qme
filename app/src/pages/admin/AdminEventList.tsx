@@ -49,11 +49,11 @@ export default function AdminEventList() {
   };
 
   return (
-    <div className="card card-scrollable" style={{ maxWidth: 700, minHeight: '600px', maxHeight: '90vh' }}>
+    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header logoSrc="/images/qmeFirstLogo.jpg" titleLine1="ADMIN" titleLine2="EVENTS" />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>
-        <h1 className="headline" style={{ fontSize: '1.5rem', margin: 0, fontWeight: 700 }}>Events</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <h1 className="headline" style={{ fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', margin: 0, fontWeight: 700 }}>Events</h1>
         <button
           className="actionBtn actionBtn-primary"
           style={{ margin: 0, width: 'auto', padding: '0.6rem 1.4rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -80,15 +80,16 @@ export default function AdminEventList() {
             style={{
               border: '1px solid #e0e0e0',
               borderRadius: 10,
-              padding: '1.25rem',
+              padding: 'clamp(0.75rem, 2vw, 1.25rem)',
               marginBottom: '1rem',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '1rem',
+              gap: '0.75rem',
               background: '#fafafa',
               transition: 'all 0.2s ease',
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              flexWrap: 'wrap' as const,
             }}
           >
             <div style={{ flex: 1, minWidth: 0 }}>

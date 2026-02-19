@@ -68,7 +68,7 @@ export default function AdminEventDetail() {
   };
 
   return (
-    <div className="card card-scrollable" style={{ maxWidth: 700, minHeight: '600px', maxHeight: '90vh' }}>
+    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header logoSrc="/images/qmeFirstLogo.jpg" titleLine1="ADMIN" titleLine2="EVENT" />
 
       {/* Event summary */}
@@ -80,17 +80,17 @@ export default function AdminEventDetail() {
           📅 {formatDate(event.event_date)}<br/>
           🕐 {formatTime(event.start_time)} – {formatTime(event.end_time)} {event.timezone}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' as const }}>
           <button
             className="actionBtn actionBtn-primary"
-            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}
+            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
             onClick={() => navigate(`/admin/events/${eventId}/edit`)}
           >
             ✏️ Edit Event
           </button>
           <button
             className="actionBtn actionBtn-secondary"
-            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}
+            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
             onClick={() => navigate('/admin/events')}
           >
             ← Back
@@ -123,15 +123,16 @@ export default function AdminEventDetail() {
             style={{
               border: '1px solid #e0e0e0',
               borderRadius: 10,
-              padding: '1rem 1.25rem',
+              padding: 'clamp(0.75rem, 2vw, 1.25rem)',
               marginBottom: '0.75rem',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '1rem',
+              gap: '0.75rem',
               background: '#fafafa',
               transition: 'all 0.2s ease',
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+              flexWrap: 'wrap' as const,
             }}
           >
             <div style={{ flex: 1, minWidth: 0 }}>
@@ -146,7 +147,7 @@ export default function AdminEventDetail() {
                 <span style={{ fontWeight: 600, color: statusColor[q.status] ?? '#999' }}>{q.status}</span>
               </div>
             </div>
-            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' as const }}>
               <button
                 className="actionBtn actionBtn-primary"
                 style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}

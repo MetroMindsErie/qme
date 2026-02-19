@@ -6,7 +6,7 @@ node_modules
 .env
 .env.local
 dist
-admin
-guest
-cgpt
-server.js
+/admin
+/guest
+/cgpt
+/server.js

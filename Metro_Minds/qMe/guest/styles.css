@@ -1,0 +1,491 @@
+:root{
+  --ink:#2f3e4f;
+  --ink-50:#2f3e4f22;
+  --bg:#f7f8fb;
+  --card:#ffffff;
+  --accent:#2f3e4f;
+}
+
+/* Page */
+body{
+  margin:0;
+  display:grid;
+  place-items:center;
+  height:100vh;
+  background:var(--bg);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+  color:var(--ink);
+}
+
+/* Card (portrait, fixed) */
+.card{
+  width:min(360px, 90vw);
+  aspect-ratio:9/16;
+  background:var(--card);
+  border:3px solid var(--ink);
+  border-radius:6px;
+  padding:14px 14px 18px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  overflow:hidden;
+}
+/* Put this once */
+.card{
+  /* ...your existing styles... */
+  container-type: inline-size;    /* enables cqw units & @container rules */
+}
+.card{ position: relative; }        /* positioning context for bottom-left */
+
+/* --- Compact header spacing --- */
+.card{
+  /* keep your other .card styles; just reduce top padding */
+  padding-top: 6px; /* was 14px */
+}
+
+/* header grid without a logo column */
+.hdr{
+  display:grid;
+  grid-template-columns: 1fr auto 1fr;     /* symmetric → center stays centered */
+  align-items:center;
+  gap:8px;  margin: 0 8px 2px; /* top 0, sides 8, bottom 2 */
+}
+
+/* Fixed 70×70 logo box that the image fills completely */
+.hdrLogoBox{
+  width: 70px;
+  height: 70px;
+  margin: 0;
+  overflow: hidden;                     /* crop overflow */
+  justify-self: start;
+}
+.hdrLogoImg{
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;                     /* fill the box (may crop edges) */
+  object-position: center;
+}
+
+/* Two-line title */
+.hdrTitle{ display: grid; place-items: center; text-align: center; line-height: 1; margin: 0; }
+.titleLine{ display: block; font-weight: 900; letter-spacing: 2px; font-size: clamp(14px, 4cqw, 20px); margin: 0; }
+
+/* Hamburger (you can keep your existing styles) */
+.hamburger{
+  width: 36px; height: 36px;
+  padding: 0;
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  display: grid; place-items: center;
+  cursor: pointer;
+  justify-self: end;
+}
+.hamburger span{
+  display: block; width: 18px; height: 3px; background: var(--ink);
+  border-radius: 2px; margin: 3px 0;
+  transition: transform .2s ease, opacity .2s ease;
+}
+/* open state (optional) */
+.hamburger.is-open span:nth-child(1){ transform: translateY(6px) rotate(45deg); }
+.hamburger.is-open span:nth-child(2){ opacity: 0; }
+.hamburger.is-open span:nth-child(3){ transform: translateY(-6px) rotate(-45deg); }
+
+/* Slide-in menu (from right, inside the card) */
+.menuPanel{
+  position: absolute;
+  top: 0; right: 0;
+  height: 100%;
+  width: 70%;
+  min-width: 220px;
+  background: var(--card);
+  border-left: 3px solid var(--ink);
+  box-shadow: -6px 0 0 var(--ink-50);
+  transform: translateX(100%);
+  transition: transform .25s ease;
+  z-index: 40;
+  padding: 12px;
+  box-sizing: border-box;
+}
+.menuPanel.open{ transform: translateX(0); }
+
+/* Dim / click-to-close backdrop */
+.menuBackdrop{
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.06);
+  backdrop-filter: blur(0px);
+  z-index: 30;
+}
+
+/* Menu links (sample) */
+.menuNav{
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+.menuNav a{
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.menuNav a:active{ transform: translateY(1px); }
+
+
+
+/* Headings */
+.headline{
+  margin:4px 0 6px;
+  line-height:1.1;
+  text-align:center;
+  font-weight:900;
+  letter-spacing:1px;
+  font-size: clamp(24px, 5.5vw, 36px); /* responsive but capped */
+}
+.headline2{
+  margin:8px 0 10px;
+  line-height:1.1;
+  text-align:center;
+  font-weight:900;
+  letter-spacing:3px;
+  font-size: clamp(22px, 6vw, 40px);
+  text-transform: uppercase;
+}
+.headline, headline2{ margin-block-start:0; }
+
+
+.inputs{
+  display: grid;
+  grid-template-columns: max-content 94px max-content 94px; /* label+input | label+input */
+  column-gap: 3px;   /* space between label and its input, and between the two pairs */
+  row-gap: 8px;
+  align-items: center;
+  justify-content: center;  /* centers both left & right pairs within the card */
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 6px;
+  letter-spacing: .2px;
+}
+
+/* Narrow cards: stack to one column */
+@container (max-width: 300px){
+  .inputs{
+    grid-template-columns: max-content minmax(120px, 1fr);
+  }
+  .hdr{ gap: 6px; }
+  .hdrLogo{ width: 30px; height: 30px; }
+  .hamburger{ width: 32px; height: 32px; }
+  
+}  /* <- don’t forget this closing brace */
+
+/* let each pair participate directly in the parent grid (keeps layout tight) */
+
+.field{ display: contents; }
+
+.inputs label{
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--ink);
+  margin: 0;          /* avoid UA default margins */
+}
+
+/* normalize inputs so they don't push the grid outward */
+
+/* Let inputs flex instead of fixed pixel widths */
+.displayInput{
+  height: 22px;
+  width: 55px;            /* clamp width so right column doesn't drift */
+  max-width: 55px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  outline: none;
+  text-align: right;
+  padding: 0 4px;
+  font: 700 12px/1 system-ui,-apple-system, Segoe UI, Roboto, Inter, Arial;
+  color: var(--ink);
+  background: #fff;
+  margin: 0;              /* strip UA margins that can misalign rows */
+}
+.displayInput2, .displayInput3{
+  height: 22px;
+  width: 90px;            /* clamp width so right column doesn't drift */
+  max-width: 90px;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  outline: none;
+  text-align: left;
+  padding: 0 4px;
+  font: 700 12px/1 system-ui,-apple-system, Segoe UI, Roboto, Inter, Arial;
+  color: var(--ink);
+  background: #fff;
+  margin: 0;              /* strip UA margins that can misalign rows */
+}.inputs input:focus{ box-shadow: 0 0 0 3px var(--ink-50); }
+
+/* updated input, input2, input3 above - keeping the code below for now */
+.displayInput:focus,
+.displayInput2:focus,
+.displayInput3:focus{
+  box-shadow: 0 0 0 3px var(--ink-50);
+}
+
+/* Optional: only show the halo for keyboard focus (not mouse) */
+.displayInput:focus-visible,
+.displayInput2:focus-visible,
+.displayInput3:focus-visible{
+  box-shadow: 0 0 0 3px var(--ink-50);
+}
+
+
+/* Keep the card portrait & prevent any spill from shifting layout */
+.card{ overflow: hidden; }
+  
+/* Make the group span the whole card */
+.miniGroup{
+  display: grid;                 /* easy gap + full-width container */
+  grid-auto-rows: auto;
+  justify-items: center;         /* center the image; text will center via text-align */
+  row-gap: 6px;
+  width: 100%;                   /* <-- key: full card width */
+  margin: 10px 0 16px;
+}
+/* Image stays small */
+.mini{
+  margin: 0;
+  width: clamp(110px, 30cqw, 150px);
+}
+.miniImg{
+  display: block;
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+/* Text can use the whole card width */
+.miniText{
+  width: 100%;                   /* <-- key: not tied to image width */
+  max-width: 100%;
+  padding-inline: 12px;          /* nice side breathing room */
+  margin: 0;
+  text-align: center;
+}
+
+/* Lines styling */
+.miniLine{
+  display: block;
+  margin: 2px 0;
+  font-weight: 600;
+  line-height: 1.35;
+  font-size: clamp(12px, 3cqw, 16px);
+}
+
+/* Divider */
+/* Put this near the END of styles.css so nothing overrides it */
+.rule{
+  display:block;
+  width:100%;
+  margin:12px 0;
+  border:0;
+  border-top:1px solid var(--ink);  /* visible line even if height is 0 */
+  height:0;                         /* safe if something collapses height */
+  box-sizing:border-box;
+}
+
+/* Shared box styling for both metrics */
+.metric1,
+.metric2{
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  margin: 12px auto 16px;     /* auto L/R centers the box */
+  padding-inline: 14px;       /* inner breathing room so digits aren't near border */
+  box-sizing: border-box;
+}
+
+/* Sizes: both narrow & centered, but top is taller/wider */
+.metric1{
+  height: 150px;
+  width: clamp(200px, 30%, 320px);   /* compact, scales with card */
+}
+.metric2{
+  height: 100px;
+  width: clamp(160px, 30%, 240px);   /* a bit smaller than metric1 */
+}
+
+/* Inputs fill the box but respect inner padding via box-sizing */
+.metricInput1,
+.metricInput2{
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: center;
+  box-sizing: border-box;     /* so padding on the parent works as expected */
+  -moz-appearance: textfield;
+}
+.metricInput1{
+  font-size: 80px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: #FF0000;
+}
+.metricInput2{
+  font-size: 55px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color:#00ff55;
+}
+
+/* Hide number spinners on both */
+.metricInput1::-webkit-inner-spin-button,
+.metricInput1::-webkit-outer-spin-button,
+.metricInput2::-webkit-inner-spin-button,
+.metricInput2::-webkit-outer-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* narrow cards: stack inputs and let metrics widen a bit */
+@container (max-width: 300px){
+  .metric1,
+  .metric2{
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+/* Arrows row: left | center | right, perfectly symmetric */
+.arrows{
+  display:grid;
+  grid-template-columns:1fr 64px 1fr;
+  align-items:center;
+  width:100%;
+  padding:2px 8px 0;
+}
+#leftArrow  { justify-self:end; }
+#rightArrow { justify-self:start; }
+#middleBtn  { justify-self:center; }
+
+.arrowBtn{
+  width:64px;
+  height:64px;
+  display:grid;
+  place-items:center;
+  border:none;
+  background:transparent;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+}
+.arrowBtn img{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  display:block;
+  margin:0;
+}
+
+/* Hidden center button (small, discoverable, no jump on click) */
+.hiddenBtn{
+  width:28px;
+  height:28px;
+  border:2px solid var(--ink);
+  border-radius:50%;
+  background:#f3f4f6;
+  opacity:0;                 /* invisible but keeps center track */
+  pointer-events:auto;
+  transition:opacity .2s;
+  display:grid;
+  place-items:center;
+  font-weight:700;
+  font-size:14px;
+  line-height:1;
+}
+.hiddenBtn.show{ opacity:1; }
+.arrowBtn:not(.hiddenBtn):active{ transform:scale(.98); }
+.hiddenBtn:active{ transform:none; }
+
+/* hide/show utility */
+.is-hidden { display: none !important; }
+
+/* Action area: two columns when both buttons visible, collapse to one centered column when one button is hidden */
+.actionGroup{
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  justify-items: center;
+  align-items: center;
+}
+
+.actionGroup:has(#leaveBtn[hidden]) #actionBtn { grid-column: 1 / -1; }
+.actionGroup:has(#actionBtn[hidden]) #leaveBtn { grid-column: 1 / -1; }
+
+/* Notes span the full width above/below the buttons */
+#actionNote1, #actionNote2 {
+  grid-column: 1 / -1;
+}
+
+#actionBtn { grid-column: 1; }
+#leaveBtn  { grid-column: 2; }
+
+/* Buttons fill their grid cell but stay visually compact */
+.actionBtn{
+  min-width: 0;               /* prevent overflow pushing to next line */
+  width: 100%;
+  max-width: 260px;
+  box-sizing: border-box;
+  justify-self: center;
+
+  margin: 0;                    /* remove previous top margin */
+  padding: 12px 0;
+  font-size: clamp(14px, 3.2cqw, 18px);
+  font-weight: 700;
+  color: #fff;
+  background: var(--ink);
+  border: none; border-radius: 30px;
+  cursor: pointer;
+  transition: background .25s ease, transform .15s ease;
+  text-align: center;
+}
+.actionBtn:hover{ background:#1e2a36; transform:translateY(-2px); }
+.actionBtn:active{ transform:translateY(0); }
+
+/* Make leave buttons look secondary by default */
+#leaveBtn{ background:#a3a3a3; color:#111; }
+#leaveBtn:hover{ background:#8d8d8d; }
+
+
+/* note under the button */
+
+/* notes under actionBtn */
+.actionNote{
+  font-size:12px; line-height:1.3;
+  color:var(--ink); opacity:.85;
+  text-align:center; max-width:260px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+
+/* bottom-left pin for the hiddenBtn */
+.pinBL{
+  position:absolute;
+  left:12px;
+  bottom:12px;
+  z-index:30;
+}
+
+
+/* Optional secondary styling for Leave button */
+.actionBtn--secondary{
+  background:#a3a3a3;
+  color:#111;
+}
+.actionBtn--secondary:hover{ background:#8d8d8d; }
+

@@ -1,0 +1,15 @@
+{
+  "name": "guest",
+  "version": "1.0.0",
+  "description": "A minimal HTML/CSS/JS card with: - Four editable display fields (dta2dsply1..4) - Inline-editable headline - Large metric input - Two star buttons with independent counters (badges are editable and increment on click)",
+  "main": "guest_qCE_single_view_script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Number</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!--  <h1 class="headline" id="headline" contenteditable="true" aria-label="Edit headline">Your #</h1>;
+  editing this out because not in right place 
+  (should be in div class = card below that and above div class = "inputs"in block)-->
+
+  <div class="card">
+
+    <div class="hdr">
+      <!-- Left: 70×70 logo -->
+      <div class="hdrLogoBox">
+        <img src="images/qmeFirstLogo.jpg" alt="Logo" class="hdrLogoImg">
+      </div>
+
+      <!-- Center: two-line title -->
+      <div class="hdrTitle" aria-label="Now Serving">
+        <span class="titleLine">NOW</span>
+        <span class="titleLine">SERVING</span>
+      </div>
+
+      <!-- Right: hamburger -->
+      <button id="menuBtn" class="hamburger" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>  
+
+
+    <!-- Slide-in menu (sample) -->
+    <div id="menuBackdrop" class="menuBackdrop" hidden></div>
+    <aside id="menuPanel" class="menuPanel" hidden>
+      <nav class="menuNav">
+        <a href="#">Home</a>
+        <a href="#">Settings</a>
+        <a href="#">Help</a>
+      </nav>
+    </aside>
+
+    <!-- Big metric (inline editable input) -->
+    <div class="metric1" role="group" aria-label="Primary metric">
+      <input id="metric1" class="metricInput1" type="number" min="1" step="1" value="" inputmode="numeric" aria-label="Metric value" />
+    </div>
+
+    <div class="inputs">
+      <div class="field"><label for="dsp1">Queue ID    </label>
+        <input class="displayInput3" id="dsp1" value="qq00001"></div>
+      <div class="field"><label for="dsp4">Queue Name</label>
+        <input class="displayInput2" id="dsp4" value="Street Burger"></div>
+    </div>
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <!-- Headline (inline editable) -->
+    <h2 class="headline2" id="subhead2" contenteditable="true" aria-label="Edit headline2">Your Number</h2>
+
+    <!-- smaller metric (inline editable input) -->
+    <div class="metric2" role="group" aria-label="Secondary metric">
+      <input id="metric2" class="metricInput2" type="number" min="1" step="1" value="" inputmode="numeric" aria-label="Metric value2" />
+    </div>
+
+    <div class="inputs">
+      <div class="field"><label for="dsp2">Event Date</label>
+        <input class="displayInput3" id="dsp2" value="08/10/2025"></div>
+      <div class="field"><label for="dsp5">Event Start Time</label>
+        <input class="displayInput" id="dsp5" value="11:00"></div>
+      <div class="field"><label for="dsp3">Time Zone </label>
+        <input class="displayInput" id="dsp3" value="EST"></div>
+      <div class="field"><label for="dsp6">Event End Time</label>
+        <input class="displayInput" id="dsp6" value="19:00"></div>
+    </div>
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <div id="actionGroup" class="actionGroup is-hidden">
+      <button id="actionBtn" class="actionBtn">Check In</button>
+      <div id="actionNote1" class="actionNote"></div>
+      <div id="actionNote2" class="actionNote"></div>
+    </div>
+
+    <!-- Bottom-left hidden button (no notes here) -->
+    <button id="middleBtn" class="arrowBtn hiddenBtn pinBL " aria-label="Secret button">R</button>
+    
+    <script src="guest_queue_ticket.js" defer></script>
+  
+</body>
+</html>

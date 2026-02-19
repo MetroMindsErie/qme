@@ -1,0 +1,401 @@
+:root{
+  --ink:#2f3e4f;
+  --ink-50:#2f3e4f22;
+  --bg:#f7f8fb;
+  --card:#ffffff;
+  --accent:#2f3e4f;
+}
+
+/* Page */
+body{
+  margin:0;
+  display:grid;
+  place-items:center;
+  height:100vh;
+  background:var(--bg);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+  color:var(--ink);
+}
+
+/* Card (portrait, fixed) */
+.card{
+  width:min(360px, 90vw);
+  aspect-ratio:9/16;
+  background:var(--card);
+  border:3px solid var(--ink);
+  border-radius:6px;
+  padding:14px 14px 18px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  overflow:hidden;
+}
+/* Put this once */
+.card{
+  /* ...your existing styles... */
+  container-type: inline-size;    /* enables cqw units & @container rules */
+}
+
+/* Headings */
+.headline{
+  margin:4px 0 6px;
+  line-height:1.1;
+  text-align:center;
+  font-weight:900;
+  letter-spacing:1px;
+  font-size: clamp(24px, 5.5vw, 36px); /* responsive but capped */
+}
+.headline2{
+  margin:8px 0 10px;
+  line-height:1.1;
+  text-align:center;
+  font-weight:900;
+  letter-spacing:3px;
+  font-size: clamp(22px, 6vw, 40px);
+  text-transform: : uppercase;
+}
+.headline, headline2{ margin-block-start:0; }
+
+
+.inputs{
+  display:grid;
+  grid-template-columns:
+    max-content minmax(70px, 1fr)
+    max-content minmax(70px, 1fr);   /* label+input | label+input */
+  column-gap: clamp(6px, 2cqw, 12px);
+  row-gap: 8px;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  box-sizing:border-box;
+}
+
+/* Narrow cards: stack to one column */
+@container (max-width: 300px){
+  .inputs{
+    grid-template-columns: max-content minmax(120px, 1fr);
+  }
+}  /* <- don’t forget this closing brace */
+
+/* let each pair participate directly in the parent grid (keeps layout tight) */
+
+.field{ display: contents; }
+
+.inputs label{
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--ink);
+  margin: 0;          /* avoid UA default margins */
+}
+
+/* normalize inputs so they don't push the grid outward */
+
+/* Let inputs flex instead of fixed pixel widths */
+.displayInput,
+.displayInput2,
+.displayInput3{
+  height: 22px;
+  width: clamp(70px, 26cqw, 120px);    /* fluid width */
+  max-width: 100%;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  outline: none;
+  text-align: left;                    /* adjust per field as needed */
+  padding: 0 4px;
+  font: 700 12px/1 system-ui,-apple-system, Segoe UI, Roboto, Inter, Arial;
+  color: var(--ink);
+  background: #fff;
+  margin: 0;
+}
+.inputs input:focus{ box-shadow: 0 0 0 3px var(--ink-50); }
+
+/* updated input, input2, input3 above - keeping the code below for now */
+.displayInput:focus,
+.displayInput2:focus,
+.displayInput3:focus{
+  box-shadow: 0 0 0 3px var(--ink-50);
+}
+
+/* Optional: only show the halo for keyboard focus (not mouse) */
+.displayInput:focus-visible,
+.displayInput2:focus-visible,
+.displayInput3:focus-visible{
+  box-shadow: 0 0 0 3px var(--ink-50);
+}
+
+
+/* Keep the card portrait & prevent any spill from shifting layout */
+.card{ overflow: hidden; }
+  
+.mini{
+  display:grid; place-items:center;
+  margin: 10px auto 10px;
+  width: clamp(110px, 30cqw, 150px);   /* fluid width */
+  aspect-ratio: 3 / 4;                 /* tall rectangle; height adapts */
+}
+.miniImg{
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+}
+
+.miniText{
+  text-align:center;
+  width:100%;
+  margin: 4px 0 16px;                  /* bottom space before .inputs */
+}
+.miniLine{
+  display:block;
+  margin:2px 0;
+  font-size: clamp(12px, 3cqw, 16px);  /* fluid type */
+  font-weight:600;
+  line-height:1.35;
+}
+
+
+/* Metric */
+.metric{
+  border:3px solid var(--ink);
+  border-radius:4px;
+  display:grid;
+  place-items:center;
+  height:150px;
+  margin:0 8px 16px;
+}
+.metric{
+  height: clamp(120px, 35cqw, 180px);  /* fluid height */
+}
+.metricInput{
+  width:100%;
+  height:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  text-align:center;
+  font-size:100px;
+  font-weight:800;
+  letter-spacing:6px;
+  color:#FF0000;
+  -moz-appearance:textfield;
+}
+.metricInput::-webkit-inner-spin-button,
+.metricInput::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
+
+.metricInput{
+  font-size: clamp(56px, 18cqw, 100px);
+  letter-spacing: clamp(2px, 0.8cqw, 6px);
+}
+/* TEMP OVERRIDES — metric sizing (remove later) */
+.metric{
+  /* add only what you want to change */
+  height: 150px;
+  margin: 0 12px 16px;   /* adds side gutters */
+  padding-inline: 10px;     /* inner padding so input isn’t flush */
+  box-sizing: border-box;   /* include padding in height */
+}
+
+.metricInput{
+  font-size: 100px;
+  letter-spacing: 6px;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  /* keep the rest as-is */
+}
+
+/* Metric2 = for <your number> */
+.metric2{
+  border:3px solid var(--ink);
+  border-radius:4px;
+  display:grid;
+  place-items:center;
+  height:100px;
+  margin:0 8px 16px;
+}
+.metric2{
+  height: clamp(120px, 35cqw, 180px);  /* fluid height */
+}
+.metricInput2{
+  width:100%;
+  height:100%;
+  border:none;
+  outline:none;
+  background:transparent;
+  text-align:center;
+  font-size:75px;
+  font-weight:800;
+  letter-spacing:6px;
+  color:#00ff55;
+  -moz-appearance:textfield;
+}
+.metricInput2::-webkit-inner-spin-button,
+.metricInput2::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
+
+.metricInput2{
+  font-size: clamp(56px, 18cqw, 100px);
+  letter-spacing: clamp(2px, 0.8cqw, 6px);
+}
+/* === METRIC 2 (BOTTOM, SMALLER) === */
+.metric2{
+  border: 3px solid var(--ink);
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  height: 100px;            /* smaller than the top’s 150px */
+  margin: 0 12px 16px;      /* same outer gutters */
+  padding-inline: 10px;     /* inner gutters */
+  box-sizing: border-box;
+}
+.metricInput2{
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: center;
+  font-size: 56px;          /* smaller number */
+  letter-spacing: 3px;
+  color:#00ff55;
+  -moz-appearance: textfield;
+}
+/* hide spin buttons for metric2 as well */
+.metricInput2::-webkit-inner-spin-button,
+.metricInput2::-webkit-outer-spin-button{ -webkit-appearance:none; margin:0; }
+
+.actionBtn{
+  display:block;
+  width: clamp(160px, 66%, 260px);   /* ~2/3 width, with min/max */
+  margin: 12px auto 0;
+  padding: 12px 0;
+  font-size: clamp(14px, 3.2cqw, 18px);
+  font-weight:700;
+  color:#fff;
+  background:var(--ink);
+  border:none; border-radius:30px;
+  cursor:pointer;
+  transition: background .25s ease, transform .15s ease;
+  text-align:center;
+}
+.actionBtn:hover{ background:#1e2a36; transform:translateY(-2px); }
+.actionBtn:active{ transform:translateY(0); }
+/* Arrows row: left | center | right, perfectly symmetric */
+.arrows{
+  display:grid;
+  grid-template-columns:1fr 64px 1fr;
+  align-items:center;
+  width:100%;
+  padding:2px 8px 0;
+}
+#leftArrow  { justify-self:end; }
+#rightArrow { justify-self:start; }
+#middleBtn  { justify-self:center; }
+
+.arrowBtn{
+  width:64px;
+  height:64px;
+  display:grid;
+  place-items:center;
+  border:none;
+  background:transparent;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+}
+.arrowBtn img{
+  width:48px;
+  height:48px;
+  object-fit:contain;
+  display:block;
+  margin:0;
+}
+
+/* Hidden center button (small, discoverable, no jump on click) */
+.hiddenBtn{
+  width:28px;
+  height:28px;
+  border:2px solid var(--ink);
+  border-radius:50%;
+  background:#f3f4f6;
+  opacity:0;                 /* invisible but keeps center track */
+  pointer-events:auto;
+  transition:opacity .2s;
+  display:grid;
+  place-items:center;
+  font-weight:700;
+  font-size:14px;
+  line-height:1;
+}
+.hiddenBtn.show{ opacity:1; }
+.arrowBtn:not(.hiddenBtn):active{ transform:scale(.98); }
+.hiddenBtn:active{ transform:none; }
+
+
+/* Divider */
+/* Put this near the END of styles.css so nothing overrides it */
+.rule{
+  display:block;
+  width:100%;
+  margin:12px 0;
+  border:0;
+  border-top:3px solid var(--ink);  /* visible line even if height is 0 */
+  height:0;                         /* safe if something collapses height */
+  box-sizing:border-box;
+}
+
+/* Shared box styling for both metrics */
+.metric1,
+.metric2{
+  border: 3px solid var(--ink);
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  margin: 12px auto 16px;     /* auto L/R centers the box */
+  padding-inline: 14px;       /* inner breathing room so digits aren't near border */
+  box-sizing: border-box;
+}
+
+/* Sizes: both narrow & centered, but top is taller/wider */
+.metric1{
+  height: 150px;
+  width: clamp(180px, 52%, 260px);   /* compact, scales with card */
+}
+.metric2{
+  height: 100px;
+  width: clamp(160px, 46%, 220px);   /* a bit smaller than metric1 */
+}
+
+/* Inputs fill the box but respect inner padding via box-sizing */
+.metricInput1,
+.metricInput2{
+  width: 100%;
+  height: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  text-align: center;
+  box-sizing: border-box;     /* so padding on the parent works as expected */
+
+}
+.metricInput1{
+  font-size: 100px;
+  font-weight: 800;
+  letter-spacing: 6px;
+  color: #FF0000;
+}
+.metricInput2{
+  font-size: 56px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #00ff55;
+}
+
+/* Hide number spinners on both */
+.metricInput1::-webkit-inner-spin-button,
+.metricInput1::-webkit-outer-spin-button,
+.metricInput2::-webkit-inner-spin-button,
+.metricInput2::-webkit-outer-spin-button{
+  -webkit-appearance: none;
+  margin: 0;
+}

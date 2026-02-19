@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>qME Admin</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!--  <h1 class="headline" id="headline" contenteditable="true" aria-label="Edit headline">Your #</h1>;
+  editing this out because not in right place 
+  (should be in div class = card below that and above div class = "inputs"in block)-->
+
+  <div class="card">
+    <!-- 2x2 data displays (now editable inputs) -->
+    <div class="hdr">
+      <!-- Left: 70×70 logo -->
+      <div class="hdrLogoBox">
+        <img id="hdrLogo"src="images/qmeFirstLogo.jpg" alt="Logo" class="hdrLogoImg">
+      </div>
+
+      <!-- Center: two-line title -->
+      <div class="hdrTitle" aria-label="Now Serving">
+        <span class="titleLine"></span>
+        <span class="titleLine"></span>
+      </div>
+
+      <!-- Right: hamburger -->
+      <button id="menuBtn" class="hamburger" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>  
+
+    <h1 class="headline" id="headline" contenteditable="true" aria-label="Edit headline">Special Event</h1>
+
+
+    <!-- Slide-in menu (sample) -->
+    <div id="menuBackdrop" class="menuBackdrop" hidden></div>
+    <aside id="menuPanel" class="menuPanel" hidden>
+      <nav class="menuNav">
+        <a href="#">Home</a>
+        <a href="#">Settings</a>
+        <a href="#">Help</a>
+      </nav>
+    </aside>
+
+    
+    <div class="rule" aria-hidden="true"></div>
+    
+    <div class="inputs">
+      <div class="field"><label for="dsp1">Queue ID    </label>
+        <input class="displayInput3" id="dsp1" value=""></div>
+      <div class="field"><label for="dsp4">Queue Name</label>
+        <input class="displayInput2" id="dsp4" value=""></div>
+      <div class="field"><label for="dsp2"># in Queue</label>
+        <input class="displayInput" id="dsp2" value=""></div>
+      <div class="field"><label for="dsp5">Guests lost</label>
+        <input class="displayInput" id="dsp5" value=""></div>
+      <div class="field"><label for="dsp3"></label>
+        <input class="displayInput" id="dsp3" value=""></div>
+      <div class="field"><label for="dsp6"></label>
+        <input class="displayInput" id="dsp6" value=""></div>
+    </div>
+
+
+    <div class="rule" aria-hidden="true"></div>
+
+    <!-- Headline (inline editable) -->
+    <h2 class="headline2" id="subhead2" contenteditable="true" aria-label="Edit headline2">NOW SERVING</h2>
+
+    <!-- Big metric (inline editable input) -->
+    <div class="metric" role="group" aria-label="Primary metric">
+      <input id="metricValue" class="metricInput" type="number" min="1" step="1" value="35" inputmode="numeric" aria-label="Metric value" />
+    </div>
+
+      <!-- Arrow controls -->
+    <div class="arrows" id="arrows">
+      <button class="arrowBtn" id="leftArrow" aria-label="Left arrow">
+        <img src="images/left_arrow.jpg" alt="Left arrow">
+      </button>
+
+        <!-- Hidden middle button -->
+      <button class="arrowBtn hiddenBtn" id="middleBtn" aria-label="Secret button">R</button>
+
+      <button class="arrowBtn" id="rightArrow" aria-label="Right arrow">
+        <img src="images/right_arrow.jpg" alt="Right arrow">
+      </button>
+    </div>
+  </div>
+
+  <script src="admin_QCE.js" defer></script>
+  
+</body>
+</html>

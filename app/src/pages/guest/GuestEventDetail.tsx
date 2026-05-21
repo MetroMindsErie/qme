@@ -19,22 +19,34 @@ interface QueueWithMeta extends Queue {
   _nowServing?: number;
 }
 
-// ── Menu definitions ────────────────────────────────────────────────────────
 
-const CHARCUTERIE_MENU: MenuConfig = {
-  id: 'charcuterie',
-  icon: '🧀',
+// ── Menu definitions ────────────────────────────────────────────────────────
+const SPEAKERS_MENU: MenuConfig = {
+  id: 'speakers',
+  icon: '🎤',
+  color: '#2196F3',
+  title: 'Main Stage – Speaker Sessions',
+  availability: 'Live startup pitches · 5:30 PM – 8:00 PM',
+  items: [
+    { emoji: '🚀', name: 'qMe', note: 'Featured Demo' },
+    { emoji: '🐾', name: 'Wags Vital', note: 'Company Presentation' },
+  ],
+};
+
+const BUFFET_MENU: MenuConfig = {
+  id: 'buffet',
+  icon: '🍽️',
   color: '#FF9800',
-  title: 'Charcuterie & Light Appetizers',
+  title: 'Food Buffet',
   availability: 'Available buffet-style · 5:00 PM – 8:00 PM',
   items: [
-    { emoji: '🧀', name: 'Aged White Cheddar', note: 'Local Wisconsin' },
-    { emoji: '🥩', name: 'Prosciutto di Parma', note: 'Thinly sliced' },
-    { emoji: '🫒', name: 'Castelvetrano Olives', note: 'Mild & buttery' },
-    { emoji: '🥖', name: 'Artisan Breads & Crackers', note: 'Assorted varieties' },
-    { emoji: '🍇', name: 'Seasonal Fresh Grapes & Berries' },
-    { emoji: '🍯', name: 'Local Honey & Fig Jam' },
-    { emoji: '🫙', name: 'Roasted Garlic Hummus', note: 'With pita chips' },
+    { emoji: '🍗', name: 'Roast Chicken', note: 'Herb-seasoned, carved fresh' },
+    { emoji: '🍝', name: 'Pasta Primavera', note: 'Vegetarian, with fresh veggies' },
+    { emoji: '🥗', name: 'Garden Salad', note: 'Assorted dressings' },
+    { emoji: '🍞', name: 'Fresh Baked Rolls', note: 'With butter' },
+    { emoji: '🥔', name: 'Garlic Mashed Potatoes' },
+    { emoji: '🍰', name: 'Assorted Desserts', note: 'Cakes, cookies, and more' },
+    { emoji: '🍎', name: 'Seasonal Fruit' },
   ],
 };
 
@@ -75,27 +87,19 @@ const STATIC_ACTIVITIES: StaticActivity[] = [
     color: '#2196F3',
     name: 'Main Stage – Speaker Sessions',
     description: 'Live startup pitches from I-Corps teams',
-    time: '5:00 PM – 8:00 PM',
+    time: '5:30 PM – 6:15 PM',
     badge: null,
+    menuConfig: SPEAKERS_MENU,
   },
   {
-    id: 'qme-demo',
-    icon: 'qMe',
-    color: '#00C853',
-    name: 'qMe Demo',
-    description: 'See how qMe works in a live event',
-    time: 'Available throughout event',
-    badge: 'FEATURED',
-  },
-  {
-    id: 'charcuterie',
-    icon: '🧀',
+    id: 'buffet',
+    icon: '🍽️',
     color: '#FF9800',
-    name: 'Charcuterie & Light Appetizers',
+    name: 'Food Buffet',
     description: 'Available buffet-style',
-    time: '5:00 PM – 8:00 PM',
+    time: '6:15 PM – 6:45 PM',
     badge: null,
-    menuConfig: CHARCUTERIE_MENU,
+    menuConfig: BUFFET_MENU,
   },
   {
     id: 'beverages',
@@ -103,7 +107,7 @@ const STATIC_ACTIVITIES: StaticActivity[] = [
     color: '#9C27B0',
     name: 'Beer, Wine & Non-Alcoholic Beverages',
     description: null,
-    time: '5:00 PM – 8:00 PM',
+    time: '5:00 PM – 7:45 PM',
     badge: null,
     menuConfig: BEVERAGE_MENU,
   },

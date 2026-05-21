@@ -134,7 +134,7 @@ export default function AdminQueueDashboard() {
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
-        logoSrc={queue?.image_url || '/images/lunaLogo.jpg'}
+        logoSrc={queue?.image_url || '/images/zippy.png'}
         titleLine1=""
         titleLine2=""
       />

@@ -196,11 +196,11 @@ export default function GuestEventDetail() {
         <div className="ed-header">
           <div className="ed-header-top">
             <div className="ed-header-left">
-              {event.image_url ? (
-                <img src={event.image_url} alt={event.name} className="ed-logo" />
-              ) : (
-                <div className="ed-logo-placeholder"><span>I-P</span></div>
-              )}
+              <img
+                src={event.image_url || '/images/zippy.png'}
+                alt={event.name}
+                className="ed-logo"
+              />
               <div className="ed-header-info">
                 <div className="ed-event-name">{event.name}</div>
                 {event.location && (
@@ -247,9 +247,12 @@ export default function GuestEventDetail() {
             return (
               <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
-                  {q.image_url
-                    ? <img src={q.image_url} alt={q.name} className="ed-activity-icon-img" />
-                    : <span style={{ fontSize: '1.1rem' }}>🎟</span>}
+                  <img
+                    src={q.image_url || '/images/zippy.png'}
+                    alt={q.name}
+                    className="ed-activity-icon-img"
+                    style={{ borderRadius: '8px' }}
+                  />
                 </div>
                 <div className="ed-activity-body">
                   <div className="ed-activity-name-row">

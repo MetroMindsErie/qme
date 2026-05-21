@@ -78,11 +78,11 @@ export default function KioskDisplay() {
       {/* Header */}
       <div className="kiosk-header">
         <div className="kiosk-header-left">
-          {event?.image_url ? (
-            <img src={event.image_url} alt={displayName} className="kiosk-logo" />
-          ) : (
-            <div className="kiosk-logo-placeholder">qMe</div>
-          )}
+          <img
+            src={event?.image_url || '/images/zippy.png'}
+            alt={displayName}
+            className="kiosk-logo"
+          />
           <div className="kiosk-header-text">
             <div className="kiosk-title">{displayName}</div>
             <div className="kiosk-subtitle">{subName}</div>

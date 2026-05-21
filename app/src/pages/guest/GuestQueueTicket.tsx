@@ -265,9 +265,11 @@ export default function GuestQueueTicketPage() {
       {/* ── Header ── */}
       <div className="tkt-header">
         <div className="tkt-header-left">
-          {queue.image_url
-            ? <img src={queue.image_url} alt={queue.name} className="tkt-logo" />
-            : <div className="tkt-logo-placeholder">qMe</div>}
+          <img
+            src={queue.image_url || '/images/zippy.png'}
+            alt={queue.name}
+            className="tkt-logo"
+          />
           <div className="tkt-header-info">
             <div className="tkt-queue-name">{queue.name}</div>
             <div className="tkt-event-name">{event.name}</div>

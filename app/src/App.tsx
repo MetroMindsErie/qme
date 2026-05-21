@@ -18,12 +18,20 @@ import GuestEventDetail from './pages/guest/GuestEventDetail';
 import GuestQueueLanding from './pages/guest/GuestQueueLanding';
 import GuestQueueTicket from './pages/guest/GuestQueueTicket';
 
+// ----- Demo / Kiosk -----
+import KioskDisplay from './pages/demo/KioskDisplay';
+
 import './styles/shared.css';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* ===== Kiosk tablet display ===== */}
+        <Route path="/kiosk/:eventSlug/:queueSlug" element={<KioskDisplay />} />
+        {/* Shortcut: /demo redirects straight to tonight's I-Pitch event */}
+        <Route path="/demo" element={<Navigate to="/events/ipitch-2026" replace />} />
+
         {/* ===== Guest: event / queue flow ===== */}
         <Route path="/events" element={<GuestEventList />} />
         <Route path="/events/:eventSlug" element={<GuestEventDetail />} />

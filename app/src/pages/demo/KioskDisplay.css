@@ -1,0 +1,298 @@
+/* ============================================================
+ * KioskDisplay.css — Full-screen tablet kiosk view
+ * ============================================================ */
+
+:root {
+  --qme-purple: #5B4FCE;
+  --qme-purple-dark: #4A3FB8;
+  --qme-purple-light: #F0EEFF;
+  --qme-green: #00C853;
+  --qme-bg: #f7f8fb;
+}
+
+.kiosk-root {
+  min-height: 100vh;
+  background: var(--qme-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px 16px;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.kiosk-loading {
+  margin-top: 40vh;
+  font-size: 1.4rem;
+  color: #888;
+}
+
+/* ---- Header ---- */
+.kiosk-header {
+  width: 100%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+.kiosk-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.kiosk-logo {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.kiosk-logo-placeholder {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  background: var(--qme-purple);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.kiosk-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kiosk-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.kiosk-subtitle {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.kiosk-location {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.kiosk-active-badge {
+  background: #e8fdf0;
+  color: var(--qme-green);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---- NOW SERVING ---- */
+.kiosk-serving-section {
+  width: 100%;
+  text-align: center;
+  background: white;
+  border-radius: 12px;
+  padding: 20px 16px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 20px;
+}
+
+.kiosk-serving-label {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--qme-purple);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.kiosk-serving-number {
+  font-size: clamp(80px, 20vw, 140px);
+  font-weight: 900;
+  color: var(--qme-purple);
+  line-height: 1;
+  margin: 4px 0;
+}
+
+.kiosk-wait {
+  font-size: 1rem;
+  color: #666;
+  margin-top: 4px;
+}
+
+/* ---- Action Buttons ---- */
+.kiosk-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.kiosk-btn {
+  background: white;
+  border-radius: 12px;
+  padding: 20px 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.1s;
+  text-decoration: none;
+  color: inherit;
+}
+
+.kiosk-btn-tap {
+  border-color: var(--qme-purple-light);
+  background: var(--qme-purple-light);
+}
+
+.kiosk-btn-tap:hover,
+.kiosk-btn-tap:active {
+  border-color: var(--qme-purple);
+  transform: scale(0.98);
+}
+
+.kiosk-btn-scan {
+  border-color: #e8f5e9;
+  background: #e8f5e9;
+}
+
+.kiosk-btn-icon {
+  font-size: 1.6rem;
+}
+
+.kiosk-btn-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #1a1a2e;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.kiosk-btn-number {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: var(--qme-purple);
+  background: white;
+  border-radius: 50%;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(91,79,206,0.2);
+}
+
+.kiosk-qr-wrap {
+  background: white;
+  border-radius: 8px;
+  padding: 8px;
+  display: inline-flex;
+}
+
+.kiosk-qr-hint {
+  font-size: 0.72rem;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* ---- Benefits ---- */
+.kiosk-benefits-section {
+  width: 100%;
+  background: white;
+  border-radius: 12px;
+  padding: 16px 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  margin-bottom: 16px;
+}
+
+.kiosk-benefits-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.kiosk-benefits {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kiosk-benefit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.kiosk-benefit-num {
+  background: var(--qme-purple);
+  color: white;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.kiosk-benefit-icon {
+  font-size: 1.1rem;
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* ---- Footer ---- */
+.kiosk-footer {
+  font-size: 0.8rem;
+  color: #aaa;
+  text-align: center;
+  padding-bottom: 8px;
+}
+
+/* Landscape tablet optimization */
+@media (min-width: 600px) and (orientation: landscape) {
+  .kiosk-root {
+    max-width: 900px;
+    padding: 20px 32px;
+  }
+
+  .kiosk-serving-number {
+    font-size: clamp(80px, 14vw, 120px);
+  }
+
+  .kiosk-actions {
+    gap: 24px;
+  }
+}

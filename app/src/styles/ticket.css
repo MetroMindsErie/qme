@@ -1,0 +1,405 @@
+/* ============================================================
+ * ticket.css — Guest queue ticket page styles
+ * ============================================================ */
+
+.tkt-card {
+  padding: 0 !important;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Header ── */
+.tkt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid #eee;
+  flex-shrink: 0;
+}
+
+.tkt-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tkt-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.tkt-logo-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--qme-purple, #5B4FCE);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 800;
+}
+
+.tkt-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.tkt-queue-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.tkt-event-name {
+  font-size: 0.72rem;
+  color: #888;
+}
+
+.tkt-active-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #00C853;
+  background: #e8fdf0;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+
+/* ── Alert banner ── */
+.tkt-alert {
+  background: #FFF9C4;
+  color: #6D4C00;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 8px 14px;
+  text-align: center;
+  border-bottom: 1px solid #F9E795;
+  flex-shrink: 0;
+}
+
+/* ── Scrollable body ── */
+.tkt-scroll-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 14px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Queue position ── */
+.tkt-position-section {
+  text-align: center;
+  padding: 12px 0 4px;
+}
+
+.tkt-position-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #888;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.tkt-position-number {
+  font-size: clamp(52px, 18vw, 80px);
+  font-weight: 900;
+  color: #5B4FCE;
+  line-height: 1;
+  margin: 0;
+}
+
+.tkt-now-serving {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  margin-top: 4px;
+}
+
+.tkt-wait {
+  font-size: 0.75rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+/* ── Info grid ── */
+.tkt-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  padding: 4px 2px;
+}
+
+.tkt-info-cell {
+  background: #f7f8fb;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+.tkt-info-label {
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.tkt-info-val {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── QR code ── */
+.tkt-qr-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f7f8fb;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.tkt-qr-wrap {
+  background: white;
+  border-radius: 6px;
+  padding: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.tkt-qr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tkt-qr-title {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #aaa;
+  text-transform: uppercase;
+}
+
+.tkt-qr-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.2;
+}
+
+.tkt-qr-loc {
+  font-size: 0.7rem;
+  color: #888;
+}
+
+.tkt-qr-ready {
+  font-size: 0.68rem;
+  color: #00C853;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ── Progress tracker ── */
+.tkt-progress {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 4px 4px;
+  position: relative;
+}
+
+.tkt-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+  gap: 4px;
+}
+
+.tkt-step-line {
+  position: absolute;
+  top: 13px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  z-index: 0;
+}
+
+.tkt-line-purple {
+  background: #5B4FCE;
+}
+
+.tkt-line-gray {
+  background: #ddd;
+}
+
+.tkt-step-circle {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  z-index: 1;
+  position: relative;
+}
+
+.tkt-step-done {
+  background: #5B4FCE;
+  color: white;
+}
+
+.tkt-step-active {
+  background: #5B4FCE;
+  color: white;
+  box-shadow: 0 0 0 3px #EDE9FF;
+}
+
+.tkt-step-pending {
+  background: white;
+  color: #aaa;
+  border: 2px solid #ddd;
+}
+
+.tkt-step-label {
+  font-size: 0.6rem;
+  color: #aaa;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.tkt-step-label-active {
+  color: #5B4FCE;
+  font-weight: 700;
+}
+
+/* ── Note ── */
+.tkt-note {
+  font-size: 0.78rem;
+  color: #666;
+  text-align: center;
+  padding: 0 8px;
+}
+
+/* ── Actions ── */
+.tkt-actions {
+  padding: 8px 14px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+  border-top: 1px solid #f0f0f0;
+  background: white;
+}
+
+.tkt-btn-checkin {
+  background: #5B4FCE;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  letter-spacing: 0.5px;
+}
+
+.tkt-btn-checkin:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tkt-secondary-actions {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.tkt-link-btn {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 0.82rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-weight: 600;
+}
+
+.tkt-leave-btn {
+  background: none;
+  border: none;
+  color: #e53935;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 4px;
+  text-align: center;
+  width: 100%;
+}
+
+.tkt-leave-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Footer ── */
+.tkt-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 14px;
+  font-size: 0.68rem;
+  color: #aaa;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.tkt-footer-live {
+  color: #00C853;
+  font-weight: 600;
+}
+
+/* Mobile compact overrides */
+@media (max-width: 380px) {
+  .tkt-position-number {
+    font-size: clamp(44px, 16vw, 64px);
+  }
+
+  .tkt-qr-wrap svg {
+    width: 80px !important;
+    height: 80px !important;
+  }
+
+  .tkt-info-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .tkt-step-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+
+  .tkt-step-label {
+    font-size: 0.55rem;
+  }
+}

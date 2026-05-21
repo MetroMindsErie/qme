@@ -1,24 +1,71 @@
 /**
- * Guest: View an event's details and its available queues.
- * The guest can see which queues they've already joined
- * and enter new ones.
+ * Guest: Event detail page — shows live queues and event activities.
+ * Redesigned for I-Pitch demo with Live badge, stats, and activity cards.
  */
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import Header from '../../components/Header';
-import DisplayField from '../../components/DisplayField';
 import { getEventBySlug } from '../../lib/eventService';
 import { listQueuesForEvent, getNowServing } from '../../lib/queueService';
-import { formatDate, formatTime } from '../../lib/utils';
+import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket } from '../../hooks/useQueueTicket';
 import type { QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
+import '../../styles/eventDetail.css';
 
 interface QueueWithMeta extends Queue {
   _myTicket?: string;
   _nowServing?: number;
 }
+
+// Static informational activities shown below live queues
+const STATIC_ACTIVITIES = [
+  {
+    id: 'main-stage',
+    icon: '🎤',
+    color: '#2196F3',
+    name: 'Main Stage – Speaker Sessions',
+    description: 'Live startup pitches from I-Corps teams',
+    time: '5:00 PM – 8:00 PM',
+    badge: null,
+  },
+  {
+    id: 'qme-demo',
+    icon: 'qMe',
+    color: '#00C853',
+    name: 'qMe Demo',
+    description: 'See how qMe works in a live event',
+    time: 'Available throughout event',
+    badge: 'FEATURED',
+  },
+  {
+    id: 'charcuterie',
+    icon: '🧀',
+    color: '#FF9800',
+    name: 'Charcuterie & Light Appetizers',
+    description: 'Available buffet-style',
+    time: '5:00 PM – 8:00 PM',
+    badge: null,
+  },
+  {
+    id: 'beverages',
+    icon: '🍷',
+    color: '#FFC107',
+    name: 'Beer, Wine & Non-Alcoholic Beverages',
+    description: null,
+    time: '5:00 PM – 8:00 PM',
+    badge: null,
+  },
+  {
+    id: 'live-updates',
+    icon: '🔔',
+    color: '#5B4FCE',
+    name: 'Live updates all event',
+    description: 'Event details update in real time so you can plan your time and enjoy more.',
+    time: null,
+    badge: null,
+  },
+];
 
 export default function GuestEventDetail() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
@@ -26,6 +73,7 @@ export default function GuestEventDetail() {
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<QueueWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState('just now');
 
   const refresh = useCallback(async () => {
     if (!eventSlug) return;
@@ -34,7 +82,6 @@ export default function GuestEventDetail() {
       setEvent(ev);
       const qs = await listQueuesForEvent(ev.id);
 
-      // Enrich with ticket state and now_serving
       const enriched: QueueWithMeta[] = await Promise.all(
         qs
           .filter((q) => q.status === 'active')
@@ -48,6 +95,7 @@ export default function GuestEventDetail() {
           })
       );
       setQueues(enriched);
+      setLastUpdated('just now');
     } catch (e) {
       console.error('Failed to load event', e);
     } finally {
@@ -59,7 +107,6 @@ export default function GuestEventDetail() {
     refresh();
   }, [refresh]);
 
-  // Poll to keep now_serving fresh
   useEffect(() => {
     const interval = setInterval(refresh, 5000);
     return () => clearInterval(interval);
@@ -88,127 +135,153 @@ export default function GuestEventDetail() {
     );
   }
 
-  const statusColor: Record<string, string> = {
-    active: '#00c853',
-    paused: '#ff9800',
-    closed: '#f44336',
-  };
+  const sessionCount = queues.length + STATIC_ACTIVITIES.filter(a => a.id !== 'live-updates').length;
 
   return (
-    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-      <Header
-        logoSrc={event.image_url || '/images/qmeFirstLogo.jpg'}
-        titleLine1=""
-        titleLine2=""
-      />
+    <div className="card card-scrollable ed-card">
 
-      <div style={{ borderBottom: '2px solid #e0e0e0', paddingBottom: '0.5rem' }}>
-        <h1 className="headline" style={{ fontSize: '1.3rem', margin: '0.5rem 0' }}>
-          {event.name}
-        </h1>
-
-        {event.description && (
-          <p style={{ textAlign: 'center', color: '#666', margin: '0.25rem 1.5rem 0.5rem', fontSize: '0.9rem' }}>
-            {event.description}
-          </p>
-        )}
-
-        <div className="inputs" style={{ marginBottom: '0.5rem' }}>
-        <DisplayField id="ev-date" label="Date" value={formatDate(event.event_date)} className="displayInput3" />
-        <DisplayField id="ev-start" label="Start" value={formatTime(event.start_time)} />
-        <DisplayField id="ev-tz" label="TZ" value={event.timezone} />
-        <DisplayField id="ev-end" label="End" value={formatTime(event.end_time)} />
+      {/* ── Event Header ── */}
+      <div className="ed-header">
+        <div className="ed-header-top">
+          <div className="ed-header-left">
+            {event.image_url ? (
+              <img src={event.image_url} alt={event.name} className="ed-logo" />
+            ) : (
+              <div className="ed-logo-placeholder">
+                <span>I-P</span>
+              </div>
+            )}
+            <div className="ed-header-info">
+              <div className="ed-event-name">{event.name}</div>
+              {event.location && (
+                <div className="ed-location">📍 {event.location}</div>
+              )}
+            </div>
+          </div>
+          <div className="ed-live-badge">● Live</div>
         </div>
 
-        {event.location && (
-          <p style={{ textAlign: 'center', color: '#888', fontSize: '0.85rem', margin: '0.25rem 0 0.5rem' }}>
-            📍 {event.location}
-          </p>
-        )}
+        {/* Stats row */}
+        <div className="ed-stats">
+          <div className="ed-stat">
+            <span className="ed-stat-icon">🎙</span>
+            <span className="ed-stat-val">{sessionCount}</span>
+            <span className="ed-stat-label">Sessions</span>
+          </div>
+          {event.start_time && (
+            <div className="ed-stat">
+              <span className="ed-stat-icon">🕖</span>
+              <span className="ed-stat-val">{formatTime(event.start_time)}</span>
+              <span className="ed-stat-label">Starts</span>
+            </div>
+          )}
+          <div className="ed-stat">
+            <span className="ed-stat-icon">⏱</span>
+            <span className="ed-stat-label ed-stat-updated">Updated {lastUpdated}</span>
+          </div>
+        </div>
       </div>
 
-      <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '0.75rem 0' }}>
-        <h2 style={{ textAlign: 'center', fontSize: '1.1rem', margin: '0.5rem 0 0.75rem', fontWeight: 700 }}>
-          Choose a Queue
-        </h2>
+      {/* ── Guest View Label ── */}
+      <div className="ed-section-header">
+        <span className="ed-section-title">GUEST VIEW</span>
+        <span className="ed-section-sub">See what's happening across the event.</span>
+      </div>
 
-        {queues.length === 0 && (
-          <p style={{ textAlign: 'center', color: '#888', padding: '2rem 1rem' }}>
-            No queues available right now.
-          </p>
-        )}
+      {/* ── Activity list ── */}
+      <div className="ed-activity-list">
 
-        <div style={{ padding: '0 1.25rem' }}>
+        {/* Live joinable queues from Supabase */}
         {queues.map((q) => {
           const hasTicket = Boolean(q._myTicket);
           return (
-            <div
-              key={q.id}
-              style={{
-                border: `2px solid ${hasTicket ? '#00c853' : '#ddd'}`,
-                borderRadius: 10,
-                padding: '0.75rem 1rem',
-                marginBottom: '0.6rem',
-                display: 'flex',
-                gap: '0.75rem',
-                alignItems: 'center',
-              }}
-            >
-              {q.image_url && (
-                <img
-                  src={q.image_url}
-                  alt={q.name}
-                  style={{ width: 48, height: 48, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }}
-                />
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: '1rem' }}>{q.name}</div>
+            <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
+              <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
+                {q.image_url
+                  ? <img src={q.image_url} alt={q.name} className="ed-activity-icon-img" />
+                  : <span style={{ fontSize: '1.1rem' }}>🎟</span>}
+              </div>
+              <div className="ed-activity-body">
+                <div className="ed-activity-name-row">
+                  <span className="ed-activity-name">{q.name}</span>
+                  <span className="ed-badge ed-badge-active">ACTIVE</span>
+                </div>
                 {q.description && (
-                  <div style={{ fontSize: '0.8rem', color: '#888', marginTop: 2 }}>{q.description}</div>
+                  <div className="ed-activity-desc">{q.description}</div>
                 )}
-                <div style={{ fontSize: '0.8rem', marginTop: 4, display: 'flex', gap: '0.75rem' }}>
-                  <span>Now Serving: <strong>{q._nowServing ?? q.now_serving}</strong></span>
-                  <span style={{ color: statusColor[q.status] }}>{q.status}</span>
+                <div className="ed-activity-meta">
+                  {event.start_time && <span>Starts {formatTime(event.start_time)}</span>}
                 </div>
                 {hasTicket && (
-                  <div style={{ fontSize: '0.8rem', color: '#00c853', fontWeight: 600, marginTop: 2 }}>
-                    🎫 Your ticket: #{q._myTicket}
-                  </div>
+                  <div className="ed-ticket-note">🎫 You're in line — #{q._myTicket}</div>
                 )}
               </div>
-              <div>
+              <div className="ed-activity-right">
+                <div className="ed-serving-badge">
+                  <div className="ed-serving-label">Now Serving</div>
+                  <div className="ed-serving-num">{q._nowServing ?? q.now_serving}</div>
+                </div>
                 {hasTicket ? (
                   <Link
                     to={`/events/${eventSlug}/q/${q.slug}/ticket`}
-                    className="actionBtn"
-                    style={{ display: 'inline-block', margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
+                    className="ed-action-btn ed-action-btn-secondary"
                   >
-                    View Ticket
+                    View ›
                   </Link>
                 ) : (
                   <Link
                     to={`/events/${eventSlug}/q/${q.slug}`}
-                    className="actionBtn"
-                    style={{ display: 'inline-block', margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem', textDecoration: 'none' }}
+                    className="ed-action-btn"
                   >
-                    Join Queue
+                    Join ›
                   </Link>
                 )}
               </div>
             </div>
           );
         })}
-        </div>
 
-        <div style={{ textAlign: 'center', padding: '1rem 0' }}>
-          <button
-            className="actionBtn actionBtn-secondary"
-            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.5rem' }}
-            onClick={() => navigate('/events')}
-          >
-            ← Back to Events
-          </button>
-        </div>
+        {/* Static informational activities */}
+        {STATIC_ACTIVITIES.map((act) => (
+          <div key={act.id} className="ed-activity-card ed-activity-card-info">
+            <div
+              className="ed-activity-icon-wrap"
+              style={{ background: act.color + '22' }}
+            >
+              {act.icon === 'qMe'
+                ? <span style={{ fontSize: '0.65rem', fontWeight: 800, color: act.color }}>qMe</span>
+                : <span style={{ fontSize: '1.1rem' }}>{act.icon}</span>}
+            </div>
+            <div className="ed-activity-body">
+              <div className="ed-activity-name-row">
+                <span className="ed-activity-name">{act.name}</span>
+                {act.badge && (
+                  <span className="ed-badge ed-badge-featured">{act.badge}</span>
+                )}
+              </div>
+              {act.description && (
+                <div className="ed-activity-desc">{act.description}</div>
+              )}
+              {act.time && (
+                <div className="ed-activity-time" style={{ color: act.color }}>
+                  {act.time}
+                </div>
+              )}
+            </div>
+            <div className="ed-activity-right ed-activity-chevron">›</div>
+          </div>
+        ))}
+
+      </div>
+
+      <div style={{ textAlign: 'center', padding: '0.75rem 0 0.25rem' }}>
+        <button
+          className="actionBtn actionBtn-secondary"
+          style={{ margin: 0, width: 'auto', padding: '0.4rem 1.2rem', fontSize: '0.85rem' }}
+          onClick={() => navigate('/events')}
+        >
+          ← All Events
+        </button>
       </div>
     </div>
   );

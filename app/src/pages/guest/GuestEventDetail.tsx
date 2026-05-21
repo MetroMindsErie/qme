@@ -197,7 +197,7 @@ export default function GuestEventDetail() {
           <div className="ed-header-top">
             <div className="ed-header-left">
               <img
-                src={event.image_url || '/images/zippy.png'}
+                src={event.image_url || '/images/icorps.png'}
                 alt={event.name}
                 className="ed-logo"
               />

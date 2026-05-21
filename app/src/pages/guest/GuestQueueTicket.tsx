@@ -1,6 +1,11 @@
 /**
  * Guest: Queue-scoped ticket page.
  * Shows queue position, NOW SERVING, progress tracker, and check-in flow.
+ *
+ * Auto-leave rules:
+ *   - Served:    checked in AND nowServing advances 1+ past ticketNumber
+ *   - Missed:    NOT checked in AND nowServing advances 2+ past ticketNumber
+ *   - Manual:    guest taps "Leave Queue"
  */
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -15,31 +20,27 @@ import '../../styles/shared.css';
 import '../../styles/guest.css';
 import '../../styles/ticket.css';
 
-const NO_CHECKIN_BYE = 5;
-const CHECKIN_BYE = 9;
-const TIME_2_CHECKIN = 3;
+// How many positions past your number before auto-removal
+const NO_CHECKIN_BYE = 2;  // missed turn — skipped without checking in
+const CHECKIN_BYE    = 1;  // served — admin advanced past your number
+const TIME_2_CHECKIN = 3;  // start prompting check-in when this many ahead
 
-// Progress step states
+// Delay (ms) the "Enjoy!" screen stays visible before navigating away
+const SERVED_LINGER_MS = 4000;
+
 type StepState = 'done' | 'active' | 'pending';
-
 const STEPS = ['In Queue', 'Called', 'Checked In', 'Enjoy!'];
 
-function getStepStates(hasCheckedIn: boolean, nowServing: number, ticketNumber: number | null): StepState[] {
+function getStepStates(
+  hasCheckedIn: boolean,
+  nowServing: number,
+  ticketNumber: number | null
+): StepState[] {
   if (!ticketNumber) return ['active', 'pending', 'pending', 'pending'];
-
   const ahead = ticketNumber - nowServing;
-
-  if (hasCheckedIn && nowServing >= ticketNumber) {
-    // All done — being served
-    return ['done', 'done', 'done', 'active'];
-  }
-  if (hasCheckedIn) {
-    return ['done', 'done', 'active', 'pending'];
-  }
-  if (ahead <= TIME_2_CHECKIN && ahead >= 0) {
-    // Called — need to check in
-    return ['done', 'active', 'pending', 'pending'];
-  }
+  if (hasCheckedIn && nowServing >= ticketNumber) return ['done', 'done', 'done', 'active'];
+  if (hasCheckedIn)                               return ['done', 'done', 'active', 'pending'];
+  if (ahead <= TIME_2_CHECKIN && ahead >= 0)      return ['done', 'active', 'pending', 'pending'];
   return ['active', 'pending', 'pending', 'pending'];
 }
 
@@ -48,8 +49,8 @@ export default function GuestQueueTicketPage() {
   const { eventSlug, queueSlug } = useParams<{ eventSlug: string; queueSlug: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [event, setEvent] = useState<QEvent | null>(null);
-  const [queue, setQueue] = useState<Queue | null>(null);
+  const [event, setEvent]   = useState<QEvent | null>(null);
+  const [queue, setQueue]   = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -58,7 +59,7 @@ export default function GuestQueueTicketPage() {
       try {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
-        const q = await getQueueBySlug(ev.id, queueSlug);
+        const q  = await getQueueBySlug(ev.id, queueSlug);
         setQueue(q);
       } catch (e) {
         console.error('Failed to load queue', e);
@@ -69,23 +70,21 @@ export default function GuestQueueTicketPage() {
   }, [eventSlug, queueSlug]);
 
   const { nowServing } = useQueueMetric(queue?.id);
-  const {
-    ticketNumber,
-    hasCheckedIn,
-    claimTicket,
-    checkIn,
-    leave,
-  } = useQueueTicket(queue?.id);
+  const { ticketNumber, hasCheckedIn, claimTicket, checkIn, leave } = useQueueTicket(queue?.id);
 
-  const [note1, setNote1] = useState('');
+  const [note1, setNote1]             = useState('');
   const [showCheckIn, setShowCheckIn] = useState(false);
   const [checkInDisabled, setCheckInDisabled] = useState(false);
-  const [leaveDisabled, setLeaveDisabled] = useState(false);
+  const [leaveDisabled, setLeaveDisabled]     = useState(false);
+  // Served state: show celebration screen before clearing
+  const [servedView, setServedView]   = useState(false);
+  const [countdown, setCountdown]     = useState(Math.round(SERVED_LINGER_MS / 1000));
 
-  const didApproachRef = useRef(false);
-  const didNowServingRef = useRef(false);
-  const didAutoLeaveRef = useRef(false);
+  const didApproachRef    = useRef(false);
+  const didNowServingRef  = useRef(false);
+  const didAutoLeaveRef   = useRef(false);
 
+  // Nuke param (dev reset)
   useEffect(() => {
     if (searchParams.get('nuke') === '1' && queue) {
       clearQueueTicket(queue.id);
@@ -93,80 +92,99 @@ export default function GuestQueueTicketPage() {
     }
   }, [searchParams, setSearchParams, queue]);
 
+  // Claim ticket on mount
   useEffect(() => {
     if (!queue) return;
     claimTicket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [queue]);
 
+  // Countdown timer shown on the served screen
+  useEffect(() => {
+    if (!servedView) return;
+    const secs = Math.round(SERVED_LINGER_MS / 1000);
+    setCountdown(secs);
+    let remaining = secs;
+    const tick = setInterval(() => {
+      remaining -= 1;
+      setCountdown(remaining);
+      if (remaining <= 0) clearInterval(tick);
+    }, 1000);
+    return () => clearInterval(tick);
+  }, [servedView]);
+
   const evaluateProximity = useCallback(() => {
     if (nowServing == null || ticketNumber == null) return;
 
-    const m1 = nowServing;
-    const m2 = ticketNumber;
+    const gap   = nowServing - ticketNumber;   // positive = nowServing has passed you
+    const ahead = ticketNumber - nowServing;   // positive = you are still waiting
 
+    // ── Auto-leave check ──────────────────────────────────────────────────
     if (!didAutoLeaveRef.current) {
-      const gap = m1 - m2;
-      const shouldKick =
-        (!hasCheckedIn && gap >= NO_CHECKIN_BYE) ||
-        (hasCheckedIn && gap >= CHECKIN_BYE);
+      const served  = hasCheckedIn && gap >= CHECKIN_BYE;
+      const missed  = !hasCheckedIn && gap >= NO_CHECKIN_BYE;
 
-      if (shouldKick) {
+      if (served || missed) {
         didAutoLeaveRef.current = true;
-        const reason = hasCheckedIn ? 'checkedInTimeout' : 'noCheckInTimeout';
-        leave(reason).finally(() => {
-          navigate(`/events/${eventSlug}/q/${queueSlug}?cleared=1`);
-        });
+
+        if (served) {
+          // Mark ticket served, then show celebration screen
+          leave('served').finally(() => {
+            setServedView(true);
+            setTimeout(() => navigate(`/events/${eventSlug}`), SERVED_LINGER_MS);
+          });
+        } else {
+          // Missed turn — leave quietly, back to event
+          leave('noCheckInTimeout').finally(() => {
+            navigate(`/events/${eventSlug}?missed=1`);
+          });
+        }
         return;
       }
     }
 
-    const ahead = m2 - m1;
+    // ── Proximity messaging ───────────────────────────────────────────────
 
+    // Far away — reset approach flag
     if (ahead > TIME_2_CHECKIN) {
       didApproachRef.current = false;
-      if (!hasCheckedIn) {
-        setShowCheckIn(false);
-        setNote1('');
-      }
+      if (!hasCheckedIn) { setShowCheckIn(false); setNote1(''); }
     }
 
-    if (m1 < m2 && didNowServingRef.current) {
+    // Slipped back after being now-serving (edge case)
+    if (nowServing < ticketNumber && didNowServingRef.current) {
       didNowServingRef.current = false;
-      if (hasCheckedIn) {
-        setShowCheckIn(false);
-        setNote1("You're checked in — wait for your number");
-      }
+      if (hasCheckedIn) { setShowCheckIn(false); setNote1("You're checked in — wait for your number"); }
     }
 
+    // Approaching — prompt check-in
     if (!didApproachRef.current && ahead > 0 && ahead <= TIME_2_CHECKIN) {
       didApproachRef.current = true;
       if (!hasCheckedIn) {
         setShowCheckIn(true);
-        setNote1('Head to the queue now and tap Check In when you arrive');
+        setNote1('Head to the queue now — tap Check In when you arrive');
       } else {
         setShowCheckIn(false);
         setNote1("You're checked in — wait for your number");
       }
     }
 
-    if (m1 - m2 >= 0) {
+    // Now serving your number
+    if (gap >= 0) {
       if (hasCheckedIn) {
         if (!didNowServingRef.current) {
           didNowServingRef.current = true;
           setShowCheckIn(false);
-          setNote1("It's your turn!");
+          setNote1("It's your turn — enjoy!");
         }
       } else {
         setShowCheckIn(true);
         setNote1('Please check in now — tap Check In to continue.');
       }
     }
-  }, [nowServing, ticketNumber, hasCheckedIn, leave, navigate, eventSlug, queueSlug]);
+  }, [nowServing, ticketNumber, hasCheckedIn, leave, navigate, eventSlug]);
 
-  useEffect(() => {
-    evaluateProximity();
-  }, [evaluateProximity]);
+  useEffect(() => { evaluateProximity(); }, [evaluateProximity]);
 
   function handleCheckIn() {
     if (hasCheckedIn) return;
@@ -177,15 +195,15 @@ export default function GuestQueueTicketPage() {
   }
 
   async function handleLeave() {
-    const confirmed = window.confirm(
-      'Leave the queue? You will lose your current position.'
-    );
+    const confirmed = window.confirm('Leave the queue? You will lose your current position.');
     if (!confirmed) return;
     setLeaveDisabled(true);
     setCheckInDisabled(true);
     await leave('user');
-    navigate(`/events/${eventSlug}/q/${queueSlug}?cleared=1`);
+    navigate(`/events/${eventSlug}`);
   }
+
+  // ── Loading / error states ────────────────────────────────────────────────
 
   if (loading) {
     return (
@@ -203,10 +221,43 @@ export default function GuestQueueTicketPage() {
     );
   }
 
-  const stepStates = getStepStates(hasCheckedIn, nowServing, ticketNumber);
-  const aheadCount = ticketNumber != null ? Math.max(0, ticketNumber - nowServing) : null;
-  const waitMins = aheadCount != null ? aheadCount * 5 : null;
-  const venueUrl = `${window.location.origin}/events/${eventSlug}/q/${queueSlug}`;
+  // ── Served celebration screen ─────────────────────────────────────────────
+
+  if (servedView) {
+    return (
+      <div className="card card-scrollable tkt-card">
+        <div className="tkt-served-screen">
+          <div className="tkt-served-check">✓</div>
+          <h2 className="tkt-served-title">You're all set!</h2>
+          <p className="tkt-served-sub">
+            Thanks for visiting <strong>{queue.name}</strong>.<br />
+            Enjoy the rest of {event.name}!
+          </p>
+          <div className="tkt-served-event-badge">
+            <span>🎉</span>
+            <span>{event.name}</span>
+          </div>
+          <p className="tkt-served-countdown">
+            Returning to event in {countdown}s…
+          </p>
+          <button
+            className="tkt-btn-checkin"
+            style={{ marginTop: '8px' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Normal ticket view ────────────────────────────────────────────────────
+
+  const stepStates  = getStepStates(hasCheckedIn, nowServing, ticketNumber);
+  const aheadCount  = ticketNumber != null ? Math.max(0, ticketNumber - nowServing) : null;
+  const waitMins    = aheadCount != null ? aheadCount * 5 : null;
+  const venueUrl    = `${window.location.origin}/events/${eventSlug}/q/${queueSlug}`;
 
   return (
     <div className="card card-scrollable tkt-card">
@@ -225,7 +276,7 @@ export default function GuestQueueTicketPage() {
         <div className="tkt-active-badge">● Active</div>
       </div>
 
-      {/* ── Check-in alert (shown when it's time) ── */}
+      {/* ── Check-in alert ── */}
       {showCheckIn && (
         <div className="tkt-alert">
           🔔 {note1 || 'Please check in now — tap Check In to continue.'}
@@ -234,7 +285,7 @@ export default function GuestQueueTicketPage() {
 
       <div className="tkt-scroll-body">
 
-        {/* ── Queue Position ── */}
+        {/* ── Queue position ── */}
         <div className="tkt-position-section">
           <div className="tkt-position-label">YOUR QUEUE POSITION</div>
           <div className="tkt-position-number">{ticketNumber ?? '—'}</div>
@@ -266,7 +317,7 @@ export default function GuestQueueTicketPage() {
           )}
         </div>
 
-        {/* ── QR code section ── */}
+        {/* ── QR code ── */}
         <div className="tkt-qr-section">
           <div className="tkt-qr-wrap">
             <QRCodeSVG value={venueUrl} size={100} bgColor="#fff" fgColor="#1a1a2e" level="M" />
@@ -286,7 +337,10 @@ export default function GuestQueueTicketPage() {
             return (
               <div key={label} className="tkt-step">
                 {i > 0 && (
-                  <div className={`tkt-step-line ${state === 'pending' && stepStates[i - 1] !== 'done' ? 'tkt-line-gray' : 'tkt-line-purple'}`} />
+                  <div className={`tkt-step-line ${
+                    state === 'pending' && stepStates[i - 1] !== 'done'
+                      ? 'tkt-line-gray' : 'tkt-line-purple'
+                  }`} />
                 )}
                 <div className={`tkt-step-circle tkt-step-${state}`}>
                   {state === 'done' ? '✓' : i + 1}
@@ -299,25 +353,17 @@ export default function GuestQueueTicketPage() {
           })}
         </div>
 
-        {/* ── Action note (non-alert version) ── */}
-        {!showCheckIn && note1 && (
-          <div className="tkt-note">{note1}</div>
-        )}
+        {!showCheckIn && note1 && <div className="tkt-note">{note1}</div>}
 
       </div>
 
-      {/* ── Action group ── */}
+      {/* ── Actions ── */}
       <div className="tkt-actions">
         {showCheckIn && (
-          <button
-            className="tkt-btn-checkin"
-            onClick={handleCheckIn}
-            disabled={checkInDisabled}
-          >
+          <button className="tkt-btn-checkin" onClick={handleCheckIn} disabled={checkInDisabled}>
             ✓ Check In Now
           </button>
         )}
-
         <div className="tkt-secondary-actions">
           <button className="tkt-link-btn" onClick={() => {
             if (navigator.share) {
@@ -325,19 +371,12 @@ export default function GuestQueueTicketPage() {
             } else {
               navigator.clipboard?.writeText(window.location.href);
             }
-          }}>
-            ⬆ Share
-          </button>
+          }}>⬆ Share</button>
           <button className="tkt-link-btn" onClick={() => navigate(`/events/${eventSlug}`)}>
             ← Event
           </button>
         </div>
-
-        <button
-          className="tkt-leave-btn"
-          onClick={handleLeave}
-          disabled={leaveDisabled}
-        >
+        <button className="tkt-leave-btn" onClick={handleLeave} disabled={leaveDisabled}>
           Leave Queue
         </button>
       </div>

@@ -427,3 +427,67 @@
   .tkt-info-cell { padding: 8px 10px; }
   .tkt-qr-section { padding: 12px 14px; }
 }
+
+/* ── Served celebration screen ──────────────────────────────── */
+.tkt-served-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+  gap: 14px;
+}
+
+.tkt-served-check {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #5B4FCE;
+  color: white;
+  font-size: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 12px #EDE9FF;
+  animation: tkt-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tkt-pop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+.tkt-served-title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #1a1a2e;
+  margin: 0;
+  line-height: 1.15;
+}
+
+.tkt-served-sub {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.tkt-served-event-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #F0EEFF;
+  color: #5B4FCE;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 20px;
+}
+
+.tkt-served-countdown {
+  font-size: 0.75rem;
+  color: #aaa;
+  margin: 0;
+}

@@ -1,15 +1,31 @@
 /* ============================================================
- * ticket.css — Guest queue ticket page styles
+ * ticket.css — Guest queue ticket page
+ * Mobile-first, tested at 320 / 375 / 390 / 430px widths
  * ============================================================ */
 
-.tkt-card {
+/* ── Card overrides ─────────────────────────────────────────── */
+.card.tkt-card {
   padding: 0 !important;
-  overflow: hidden;
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  aspect-ratio: unset !important;
+  justify-content: flex-start !important;
+  height: calc(100vh - 40px);
+  height: calc(100svh - 40px);
   display: flex;
   flex-direction: column;
 }
 
-/* ── Header ── */
+@media (max-width: 480px) {
+  .card.tkt-card {
+    height: calc(100vh - 20px);
+    height: calc(100svh - 20px);
+    border-width: 0 !important;
+    border-radius: 12px !important;
+  }
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
 .tkt-header {
   display: flex;
   align-items: center;
@@ -23,94 +39,112 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
 .tkt-logo {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
   object-fit: cover;
+  flex-shrink: 0;
 }
 
 .tkt-logo-placeholder {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
-  background: var(--qme-purple, #5B4FCE);
+  background: #5B4FCE;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.65rem;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .tkt-header-info {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .tkt-queue-name {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: #1a1a2e;
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tkt-event-name {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tkt-active-badge {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #00C853;
   background: #e8fdf0;
   padding: 3px 8px;
   border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-/* ── Alert banner ── */
+/* ── Alert banner ───────────────────────────────────────────── */
 .tkt-alert {
   background: #FFF9C4;
   color: #6D4C00;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   padding: 8px 14px;
   text-align: center;
   border-bottom: 1px solid #F9E795;
   flex-shrink: 0;
+  line-height: 1.4;
 }
 
-/* ── Scrollable body ── */
+/* ── Scrollable body ────────────────────────────────────────── */
 .tkt-scroll-body {
   flex: 1;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
   padding: 0 14px 8px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* Ensure it actually fills the remaining space */
+  min-height: 0;
 }
 
-/* ── Queue position ── */
+/* ── Queue position ─────────────────────────────────────────── */
 .tkt-position-section {
   text-align: center;
-  padding: 12px 0 4px;
+  padding: 14px 0 6px;
+  flex-shrink: 0;
 }
 
 .tkt-position-label {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 2px;
-  color: #888;
+  color: #aaa;
   text-transform: uppercase;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .tkt-position-number {
-  font-size: clamp(52px, 18vw, 80px);
+  font-size: clamp(56px, 20vw, 88px);
   font-weight: 900;
   color: #5B4FCE;
   line-height: 1;
@@ -118,42 +152,43 @@
 }
 
 .tkt-now-serving {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  color: #555;
+  color: #444;
   margin-top: 4px;
+  letter-spacing: 0.5px;
 }
 
 .tkt-wait {
-  font-size: 0.75rem;
-  color: #888;
+  font-size: 0.72rem;
+  color: #999;
   margin-top: 2px;
 }
 
-/* ── Info grid ── */
+/* ── Info grid ──────────────────────────────────────────────── */
 .tkt-info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4px 8px;
-  padding: 4px 2px;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .tkt-info-cell {
   background: #f7f8fb;
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-radius: 7px;
+  padding: 7px 10px;
 }
 
 .tkt-info-label {
-  font-size: 0.58rem;
+  font-size: 0.56rem;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #aaa;
+  color: #bbb;
   text-transform: uppercase;
 }
 
 .tkt-info-val {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 600;
   color: #1a1a2e;
   margin-top: 1px;
@@ -162,14 +197,15 @@
   text-overflow: ellipsis;
 }
 
-/* ── QR code ── */
+/* ── QR code section ────────────────────────────────────────── */
 .tkt-qr-section {
   display: flex;
   align-items: center;
   gap: 12px;
   background: #f7f8fb;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 12px;
+  flex-shrink: 0;
 }
 
 .tkt-qr-wrap {
@@ -177,21 +213,22 @@
   border-radius: 6px;
   padding: 6px;
   flex-shrink: 0;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  line-height: 0; /* removes gap under SVG */
 }
 
 .tkt-qr-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
 .tkt-qr-title {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
   letter-spacing: 1px;
-  color: #aaa;
+  color: #bbb;
   text-transform: uppercase;
 }
 
@@ -203,24 +240,27 @@
 }
 
 .tkt-qr-loc {
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   color: #888;
+  line-height: 1.3;
 }
 
 .tkt-qr-ready {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: #00C853;
   font-weight: 600;
   margin-top: 2px;
 }
 
-/* ── Progress tracker ── */
+/* ── Progress tracker ───────────────────────────────────────── */
 .tkt-progress {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding: 4px 4px;
-  position: relative;
+  padding: 4px 2px 0;
+  flex-shrink: 0;
+  /* Extra row gap between circle and label */
+  row-gap: 0;
 }
 
 .tkt-step {
@@ -229,25 +269,22 @@
   align-items: center;
   flex: 1;
   position: relative;
-  gap: 4px;
+  gap: 5px;
 }
 
+/* Connecting line between step[i-1] center → step[i] center */
 .tkt-step-line {
   position: absolute;
-  top: 13px;
-  right: 50%;
-  width: 100%;
+  top: 13px;     /* half of 28px circle */
+  right: 50%;    /* right edge at this step's center */
+  width: 100%;   /* extends 100% to the left → reaches previous step's center */
   height: 2px;
   z-index: 0;
+  transform: none;
 }
 
-.tkt-line-purple {
-  background: #5B4FCE;
-}
-
-.tkt-line-gray {
-  background: #ddd;
-}
+.tkt-line-purple { background: #5B4FCE; }
+.tkt-line-gray   { background: #e0e0e0; }
 
 .tkt-step-circle {
   width: 28px;
@@ -256,34 +293,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
   z-index: 1;
   position: relative;
+  flex-shrink: 0;
 }
 
-.tkt-step-done {
-  background: #5B4FCE;
-  color: white;
-}
-
-.tkt-step-active {
-  background: #5B4FCE;
-  color: white;
-  box-shadow: 0 0 0 3px #EDE9FF;
-}
-
-.tkt-step-pending {
-  background: white;
-  color: #aaa;
-  border: 2px solid #ddd;
-}
+.tkt-step-done    { background: #5B4FCE; color: white; }
+.tkt-step-active  { background: #5B4FCE; color: white; box-shadow: 0 0 0 4px #EDE9FF; }
+.tkt-step-pending { background: white; color: #bbb; border: 2px solid #e0e0e0; }
 
 .tkt-step-label {
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   color: #aaa;
   text-align: center;
   line-height: 1.2;
+  padding: 0 2px;
 }
 
 .tkt-step-label-active {
@@ -291,15 +317,16 @@
   font-weight: 700;
 }
 
-/* ── Note ── */
+/* ── Inline note ────────────────────────────────────────────── */
 .tkt-note {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   color: #666;
   text-align: center;
   padding: 0 8px;
+  flex-shrink: 0;
 }
 
-/* ── Actions ── */
+/* ── Actions (sticky bottom) ────────────────────────────────── */
 .tkt-actions {
   padding: 8px 14px;
   padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
@@ -315,24 +342,24 @@
   background: #5B4FCE;
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 0.95rem;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   width: 100%;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
+  transition: background 0.15s;
 }
 
-.tkt-btn-checkin:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
+.tkt-btn-checkin:hover   { background: #4A3FB8; }
+.tkt-btn-checkin:active  { background: #3D35A0; }
+.tkt-btn-checkin:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .tkt-secondary-actions {
   display: flex;
   justify-content: center;
-  gap: 24px;
+  gap: 28px;
 }
 
 .tkt-link-btn {
@@ -341,34 +368,35 @@
   color: #666;
   font-size: 0.82rem;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px 10px;
   font-weight: 600;
+  border-radius: 6px;
 }
+
+.tkt-link-btn:hover { background: #f5f5f5; }
 
 .tkt-leave-btn {
   background: none;
   border: none;
   color: #e53935;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   cursor: pointer;
   padding: 4px;
   text-align: center;
   width: 100%;
 }
 
-.tkt-leave-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
+.tkt-leave-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ── Footer ── */
+/* ── Footer ─────────────────────────────────────────────────── */
 .tkt-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 6px 14px;
-  font-size: 0.68rem;
-  color: #aaa;
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  font-size: 0.65rem;
+  color: #bbb;
   border-top: 1px solid #f0f0f0;
   flex-shrink: 0;
 }
@@ -378,28 +406,24 @@
   font-weight: 600;
 }
 
-/* Mobile compact overrides */
-@media (max-width: 380px) {
-  .tkt-position-number {
-    font-size: clamp(44px, 16vw, 64px);
-  }
+/* ── Compact tweaks for very small screens (< 360px) ─────────── */
+@media (max-width: 359px) {
+  .tkt-scroll-body { padding: 0 10px 6px; gap: 7px; }
+  .tkt-position-section { padding: 10px 0 4px; }
+  .tkt-position-number { font-size: clamp(48px, 18vw, 68px); }
+  .tkt-qr-wrap svg { width: 76px !important; height: 76px !important; }
+  .tkt-info-grid { gap: 4px; }
+  .tkt-info-cell { padding: 6px 8px; }
+  .tkt-step-circle { width: 24px; height: 24px; font-size: 0.62rem; }
+  .tkt-step-line { top: 11px; }
+  .tkt-step-label { font-size: 0.53rem; }
+  .tkt-actions { padding: 6px 10px; padding-bottom: max(8px, env(safe-area-inset-bottom, 8px)); }
+  .tkt-btn-checkin { padding: 11px; font-size: 0.92rem; }
+}
 
-  .tkt-qr-wrap svg {
-    width: 80px !important;
-    height: 80px !important;
-  }
-
-  .tkt-info-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .tkt-step-circle {
-    width: 24px;
-    height: 24px;
-    font-size: 0.65rem;
-  }
-
-  .tkt-step-label {
-    font-size: 0.55rem;
-  }
+/* ── Large phones (430px+) — can show a bit more ─────────────── */
+@media (min-width: 430px) {
+  .tkt-position-number { font-size: clamp(64px, 18vw, 96px); }
+  .tkt-info-cell { padding: 8px 10px; }
+  .tkt-qr-section { padding: 12px 14px; }
 }

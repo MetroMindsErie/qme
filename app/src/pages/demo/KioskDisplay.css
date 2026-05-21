@@ -12,11 +12,13 @@
 
 .kiosk-root {
   min-height: 100vh;
-  background: var(--qme-bg);
-  display: flex;
+  /* Override shared.css grid centering — kiosk fills the full page */
+  display: flex !important;
   flex-direction: column;
   align-items: center;
-  padding: 24px 20px 16px;
+  background: var(--qme-bg);
+  padding: 20px 16px 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 16px));
   box-sizing: border-box;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
   max-width: 680px;
@@ -281,18 +283,34 @@
   padding-bottom: 8px;
 }
 
-/* Landscape tablet optimization */
+/* Kiosk needs body to be a normal block, not grid-centered */
+:has(.kiosk-root) body,
+body:has(.kiosk-root) {
+  display: block !important;
+  place-items: unset !important;
+}
+
+/* Landscape tablet */
 @media (min-width: 600px) and (orientation: landscape) {
   .kiosk-root {
     max-width: 900px;
-    padding: 20px 32px;
+    padding: 16px 32px;
   }
-
   .kiosk-serving-number {
     font-size: clamp(80px, 14vw, 120px);
   }
-
   .kiosk-actions {
     gap: 24px;
+  }
+}
+
+/* Narrow mobile (shouldn't be primary kiosk device but handle gracefully) */
+@media (max-width: 480px) {
+  .kiosk-actions {
+    grid-template-columns: 1fr;
+  }
+  .kiosk-btn-scan .kiosk-qr-wrap svg {
+    width: 120px !important;
+    height: 120px !important;
   }
 }

@@ -1,6 +1,6 @@
 /**
- * Guest: Event detail page — shows live queues and event activities.
- * Redesigned for I-Pitch demo with Live badge, stats, and activity cards.
+ * Guest: Event detail page — live queues + informational activity cards.
+ * Redesigned for I-Pitch demo: Live badge, stats bar, clickable menus.
  */
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
@@ -8,6 +8,7 @@ import { getEventBySlug } from '../../lib/eventService';
 import { listQueuesForEvent, getNowServing } from '../../lib/queueService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket } from '../../hooks/useQueueTicket';
+import MenuModal, { type MenuConfig } from '../../components/MenuModal';
 import type { QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
@@ -18,8 +19,56 @@ interface QueueWithMeta extends Queue {
   _nowServing?: number;
 }
 
-// Static informational activities shown below live queues
-const STATIC_ACTIVITIES = [
+// ── Menu definitions ────────────────────────────────────────────────────────
+
+const CHARCUTERIE_MENU: MenuConfig = {
+  id: 'charcuterie',
+  icon: '🧀',
+  color: '#FF9800',
+  title: 'Charcuterie & Light Appetizers',
+  availability: 'Available buffet-style · 5:00 PM – 8:00 PM',
+  items: [
+    { emoji: '🧀', name: 'Aged White Cheddar', note: 'Local Wisconsin' },
+    { emoji: '🥩', name: 'Prosciutto di Parma', note: 'Thinly sliced' },
+    { emoji: '🫒', name: 'Castelvetrano Olives', note: 'Mild & buttery' },
+    { emoji: '🥖', name: 'Artisan Breads & Crackers', note: 'Assorted varieties' },
+    { emoji: '🍇', name: 'Seasonal Fresh Grapes & Berries' },
+    { emoji: '🍯', name: 'Local Honey & Fig Jam' },
+    { emoji: '🫙', name: 'Roasted Garlic Hummus', note: 'With pita chips' },
+  ],
+};
+
+const BEVERAGE_MENU: MenuConfig = {
+  id: 'beverages',
+  icon: '🍷',
+  color: '#9C27B0',
+  title: 'Beer, Wine & Non-Alcoholic',
+  availability: 'Available throughout event · 5:00 PM – 8:00 PM',
+  items: [
+    { emoji: '🍺', name: 'Thirsty Dog Labrador Lager', note: 'Local · Akron, OH' },
+    { emoji: '🍺', name: 'Platform Beer Mosaic IPA', note: 'Local · Cleveland, OH' },
+    { emoji: '🍷', name: 'Kendall-Jackson Chardonnay', note: 'Unoaked, crisp' },
+    { emoji: '🍷', name: 'The Prisoner Cabernet Sauvignon' },
+    { emoji: '🥂', name: 'Chandon Brut Rosé', note: 'California sparkling' },
+    { emoji: '💧', name: 'Still & Sparkling Water' },
+    { emoji: '🥤', name: 'Pepsi Products & Juice', note: 'Assorted' },
+  ],
+};
+
+// ── Static informational activities ─────────────────────────────────────────
+
+interface StaticActivity {
+  id: string;
+  icon: string;
+  color: string;
+  name: string;
+  description: string | null;
+  time: string | null;
+  badge: string | null;
+  menuConfig?: MenuConfig;
+}
+
+const STATIC_ACTIVITIES: StaticActivity[] = [
   {
     id: 'main-stage',
     icon: '🎤',
@@ -46,15 +95,17 @@ const STATIC_ACTIVITIES = [
     description: 'Available buffet-style',
     time: '5:00 PM – 8:00 PM',
     badge: null,
+    menuConfig: CHARCUTERIE_MENU,
   },
   {
     id: 'beverages',
     icon: '🍷',
-    color: '#FFC107',
+    color: '#9C27B0',
     name: 'Beer, Wine & Non-Alcoholic Beverages',
     description: null,
     time: '5:00 PM – 8:00 PM',
     badge: null,
+    menuConfig: BEVERAGE_MENU,
   },
   {
     id: 'live-updates',
@@ -67,13 +118,17 @@ const STATIC_ACTIVITIES = [
   },
 ];
 
+// ────────────────────────────────────────────────────────────────────────────
+
 export default function GuestEventDetail() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
   const navigate = useNavigate();
+
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<QueueWithMeta[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('just now');
+  const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
 
   const refresh = useCallback(async () => {
     if (!eventSlug) return;
@@ -88,9 +143,7 @@ export default function GuestEventDetail() {
           .map(async (q) => {
             const ticket = getStoredQueueTicket(q.id);
             let ns = q.now_serving;
-            try {
-              ns = await getNowServing(q.id);
-            } catch { /* */ }
+            try { ns = await getNowServing(q.id); } catch { /* */ }
             return { ...q, _myTicket: ticket || undefined, _nowServing: ns };
           })
       );
@@ -103,10 +156,7 @@ export default function GuestEventDetail() {
     }
   }, [eventSlug]);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
+  useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {
     const interval = setInterval(refresh, 5000);
     return () => clearInterval(interval);
@@ -123,13 +173,10 @@ export default function GuestEventDetail() {
   if (!event) {
     return (
       <div className="card">
-        <p style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>
-          Event not found.
-        </p>
+        <p style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Event not found.</p>
         <div style={{ textAlign: 'center', paddingBottom: '2rem' }}>
-          <button className="actionBtn" style={{ width: 'auto', padding: '0.5rem 1.5rem' }} onClick={() => navigate('/events')}>
-            ← Back to Events
-          </button>
+          <button className="actionBtn" style={{ width: 'auto', padding: '0.5rem 1.5rem' }}
+            onClick={() => navigate('/demo')}>← Back</button>
         </div>
       </div>
     );
@@ -138,151 +185,152 @@ export default function GuestEventDetail() {
   const sessionCount = queues.length + STATIC_ACTIVITIES.filter(a => a.id !== 'live-updates').length;
 
   return (
-    <div className="card card-scrollable ed-card">
+    <>
+      <div className="card card-scrollable ed-card">
 
-      {/* ── Event Header ── */}
-      <div className="ed-header">
-        <div className="ed-header-top">
-          <div className="ed-header-left">
-            {event.image_url ? (
-              <img src={event.image_url} alt={event.name} className="ed-logo" />
-            ) : (
-              <div className="ed-logo-placeholder">
-                <span>I-P</span>
+        {/* ── Event Header ── */}
+        <div className="ed-header">
+          <div className="ed-header-top">
+            <div className="ed-header-left">
+              {event.image_url ? (
+                <img src={event.image_url} alt={event.name} className="ed-logo" />
+              ) : (
+                <div className="ed-logo-placeholder"><span>I-P</span></div>
+              )}
+              <div className="ed-header-info">
+                <div className="ed-event-name">{event.name}</div>
+                {event.location && (
+                  <div className="ed-location">📍 {event.location}</div>
+                )}
+              </div>
+            </div>
+            <div className="ed-live-badge">● Live</div>
+          </div>
+
+          {/* Stats row */}
+          <div className="ed-stats">
+            <div className="ed-stat">
+              <span className="ed-stat-icon">🎙</span>
+              <span className="ed-stat-val">{sessionCount}</span>
+              <span className="ed-stat-label">Sessions</span>
+            </div>
+            {event.start_time && (
+              <div className="ed-stat">
+                <span className="ed-stat-icon">🕖</span>
+                <span className="ed-stat-val">{formatTime(event.start_time)}</span>
+                <span className="ed-stat-label">Starts</span>
               </div>
             )}
-            <div className="ed-header-info">
-              <div className="ed-event-name">{event.name}</div>
-              {event.location && (
-                <div className="ed-location">📍 {event.location}</div>
-              )}
+            <div className="ed-stat ed-stat-right">
+              <span className="ed-stat-icon">⏱</span>
+              <span className="ed-stat-label">Updated {lastUpdated}</span>
             </div>
           </div>
-          <div className="ed-live-badge">● Live</div>
         </div>
 
-        {/* Stats row */}
-        <div className="ed-stats">
-          <div className="ed-stat">
-            <span className="ed-stat-icon">🎙</span>
-            <span className="ed-stat-val">{sessionCount}</span>
-            <span className="ed-stat-label">Sessions</span>
-          </div>
-          {event.start_time && (
-            <div className="ed-stat">
-              <span className="ed-stat-icon">🕖</span>
-              <span className="ed-stat-val">{formatTime(event.start_time)}</span>
-              <span className="ed-stat-label">Starts</span>
-            </div>
-          )}
-          <div className="ed-stat">
-            <span className="ed-stat-icon">⏱</span>
-            <span className="ed-stat-label ed-stat-updated">Updated {lastUpdated}</span>
-          </div>
+        {/* ── Guest View Label ── */}
+        <div className="ed-section-header">
+          <span className="ed-section-title">GUEST VIEW</span>
+          <span className="ed-section-sub">See what's happening across the event.</span>
+        </div>
+
+        {/* ── Activity list ── */}
+        <div className="ed-activity-list">
+
+          {/* Live joinable queues */}
+          {queues.map((q) => {
+            const hasTicket = Boolean(q._myTicket);
+            return (
+              <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
+                <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
+                  {q.image_url
+                    ? <img src={q.image_url} alt={q.name} className="ed-activity-icon-img" />
+                    : <span style={{ fontSize: '1.1rem' }}>🎟</span>}
+                </div>
+                <div className="ed-activity-body">
+                  <div className="ed-activity-name-row">
+                    <span className="ed-activity-name">{q.name}</span>
+                    <span className="ed-badge ed-badge-active">ACTIVE</span>
+                  </div>
+                  {q.description && (
+                    <div className="ed-activity-desc">{q.description}</div>
+                  )}
+                  {event.start_time && (
+                    <div className="ed-activity-meta">
+                      <span>Starts {formatTime(event.start_time)}</span>
+                    </div>
+                  )}
+                  {hasTicket && (
+                    <div className="ed-ticket-note">🎫 You're in line — #{q._myTicket}</div>
+                  )}
+                </div>
+                <div className="ed-activity-right">
+                  <div className="ed-serving-badge">
+                    <div className="ed-serving-label">Now Serving</div>
+                    <div className="ed-serving-num">{q._nowServing ?? q.now_serving}</div>
+                  </div>
+                  {hasTicket ? (
+                    <Link to={`/events/${eventSlug}/q/${q.slug}/ticket`} className="ed-action-btn ed-action-btn-secondary">
+                      View ›
+                    </Link>
+                  ) : (
+                    <Link to={`/events/${eventSlug}/q/${q.slug}`} className="ed-action-btn">
+                      Join ›
+                    </Link>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Static informational activities */}
+          {STATIC_ACTIVITIES.map((act) => {
+            const isClickable = Boolean(act.menuConfig);
+            return (
+              <div
+                key={act.id}
+                className={`ed-activity-card ed-activity-card-info ${isClickable ? 'ed-card-clickable' : ''}`}
+                onClick={isClickable ? () => setActiveMenu(act.menuConfig!) : undefined}
+                role={isClickable ? 'button' : undefined}
+                tabIndex={isClickable ? 0 : undefined}
+                onKeyDown={isClickable ? (e) => { if (e.key === 'Enter') setActiveMenu(act.menuConfig!); } : undefined}
+              >
+                <div
+                  className="ed-activity-icon-wrap"
+                  style={{ background: act.color + '22' }}
+                >
+                  {act.icon === 'qMe'
+                    ? <span style={{ fontSize: '0.65rem', fontWeight: 800, color: act.color }}>qMe</span>
+                    : <span style={{ fontSize: '1.1rem' }}>{act.icon}</span>}
+                </div>
+                <div className="ed-activity-body">
+                  <div className="ed-activity-name-row">
+                    <span className="ed-activity-name">{act.name}</span>
+                    {act.badge && (
+                      <span className="ed-badge ed-badge-featured">{act.badge}</span>
+                    )}
+                  </div>
+                  {act.description && (
+                    <div className="ed-activity-desc">{act.description}</div>
+                  )}
+                  {act.time && (
+                    <div className="ed-activity-time" style={{ color: act.color }}>
+                      {act.time}
+                    </div>
+                  )}
+                </div>
+                <div className="ed-activity-right ed-activity-chevron">
+                  {isClickable ? '›' : <span style={{ color: '#e0e0e0' }}>›</span>}
+                </div>
+              </div>
+            );
+          })}
+
         </div>
       </div>
 
-      {/* ── Guest View Label ── */}
-      <div className="ed-section-header">
-        <span className="ed-section-title">GUEST VIEW</span>
-        <span className="ed-section-sub">See what's happening across the event.</span>
-      </div>
-
-      {/* ── Activity list ── */}
-      <div className="ed-activity-list">
-
-        {/* Live joinable queues from Supabase */}
-        {queues.map((q) => {
-          const hasTicket = Boolean(q._myTicket);
-          return (
-            <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
-              <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
-                {q.image_url
-                  ? <img src={q.image_url} alt={q.name} className="ed-activity-icon-img" />
-                  : <span style={{ fontSize: '1.1rem' }}>🎟</span>}
-              </div>
-              <div className="ed-activity-body">
-                <div className="ed-activity-name-row">
-                  <span className="ed-activity-name">{q.name}</span>
-                  <span className="ed-badge ed-badge-active">ACTIVE</span>
-                </div>
-                {q.description && (
-                  <div className="ed-activity-desc">{q.description}</div>
-                )}
-                <div className="ed-activity-meta">
-                  {event.start_time && <span>Starts {formatTime(event.start_time)}</span>}
-                </div>
-                {hasTicket && (
-                  <div className="ed-ticket-note">🎫 You're in line — #{q._myTicket}</div>
-                )}
-              </div>
-              <div className="ed-activity-right">
-                <div className="ed-serving-badge">
-                  <div className="ed-serving-label">Now Serving</div>
-                  <div className="ed-serving-num">{q._nowServing ?? q.now_serving}</div>
-                </div>
-                {hasTicket ? (
-                  <Link
-                    to={`/events/${eventSlug}/q/${q.slug}/ticket`}
-                    className="ed-action-btn ed-action-btn-secondary"
-                  >
-                    View ›
-                  </Link>
-                ) : (
-                  <Link
-                    to={`/events/${eventSlug}/q/${q.slug}`}
-                    className="ed-action-btn"
-                  >
-                    Join ›
-                  </Link>
-                )}
-              </div>
-            </div>
-          );
-        })}
-
-        {/* Static informational activities */}
-        {STATIC_ACTIVITIES.map((act) => (
-          <div key={act.id} className="ed-activity-card ed-activity-card-info">
-            <div
-              className="ed-activity-icon-wrap"
-              style={{ background: act.color + '22' }}
-            >
-              {act.icon === 'qMe'
-                ? <span style={{ fontSize: '0.65rem', fontWeight: 800, color: act.color }}>qMe</span>
-                : <span style={{ fontSize: '1.1rem' }}>{act.icon}</span>}
-            </div>
-            <div className="ed-activity-body">
-              <div className="ed-activity-name-row">
-                <span className="ed-activity-name">{act.name}</span>
-                {act.badge && (
-                  <span className="ed-badge ed-badge-featured">{act.badge}</span>
-                )}
-              </div>
-              {act.description && (
-                <div className="ed-activity-desc">{act.description}</div>
-              )}
-              {act.time && (
-                <div className="ed-activity-time" style={{ color: act.color }}>
-                  {act.time}
-                </div>
-              )}
-            </div>
-            <div className="ed-activity-right ed-activity-chevron">›</div>
-          </div>
-        ))}
-
-      </div>
-
-      <div style={{ textAlign: 'center', padding: '0.75rem 0 0.25rem' }}>
-        <button
-          className="actionBtn actionBtn-secondary"
-          style={{ margin: 0, width: 'auto', padding: '0.4rem 1.2rem', fontSize: '0.85rem' }}
-          onClick={() => navigate('/events')}
-        >
-          ← All Events
-        </button>
-      </div>
-    </div>
+      {/* Menu bottom sheet — rendered outside card so it overlays everything */}
+      <MenuModal config={activeMenu} onClose={() => setActiveMenu(null)} />
+    </>
   );
 }

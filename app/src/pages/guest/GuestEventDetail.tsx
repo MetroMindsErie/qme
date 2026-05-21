@@ -26,7 +26,7 @@ const SPEAKERS_MENU: MenuConfig = {
   icon: '🎤',
   color: '#2196F3',
   title: 'Main Stage – Speaker Sessions',
-  availability: 'Live startup pitches · 5:30 PM – 8:00 PM',
+  availability: 'Live startup pitches · 5:30 PM – 6:15 PM',
   items: [
     { emoji: '🚀', name: 'qMe', note: 'Featured Demo' },
     { emoji: '🐾', name: 'Wags Vital', note: 'Company Presentation' },
@@ -38,7 +38,7 @@ const BUFFET_MENU: MenuConfig = {
   icon: '🍽️',
   color: '#FF9800',
   title: 'Food Buffet',
-  availability: 'Available buffet-style · 5:00 PM – 8:00 PM',
+  availability: 'Available buffet-style · 6:15 PM – 6:45 PM',
   items: [
     { emoji: '🍗', name: 'Roast Chicken', note: 'Herb-seasoned, carved fresh' },
     { emoji: '🍝', name: 'Pasta Primavera', note: 'Vegetarian, with fresh veggies' },
@@ -55,7 +55,7 @@ const BEVERAGE_MENU: MenuConfig = {
   icon: '🍷',
   color: '#9C27B0',
   title: 'Beer, Wine & Non-Alcoholic',
-  availability: 'Available throughout event · 5:00 PM – 8:00 PM',
+  availability: 'Available throughout event · 5:00 PM – 7:45 PM',
   items: [
     { emoji: '🍺', name: 'Thirsty Dog Labrador Lager', note: 'Local · Akron, OH' },
     { emoji: '🍺', name: 'Platform Beer Mosaic IPA', note: 'Local · Cleveland, OH' },

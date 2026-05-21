@@ -133,15 +133,26 @@ export default function AdminEventDetail() {
               transition: 'all 0.2s ease',
               boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
               flexWrap: 'wrap' as const,
+              cursor: 'pointer',
             }}
+            onClick={(e) => {
+              // Prevent navigation if a button inside is clicked
+              if ((e.target as HTMLElement).closest('button')) return;
+              navigate(`/admin/events/${eventId}/queues/${q.id}`);
+            }}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                navigate(`/admin/events/${eventId}/queues/${q.id}`);
+              }
+            }}
+            role="button"
+            aria-label={`View queue ${q.name}`}
           >
             <div style={{ flex: 1, minWidth: 0 }}>
-              <Link
-                to={`/admin/events/${eventId}/queues/${q.id}`}
-                style={{ fontWeight: 700, fontSize: '1.05rem', color: '#2f3e4f', textDecoration: 'none', display: 'block', marginBottom: '0.4rem' }}
-              >
+              <span style={{ fontWeight: 700, fontSize: '1.05rem', color: '#2f3e4f', display: 'block', marginBottom: '0.4rem' }}>
                 {q.name}
-              </Link>
+              </span>
               <div style={{ fontSize: '0.85rem', color: '#555' }}>
                 Now serving: <span style={{ fontWeight: 600, color: '#2f3e4f' }}>{q.now_serving}</span> ·{' '}
                 <span style={{ fontWeight: 600, color: statusColor[q.status] ?? '#999' }}>{q.status}</span>
@@ -151,21 +162,21 @@ export default function AdminEventDetail() {
               <button
                 className="actionBtn actionBtn-primary"
                 style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                onClick={() => navigate(`/admin/events/${eventId}/queues/${q.id}`)}
+                onClick={(e) => { e.stopPropagation(); navigate(`/admin/events/${eventId}/queues/${q.id}`); }}
               >
                 📊 Manage
               </button>
               <button
                 className="actionBtn actionBtn-secondary"
                 style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                onClick={() => navigate(`/admin/events/${eventId}/queues/${q.id}/edit`)}
+                onClick={(e) => { e.stopPropagation(); navigate(`/admin/events/${eventId}/queues/${q.id}/edit`); }}
               >
                 ✏️ Edit
               </button>
               <button
                 className="actionBtn actionBtn-danger"
                 style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                onClick={() => handleDeleteQueue(q.id, q.name)}
+                onClick={(e) => { e.stopPropagation(); handleDeleteQueue(q.id, q.name); }}
               >
                 🗑️
               </button>

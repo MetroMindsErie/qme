@@ -61,6 +61,19 @@ export type CreateQueueInput = Pick<
 
 export type UpdateQueueInput = Partial<Omit<CreateQueueInput, 'event_id'>>;
 
+export interface Experience {
+  id: string;
+  event_id: string;
+  org_id: string | null;
+  name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  status: 'draft' | 'active' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+}
+
 // ===================== Snapshot =====================
 
 export interface QueueSnapshot {

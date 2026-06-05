@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "qMe",
+    "slug": "qme",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "qme",
+    "userInterfaceStyle": "automatic",
+    
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.qme.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Used for scanning QR codes at event check-in.",
+        "NSPhotoLibraryUsageDescription": "Used to upload your profile photo and event images.",
+        "NSPhotoLibraryAddUsageDescription": "Used to save event QR codes to your photo library."
+      }
+    },
+    "android": {
+      
+      "package": "com.qme.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        { "photosPermission": "Used to upload your profile and event photos." }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": { "deploymentTarget": "15.1" },
+          "android": { "compileSdkVersion": 35, "targetSdkVersion": 35 }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-eas-project-id"
+      }
+    }
+  }
+}

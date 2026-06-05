@@ -6,10 +6,11 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
 import { listQueuesForEvent, getNowServing } from '../../lib/queueService';
+import { listExperiencesForEvent } from '../../lib/experienceService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
-import type { QEvent, Queue } from '../../types';
+import type { QEvent, Queue, Experience } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 import '../../styles/eventDetail.css';
@@ -130,6 +131,7 @@ export default function GuestEventDetail() {
 
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<QueueWithMeta[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('just now');
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
@@ -152,6 +154,10 @@ export default function GuestEventDetail() {
           })
       );
       setQueues(enriched);
+
+      const exps = await listExperiencesForEvent(ev.id);
+      setExperiences(exps);
+
       setLastUpdated('just now');
     } catch (e) {
       console.error('Failed to load event', e);
@@ -186,7 +192,7 @@ export default function GuestEventDetail() {
     );
   }
 
-  const sessionCount = queues.length + STATIC_ACTIVITIES.filter(a => a.id !== 'live-updates').length;
+  const sessionCount = queues.length + STATIC_ACTIVITIES.filter(a => a.id !== 'live-updates').length + experiences.length;
 
   return (
     <>
@@ -289,6 +295,28 @@ export default function GuestEventDetail() {
               </div>
             );
           })}
+
+          {/* Dynamic experiences from DB */}
+          {experiences.map((exp) => (
+            <div key={exp.id} className="ed-activity-card ed-activity-card-info">
+              <div className="ed-activity-icon-wrap" style={{ background: '#E8F5E9' }}>
+                {exp.image_url
+                  ? <img src={exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
+                  : <span style={{ fontSize: '1.1rem' }}>✨</span>}
+              </div>
+              <div className="ed-activity-body">
+                <div className="ed-activity-name-row">
+                  <span className="ed-activity-name">{exp.name}</span>
+                </div>
+                {exp.description && (
+                  <div className="ed-activity-desc">{exp.description}</div>
+                )}
+              </div>
+              <div className="ed-activity-right ed-activity-chevron">
+                <span style={{ color: '#e0e0e0' }}>›</span>
+              </div>
+            </div>
+          ))}
 
           {/* Static informational activities */}
           {STATIC_ACTIVITIES.map((act) => {

@@ -28,7 +28,7 @@ const SPEAKERS_MENU: MenuConfig = {
   title: 'Main Stage – Speaker Sessions',
   availability: 'Live startup pitches · 5:30 PM – 6:15 PM',
   items: [
-    { emoji: '🚀', name: 'qMe', note: 'Featured Demo' },
+    { emoji: '🚀', name: 'qMe', note: 'Featured Demo Demo' },
     { emoji: '🐾', name: 'Wags Vital', note: 'Company Presentation' },
   ],
 };
@@ -50,7 +50,7 @@ const BUFFET_MENU: MenuConfig = {
   ],
 };
 
-const BEVERAGE_MENU: MenuConfig = {
+const : MenuConfig = {
   id: 'beverages',
   icon: '🍷',
   color: '#9C27B0',

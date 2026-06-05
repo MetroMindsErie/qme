@@ -29,7 +29,7 @@ const SPEAKERS_MENU: MenuConfig = {
   title: 'Main Stage – Speaker Sessions',
   availability: 'Live startup pitches · 5:30 PM – 6:15 PM',
   items: [
-    { emoji: '🚀', name: 'qMe', note: 'Featured Demo' },
+    { emoji: '🚀', name: 'qMe', note: 'Featured Demo Demo' },
     { emoji: '🐾', name: 'Wags Vital', note: 'Company Presentation' },
   ],
 };
@@ -123,6 +123,10 @@ const STATIC_ACTIVITIES: StaticActivity[] = [
   },
 ];
 
+// Demo toggles: keep these sections available in code without showing them.
+const SHOW_DB_EXPERIENCES = false;
+const SHOW_STATIC_ACTIVITIES = false;
+
 // ────────────────────────────────────────────────────────────────────────────
 
 export default function GuestEventDetail() {
@@ -155,7 +159,7 @@ export default function GuestEventDetail() {
       );
       setQueues(enriched);
 
-      const exps = await listExperiencesForEvent(ev.id);
+      const exps = SHOW_DB_EXPERIENCES ? await listExperiencesForEvent(ev.id) : [];
       setExperiences(exps);
 
       setLastUpdated('just now');
@@ -192,7 +196,8 @@ export default function GuestEventDetail() {
     );
   }
 
-  const sessionCount = queues.length + STATIC_ACTIVITIES.filter(a => a.id !== 'live-updates').length + experiences.length;
+  const visibleStaticActivities = SHOW_STATIC_ACTIVITIES ? STATIC_ACTIVITIES : [];
+  const sessionCount = queues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + experiences.length;
 
   return (
     <>
@@ -319,7 +324,7 @@ export default function GuestEventDetail() {
           ))}
 
           {/* Static informational activities */}
-          {STATIC_ACTIVITIES.map((act) => {
+          {visibleStaticActivities.map((act) => {
             const isClickable = Boolean(act.menuConfig);
             return (
               <div

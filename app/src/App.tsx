@@ -16,7 +16,6 @@ import './styles/shared.css';
 
 // Demo constants — all guest routes funnel through these
 const DEMO_EVENT = 'ipitch-2026';
-const DEMO_QUEUE = 'photo-with-zippy';
 
 // Guard: only allow the demo event slug, else redirect to /demo
 function DemoEventGuard() {
@@ -28,16 +27,16 @@ function DemoEventGuard() {
 // Skip the queue landing page — go directly to ticket claim
 function DemoQueueSkip() {
   const { eventSlug, queueSlug } = useParams<{ eventSlug: string; queueSlug: string }>();
-  if (eventSlug !== DEMO_EVENT || queueSlug !== DEMO_QUEUE) {
+  if (eventSlug !== DEMO_EVENT || !queueSlug) {
     return <Navigate to="/demo" replace />;
   }
   return <Navigate to={`/events/${eventSlug}/q/${queueSlug}/ticket`} replace />;
 }
 
-// Guard: only allow the demo ticket route
+// Guard: allow any queue under the demo event
 function DemoTicketGuard() {
   const { eventSlug, queueSlug } = useParams<{ eventSlug: string; queueSlug: string }>();
-  if (eventSlug !== DEMO_EVENT || queueSlug !== DEMO_QUEUE) {
+  if (eventSlug !== DEMO_EVENT || !queueSlug) {
     return <Navigate to="/demo" replace />;
   }
   return <GuestQueueTicket />;

@@ -15,7 +15,7 @@ import KioskDisplay from './pages/demo/KioskDisplay';
 import './styles/shared.css';
 
 // Demo constants — all guest routes funnel through these
-const DEMO_EVENT = 'ipitch-2026';
+const DEMO_EVENT = 'peony-festival';
 
 // Guard: only allow the demo event slug, else redirect to /demo
 function DemoEventGuard() {

@@ -13,6 +13,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
 import { useQueueTicket, clearQueueTicket } from '../../hooks/useQueueTicket';
 import { getEventBySlug } from '../../lib/eventService';
+import { getEventCheckIn } from '../../lib/checkInService';
 import { getQueueBySlug } from '../../lib/queueService';
 import { formatTime } from '../../lib/utils';
 import type { QEvent, Queue } from '../../types';
@@ -52,6 +53,7 @@ export default function GuestQueueTicketPage() {
   const [event, setEvent]   = useState<QEvent | null>(null);
   const [queue, setQueue]   = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasFlowersAccess, setHasFlowersAccess] = useState(false);
 
   useEffect(() => {
     if (!eventSlug || !queueSlug) return;
@@ -59,6 +61,18 @@ export default function GuestQueueTicketPage() {
       try {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
+        const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
+        if (storedCheckIn) {
+          try {
+            const saved = JSON.parse(storedCheckIn) as { id?: string };
+            if (saved.id) {
+              const row = await getEventCheckIn(saved.id);
+              setHasFlowersAccess(row.ticket_type === 'flowers');
+            }
+          } catch {
+            setHasFlowersAccess(false);
+          }
+        }
         const q  = await getQueueBySlug(ev.id, queueSlug);
         setQueue(q);
       } catch (e) {
@@ -282,6 +296,31 @@ export default function GuestQueueTicketPage() {
       {showCheckIn && (
         <div className="tkt-alert">
           🔔 {note1 || 'Please check in now — tap Check In to continue.'}
+        </div>
+      )}
+
+      {queue.slug === 'wrapped-bouquets' && hasFlowersAccess && (
+        <div style={{
+          margin: '0 1rem 0.75rem',
+          borderRadius: 14,
+          overflow: 'hidden',
+          background: '#F0EEFF',
+          border: '1px solid #D8D1FF',
+          color: '#2f275f',
+        }}>
+          <img
+            src={queue.image_url || '/images/market-fresh-peonies.png'}
+            alt="Festival and flowers access"
+            style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block' }}
+          />
+          <div style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Festival + Flowers Access
+            </div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 900, marginTop: 4 }}>
+              Show this at the Bouquet Bar
+            </div>
+          </div>
         </div>
       )}
 

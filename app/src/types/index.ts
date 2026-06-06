@@ -74,6 +74,25 @@ export interface Experience {
   updated_at: string;
 }
 
+export interface EventCheckIn {
+  id: string;
+  event_id: string;
+  first_name: string;
+  last_name: string;
+  code: string | null;
+  ticket_type: 'general' | 'flowers' | null;
+  status: 'waiting' | 'called' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+}
+
+export type CreateEventCheckInInput = Pick<
+  EventCheckIn,
+  'event_id' | 'first_name' | 'last_name'
+> & {
+  code?: string | null;
+};
+
 // ===================== Snapshot =====================
 
 export interface QueueSnapshot {

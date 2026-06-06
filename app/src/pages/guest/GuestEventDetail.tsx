@@ -7,6 +7,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
 import { listQueuesForEvent, getNowServing } from '../../lib/queueService';
 import { listExperiencesForEvent } from '../../lib/experienceService';
+import { getEventCheckIn } from '../../lib/checkInService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
@@ -139,12 +140,30 @@ export default function GuestEventDetail() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('just now');
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
+  const [hasEventCheckIn, setHasEventCheckIn] = useState(false);
+  const [eventCheckInTicketType, setEventCheckInTicketType] = useState<'general' | 'flowers' | null>(null);
 
   const refresh = useCallback(async () => {
     if (!eventSlug) return;
     try {
       const ev = await getEventBySlug(eventSlug);
       setEvent(ev);
+      const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
+      let checkInTicketType: 'general' | 'flowers' | null = null;
+      setHasEventCheckIn(Boolean(storedCheckIn));
+      setEventCheckInTicketType(null);
+      if (storedCheckIn) {
+        try {
+          const saved = JSON.parse(storedCheckIn) as { id?: string };
+          if (saved.id) {
+            const row = await getEventCheckIn(saved.id);
+            checkInTicketType = row.ticket_type;
+            setEventCheckInTicketType(checkInTicketType);
+          }
+        } catch {
+          /* keep the local checked-in state even if the row cannot be read */
+        }
+      }
       const qs = await listQueuesForEvent(ev.id);
 
       const enriched: QueueWithMeta[] = await Promise.all(
@@ -157,7 +176,7 @@ export default function GuestEventDetail() {
             return { ...q, _myTicket: ticket || undefined, _nowServing: ns };
           })
       );
-      setQueues(enriched);
+      setQueues(enriched.filter((q) => q.slug !== 'wrapped-bouquets' || checkInTicketType === 'flowers'));
 
       const exps = SHOW_DB_EXPERIENCES ? await listExperiencesForEvent(ev.id) : [];
       setExperiences(exps);
@@ -252,6 +271,37 @@ export default function GuestEventDetail() {
         {/* ── Activity list ── */}
         <div className="ed-activity-list">
 
+          {/* Arrival check-in */}
+          <div className="ed-activity-card ed-card-clickable">
+            <div className="ed-activity-icon-wrap" style={{ background: '#E8F5E9' }}>
+              <span style={{ fontSize: '1.1rem' }}>✓</span>
+            </div>
+            <div className="ed-activity-body">
+              <div className="ed-activity-name-row">
+                <span className="ed-activity-name">Check In at Mobile Bar</span>
+                <span className="ed-badge ed-badge-active">{hasEventCheckIn ? 'DONE' : 'START HERE'}</span>
+              </div>
+              <div className="ed-activity-desc">
+                {eventCheckInTicketType === 'flowers'
+                  ? 'You are checked in with flowers access. Use the Bouquet Bar option below when ready.'
+                  : hasEventCheckIn
+                  ? 'You are checked in. Please stay near the mobile bar if the team needs you.'
+                  : 'Enter your name when you arrive so the team can prepare your admission and bouquet access.'}
+              </div>
+            </div>
+            <div className="ed-activity-right">
+              {hasEventCheckIn ? (
+                <Link to={`/events/${eventSlug}`} className="ed-action-btn ed-action-btn-secondary">
+                  Checked In
+                </Link>
+              ) : (
+                <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
+                  Check In &gt;
+                </Link>
+              )}
+            </div>
+          </div>
+
           {/* Live joinable queues */}
           {queues.map((q) => {
             const hasTicket = Boolean(q._myTicket);
@@ -260,19 +310,21 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
                   <img
                     src={q.image_url || '/images/zippy.png'}
-                    alt={q.name}
+                    alt={q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}
                     className="ed-activity-icon-img"
                     style={{ borderRadius: '8px' }}
                   />
                 </div>
                 <div className="ed-activity-body">
                   <div className="ed-activity-name-row">
-                    <span className="ed-activity-name">{q.name}</span>
+                    <span className="ed-activity-name">{q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}</span>
                     <span className="ed-badge ed-badge-active">ACTIVE</span>
                   </div>
-                  {q.description && (
-                    <div className="ed-activity-desc">{q.description}</div>
-                  )}
+                  <div className="ed-activity-desc">
+                    {q.slug === 'wrapped-bouquets'
+                      ? 'Special flowers ticket access for wrapped bouquets.'
+                      : q.description}
+                  </div>
                   {event.start_time && (
                     <div className="ed-activity-meta">
                       <span>Starts {formatTime(event.start_time)}</span>

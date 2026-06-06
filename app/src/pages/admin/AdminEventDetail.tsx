@@ -91,6 +91,13 @@ export default function AdminEventDetail() {
           <button
             className="actionBtn actionBtn-secondary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
+            onClick={() => navigate(`/admin/events/${eventId}/check-ins`)}
+          >
+            Check-Ins
+          </button>
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
             onClick={() => navigate('/admin/events')}
           >
             ← Back

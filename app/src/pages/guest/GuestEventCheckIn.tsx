@@ -11,7 +11,19 @@ import type { EventCheckIn, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 
-export default function GuestEventCheckIn() {
+interface GuestEventCheckInProps {
+  checkInCode?: string | null;
+  title?: string;
+  intro?: string;
+  confirmation?: string;
+}
+
+export default function GuestEventCheckIn({
+  checkInCode = null,
+  title = 'Check In at Mobile Bar',
+  intro = 'Start here when you arrive. Enter your name so the festival team can prepare your admission and bouquet access.',
+  confirmation = 'Please stay near the mobile bar while the team gets ready for you.',
+}: GuestEventCheckInProps) {
   const navigate = useNavigate();
   const { eventSlug } = useParams<{ eventSlug: string }>();
   const [event, setEvent] = useState<QEvent | null>(null);
@@ -24,7 +36,7 @@ export default function GuestEventCheckIn() {
   const [error, setError] = useState('');
 
   function storageKey(evId: string) {
-    return `qme:eventCheckIn:${evId}`;
+    return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
   }
 
   useEffect(() => {
@@ -63,6 +75,7 @@ export default function GuestEventCheckIn() {
         event_id: event.id,
         first_name: firstName,
         last_name: lastName,
+        code: checkInCode,
       });
       localStorage.setItem(storageKey(event.id), JSON.stringify({
         id: row.id,
@@ -128,18 +141,18 @@ export default function GuestEventCheckIn() {
 
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
         <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
-          Check In at Mobile Bar
+          {title}
         </h1>
         <p style={{ color: '#666', lineHeight: 1.5, marginTop: 0 }}>
-          Start here when you arrive. Enter your name so the festival team can prepare your admission and bouquet access.
+          {intro}
         </p>
 
         {submitted ? (
           <>
             <div style={{ background: '#E8F5E9', borderRadius: 10, padding: '1rem', margin: '1rem 0', color: '#1B5E20', fontWeight: 700 }}>
-              Thanks, {firstName || 'guest'}! Please stay near the mobile bar while the team gets ready for you.
+              Thanks, {firstName || 'guest'}! {confirmation}
             </div>
-            {checkIn?.ticket_type === 'flowers' && (
+            {!checkInCode && checkIn?.ticket_type === 'flowers' && (
               <div style={{ background: '#F0EEFF', borderRadius: 12, padding: '1rem', margin: '1rem 0', color: '#2f275f', textAlign: 'center' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
                   Festival + Flowers Access

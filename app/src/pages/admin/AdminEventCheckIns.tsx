@@ -9,12 +9,23 @@ import {
   checkInEventGuest,
   listEventCheckIns,
   onEventCheckInsChange,
+  updateEventCheckInStatus,
 } from '../../lib/checkInService';
 import type { EventCheckIn, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
-export default function AdminEventCheckIns() {
+interface AdminEventCheckInsProps {
+  checkInCode?: string | null;
+  title?: string;
+  completedLabel?: string;
+}
+
+export default function AdminEventCheckIns({
+  checkInCode = null,
+  title = 'Mobile Bar Check-In',
+  completedLabel = 'Checked In Today',
+}: AdminEventCheckInsProps) {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<QEvent | null>(null);
@@ -27,7 +38,7 @@ export default function AdminEventCheckIns() {
     try {
       const [ev, rows] = await Promise.all([
         getEvent(eventId),
-        listEventCheckIns(eventId),
+        listEventCheckIns(eventId, checkInCode),
       ]);
       setEvent(ev);
       setCheckIns(rows);
@@ -38,7 +49,7 @@ export default function AdminEventCheckIns() {
     } finally {
       setLoading(false);
     }
-  }, [eventId]);
+  }, [eventId, checkInCode]);
 
   useEffect(() => {
     refresh();
@@ -56,10 +67,14 @@ export default function AdminEventCheckIns() {
 
   async function checkInGuest(
     id: string,
-    ticketType: NonNullable<EventCheckIn['ticket_type']>
+    ticketType?: NonNullable<EventCheckIn['ticket_type']>
   ) {
     try {
-      await checkInEventGuest(id, ticketType);
+      if (ticketType) {
+        await checkInEventGuest(id, ticketType);
+      } else {
+        await updateEventCheckInStatus(id, 'completed');
+      }
       await refresh();
     } catch (e) {
       console.error('Failed to update check-in', e);
@@ -84,7 +99,7 @@ export default function AdminEventCheckIns() {
 
       <div style={{ padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>
         <h1 className="headline" style={{ fontSize: '1.35rem', margin: 0, fontWeight: 700 }}>
-          Mobile Bar Check-In
+          {title}
         </h1>
         <p style={{ color: '#666', margin: '0.35rem 0 0' }}>
           {event?.name || 'Event'} · {waiting.length} waiting
@@ -116,12 +131,20 @@ export default function AdminEventCheckIns() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'general')}>
-                  General
-                </button>
-                <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'flowers')}>
-                  Flowers
-                </button>
+                {checkInCode ? (
+                  <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id)}>
+                    Check In
+                  </button>
+                ) : (
+                  <>
+                    <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'general')}>
+                      General
+                    </button>
+                    <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'flowers')}>
+                      Flowers
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -130,7 +153,7 @@ export default function AdminEventCheckIns() {
         {completed.length > 0 && (
           <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #e0e0e0' }}>
             <h2 style={{ fontSize: '1rem', margin: '0 0 0.75rem', color: '#2f3e4f' }}>
-              Checked In Today ({completed.length})
+              {completedLabel} ({completed.length})
             </h2>
             {completed.map((row) => (
               <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.65rem 0', borderBottom: '1px solid #f0f0f0' }}>
@@ -138,7 +161,7 @@ export default function AdminEventCheckIns() {
                   {row.first_name} {row.last_name}
                 </span>
                 <span style={{ color: row.ticket_type === 'flowers' ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800 }}>
-                  {row.ticket_type === 'flowers' ? 'FLOWERS' : 'GENERAL'}
+                  {checkInCode ? 'CHECKED IN' : row.ticket_type === 'flowers' ? 'FLOWERS' : 'GENERAL'}
                 </span>
               </div>
             ))}

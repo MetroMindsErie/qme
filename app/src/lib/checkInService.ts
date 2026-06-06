@@ -23,13 +23,21 @@ export async function createEventCheckIn(
 }
 
 export async function listEventCheckIns(
-  eventId: string
+  eventId: string,
+  code?: string | null
 ): Promise<EventCheckIn[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('event_check_ins')
     .select('*')
-    .eq('event_id', eventId)
-    .order('created_at', { ascending: true });
+    .eq('event_id', eventId);
+
+  if (code === null) {
+    query = query.is('code', null);
+  } else if (code) {
+    query = query.eq('code', code);
+  }
+
+  const { data, error } = await query.order('created_at', { ascending: true });
   if (error) throw error;
   return (data ?? []) as EventCheckIn[];
 }

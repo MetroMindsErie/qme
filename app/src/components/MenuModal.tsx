@@ -9,6 +9,7 @@ export interface MenuItem {
   emoji: string;
   name: string;
   note?: string;
+  imageUrl?: string;
 }
 
 export interface MenuConfig {
@@ -19,6 +20,7 @@ export interface MenuConfig {
   badge?: string;
   availability: string;
   items: MenuItem[];
+  gallery?: string[];
 }
 
 interface MenuModalProps {
@@ -70,11 +72,23 @@ export default function MenuModal({ config, onClose }: MenuModalProps) {
           {config.availability}
         </div>
 
+        {config.gallery && config.gallery.length > 0 && (
+          <div className="mm-gallery" aria-label={`${config.title} photos`}>
+            {config.gallery.map((src) => (
+              <img key={src} src={src} alt="" className="mm-gallery-img" />
+            ))}
+          </div>
+        )}
+
         {/* Menu items */}
         <div className="mm-items">
           {config.items.map((item, i) => (
             <div key={i} className="mm-item">
-              <span className="mm-item-emoji" aria-hidden="true">{item.emoji}</span>
+              {item.imageUrl ? (
+                <img src={item.imageUrl} alt="" className="mm-item-img" />
+              ) : (
+                <span className="mm-item-emoji" aria-hidden="true">{item.emoji}</span>
+              )}
               <div className="mm-item-body">
                 <div className="mm-item-name">{item.name}</div>
                 {item.note && <div className="mm-item-note">{item.note}</div>}

@@ -36,7 +36,7 @@ function chainMock(finalData: unknown, finalError: unknown = null) {
         // Make it thenable (Promise-like)
         return (resolve: (v: unknown) => void) => resolve(terminal);
       }
-      return (..._args: unknown[]) => proxy;
+      return () => proxy;
     },
   });
   return proxy;

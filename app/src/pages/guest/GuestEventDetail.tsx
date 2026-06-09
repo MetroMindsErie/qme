@@ -22,53 +22,6 @@ interface QueueWithMeta extends Queue {
 }
 
 
-// ── Menu definitions ────────────────────────────────────────────────────────
-const SPEAKERS_MENU: MenuConfig = {
-  id: 'speakers',
-  icon: '🎤',
-  color: '#2196F3',
-  title: 'Main Stage – Speaker Sessions',
-  availability: 'Live startup pitches · 5:30 PM – 6:15 PM',
-  items: [
-    { emoji: '🚀', name: 'qMe', note: 'Featured Demo Demo' },
-    { emoji: '🐾', name: 'Wags Vital', note: 'Company Presentation' },
-  ],
-};
-
-const BUFFET_MENU: MenuConfig = {
-  id: 'buffet',
-  icon: '🍽️',
-  color: '#FF9800',
-  title: 'Food Buffet',
-  availability: 'Available buffet-style · 6:15 PM – 6:45 PM',
-  items: [
-    { emoji: '🍗', name: 'Roast Chicken', note: 'Herb-seasoned, carved fresh' },
-    { emoji: '🍝', name: 'Pasta Primavera', note: 'Vegetarian, with fresh veggies' },
-    { emoji: '🥗', name: 'Garden Salad', note: 'Assorted dressings' },
-    { emoji: '🍞', name: 'Fresh Baked Rolls', note: 'With butter' },
-    { emoji: '🥔', name: 'Garlic Mashed Potatoes' },
-    { emoji: '🍰', name: 'Assorted Desserts', note: 'Cakes, cookies, and more' },
-    { emoji: '🍎', name: 'Seasonal Fruit' },
-  ],
-};
-
-const BEVERAGE_MENU: MenuConfig = {
-  id: 'beverages',
-  icon: '🍷',
-  color: '#9C27B0',
-  title: 'Beer, Wine & Non-Alcoholic',
-  availability: 'Available throughout event · 5:00 PM – 7:45 PM',
-  items: [
-    { emoji: '🍺', name: 'Thirsty Dog Labrador Lager', note: 'Local · Akron, OH' },
-    { emoji: '🍺', name: 'Platform Beer Mosaic IPA', note: 'Local · Cleveland, OH' },
-    { emoji: '🍷', name: 'Kendall-Jackson Chardonnay', note: 'Unoaked, crisp' },
-    { emoji: '🍷', name: 'The Prisoner Cabernet Sauvignon' },
-    { emoji: '🥂', name: 'Chandon Brut Rosé', note: 'California sparkling' },
-    { emoji: '💧', name: 'Still & Sparkling Water' },
-    { emoji: '🥤', name: 'Pepsi Products & Juice', note: 'Assorted' },
-  ],
-};
-
 // ── Static informational activities ─────────────────────────────────────────
 
 interface StaticActivity {
@@ -82,48 +35,6 @@ interface StaticActivity {
   imageUrl?: string;
   menuConfig?: MenuConfig;
 }
-
-const STATIC_ACTIVITIES: StaticActivity[] = [
-  {
-    id: 'main-stage',
-    icon: '🎤',
-    color: '#2196F3',
-    name: 'Main Stage – Speaker Sessions',
-    description: 'Live startup pitches from I-Corps teams',
-    time: '5:30 PM – 6:15 PM',
-    badge: null,
-    menuConfig: SPEAKERS_MENU,
-  },
-  {
-    id: 'buffet',
-    icon: '🍽️',
-    color: '#FF9800',
-    name: 'Food Buffet',
-    description: 'Available buffet-style',
-    time: '6:15 PM – 6:45 PM',
-    badge: null,
-    menuConfig: BUFFET_MENU,
-  },
-  {
-    id: 'beverages',
-    icon: '🍷',
-    color: '#9C27B0',
-    name: 'Beer, Wine & Non-Alcoholic Beverages',
-    description: null,
-    time: '5:00 PM – 7:45 PM',
-    badge: null,
-    menuConfig: BEVERAGE_MENU,
-  },
-  {
-    id: 'live-updates',
-    icon: '🔔',
-    color: '#5B4FCE',
-    name: 'Live updates all event',
-    description: 'Event details update in real time so you can plan your time and enjoy more.',
-    time: null,
-    badge: null,
-  },
-];
 
 // Demo toggles: keep these sections available in code without showing them.
 const SHOW_DB_EXPERIENCES = false;

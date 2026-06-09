@@ -2,7 +2,7 @@
  * Admin: View event details + manage its queues (list, create, delete).
  */
 import { useEffect, useState, useCallback } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { getEvent } from '../../lib/eventService';
 import { listQueuesForEvent, deleteQueue } from '../../lib/queueService';

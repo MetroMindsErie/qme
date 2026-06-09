@@ -10,8 +10,6 @@ import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
 import {
   getQueue,
-  peekTicketForQueue,
-  getLostCountForQueue,
   resetQueueTickets,
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
@@ -27,8 +25,6 @@ export default function AdminQueueDashboard() {
 
   const [queue, setQueue] = useState<QueueType | null>(null);
   const [event, setEvent] = useState<QEvent | null>(null);
-  const [lastIssued, setLastIssued] = useState(0);
-  const [lostCount, setLostCount] = useState(0);
   const [flowersCheckIns, setFlowersCheckIns] = useState<EventCheckIn[]>([]);
   const [loading, setLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -40,7 +36,6 @@ export default function AdminQueueDashboard() {
     setInputValue(String(nowServing));
   }, [nowServing]);
 
-  const queueCount = Math.max(0, lastIssued - nowServing + 1);
   const isBouquetQueue = queue?.slug === 'wrapped-bouquets';
 
   // Load queue + event metadata
@@ -62,38 +57,6 @@ export default function AdminQueueDashboard() {
       }
     })();
   }, [queueId, eventId, navigate]);
-
-  // Refresh ticket / lost counts
-  const refreshTicket = useCallback(async () => {
-    if (!queueId) return;
-    try {
-      const val = await peekTicketForQueue(queueId);
-      setLastIssued(val);
-    } catch (e) {
-      console.error('peek failed', e);
-    }
-  }, [queueId]);
-
-  const refreshLost = useCallback(async () => {
-    if (!queueId) return;
-    try {
-      const val = await getLostCountForQueue(queueId);
-      setLostCount(val);
-    } catch (e) {
-      console.error('lost fetch failed', e);
-    }
-  }, [queueId]);
-
-  useEffect(() => {
-    refreshTicket();
-    refreshLost();
-    const t1 = setInterval(refreshTicket, 2000);
-    const t2 = setInterval(refreshLost, 2000);
-    return () => {
-      clearInterval(t1);
-      clearInterval(t2);
-    };
-  }, [refreshTicket, refreshLost]);
 
   const refreshFlowersCheckIns = useCallback(async () => {
     if (!eventId || !isBouquetQueue) {
@@ -147,7 +110,6 @@ export default function AdminQueueDashboard() {
     try {
       await resetQueueTickets(queueId);
       setNowServing(1);
-      await refreshTicket();
       console.log('Queue reset, now_serving set to 1');
     } catch (e) {
       console.error('Reset failed', e);

@@ -48,7 +48,7 @@ function chainMock(finalData: unknown, finalError: unknown = null) {
       if (prop === 'then') {
         return (resolve: (v: unknown) => void) => resolve(terminal);
       }
-      return (..._args: unknown[]) => proxy;
+      return () => proxy;
     },
   });
   return proxy;

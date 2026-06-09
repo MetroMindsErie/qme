@@ -22,6 +22,7 @@ export default function KioskDisplay() {
   const [queue, setQueue] = useState<Queue | null>(null);
   const [nextNumber, setNextNumber] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const { nowServing } = useQueueMetric(queue?.id);
 
@@ -31,6 +32,7 @@ export default function KioskDisplay() {
   const load = useCallback(async () => {
     if (!eventSlug || !queueSlug) return;
     try {
+      setLoadError(null);
       const ev = await getEventBySlug(eventSlug);
       setEvent(ev);
       const q = await getQueueBySlug(ev.id, queueSlug);
@@ -39,6 +41,7 @@ export default function KioskDisplay() {
       setNextNumber(last + 1);
     } catch (e) {
       console.error('Kiosk load failed', e);
+      setLoadError('Queue not found');
     } finally {
       setLoading(false);
     }
@@ -69,8 +72,24 @@ export default function KioskDisplay() {
     );
   }
 
-  const displayName = queue?.name ?? 'Queue';
-  const subName = event?.name ?? '';
+  if (loadError || !event || !queue) {
+    return (
+      <div className="kiosk-root">
+        <div className="kiosk-serving-section">
+          <div className="kiosk-serving-label">KIOSK</div>
+          <div className="kiosk-title" style={{ textAlign: 'center' }}>
+            {loadError || 'Queue not found'}
+          </div>
+          <div className="kiosk-wait">
+            Check the event slug and queue slug in the URL.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const displayName = queue.name;
+  const subName = event.name;
   const waitMins = nowServing ? Math.max(1, (nextNumber ?? nowServing + 1) - nowServing) * 5 : null;
 
   return (

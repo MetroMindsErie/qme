@@ -1,36 +1,26 @@
 /**
- * Routing tests: verifies all new routes resolve to the correct pages.
+ * Routing tests for the current demo-focused app shell.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
-// Stub every page component to a simple marker
-vi.mock('../pages/AdminDashboard', () => ({ default: () => <div data-testid="legacy-admin" /> }));
-vi.mock('../pages/GuestSingleView', () => ({ default: () => <div data-testid="legacy-guest" /> }));
-vi.mock('../pages/GuestQueueTicket', () => ({ default: () => <div data-testid="legacy-ticket" /> }));
-
 vi.mock('../pages/admin/AdminEventList', () => ({ default: () => <div data-testid="admin-event-list" /> }));
 vi.mock('../pages/admin/AdminEventForm', () => ({ default: () => <div data-testid="admin-event-form" /> }));
 vi.mock('../pages/admin/AdminEventDetail', () => ({ default: () => <div data-testid="admin-event-detail" /> }));
+vi.mock('../pages/admin/AdminEventCheckIns', () => ({ default: () => <div data-testid="admin-event-check-ins" /> }));
 vi.mock('../pages/admin/AdminQueueForm', () => ({ default: () => <div data-testid="admin-queue-form" /> }));
 vi.mock('../pages/admin/AdminQueueDashboard', () => ({ default: () => <div data-testid="admin-queue-dashboard" /> }));
 
-vi.mock('../pages/guest/GuestEventList', () => ({ default: () => <div data-testid="guest-event-list" /> }));
 vi.mock('../pages/guest/GuestEventDetail', () => ({ default: () => <div data-testid="guest-event-detail" /> }));
-vi.mock('../pages/guest/GuestQueueLanding', () => ({ default: () => <div data-testid="guest-queue-landing" /> }));
+vi.mock('../pages/guest/GuestEventCheckIn', () => ({ default: () => <div data-testid="guest-event-check-in" /> }));
 vi.mock('../pages/guest/GuestQueueTicket', () => ({ default: () => <div data-testid="guest-queue-ticket" /> }));
+vi.mock('../pages/demo/KioskDisplay', () => ({ default: () => <div data-testid="kiosk-display" /> }));
 
-// Import App AFTER mocks – we wrap with MemoryRouter ourselves
-// so we need to strip BrowserRouter from App. Instead, let's just
-// import the routes definition from App.tsx.
-// Since App exports a component with BrowserRouter, render it with MemoryRouter
-// by mocking react-router-dom's BrowserRouter.
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    // Make BrowserRouter a pass-through so MemoryRouter controls
     BrowserRouter: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   };
 });
@@ -50,28 +40,41 @@ describe('App routing', () => {
     vi.clearAllMocks();
   });
 
-  // ===== Guest event/queue routes =====
-  it('/events renders GuestEventList', () => {
-    renderAt('/events');
-    expect(screen.getByTestId('guest-event-list')).toBeInTheDocument();
+  it('/ and /demo land on the demo event', () => {
+    renderAt('/');
+    expect(screen.getByTestId('guest-event-detail')).toBeInTheDocument();
   });
 
-  it('/events/:slug renders GuestEventDetail', () => {
+  it('/events/peony-festival renders the guest event detail', () => {
+    renderAt('/events/peony-festival');
+    expect(screen.getByTestId('guest-event-detail')).toBeInTheDocument();
+  });
+
+  it('/events/:slug redirects non-demo events to the demo event', () => {
     renderAt('/events/food-truck-fest');
     expect(screen.getByTestId('guest-event-detail')).toBeInTheDocument();
   });
 
-  it('/events/:slug/q/:qSlug renders GuestQueueLanding', () => {
-    renderAt('/events/food-truck-fest/q/tacos');
-    expect(screen.getByTestId('guest-queue-landing')).toBeInTheDocument();
+  it('/events/peony-festival/check-in renders event check-in', () => {
+    renderAt('/events/peony-festival/check-in');
+    expect(screen.getByTestId('guest-event-check-in')).toBeInTheDocument();
   });
 
-  it('/events/:slug/q/:qSlug/ticket renders GuestQueueTicket', () => {
-    renderAt('/events/food-truck-fest/q/tacos/ticket');
+  it('/events/peony-festival/q/:queueSlug redirects to the ticket page', () => {
+    renderAt('/events/peony-festival/q/bouquets');
     expect(screen.getByTestId('guest-queue-ticket')).toBeInTheDocument();
   });
 
-  // ===== Admin event/queue routes =====
+  it('/events/peony-festival/q/:queueSlug/ticket renders the queue ticket', () => {
+    renderAt('/events/peony-festival/q/bouquets/ticket');
+    expect(screen.getByTestId('guest-queue-ticket')).toBeInTheDocument();
+  });
+
+  it('/kiosk/:eventSlug/:queueSlug renders the kiosk display', () => {
+    renderAt('/kiosk/peony-festival/bouquets');
+    expect(screen.getByTestId('kiosk-display')).toBeInTheDocument();
+  });
+
   it('/admin/events renders AdminEventList', () => {
     renderAt('/admin/events');
     expect(screen.getByTestId('admin-event-list')).toBeInTheDocument();
@@ -85,6 +88,11 @@ describe('App routing', () => {
   it('/admin/events/:id renders AdminEventDetail', () => {
     renderAt('/admin/events/abc-123');
     expect(screen.getByTestId('admin-event-detail')).toBeInTheDocument();
+  });
+
+  it('/admin/events/:id/check-ins renders AdminEventCheckIns', () => {
+    renderAt('/admin/events/abc-123/check-ins');
+    expect(screen.getByTestId('admin-event-check-ins')).toBeInTheDocument();
   });
 
   it('/admin/events/:id/edit renders AdminEventForm', () => {
@@ -105,21 +113,5 @@ describe('App routing', () => {
   it('/admin/events/:id/queues/:qid/edit renders AdminQueueForm', () => {
     renderAt('/admin/events/abc-123/queues/q-456/edit');
     expect(screen.getByTestId('admin-queue-form')).toBeInTheDocument();
-  });
-
-  // ===== Legacy routes =====
-  it('/ renders legacy GuestSingleView', () => {
-    renderAt('/');
-    expect(screen.getByTestId('legacy-guest')).toBeInTheDocument();
-  });
-
-  it('/ticket renders legacy GuestQueueTicket', () => {
-    renderAt('/ticket');
-    expect(screen.getByTestId('legacy-ticket')).toBeInTheDocument();
-  });
-
-  it('/admin renders legacy AdminDashboard', () => {
-    renderAt('/admin');
-    expect(screen.getByTestId('legacy-admin')).toBeInTheDocument();
   });
 });

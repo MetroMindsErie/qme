@@ -2,7 +2,7 @@
  * Guest: Event check-in landing page.
  * First alpha pass: gives the event QR a clear "start here" destination.
  */
-import { useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { createEventCheckIn, getEventCheckIn } from '../../lib/checkInService';
@@ -35,9 +35,9 @@ export default function GuestEventCheckIn({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  function storageKey(evId: string) {
+  const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
-  }
+  }, [checkInCode]);
 
   useEffect(() => {
     if (!eventSlug) return;
@@ -63,7 +63,7 @@ export default function GuestEventCheckIn({
         setLoading(false);
       }
     })();
-  }, [eventSlug]);
+  }, [eventSlug, storageKey]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -113,7 +113,7 @@ export default function GuestEventCheckIn({
       stopped = true;
       clearInterval(interval);
     };
-  }, [event, submitted]);
+  }, [event, submitted, storageKey]);
 
   if (loading) {
     return (

@@ -7,7 +7,7 @@ class MockBroadcastChannel {
   constructor(name: string) {
     this.name = name;
   }
-  postMessage(_data: unknown) { /* noop in test */ }
+  postMessage() { /* noop in test */ }
   close() { /* noop */ }
   addEventListener() { /* noop */ }
   removeEventListener() { /* noop */ }

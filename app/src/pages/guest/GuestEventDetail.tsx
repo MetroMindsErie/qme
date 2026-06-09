@@ -3,13 +3,13 @@
  * Redesigned for I-Pitch demo: Live badge, stats bar, clickable menus.
  */
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
 import { listQueuesForEvent, getNowServing } from '../../lib/queueService';
 import { listExperiencesForEvent } from '../../lib/experienceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { formatTime } from '../../lib/utils';
-import { getStoredQueueTicket } from '../../hooks/useQueueTicket';
+import { getStoredQueueTicket, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
 import type { QEvent, Queue, Experience } from '../../types';
 import '../../styles/shared.css';
@@ -216,6 +216,8 @@ const PEONY_ACTIVITIES: StaticActivity[] = [
 export default function GuestEventDetail() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const freshReset = searchParams.get('fresh') === '1';
 
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<QueueWithMeta[]>([]);
@@ -231,6 +233,24 @@ export default function GuestEventDetail() {
     try {
       const ev = await getEventBySlug(eventSlug);
       setEvent(ev);
+      const qs = await listQueuesForEvent(ev.id);
+
+      if (freshReset) {
+        try {
+          localStorage.removeItem(`qme:eventCheckIn:${ev.id}`);
+          for (let i = localStorage.length - 1; i >= 0; i--) {
+            const key = localStorage.key(i);
+            if (key?.startsWith('qme:eventCheckIn:') && key.endsWith(`:${ev.id}`)) {
+              localStorage.removeItem(key);
+            }
+          }
+          qs.forEach((q) => clearQueueTicket(q.id));
+        } catch {
+          /* keep loading even if browser storage is unavailable */
+        }
+        setSearchParams({}, { replace: true });
+      }
+
       const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
       let checkInTicketType: 'general' | 'flowers' | null = null;
       setHasEventCheckIn(Boolean(storedCheckIn));
@@ -247,8 +267,6 @@ export default function GuestEventDetail() {
           /* keep the local checked-in state even if the row cannot be read */
         }
       }
-      const qs = await listQueuesForEvent(ev.id);
-
       const enriched: QueueWithMeta[] = await Promise.all(
         qs
           .filter((q) => q.status === 'active')
@@ -270,7 +288,7 @@ export default function GuestEventDetail() {
     } finally {
       setLoading(false);
     }
-  }, [eventSlug]);
+  }, [eventSlug, freshReset, setSearchParams]);
 
   useEffect(() => { refresh(); }, [refresh]);
   useEffect(() => {

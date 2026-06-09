@@ -16,6 +16,8 @@ import type { QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 
+type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
+
 export default function GuestQueueLanding() {
   const navigate = useNavigate();
   const { eventSlug, queueSlug } = useParams<{ eventSlug: string; queueSlug: string }>();
@@ -24,7 +26,7 @@ export default function GuestQueueLanding() {
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queue, setQueue] = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasFlowersAccess, setHasFlowersAccess] = useState(false);
+  const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
 
   const { nowServing } = useQueueMetric(queue?.id);
 
@@ -45,10 +47,10 @@ export default function GuestQueueLanding() {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
             if (saved.id) {
               const row = await getEventCheckIn(saved.id);
-              setHasFlowersAccess(row.ticket_type === 'flowers');
+              setBouquetAccess(row.ticket_type ?? 'checked-in');
             }
           } catch {
-            setHasFlowersAccess(false);
+            setBouquetAccess('none');
           }
         }
         const q = await getQueueBySlug(ev.id, queueSlug);
@@ -135,7 +137,9 @@ export default function GuestQueueLanding() {
   }
 
   const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
+  const hasAnyEventCheckIn = bouquetAccess !== 'none';
 
   if (needsBouquetAccess) {
     return (
@@ -151,24 +155,29 @@ export default function GuestQueueLanding() {
               Festival + Flowers Access
             </div>
             <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
-              Check in before joining the Bouquet Bar
+              {hasAnyEventCheckIn
+                ? 'Bouquet Bar access is not on your check-in'
+                : 'Check in before joining the Bouquet Bar'}
             </h1>
             <p style={{ margin: 0, lineHeight: 1.5 }}>
-              Bouquet Bar queue access is reserved for Festival + Flowers ticket holders.
-              If you purchased Festival + Flowers, please check in at the mobile bar first.
+              {hasAnyEventCheckIn
+                ? 'You are checked in for general admission. Bouquet Bar queue access is reserved for Festival + Flowers ticket holders.'
+                : 'Bouquet Bar queue access is reserved for Festival + Flowers ticket holders. If you purchased Festival + Flowers, please check in at the mobile bar first.'}
             </p>
             <p style={{ margin: '0.85rem 0 0', lineHeight: 1.5 }}>
               If you would like to buy a bouquet today, please visit the bouquet team for availability.
             </p>
           </div>
 
-          <button
-            className="actionBtn actionBtn-primary"
-            style={{ marginTop: '1rem' }}
-            onClick={() => navigate(`/events/${eventSlug}/check-in`)}
-          >
-            Check In at Mobile Bar
-          </button>
+          {!hasAnyEventCheckIn && (
+            <button
+              className="actionBtn actionBtn-primary"
+              style={{ marginTop: '1rem' }}
+              onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+            >
+              Check In at Mobile Bar
+            </button>
+          )}
           <button
             className="actionBtn actionBtn-secondary"
             style={{ marginTop: '0.75rem' }}

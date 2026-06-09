@@ -30,6 +30,7 @@ const TIME_2_CHECKIN = 3;  // start prompting check-in when this many ahead
 const SERVED_LINGER_MS = 4000;
 
 type StepState = 'done' | 'active' | 'pending';
+type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
 const STEPS = ['In Queue', 'Called', 'Checked In', 'Enjoy!'];
 
 function getStepStates(
@@ -53,7 +54,7 @@ export default function GuestQueueTicketPage() {
   const [event, setEvent]   = useState<QEvent | null>(null);
   const [queue, setQueue]   = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasFlowersAccess, setHasFlowersAccess] = useState(false);
+  const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
 
   useEffect(() => {
     if (!eventSlug || !queueSlug) return;
@@ -67,10 +68,10 @@ export default function GuestQueueTicketPage() {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
             if (saved.id) {
               const row = await getEventCheckIn(saved.id);
-              setHasFlowersAccess(row.ticket_type === 'flowers');
+              setBouquetAccess(row.ticket_type ?? 'checked-in');
             }
           } catch {
-            setHasFlowersAccess(false);
+            setBouquetAccess('none');
           }
         }
         const q  = await getQueueBySlug(ev.id, queueSlug);
@@ -109,10 +110,10 @@ export default function GuestQueueTicketPage() {
   // Claim ticket on mount
   useEffect(() => {
     if (!queue) return;
-    if (queue.slug === 'wrapped-bouquets' && !hasFlowersAccess) return;
+    if (queue.slug === 'wrapped-bouquets' && bouquetAccess !== 'flowers') return;
     claimTicket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, hasFlowersAccess]);
+  }, [queue, bouquetAccess]);
 
   // Countdown timer shown on the served screen
   useEffect(() => {
@@ -237,7 +238,9 @@ export default function GuestQueueTicketPage() {
   }
 
   const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
+  const hasAnyEventCheckIn = bouquetAccess !== 'none';
 
   if (needsBouquetAccess) {
     return (
@@ -262,24 +265,29 @@ export default function GuestQueueTicketPage() {
               Festival + Flowers Access
             </div>
             <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
-              Check in before joining the Bouquet Bar
+              {hasAnyEventCheckIn
+                ? 'Bouquet Bar access is not on your check-in'
+                : 'Check in before joining the Bouquet Bar'}
             </h1>
             <p style={{ margin: 0, lineHeight: 1.5 }}>
-              Bouquet Bar queue access is reserved for Festival + Flowers ticket holders.
-              If you purchased Festival + Flowers, please check in at the mobile bar first.
+              {hasAnyEventCheckIn
+                ? 'You are checked in for general admission. Bouquet Bar queue access is reserved for Festival + Flowers ticket holders.'
+                : 'Bouquet Bar queue access is reserved for Festival + Flowers ticket holders. If you purchased Festival + Flowers, please check in at the mobile bar first.'}
             </p>
             <p style={{ margin: '0.85rem 0 0', lineHeight: 1.5 }}>
               If you would like to buy a bouquet today, please visit the bouquet team for availability.
             </p>
           </div>
 
-          <button
-            className="tkt-btn-checkin"
-            style={{ marginTop: '1rem' }}
-            onClick={() => navigate(`/events/${eventSlug}/check-in`)}
-          >
-            Check In at Mobile Bar
-          </button>
+          {!hasAnyEventCheckIn && (
+            <button
+              className="tkt-btn-checkin"
+              style={{ marginTop: '1rem' }}
+              onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+            >
+              Check In at Mobile Bar
+            </button>
+          )}
           <button
             className="tkt-leave-btn"
             style={{ marginTop: '0.75rem' }}

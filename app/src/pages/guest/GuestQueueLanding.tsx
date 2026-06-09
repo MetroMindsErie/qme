@@ -134,6 +134,53 @@ export default function GuestQueueLanding() {
     );
   }
 
+  const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
+
+  if (needsBouquetAccess) {
+    return (
+      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+        <Header
+          logoSrc={queue.image_url || event.image_url || '/images/qmeFirstLogo.jpg'}
+          titleLine1=""
+          titleLine2=""
+        />
+        <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#F0EEFF', borderRadius: 14, padding: '1.25rem', color: '#2f275f' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Festival + Flowers Access
+            </div>
+            <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
+              Check in before joining the Bouquet Bar
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              Bouquet Bar queue access is reserved for Festival + Flowers ticket holders.
+              If you purchased Festival + Flowers, please check in at the mobile bar first.
+            </p>
+            <p style={{ margin: '0.85rem 0 0', lineHeight: 1.5 }}>
+              If you would like to buy a bouquet today, please visit the bouquet team for availability.
+            </p>
+          </div>
+
+          <button
+            className="actionBtn actionBtn-primary"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+          >
+            Check In at Mobile Bar
+          </button>
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header

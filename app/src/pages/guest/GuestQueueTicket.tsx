@@ -109,9 +109,10 @@ export default function GuestQueueTicketPage() {
   // Claim ticket on mount
   useEffect(() => {
     if (!queue) return;
+    if (queue.slug === 'wrapped-bouquets' && !hasFlowersAccess) return;
     claimTicket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue]);
+  }, [queue, hasFlowersAccess]);
 
   // Countdown timer shown on the served screen
   useEffect(() => {
@@ -231,6 +232,62 @@ export default function GuestQueueTicketPage() {
     return (
       <div className="card">
         <p style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Queue not found.</p>
+      </div>
+    );
+  }
+
+  const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
+
+  if (needsBouquetAccess) {
+    return (
+      <div className="card card-scrollable tkt-card">
+        <div className="tkt-header">
+          <div className="tkt-header-left">
+            <img
+              src={queue.image_url || '/images/market-fresh-peonies.png'}
+              alt="Bouquet Bar"
+              className="tkt-logo"
+            />
+            <div className="tkt-header-info">
+              <div className="tkt-queue-name">Bouquet Bar</div>
+              <div className="tkt-event-name">{event.name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#F0EEFF', borderRadius: 14, padding: '1.25rem', color: '#2f275f' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Festival + Flowers Access
+            </div>
+            <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
+              Check in before joining the Bouquet Bar
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              Bouquet Bar queue access is reserved for Festival + Flowers ticket holders.
+              If you purchased Festival + Flowers, please check in at the mobile bar first.
+            </p>
+            <p style={{ margin: '0.85rem 0 0', lineHeight: 1.5 }}>
+              If you would like to buy a bouquet today, please visit the bouquet team for availability.
+            </p>
+          </div>
+
+          <button
+            className="tkt-btn-checkin"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+          >
+            Check In at Mobile Bar
+          </button>
+          <button
+            className="tkt-leave-btn"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
       </div>
     );
   }

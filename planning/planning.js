@@ -249,7 +249,7 @@ function renderReview() {
         <article class="decision-card">
           <div class="story-card-head">
             <h4>${escapeHtml(decision.title)}</h4>
-            <span class="status status-discovery">${escapeHtml(decision.status)}</span>
+            <span class="status status-${escapeHtml(decision.status)}">${escapeHtml(decision.status)}</span>
           </div>
           <p>${escapeHtml(decision.prompt)}</p>
         </article>

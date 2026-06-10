@@ -467,6 +467,16 @@ summary::-webkit-details-marker {
   color: var(--green);
 }
 
+.status-decided {
+  background: #e4f4eb;
+  color: var(--green);
+}
+
+.status-tabled {
+  background: #f3e8e8;
+  color: var(--red);
+}
+
 .status-idea {
   background: #edf1f5;
   color: #475466;

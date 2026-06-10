@@ -45,6 +45,7 @@ const QME_ROADMAP = {
         "Create the minimum organization/admin/event foundation needed to set up Summer on the Cuyahoga without hard-coded demo behavior.",
       storyIds: [
         "story-org-table",
+        "story-preserve-peony-demo",
         "story-admin-org-role",
         "story-event-org-owner",
         "story-event-create-edit",
@@ -118,6 +119,22 @@ const QME_ROADMAP = {
                 "Known local build/workflow issues are captured.",
                 "Deferred cleanup items are separated from multi-org stories."
               ]
+            },
+            {
+              id: "story-preserve-peony-demo",
+              title: "Keep Peony Festival demonstrable during foundation work",
+              status: "ready",
+              sprint: "next",
+              summary:
+                "Preserve the working Peony Festival guest, queue, and admin demo while organizations and event ownership are introduced.",
+              acceptanceCriteria: [
+                "Existing Peony Festival URLs keep working.",
+                "Peony Festival can be assigned to a demo/test organization without breaking guest flows.",
+                "Flower Photos and Wrapped Bouquets queues remain usable for demos.",
+                "Demo-specific assumptions are documented before they are generalized."
+              ],
+              notes:
+                "Sprint review decision: Peony Festival flow is good enough for now and should remain available for demonstration while qME moves toward multi-organization support."
             }
           ]
         },
@@ -188,7 +205,7 @@ const QME_ROADMAP = {
             {
               id: "story-planning-workspace",
               title: "Create static planning workspace",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Add HTML pages in the repo for roadmap, backlog, and sprint review views.",
@@ -203,7 +220,7 @@ const QME_ROADMAP = {
             {
               id: "story-roadmap-data-model",
               title: "Store roadmap as structured data",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Keep roadmap content in a single data file so graphical views do not duplicate cards.",
@@ -216,7 +233,7 @@ const QME_ROADMAP = {
             {
               id: "story-triage-inbox",
               title: "Add product inbox for emailed thoughts",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Create a place for raw notes to be captured, triaged, promoted to stories, or parked.",
@@ -399,7 +416,7 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-anchor-event",
               title: "Create SOTC Rock Hall event plan",
-              status: "current",
+              status: "ready",
               sprint: "now",
               summary:
                 "Use the July 22 event as the product anchor for multi-org and event-builder work.",
@@ -412,12 +429,14 @@ const QME_ROADMAP = {
                 "I-Pitch Presentation - qMe.pptx",
                 "SOTC interview notes",
                 "Mixer resources page"
-              ]
+              ],
+              notes:
+                "Sprint review decision: keep SOTC as the event anchor, but table detailed July 22 MVP scope until cleanup and org/admin/event structure are underway. Initial SOTC modeling should follow the Peony event pattern and stay simple."
             },
             {
               id: "story-sotc-experience-inventory",
               title: "Inventory SOTC event experiences",
-              status: "current",
+              status: "ready",
               sprint: "now",
               summary:
                 "Turn the brochure/program areas into event experience candidates.",
@@ -425,7 +444,9 @@ const QME_ROADMAP = {
                 "Registration, sponsors, headshots, networking, resume reviews, food, bar, greetings, workshops, galleries, and resources are captured.",
                 "Each experience has an initial treatment: queue, info card, signup, notification, map, or future experiment.",
                 "Queue-bearing experiences are identified first."
-              ]
+              ],
+              notes:
+                "Do not overbuild this yet. Use the inventory to inform the foundation and later pick a thin SOTC MVP."
             }
           ]
         }
@@ -1042,11 +1063,25 @@ const QME_ROADMAP = {
   ],
   decisions: [
     {
+      id: "decision-peony-demo-preservation",
+      title: "Peony Festival remains the working demo",
+      status: "decided",
+      prompt:
+        "Peony Festival guest/queue flow is good enough for now and should remain demonstrable while multi-organization and multi-event foundations are built."
+    },
+    {
+      id: "decision-planning-workspace-source",
+      title: "Planning workspace is source of truth for now",
+      status: "decided",
+      prompt:
+        "Use the repo-based planning workspace as the product source of truth for the next few weeks."
+    },
+    {
       id: "decision-sotc-mvp",
       title: "What must be real by July 22?",
-      status: "open",
+      status: "tabled",
       prompt:
-        "Choose the smallest useful SOTC demo: organization/event setup, public event page, resource cards, and one or two queues."
+        "Table detailed MVP scope until cleanup and org/admin/event foundations are underway. SOTC should initially be modeled on the Peony event pattern, with all major event modules represented thinly rather than overcomplicated."
     },
     {
       id: "decision-ece-language",
@@ -1061,6 +1096,13 @@ const QME_ROADMAP = {
       status: "open",
       prompt:
         "For July, decide whether admin marking at check-in is enough or whether payment/photo purchase needs a richer flow."
+    },
+    {
+      id: "decision-roadmap-auth",
+      title: "Real roadmap auth is deferred",
+      status: "decided",
+      prompt:
+        "Current code/API gate is acceptable while usage is limited to the owner and possibly one trusted collaborator. Revisit real auth before adding sensitive patent/customer details or expanding collaborators."
     }
   ]
 };

@@ -35,6 +35,7 @@ const QME_ROADMAP = {
         "story-sotc-anchor-event",
         "story-sotc-experience-inventory",
         "story-cleanup-before-multi-org",
+        "story-admin-update-guest-access",
         "story-triage-inbox"
       ]
     },
@@ -135,6 +136,22 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Sprint review decision: Peony Festival flow is good enough for now and should remain available for demonstration while qME moves toward multi-organization support."
+            },
+            {
+              id: "story-admin-update-guest-access",
+              title: "Allow admin to update guest access after check-in",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Let an admin correct or upgrade a checked-in guest's access, such as changing a Peony guest from general admission to Festival + Flowers so they can join Wrapped Bouquets.",
+              acceptanceCriteria: [
+                "Admin can view a guest's current event check-in access type.",
+                "Admin can update a checked-in guest from general admission to Festival + Flowers.",
+                "Updated access is respected by the Wrapped Bouquets queue guard without requiring a new phone/browser identity.",
+                "The pattern is documented as a precursor to SOTC access tags such as student, professional, and professional-with-photo."
+              ],
+              notes:
+                "Current sprint card from Peony/SOTC review: guest access should be adjustable by admin instead of fixed forever at initial check-in."
             }
           ]
         },

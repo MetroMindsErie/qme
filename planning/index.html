@@ -7,6 +7,19 @@
     <link rel="stylesheet" href="./planning.css" />
   </head>
   <body>
+    <section class="gate" id="accessGate">
+      <form class="gate-panel" id="accessForm">
+        <p class="eyebrow">qME Planning</p>
+        <h1>Enter Access Code</h1>
+        <label>
+          <span>Code</span>
+          <input id="accessCode" type="password" inputmode="numeric" autocomplete="off" />
+        </label>
+        <p class="gate-error" id="gateError" role="alert"></p>
+        <button type="submit">Open Roadmap</button>
+      </form>
+    </section>
+
     <header class="topbar">
       <div>
         <p class="eyebrow">qME Product Workspace</p>

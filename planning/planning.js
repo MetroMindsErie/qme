@@ -1,4 +1,6 @@
 const data = window.QME_ROADMAP;
+const ACCESS_CODE = "3298";
+const ACCESS_KEY = "qme-planning-access";
 
 const state = {
   view: "roadmap",
@@ -313,6 +315,35 @@ function renderAll() {
   renderReview();
 }
 
+function initAccessGate() {
+  const gate = document.getElementById("accessGate");
+  const form = document.getElementById("accessForm");
+  const input = document.getElementById("accessCode");
+  const error = document.getElementById("gateError");
+
+  function unlock() {
+    gate.classList.add("unlocked");
+    gate.setAttribute("aria-hidden", "true");
+  }
+
+  if (window.localStorage.getItem(ACCESS_KEY) === "granted") {
+    unlock();
+    return;
+  }
+
+  input.focus();
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (input.value.trim() === ACCESS_CODE) {
+      window.localStorage.setItem(ACCESS_KEY, "granted");
+      unlock();
+      return;
+    }
+    error.textContent = "That code did not work.";
+    input.select();
+  });
+}
+
 document.addEventListener("click", (event) => {
   const storyButtonEl = event.target.closest("[data-story-id]");
   if (storyButtonEl) {
@@ -334,3 +365,4 @@ document.addEventListener("keydown", (event) => {
 });
 
 renderAll();
+initAccessGate();

@@ -36,6 +36,7 @@ const QME_ROADMAP = {
         "story-sotc-experience-inventory",
         "story-cleanup-before-multi-org",
         "story-admin-update-guest-access",
+        "story-import-trello-detail-cards",
         "story-triage-inbox"
       ]
     },
@@ -259,6 +260,23 @@ const QME_ROADMAP = {
                 "Raw wording can be preserved while product implications are clarified.",
                 "Deferred ideas remain visible without distracting the current sprint."
               ]
+            },
+            {
+              id: "story-import-trello-detail-cards",
+              title: "Import detailed Trello cards into product board",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Review screenshots/PDF of detailed Trello cards and reconcile them into the repo-based product roadmap.",
+              acceptanceCriteria: [
+                "Trello card screenshots are collected into a PDF or readable image set.",
+                "PDF is reviewed for overlap with existing roadmap epics, themes, and stories.",
+                "New or missing items are added to the roadmap or product inbox.",
+                "Duplicate items are merged, linked, or noted against existing stories.",
+                "Open questions from Trello are captured separately as decisions or discovery items."
+              ],
+              notes:
+                "User will create a PowerPoint from Trello screenshots and export/provide a PDF for review."
             }
           ]
         },

@@ -1,6 +1,6 @@
-const data = window.QME_ROADMAP;
-const ACCESS_CODE = "3298";
-const ACCESS_KEY = "qme-planning-access";
+let data = null;
+let allStories = [];
+let storyById = new Map();
 
 const state = {
   view: "roadmap",
@@ -36,8 +36,12 @@ function flattenStories() {
   return stories;
 }
 
-const allStories = flattenStories();
-const storyById = new Map(allStories.map((story) => [story.id, story]));
+function setRoadmapData(nextData) {
+  data = nextData;
+  allStories = flattenStories();
+  storyById = new Map(allStories.map((story) => [story.id, story]));
+  renderAll();
+}
 
 function matchesQuery(...values) {
   if (!state.query) return true;
@@ -315,7 +319,21 @@ function renderAll() {
   renderReview();
 }
 
-function initAccessGate() {
+async function fetchRoadmap(options = {}) {
+  const response = await fetch("/api/planning-data", {
+    headers: { "Content-Type": "application/json" },
+    credentials: "same-origin",
+    ...options
+  });
+
+  if (!response.ok) {
+    throw new Error("Roadmap access denied");
+  }
+
+  return response.json();
+}
+
+async function initAccessGate() {
   const gate = document.getElementById("accessGate");
   const form = document.getElementById("accessForm");
   const input = document.getElementById("accessCode");
@@ -326,21 +344,31 @@ function initAccessGate() {
     gate.setAttribute("aria-hidden", "true");
   }
 
-  if (window.localStorage.getItem(ACCESS_KEY) === "granted") {
+  try {
+    const roadmap = await fetchRoadmap();
+    setRoadmapData(roadmap);
     unlock();
     return;
+  } catch {
+    gate.classList.remove("unlocked");
   }
 
   input.focus();
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (input.value.trim() === ACCESS_CODE) {
-      window.localStorage.setItem(ACCESS_KEY, "granted");
+    error.textContent = "";
+    try {
+      const roadmap = await fetchRoadmap({
+        method: "POST",
+        body: JSON.stringify({ code: input.value.trim() })
+      });
+      setRoadmapData(roadmap);
       unlock();
       return;
+    } catch {
+      error.textContent = "That code did not work.";
+      input.select();
     }
-    error.textContent = "That code did not work.";
-    input.select();
   });
 }
 
@@ -364,5 +392,4 @@ document.addEventListener("keydown", (event) => {
   if (event.key === "Escape") closeDrawer();
 });
 
-renderAll();
 initAccessGate();

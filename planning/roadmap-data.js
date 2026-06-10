@@ -1,4 +1,4 @@
-window.QME_ROADMAP = {
+const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
@@ -1064,3 +1064,11 @@ window.QME_ROADMAP = {
     }
   ]
 };
+
+if (typeof window !== "undefined") {
+  window.QME_ROADMAP = QME_ROADMAP;
+}
+
+if (typeof module !== "undefined") {
+  module.exports = QME_ROADMAP;
+}

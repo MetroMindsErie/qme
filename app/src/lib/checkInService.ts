@@ -70,6 +70,20 @@ export async function checkInEventGuest(
   return data as EventCheckIn;
 }
 
+export async function updateEventCheckInTicketType(
+  id: string,
+  ticketType: NonNullable<EventCheckIn['ticket_type']>
+): Promise<EventCheckIn> {
+  const { data, error } = await supabase
+    .from('event_check_ins')
+    .update({ ticket_type: ticketType })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as EventCheckIn;
+}
+
 export async function getEventCheckIn(id: string): Promise<EventCheckIn> {
   const { data, error } = await supabase
     .from('event_check_ins')

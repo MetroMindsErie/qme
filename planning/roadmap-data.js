@@ -113,7 +113,7 @@ const QME_ROADMAP = {
             {
               id: "story-cleanup-before-multi-org",
               title: "Complete cleanup pass before multi-organization build",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Keep a short, explicit cleanup list so known issues are reviewed before the architecture expands.",
@@ -121,7 +121,9 @@ const QME_ROADMAP = {
                 "Known guest-flow bugs are either fixed or documented.",
                 "Known local build/workflow issues are captured.",
                 "Deferred cleanup items are separated from multi-org stories."
-              ]
+              ],
+              notes:
+                "Completed with docs/pre-multi-org-cleanup.md. Demo-specific Peony behavior is intentionally preserved and deferred until the multi-org foundation can absorb it safely."
             },
             {
               id: "story-preserve-peony-demo",
@@ -142,7 +144,7 @@ const QME_ROADMAP = {
             {
               id: "story-admin-update-guest-access",
               title: "Allow admin to update guest access after check-in",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Let an admin correct or upgrade a checked-in guest's access, such as changing a Peony guest from general admission to Festival + Flowers so they can join Wrapped Bouquets.",
@@ -153,7 +155,7 @@ const QME_ROADMAP = {
                 "The pattern is documented as a precursor to SOTC access tags such as student, professional, and professional-with-photo."
               ],
               notes:
-                "Current sprint card from Peony/SOTC review: guest access should be adjustable by admin instead of fixed forever at initial check-in."
+                "Implemented for Peony event check-ins by allowing completed guests to be updated between general and Festival + Flowers access."
             }
           ]
         },

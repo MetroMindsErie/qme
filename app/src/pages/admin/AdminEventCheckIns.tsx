@@ -10,6 +10,7 @@ import {
   listEventCheckIns,
   onEventCheckInsChange,
   updateEventCheckInStatus,
+  updateEventCheckInTicketType,
 } from '../../lib/checkInService';
 import type { EventCheckIn, QEvent } from '../../types';
 import '../../styles/shared.css';
@@ -79,6 +80,19 @@ export default function AdminEventCheckIns({
     } catch (e) {
       console.error('Failed to update check-in', e);
       alert('Could not update check-in.');
+    }
+  }
+
+  async function updateGuestAccess(
+    id: string,
+    ticketType: NonNullable<EventCheckIn['ticket_type']>
+  ) {
+    try {
+      await updateEventCheckInTicketType(id, ticketType);
+      await refresh();
+    } catch (e) {
+      console.error('Failed to update guest access', e);
+      alert('Could not update guest access.');
     }
   }
 
@@ -155,16 +169,34 @@ export default function AdminEventCheckIns({
             <h2 style={{ fontSize: '1rem', margin: '0 0 0.75rem', color: '#2f3e4f' }}>
               {completedLabel} ({completed.length})
             </h2>
-            {completed.map((row) => (
-              <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.65rem 0', borderBottom: '1px solid #f0f0f0' }}>
-                <span style={{ fontWeight: 700, color: '#2f3e4f' }}>
-                  {row.first_name} {row.last_name}
-                </span>
-                <span style={{ color: row.ticket_type === 'flowers' ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800 }}>
-                  {checkInCode ? 'CHECKED IN' : row.ticket_type === 'flowers' ? 'FLOWERS' : 'GENERAL'}
-                </span>
+            {completed.map((row) => {
+              const hasFlowersAccess = row.ticket_type === 'flowers';
+              const accessLabel = hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
+              const nextTicketType = hasFlowersAccess ? 'general' : 'flowers';
+              const nextLabel = hasFlowersAccess ? 'Set General' : 'Upgrade Flowers';
+
+              return (
+              <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.65rem 0', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: '#2f3e4f' }}>
+                    {row.first_name} {row.last_name}
+                  </div>
+                  <div style={{ color: hasFlowersAccess ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800, marginTop: 2 }}>
+                    {checkInCode ? 'CHECKED IN' : accessLabel}
+                  </div>
+                </div>
+                {!checkInCode && (
+                  <button
+                    className={hasFlowersAccess ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
+                    style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
+                    onClick={() => updateGuestAccess(row.id, nextTicketType)}
+                  >
+                    {nextLabel}
+                  </button>
+                )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

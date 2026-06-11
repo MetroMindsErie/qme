@@ -4,7 +4,7 @@ Updated: 2026-06-11
 
 ## Fixed In This Pass
 
-- Admins can now update a completed event check-in's access type between `general` and `flowers`.
+- Admins can now upgrade a completed event check-in from `general` to `flowers`.
 - This lets the Peony Festival demo recover when a guest was checked in as general admission but should have Festival + Flowers access.
 - The guest's existing browser identity remains valid because the same `event_check_ins` row is updated.
 
@@ -27,4 +27,5 @@ Updated: 2026-06-11
 - Preserve Peony Festival as a demonstrable event while adding organizations.
 - Assign Peony Festival to a demo/test organization during the multi-org migration.
 - Generalize special access from `flowers` into a broader guest access/tag model after the foundation is in place.
+- Model SOTC photo access separately from Peony bouquet access. SOTC will need state changes such as eligible, used, student-used, or professional-used rather than a simple bouquet upgrade.
 - Keep documenting local Windows/Dropbox build-folder locks separately from app compile failures.

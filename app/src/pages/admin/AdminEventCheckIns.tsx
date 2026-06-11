@@ -172,8 +172,6 @@ export default function AdminEventCheckIns({
             {completed.map((row) => {
               const hasFlowersAccess = row.ticket_type === 'flowers';
               const accessLabel = hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
-              const nextTicketType = hasFlowersAccess ? 'general' : 'flowers';
-              const nextLabel = hasFlowersAccess ? 'Set General' : 'Upgrade Flowers';
 
               return (
               <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.65rem 0', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
@@ -185,13 +183,13 @@ export default function AdminEventCheckIns({
                     {checkInCode ? 'CHECKED IN' : accessLabel}
                   </div>
                 </div>
-                {!checkInCode && (
+                {!checkInCode && !hasFlowersAccess && (
                   <button
-                    className={hasFlowersAccess ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
+                    className="actionBtn actionBtn-primary"
                     style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
-                    onClick={() => updateGuestAccess(row.id, nextTicketType)}
+                    onClick={() => updateGuestAccess(row.id, 'flowers')}
                   >
-                    {nextLabel}
+                    Upgrade Flowers
                   </button>
                 )}
               </div>

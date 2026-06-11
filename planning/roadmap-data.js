@@ -150,12 +150,12 @@ const QME_ROADMAP = {
                 "Let an admin correct or upgrade a checked-in guest's access, such as changing a Peony guest from general admission to Festival + Flowers so they can join Wrapped Bouquets.",
               acceptanceCriteria: [
                 "Admin can view a guest's current event check-in access type.",
-                "Admin can update a checked-in guest from general admission to Festival + Flowers.",
+                "Admin can upgrade a checked-in guest from general admission to Festival + Flowers.",
                 "Updated access is respected by the Wrapped Bouquets queue guard without requiring a new phone/browser identity.",
                 "The pattern is documented as a precursor to SOTC access tags such as student, professional, and professional-with-photo."
               ],
               notes:
-                "Implemented for Peony event check-ins by allowing completed guests to be updated between general and Festival + Flowers access."
+                "Implemented for Peony event check-ins as a one-way correction from general to Festival + Flowers access. SOTC photo credit states should be modeled separately."
             }
           ]
         },

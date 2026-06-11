@@ -35,6 +35,7 @@ const QME_ROADMAP = {
         "story-governance-principles-foundation",
         "story-image-ownership-model",
         "story-hardcoded-demo-assumptions-audit",
+        "story-event-guest-data-cleanup",
         "story-org-table",
         "story-preserve-peony-demo",
         "story-seed-sotc-org",
@@ -219,6 +220,24 @@ const QME_ROADMAP = {
               ],
               notes:
                 "This follows the hard-coded assumptions audit and should be split into smaller implementation stories if the list is large."
+            },
+            {
+              id: "story-event-guest-data-cleanup",
+              title: "Clean up event guest and check-in data before org migration",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Review and normalize Peony demo guest/check-in data before it is carried into an organization-based system.",
+              acceptanceCriteria: [
+                "Identify test/demo guest and event_check_ins rows that should be archived, deleted, renamed, or preserved.",
+                "Identify completed event_check_ins rows with null or ambiguous ticket_type values.",
+                "Decide whether null ticket_type values should become general for Peony demo rows.",
+                "Confirm which Peony guest/check-in data should remain available for demonstrations.",
+                "Document any cleanup SQL or manual Supabase steps before changing live data.",
+                "Do not mutate production/demo data until the cleanup plan is reviewed."
+              ],
+              notes:
+                "Prompted by observing a completed event_check_ins row with NULL ticket_type. This is data cleanup/planning first, not an immediate data mutation."
             }
           ]
         },

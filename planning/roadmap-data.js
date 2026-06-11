@@ -62,6 +62,7 @@ const QME_ROADMAP = {
         "Model the Rock Hall mixer as an event with experiences, queues, access rules, and public resource cards.",
       storyIds: [
         "story-experience-model",
+        "story-managed-image-storage",
         "story-headshot-queue",
         "story-resume-review-queue",
         "story-resource-cards",
@@ -1249,6 +1250,25 @@ const QME_ROADMAP = {
                 "Event can override limited branding fields.",
                 "Branding has safe defaults."
               ]
+            },
+            {
+              id: "story-managed-image-storage",
+              title: "Move event images to managed storage",
+              status: "ready",
+              sprint: "soon",
+              summary:
+                "Move organization, event, experience, sponsor, and resource images out of hard-coded public assets and into managed storage with database references.",
+              acceptanceCriteria: [
+                "Inventory current static images used as event/demo content.",
+                "Define which image types belong to organizations, events, experiences, sponsors, resources, and galleries.",
+                "Choose a storage convention, likely Supabase Storage paths plus database URL/path fields.",
+                "Admin UI can eventually upload or select images for event content.",
+                "Static assets remain available only for app defaults and fallback images.",
+                "Peony demo keeps working during migration.",
+                "SOTC event can use managed/uploaded images instead of code-folder images."
+              ],
+              notes:
+                "This should be considered while building multi-org/event ownership because image ownership follows organization/event/experience ownership. It may also reduce reliance on generated static images in the local Vite build pipeline."
             }
           ]
         },

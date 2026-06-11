@@ -26,47 +26,49 @@ const QME_ROADMAP = {
   sprints: [
     {
       id: "now",
-      title: "Now: Planning Workspace and SOTC Shape",
+      title: "Now: SOTC and Multi-Org Foundation",
       goal:
-        "Create the product management space, preserve epics/themes, and identify the first SOTC stories without losing the bigger roadmap.",
+        "Frame the SOTC Rock Hall event and build the minimum organization/admin/event foundation without breaking the Peony Festival demo.",
       storyIds: [
-        "story-planning-workspace",
-        "story-roadmap-data-model",
         "story-sotc-anchor-event",
         "story-sotc-experience-inventory",
-        "story-cleanup-before-multi-org",
-        "story-admin-update-guest-access",
-        "story-import-trello-detail-cards",
-        "story-triage-inbox"
+        "story-governance-principles-foundation",
+        "story-image-ownership-model",
+        "story-hardcoded-demo-assumptions-audit",
+        "story-org-table",
+        "story-preserve-peony-demo",
+        "story-seed-sotc-org",
+        "story-admin-org-role",
+        "story-event-org-owner",
+        "story-event-create-edit"
       ]
     },
     {
       id: "next",
-      title: "Next: Multi-Org Foundation",
+      title: "Next: SOTC Event Builder",
       goal:
-        "Create the minimum organization/admin/event foundation needed to set up Summer on the Cuyahoga without hard-coded demo behavior.",
+        "Model the Rock Hall mixer as an event with experiences, queues, access rules, public resources, and managed media.",
       storyIds: [
-        "story-governance-principles-foundation",
-        "story-org-table",
-        "story-preserve-peony-demo",
-        "story-admin-org-role",
-        "story-event-org-owner",
-        "story-event-create-edit",
-        "story-seed-sotc-org"
-      ]
-    },
-    {
-      id: "soon",
-      title: "Soon: SOTC Event Builder",
-      goal:
-        "Model the Rock Hall mixer as an event with experiences, queues, access rules, and public resource cards.",
-      storyIds: [
+        "story-remove-hardcoded-demo-assumptions",
         "story-experience-model",
         "story-managed-image-storage",
         "story-headshot-queue",
         "story-resume-review-queue",
         "story-resource-cards",
         "story-passport-activity"
+      ]
+    },
+    {
+      id: "soon",
+      title: "Soon: SOTC Program Depth",
+      goal:
+        "Expand SOTC from the first event model into registration, attendee import, networking, schedules, and event activities.",
+      storyIds: [
+        "story-sotc-qr-entry",
+        "story-attendee-import",
+        "story-registration",
+        "story-workshop-signups",
+        "story-personal-agenda"
       ]
     },
     {
@@ -80,6 +82,32 @@ const QME_ROADMAP = {
         "story-location-beacons",
         "story-networking-matching",
         "story-food-filters"
+      ]
+    }
+  ],
+  completedSprints: [
+    {
+      id: "completed-planning-cleanup",
+      title: "Completed: Planning Workspace and Demo Stabilization",
+      completedDate: "2026-06-11",
+      goal:
+        "Get qME cleaned up enough to trust the Peony Festival flow, then create a product roadmap/planning workspace for SOTC and multi-org work.",
+      summary:
+        "Peony Festival is stable enough to demonstrate; Bouquet Bar access, fresh reset, kiosk bad-slug handling, legacy cleanup, Node/test setup, roadmap deployment, planning data protection, Trello import, governance review, and pre-multi-org cleanup are complete.",
+      storyIds: [
+        "story-planning-workspace",
+        "story-roadmap-data-model",
+        "story-cleanup-before-multi-org",
+        "story-admin-update-guest-access",
+        "story-import-trello-detail-cards",
+        "story-triage-inbox",
+        "story-bouquet-access-fixed"
+      ],
+      notes: [
+        "Peony Festival guest flow is good enough for now and should remain demonstrable.",
+        "The planning workspace is the source of truth for the next few weeks.",
+        "SOTC MVP detail is intentionally deferred until the foundation work starts.",
+        "Real roadmap auth is deferred while usage remains limited."
       ]
     }
   ],
@@ -128,16 +156,18 @@ const QME_ROADMAP = {
             },
             {
               id: "story-preserve-peony-demo",
-              title: "Keep Peony Festival demonstrable during foundation work",
+              title: "Migrate Peony Festival into a demo organization without breaking it",
               status: "ready",
-              sprint: "next",
+              sprint: "now",
               summary:
-                "Preserve the working Peony Festival guest, queue, and admin demo while organizations and event ownership are introduced.",
+                "Create a demo/test organization for Peony Festival and use it as the safety check while organizations and event ownership are introduced.",
               acceptanceCriteria: [
+                "A demo/test organization exists for the Peony Festival demo.",
+                "The Peony Festival event is assigned to that demo organization.",
                 "Existing Peony Festival URLs keep working.",
-                "Peony Festival can be assigned to a demo/test organization without breaking guest flows.",
                 "Flower Photos and Wrapped Bouquets queues remain usable for demos.",
-                "Demo-specific assumptions are documented before they are generalized."
+                "Demo-specific assumptions are documented before they are generalized.",
+                "The migration explicitly preserves the 'please do not break the demo' requirement."
               ],
               notes:
                 "Sprint review decision: Peony Festival flow is good enough for now and should remain available for demonstration while qME moves toward multi-organization support."
@@ -157,6 +187,38 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Implemented for Peony event check-ins as a one-way correction from general to Festival + Flowers access. SOTC photo credit states should be modeled separately."
+            },
+            {
+              id: "story-hardcoded-demo-assumptions-audit",
+              title: "Identify hard-coded demo assumptions before foundation build",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Audit the app for Peony-specific, Bouquet-specific, static-image, route-guard, and demo-only assumptions before they are generalized or removed.",
+              acceptanceCriteria: [
+                "Hard-coded event slugs, queue slugs, ticket/access types, static event content, image paths, and demo route guards are listed.",
+                "Each item is classified as keep-for-demo, migrate-to-data, generalize-now, or remove-later.",
+                "Peony demo safety requirements are captured beside each risky item.",
+                "Findings produce follow-up implementation stories rather than broad untracked cleanup."
+              ],
+              notes:
+                "Identification is separate from removal so the Peony demo remains stable while the multi-org foundation is introduced."
+            },
+            {
+              id: "story-remove-hardcoded-demo-assumptions",
+              title: "Remove or generalize hard-coded demo assumptions",
+              status: "ready",
+              sprint: "next",
+              summary:
+                "Replace audited hard-coded demo assumptions with organization/event/experience data once the foundation exists.",
+              acceptanceCriteria: [
+                "Only items classified for removal or generalization are changed.",
+                "Peony remains demonstrable after each removal/generalization step.",
+                "SOTC can be modeled without copying Peony-specific code paths.",
+                "Static content or images move to data/storage only after ownership is defined."
+              ],
+              notes:
+                "This follows the hard-coded assumptions audit and should be split into smaller implementation stories if the list is large."
             }
           ]
         },
@@ -322,7 +384,7 @@ const QME_ROADMAP = {
               id: "story-org-table",
               title: "Create organizations table",
               status: "ready",
-              sprint: "next",
+              sprint: "now",
               summary:
                 "Add the core organization model so qME is no longer only a single demo/event app.",
               acceptanceCriteria: [
@@ -335,7 +397,7 @@ const QME_ROADMAP = {
               id: "story-governance-principles-foundation",
               title: "Define governance principles for multi-org foundation",
               status: "ready",
-              sprint: "next",
+              sprint: "now",
               summary:
                 "Use the authority/object governance model to settle the minimum role, authority, ownership, and audit principles before building superadmin, organization, and admin structures.",
               acceptanceCriteria: [
@@ -351,10 +413,27 @@ const QME_ROADMAP = {
                 "Based on qMe Authority & Object Governance Model v1. This should happen before creating the organization/admin schema, but should not expand into a full permissions engine yet."
             },
             {
+              id: "story-image-ownership-model",
+              title: "Define image ownership model before schema work",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Decide where organization logos, event images, experience images, sponsor logos, resource images, and gallery images belong before tables and storage are implemented.",
+              acceptanceCriteria: [
+                "Image ownership is defined for organizations, events, experiences/eCe's, sponsors, resources, and galleries.",
+                "Initial database fields or image reference strategy are identified before event schema work proceeds.",
+                "Managed storage implementation remains a separate story.",
+                "Static app images are limited to defaults/placeholders over time.",
+                "Peony and SOTC image needs are both considered."
+              ],
+              notes:
+                "This is the pre-build design decision. The separate managed image storage story covers Supabase Storage and upload/selection implementation."
+            },
+            {
               id: "story-seed-sotc-org",
               title: "Seed Summer on the Cuyahoga organization",
               status: "ready",
-              sprint: "next",
+              sprint: "now",
               summary:
                 "Create Summer on the Cuyahoga as a first real organization for the Rock Hall event demo.",
               acceptanceCriteria: [
@@ -390,7 +469,7 @@ const QME_ROADMAP = {
               id: "story-admin-org-role",
               title: "Add admin and organization roles",
               status: "ready",
-              sprint: "next",
+              sprint: "now",
               summary:
                 "Separate qME superadmin access from organization admin access.",
               acceptanceCriteria: [
@@ -452,7 +531,7 @@ const QME_ROADMAP = {
               id: "story-event-org-owner",
               title: "Attach events to organizations",
               status: "ready",
-              sprint: "next",
+              sprint: "now",
               summary:
                 "Make event ownership explicit so each customer can manage their own events.",
               acceptanceCriteria: [
@@ -465,7 +544,7 @@ const QME_ROADMAP = {
               id: "story-event-create-edit",
               title: "Create and edit events",
               status: "ready",
-              sprint: "next",
+              sprint: "now",
               summary:
                 "Allow an admin or qME operator to set up an event without code changes.",
               acceptanceCriteria: [

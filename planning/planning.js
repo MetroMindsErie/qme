@@ -151,27 +151,62 @@ function renderRoadmap() {
 
 function renderSprints() {
   const grid = document.getElementById("sprintGrid");
-  grid.innerHTML = data.sprints
-    .map((sprint) => {
-      const stories = sprint.storyIds
-        .map((id) => storyById.get(id))
-        .filter(Boolean)
-        .filter((story) =>
-          matchesQuery(sprint.title, sprint.goal, story.title, story.summary, story.epicTitle)
-        );
-      return `
-        <article class="sprint-column">
-          <div class="sprint-head">
-            <h3>${escapeHtml(sprint.title)}</h3>
-            <p>${escapeHtml(sprint.goal)}</p>
-          </div>
-          <div class="sprint-stories">
-            ${stories.map((story) => storyButton(story, "compact")).join("") || `<p class="empty">No matching stories.</p>`}
-          </div>
-        </article>
-      `;
-    })
-    .join("");
+  const currentSprint = data.sprints.find((sprint) => sprint.id === "now") || data.sprints[0];
+  const otherSprints = data.sprints.filter((sprint) => sprint.id !== currentSprint?.id);
+  const completedSprints = data.completedSprints || [];
+
+  function sprintColumn(sprint, variant = "") {
+    const stories = sprint.storyIds
+      .map((id) => storyById.get(id))
+      .filter(Boolean)
+      .filter((story) =>
+        matchesQuery(sprint.title, sprint.goal, story.title, story.summary, story.epicTitle)
+      );
+    return `
+      <article class="sprint-column ${variant}">
+        <div class="sprint-head">
+          <h3>${escapeHtml(sprint.title)}</h3>
+          <p>${escapeHtml(sprint.goal)}</p>
+        </div>
+        <div class="sprint-stories">
+          ${stories.map((story) => storyButton(story, "compact")).join("") || `<p class="empty">No matching stories.</p>`}
+        </div>
+      </article>
+    `;
+  }
+
+  function completedColumn(sprint) {
+    const stories = (sprint.storyIds || [])
+      .map((id) => storyById.get(id))
+      .filter(Boolean)
+      .filter((story) =>
+        matchesQuery(sprint.title, sprint.goal, sprint.summary, story.title, story.summary)
+      );
+    const notes = (sprint.notes || []).filter((note) => matchesQuery(sprint.title, sprint.summary, note));
+    return `
+      <article class="sprint-column completed">
+        <div class="sprint-head">
+          <span class="status status-done">${escapeHtml(sprint.completedDate || "done")}</span>
+          <h3>${escapeHtml(sprint.title)}</h3>
+          <p>${escapeHtml(sprint.summary || sprint.goal || "")}</p>
+        </div>
+        <div class="sprint-stories">
+          ${notes.map((note) => `<p class="sprint-note">${escapeHtml(note)}</p>`).join("")}
+          ${stories.map((story) => storyButton(story, "compact")).join("") || `<p class="empty">No matching completed stories.</p>`}
+        </div>
+      </article>
+    `;
+  }
+
+  grid.innerHTML = `
+    <div class="current-sprint-wrap">
+      ${currentSprint ? sprintColumn(currentSprint, "current") : `<p class="empty">No current sprint defined.</p>`}
+    </div>
+    <div class="sprint-strip" aria-label="Upcoming and completed sprints">
+      ${otherSprints.map((sprint) => sprintColumn(sprint)).join("")}
+      ${completedSprints.map((sprint) => completedColumn(sprint)).join("")}
+    </div>
+  `;
 }
 
 function renderStories() {

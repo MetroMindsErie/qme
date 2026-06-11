@@ -45,9 +45,9 @@ The SOTC event should initially include:
 - Event experiences listed as structured records rather than hard-coded UI.
 - A path to add queues to selected experiences.
 
-Suggested event slug: `sotc-rock-hall-mixer`
+Suggested event slug: `sotc-rock-hall`
 
-The old Trello shorthand `SOTCRH` can remain an internal/project shorthand, but a human-readable slug is better for URLs.
+The old Trello shorthand `SOTCRH` can remain an internal/project shorthand, but `sotc-rock-hall` is better for public URLs.
 
 ## Experience Inventory
 
@@ -63,7 +63,15 @@ Initial treatment:
 
 Open question:
 
-- Will qME import attendees before the event, or start with manual/QR check-in only?
+Decision:
+
+- Do not import attendees for the first SOTC slice.
+- Simulate a guest walking up and giving their name: guest scans a QR code and enters their name.
+- Registration staff see guest names in a registration admin console.
+- Staff can mark the guest with the right tag/status, including photo access.
+- Staff then find the name tag/materials and call the guest's name.
+- SOTC staff can continue marking attendance in their own list/system such as Evite outside qME.
+- Future attendee import/sync can be revisited later, but it creates more risk than value for the first slice.
 
 ### Sponsors
 
@@ -73,6 +81,7 @@ Initial treatment:
 
 - Sponsor cards with name, logo/image, description, and location.
 - Passport/activity tie-in remains optional.
+- Informational presence in the digital brochure is enough for the first slice.
 
 Open question:
 
@@ -87,20 +96,23 @@ Initial treatment:
 - Queue-bearing experience.
 - Students can get headshots.
 - Professionals may require paid/approved photo access.
+- Photo access is assigned at registration/check-in.
 - Access should not be modeled as Peony `flowers`; it needs SOTC-specific guest states.
 
-Likely future guest states:
+Initial guest states:
 
-- student
 - professional
 - student-photo-eligible
 - student-photo-used
+- professional-general
 - professional-photo-eligible
 - professional-photo-used
 
-Open question:
+Secondary tag placeholder:
 
-- Who marks professional photo access, and when?
+- The brochure used colored nametag stickers representing different professions.
+- qME should leave room for a second tag, either admin-assigned or self-assigned later.
+- This may support networking activities in the future.
 
 ### Resume Reviews
 
@@ -213,6 +225,7 @@ Likely thin MVP candidates:
 - Resume review queue.
 - Mixer resources/digital brochure cards.
 - Basic registration/check-in path.
+- Registration admin console for name entry/check-in and photo access tagging.
 
 ## Explicit Non-Goals For First Pass
 
@@ -228,9 +241,16 @@ Likely thin MVP candidates:
 ## Open Decisions
 
 - What is the minimum July 22 MVP?
-- Should public URLs use `sotc-rock-hall-mixer`, `sotc-rock-hall`, or another slug?
-- What guest types/states are needed for headshot access?
-- Does SOTC need attendee import before the event?
-- Which images/logos/resources are available from SOTC or Rock Hall?
-- Which experiences need queues on day one?
 - What must be demoable versus operationally reliable for July?
+- Which images/logos/resources are available from SOTC or Rock Hall?
+
+## Decisions From 2026-06-11 Review
+
+- Public event slug should be `sotc-rock-hall`.
+- Do not import attendees before the first SOTC slice.
+- Registration is QR/name entry plus an admin console where staff can mark check-in/access tags.
+- Photo access is marked at check-in.
+- Sponsors are informational for now.
+- Day-one queue/service flows should include registration check-in, headshots, and resume review.
+- Headshot states should include student-photo-eligible, student-photo-used, professional-general, professional-photo-eligible, and professional-photo-used.
+- Keep a placeholder for a second profession/networking tag.

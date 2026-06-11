@@ -857,12 +857,15 @@ const QME_ROADMAP = {
               status: "ready",
               sprint: "soon",
               summary:
-                "Use guest tags such as student, professional, student-took-photo, professional-with-photo, and professional-took-photo.",
+                "Use SOTC-specific guest/photo states such as student-photo-eligible, student-photo-used, professional-general, professional-photo-eligible, and professional-photo-used.",
               acceptanceCriteria: [
                 "Admin can assign or update guest tags.",
                 "Queue access can read guest tags.",
-                "Photo completion can update tag/state."
-              ]
+                "Photo completion can update tag/state.",
+                "A separate profession/networking tag placeholder is supported for later colored-nametag or networking use."
+              ],
+              notes:
+                "2026-06-11 PO review: photo access is marked at registration/check-in, not imported. Professional-general is a distinct state from professional-photo-eligible."
             },
             {
               id: "story-photographer-console",
@@ -1014,15 +1017,17 @@ const QME_ROADMAP = {
               status: "ready",
               sprint: "soon",
               summary:
-                "Represent the 5:30-7:30 level 1 registration area and connect it to guest entry/check-in.",
+                "Represent the 5:30-7:30 level 1 registration area and connect QR/name entry to an admin check-in console.",
               acceptanceCriteria: [
                 "Registration appears as an event experience.",
                 "Check-in can kick off the passport activity.",
                 "Guest-facing copy explains what to do next.",
-                "Registration admin view can show guests expected, checked in, and missing key contact fields."
+                "Registration admin view can show guest names as they enter/check in.",
+                "Registration admin can mark the guest with the right tag/status, including photo access.",
+                "SOTC staff can continue using their own external list/system for official attendance tracking."
               ],
               notes:
-                "Trello import highlights using registration to collect missing phone/email and give staff a heads-up on who is next in line."
+                "2026-06-11 PO review: do not import attendees for the first slice. Simulate a guest walking up, scanning QR, and entering their name. Staff see the guest in qME, mark the right tag, find the name tag/materials, and call the guest name."
             },
             {
               id: "story-sotc-qr-entry",
@@ -1030,20 +1035,20 @@ const QME_ROADMAP = {
               status: "ready",
               sprint: "soon",
               summary:
-                "Let guests scan a QR code at entry, find themselves from an invite/attendee list, and complete missing event profile details.",
+                "Let guests scan a QR code at entry and enter their name so registration staff can handle check-in and tags from an admin console.",
               acceptanceCriteria: [
                 "Guest can scan QR to enter the SOTC event experience.",
-                "Guest can search/select their attendee record from an imported list.",
+                "Guest can enter their name without relying on an imported attendee list.",
                 "Guest can provide missing phone or email details.",
                 "Guests who do not want digital entry can still go to the desk."
               ],
               notes:
-                "Imported from Trello SOTC high-level features. Signage and pre-event emails should explain the QR flow."
+                "2026-06-11 PO review: no attendee import for first slice. Signage and pre-event emails should explain the QR flow."
             },
             {
               id: "story-attendee-import",
               title: "Import or sync SOTC attendee list",
-              status: "future",
+              status: "deferred",
               sprint: "future",
               summary:
                 "Bring attendee records from Evite/Eventbrite or another registration source into qME for event check-in and personalization.",
@@ -1054,7 +1059,7 @@ const QME_ROADMAP = {
                 "Realtime updates are considered but not required for the first SOTC slice."
               ],
               notes:
-                "Imported from Trello: get list from evite of attendees, update realtime ideally, and possibly use Eventbrite API."
+                "Deferred by 2026-06-11 PO review. For the first SOTC slice, qME should not import attendees; staff can keep marking attendance in Evite/external system."
             },
             {
               id: "story-passport-activity",
@@ -1471,9 +1476,37 @@ const QME_ROADMAP = {
     {
       id: "decision-sotc-mvp",
       title: "What must be real by July 22?",
-      status: "tabled",
+      status: "discovery",
       prompt:
-        "Table detailed MVP scope until cleanup and org/admin/event foundations are underway. SOTC should initially be modeled on the Peony event pattern, with all major event modules represented thinly rather than overcomplicated."
+        "Likely thin MVP: organization-owned SOTC event, public event page with structured experience cards, registration QR/name entry with admin tagging, headshot queue, resume review queue, and mixer resources/digital brochure cards. Exact demoable vs operational reliability line remains open."
+    },
+    {
+      id: "decision-sotc-slug",
+      title: "SOTC public slug",
+      status: "decided",
+      prompt:
+        "Use sotc-rock-hall for the public event slug. Keep SOTCRH as internal shorthand only."
+    },
+    {
+      id: "decision-sotc-attendee-import",
+      title: "No SOTC attendee import for first slice",
+      status: "decided",
+      prompt:
+        "Do not import Evite/Eventbrite attendees for the first SOTC slice. Guests scan QR and enter their name; staff can continue official attendance tracking in their existing external list/system."
+    },
+    {
+      id: "decision-sotc-photo-states",
+      title: "SOTC headshot states",
+      status: "decided",
+      prompt:
+        "Use SOTC-specific states: student-photo-eligible, student-photo-used, professional-general, professional-photo-eligible, professional-photo-used. Leave room for a second profession/networking tag."
+    },
+    {
+      id: "decision-sotc-day-one-queues",
+      title: "SOTC day-one queue/service flows",
+      status: "decided",
+      prompt:
+        "Day-one queue/service flows are registration check-in, professional headshots, and resume review."
     },
     {
       id: "decision-ece-language",
@@ -1485,9 +1518,9 @@ const QME_ROADMAP = {
     {
       id: "decision-headshot-payment",
       title: "How should professional photo access be acknowledged?",
-      status: "open",
+      status: "decided",
       prompt:
-        "For July, decide whether admin marking at check-in is enough or whether payment/photo purchase needs a richer flow."
+        "For the first SOTC slice, admin/staff marking at registration/check-in is enough. Payment or purchase workflow is deferred."
     },
     {
       id: "decision-roadmap-auth",

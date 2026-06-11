@@ -628,7 +628,7 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-anchor-event",
               title: "Create SOTC Rock Hall event plan",
-              status: "ready",
+              status: "done",
               sprint: "now",
               summary:
                 "Use the July 22 event as the product anchor for multi-org and event-builder work.",
@@ -643,7 +643,7 @@ const QME_ROADMAP = {
                 "Mixer resources page"
               ],
               notes:
-                "Sprint review decision: keep SOTC as the event anchor, but table detailed July 22 MVP scope until cleanup and org/admin/event structure are underway. Initial SOTC modeling should follow the Peony event pattern and stay simple."
+                "Initial event plan captured in docs/sotc-rock-hall-event-plan.md. Detailed July 22 MVP remains open until org/admin/event foundation is underway."
             },
             {
               id: "story-sotc-experience-inventory",

@@ -101,7 +101,6 @@ Initial treatment:
 
 Initial guest states:
 
-- professional
 - student-photo-eligible
 - student-photo-used
 - professional-general
@@ -213,9 +212,9 @@ https://sites.google.com/summeronthecuyahoga.com/mixerresourcespage?usp=sharing
 
 ## MVP Direction
 
-Do not decide the full July MVP yet.
+Use this plan as the working event anchor. The exact July 22 MVP should be decided after the SOTC org/admin/event foundation exists and can be demonstrated to SOTC leaders.
 
-The next step is to make SOTC representable in the system without hard-coding it. Then choose a thin July slice.
+The next step is to make SOTC representable in the system without hard-coding it. Then demo the thin slice to Eric and Tanya and decide what is in the operational July event build.
 
 Likely thin MVP candidates:
 
@@ -240,9 +239,9 @@ Likely thin MVP candidates:
 
 ## Open Decisions
 
-- What is the minimum July 22 MVP?
-- What must be demoable versus operationally reliable for July?
+- What do sponsors want to measure or receive?
 - Which images/logos/resources are available from SOTC or Rock Hall?
+- What exact July 22 scope is approved after the first SOTC foundation demo?
 
 ## Decisions From 2026-06-11 Review
 
@@ -254,3 +253,5 @@ Likely thin MVP candidates:
 - Day-one queue/service flows should include registration check-in, headshots, and resume review.
 - Headshot states should include student-photo-eligible, student-photo-used, professional-general, professional-photo-eligible, and professional-photo-used.
 - Keep a placeholder for a second profession/networking tag.
+- The July 22 build should be treated as operationally reliable, not only demoable.
+- Available SOTC/Rock Hall images, logos, and resources are still TBD; generated or placeholder assets can be used temporarily if needed.

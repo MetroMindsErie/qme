@@ -643,7 +643,7 @@ const QME_ROADMAP = {
                 "Mixer resources page"
               ],
               notes:
-                "Initial event plan captured in docs/sotc-rock-hall-event-plan.md. Detailed July 22 MVP remains open until org/admin/event foundation is underway."
+                "Done as the working anchor plan in docs/sotc-rock-hall-event-plan.md. Exact July 22 operating scope will be confirmed after the first SOTC foundation demo."
             },
             {
               id: "story-sotc-experience-inventory",

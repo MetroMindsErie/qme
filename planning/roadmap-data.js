@@ -46,6 +46,7 @@ const QME_ROADMAP = {
       goal:
         "Create the minimum organization/admin/event foundation needed to set up Summer on the Cuyahoga without hard-coded demo behavior.",
       storyIds: [
+        "story-governance-principles-foundation",
         "story-org-table",
         "story-preserve-peony-demo",
         "story-admin-org-role",
@@ -326,6 +327,25 @@ const QME_ROADMAP = {
                 "Organizations have name, slug, status, and timestamps.",
                 "Existing Peony Festival data can belong to a default organization."
               ]
+            },
+            {
+              id: "story-governance-principles-foundation",
+              title: "Define governance principles for multi-org foundation",
+              status: "ready",
+              sprint: "next",
+              summary:
+                "Use the authority/object governance model to settle the minimum role, authority, ownership, and audit principles before building superadmin, organization, and admin structures.",
+              acceptanceCriteria: [
+                "Superadmin, organization admin, and staff boundaries are defined.",
+                "Active organization context behavior is decided for users who belong to multiple organizations.",
+                "Organizations owning events is confirmed as a foundation rule.",
+                "Role assignment/removal and sensitive governance actions are identified as audit candidates.",
+                "Sensitive operations needing confirmation or later PIN/process are identified.",
+                "Full custom permissions are explicitly deferred.",
+                "Decisions are translated into initial table/schema requirements before implementation."
+              ],
+              notes:
+                "Based on qMe Authority & Object Governance Model v1. This should happen before creating the organization/admin schema, but should not expand into a full permissions engine yet."
             },
             {
               id: "story-seed-sotc-org",

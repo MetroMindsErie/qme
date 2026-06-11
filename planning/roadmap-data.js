@@ -264,7 +264,7 @@ const QME_ROADMAP = {
             {
               id: "story-import-trello-detail-cards",
               title: "Import detailed Trello cards into product board",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Review screenshots/PDF of detailed Trello cards and reconcile them into the repo-based product roadmap.",
@@ -276,7 +276,7 @@ const QME_ROADMAP = {
                 "Open questions from Trello are captured separately as decisions or discovery items."
               ],
               notes:
-                "User will create a PowerPoint from Trello screenshots and export/provide a PDF for review."
+                "Imported from sotc planning doc.pdf on 2026-06-10. Most items overlapped existing epics; missing details were added as role, event scheduling, eCe lifecycle, SOTC registration, and admin operations cards."
             }
           ]
         },
@@ -350,8 +350,11 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "One person can belong to one or more organizations.",
                 "Staff permissions can be narrower than owner/admin permissions.",
-                "Staff can be assigned to event operations later."
-              ]
+                "Staff can be assigned to event operations later.",
+                "A user with multiple organizations can choose which organization/account context to use after login."
+              ],
+              notes:
+                "Trello import adds invite flow by email/phone and multi-organization account selection."
             }
           ]
         },
@@ -370,8 +373,28 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "A qME superadmin can manage all organizations.",
                 "An organization admin can manage only their organization.",
-                "Role checks are documented before sensitive admin screens expand."
-              ]
+                "Role checks are documented before sensitive admin screens expand.",
+                "Superadmin can assume an admin role in an organization for support.",
+                "Admin operational actions such as start, pause, end, and reset have extra friction such as confirmation or PIN."
+              ],
+              notes:
+                "Trello import adds admin request/approval flow, support role assumption, and operational controls that should not be too easy to trigger."
+            },
+            {
+              id: "story-role-permissions-audit",
+              title: "Define role permissions and audit logs",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Model organization roles as permission sets and record sensitive admin actions with actor, timestamp, and rationale.",
+              acceptanceCriteria: [
+                "Roles can grant capabilities such as create, edit, view, delete, check-in, pause/resume, skip/reorder, merge/split, and priority override.",
+                "User state can be live, suspended, or unsuspended.",
+                "Sensitive operational actions create audit log entries with actor identity and timestamp.",
+                "The model can start with default roles and allow later customization."
+              ],
+              notes:
+                "Imported from Trello admin/staff role cards and provisional admin console notes."
             },
             {
               id: "story-superadmin-role",
@@ -425,8 +448,40 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Admin can create event name, slug, date, venue, and status.",
                 "Admin can edit event details.",
-                "Validation protects unique slugs within an organization."
+                "Validation protects unique slugs within an organization.",
+                "Event can store short description, long description, location, and multi-day start/end windows."
               ]
+            },
+            {
+              id: "story-event-schedules-recurrence",
+              title: "Support event schedules and recurrence",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Allow events to span multiple days, have multiple daily start/stop blocks, and later support recurring schedules.",
+              acceptanceCriteria: [
+                "Event can represent multi-day date/time windows.",
+                "Event can represent multiple time blocks in a day, such as breakfast, lunch, happy hour, or session blocks.",
+                "Calendar-style event schedule view is considered.",
+                "Recurring event rules are parked for later unless a customer requires them."
+              ],
+              notes:
+                "Imported from Trello event creation card."
+            },
+            {
+              id: "story-event-type-templates",
+              title: "Define event types and templates",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Use event types such as festival, conference, concert, sporting event, speaker event, or trade show to seed useful default experiences.",
+              acceptanceCriteria: [
+                "Event type list is documented.",
+                "Each event type can suggest expected experience types.",
+                "Templates remain optional and do not block simple event creation."
+              ],
+              notes:
+                "Imported from Trello Events have types card."
             },
             {
               id: "story-event-suspend",
@@ -438,7 +493,8 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Suspended events are not joinable by guests.",
                 "Archived events remain available for reporting.",
-                "Admin can see why an event is unavailable."
+                "Admin can see why an event is unavailable.",
+                "Editing or suspension restrictions are defined when an event has active eCe/experience instances."
               ]
             }
           ]
@@ -478,7 +534,8 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Registration, sponsors, headshots, networking, resume reviews, food, bar, greetings, workshops, galleries, and resources are captured.",
                 "Each experience has an initial treatment: queue, info card, signup, notification, map, or future experiment.",
-                "Queue-bearing experiences are identified first."
+                "Queue-bearing experiences are identified first.",
+                "QR entry, attendee lookup/import, registration admin view, headshot queue, resume queue, scavenger hunts, and micro-activities are represented at least as thin backlog items."
               ],
               notes:
                 "Do not overbuild this yet. Use the inventory to inform the foundation and later pick a thin SOTC MVP."
@@ -509,8 +566,11 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Experiences belong to events.",
                 "Experiences have type, title, location, time window, status, and display order.",
-                "An experience can optionally connect to a queue."
-              ]
+                "An experience can optionally connect to a queue.",
+                "Experience can store short/long description, image/logo/media, and configurable feature flags."
+              ],
+              notes:
+                "Trello uses 'expie' for the reusable experienceable unit. Product language can still use Experience while eCe may represent an event-specific instance."
             },
             {
               id: "story-experience-types",
@@ -522,8 +582,40 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Type names are documented.",
                 "Sponsor and vendor are intentionally distinguished.",
-                "Types drive guest UI defaults without hard-coding the SOTC event."
+                "Types drive guest UI defaults without hard-coding the SOTC event.",
+                "Types can later provide configuration templates for headshot photographer, food truck, food/beverage vendor, performance, speaker, and similar patterns."
               ]
+            },
+            {
+              id: "story-experience-configuration",
+              title: "Configure experience features and content",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Allow an experience/expie to enable feature modules such as menu, queue, merchandising, media, guest-facing content, or later POS integration.",
+              acceptanceCriteria: [
+                "Experience can enable/disable feature modules with configuration flags.",
+                "Experience can publish guest-facing content such as descriptions, menus, prices, modifiers, allergens, preparation time, or limited-time offerings.",
+                "Food/menu items can support searchable tags such as chicken, pesto, gluten free, or nuts.",
+                "POS/API integration remains a future option, not a July dependency."
+              ],
+              notes:
+                "Imported from Trello Expies are created and provisional queue content cards."
+            },
+            {
+              id: "story-experience-hierarchy-grouping",
+              title: "Explore experience hierarchy and grouping",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Support grouping multiple related experiences by owner, type, or location, such as the same lemonade stand in multiple locations.",
+              acceptanceCriteria: [
+                "Relationship between organization-owned expies and event-specific instances is documented.",
+                "Same experience can appear in multiple locations or times.",
+                "Grouping can support future smart ordering or routing."
+              ],
+              notes:
+                "Imported from Trello expie hierarchy notes."
             },
             {
               id: "story-experience-suspend",
@@ -555,8 +647,43 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "The term eCe is defined in product language.",
                 "Creation, edit, suspend, activation, and reset behavior are documented.",
-                "The relationship between eCe, experience, queue, and event is clear."
-              ]
+                "The relationship between eCe, experience, queue, and event is clear.",
+                "eCe is modeled as an event-specific instance that combines an event, an expie/experience, date/time, location, and optional queue behavior.",
+                "Inheritance and overrides from event and expie/experience are documented."
+              ],
+              notes:
+                "Trello import says eCe combines event + expie at specific date/time/location, can inherit properties, can be reused in multiple locations/times, and each eCe may have its own host/admin console."
+            },
+            {
+              id: "story-ece-cross-org-permissions",
+              title: "Define cross-organization eCe attachment permissions",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Allow an event to attach an experience owned by another organization only when permission rules allow it.",
+              acceptanceCriteria: [
+                "An event organization can request to attach another organization's experience.",
+                "The owning organization can approve, deny, or preconfigure attachment rules.",
+                "Inherited and overridden fields are clear to both organizations."
+              ],
+              notes:
+                "Imported from Trello eCe creation card."
+            },
+            {
+              id: "story-ece-activation-reset",
+              title: "Define eCe activation, reset, and restricted controls",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Document how an eCe turns on, whether it activates by calendar/location/admin action, and who may reset it.",
+              acceptanceCriteria: [
+                "Activation can be manual, scheduled, or later location-triggered.",
+                "Activation controls guest visibility, map display, and joinability.",
+                "Reset is limited to admin or special role and has extra confirmation friction.",
+                "Active eCe edit/suspend restrictions are documented."
+              ],
+              notes:
+                "Imported from Trello eCe lifecycle cards."
             },
             {
               id: "story-ece-queue-entry-limits",
@@ -568,7 +695,8 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Queue entry can depend on experience time, capacity, and guest eligibility.",
                 "Guest receives a clear reason when they cannot join.",
-                "Admin can understand blocked entry counts."
+                "Admin can understand blocked entry counts.",
+                "Queue entry can close near the end of the eCe window when the system predicts the guest cannot be served or order in time."
               ]
             }
           ]
@@ -658,8 +786,11 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Privacy and file handling questions are identified.",
                 "Mobile upload feasibility is validated.",
-                "MVP alternative is documented if upload is too much for July."
-              ]
+                "MVP alternative is documented if upload is too much for July.",
+                "Forwarding or releasing a resume to an assigned reviewer is considered separately from raw upload."
+              ],
+              notes:
+                "Trello import includes possibly forwarding resume to reviewer before guest walks up."
             },
             {
               id: "story-reviewer-ready",
@@ -691,7 +822,8 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Host can advance, pause, and inspect a queue.",
                 "Host can see check-in/standby state.",
-                "Console language matches the experience type."
+                "Console language matches the experience type.",
+                "Host can see operational context such as queue length, intake rate, now serving, guests lost, and open slots where relevant."
               ]
             },
             {
@@ -704,8 +836,40 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Needs are grouped by qME operator, organization admin, event host, and service provider.",
                 "Screens are prioritized against the SOTC event.",
-                "Temporary demo-only controls are marked."
+                "Temporary demo-only controls are marked.",
+                "Operational exception actions such as pause queue, announce delay, close intake, merge/split, redirect, and transfer are captured."
               ]
+            },
+            {
+              id: "story-queue-rule-configuration",
+              title: "Configure queue rules and priority policies",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Allow admins to configure queue capacity, pacing, intake, remote wait, commitment windows, no-show handling, and priority structures.",
+              acceptanceCriteria: [
+                "Queue rules can include capacity thresholds, max digital positions, intake rates, and average service time.",
+                "Rules can include commitment prompts, expiration, grace periods, skip/reinsert behavior, and no-show policies.",
+                "Priority structures can support premium tiers, staff passes, accessibility accommodations, or weighted/batched service.",
+                "This remains future configuration until a concrete event requires it."
+              ],
+              notes:
+                "Imported from Trello/provisional queue rules."
+            },
+            {
+              id: "story-notification-policies",
+              title: "Configure notification policies and templates",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Define guest and staff notification rules for now-serving, up-next, commitment prompts, approach reminders, and exceptions.",
+              acceptanceCriteria: [
+                "Notification templates can support merge fields such as queue name, estimated time, map pin, and instructions.",
+                "Policies can include now serving, up next, commitment threshold, head toward venue, proceed-to-service, slowdowns, pauses, closures, or rerouting.",
+                "Delivery channels such as in-app, SMS, email, and push are evaluated separately."
+              ],
+              notes:
+                "Imported from Trello/provisional notification policy notes."
             }
           ]
         }
@@ -733,8 +897,43 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Registration appears as an event experience.",
                 "Check-in can kick off the passport activity.",
-                "Guest-facing copy explains what to do next."
-              ]
+                "Guest-facing copy explains what to do next.",
+                "Registration admin view can show guests expected, checked in, and missing key contact fields."
+              ],
+              notes:
+                "Trello import highlights using registration to collect missing phone/email and give staff a heads-up on who is next in line."
+            },
+            {
+              id: "story-sotc-qr-entry",
+              title: "SOTC QR entry and guest lookup",
+              status: "ready",
+              sprint: "soon",
+              summary:
+                "Let guests scan a QR code at entry, find themselves from an invite/attendee list, and complete missing event profile details.",
+              acceptanceCriteria: [
+                "Guest can scan QR to enter the SOTC event experience.",
+                "Guest can search/select their attendee record from an imported list.",
+                "Guest can provide missing phone or email details.",
+                "Guests who do not want digital entry can still go to the desk."
+              ],
+              notes:
+                "Imported from Trello SOTC high-level features. Signage and pre-event emails should explain the QR flow."
+            },
+            {
+              id: "story-attendee-import",
+              title: "Import or sync SOTC attendee list",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Bring attendee records from Evite/Eventbrite or another registration source into qME for event check-in and personalization.",
+              acceptanceCriteria: [
+                "Admin can import an attendee list for the event.",
+                "Imported records can be matched to guests during QR/check-in.",
+                "Future API sync with Evite/Eventbrite is noted separately from manual import.",
+                "Realtime updates are considered but not required for the first SOTC slice."
+              ],
+              notes:
+                "Imported from Trello: get list from evite of attendees, update realtime ideally, and possibly use Eventbrite API."
             },
             {
               id: "story-passport-activity",
@@ -1094,6 +1293,24 @@ const QME_ROADMAP = {
       summary:
         "Capture interests and different groups using simple icons; later can drive networking or recommendations.",
       linkedStoryIds: ["story-survey-icons", "story-networking-matching"]
+    },
+    {
+      id: "inbox-trello-sotc-pdf-import",
+      title: "SOTC Trello PDF import",
+      disposition: "promote",
+      summary:
+        "sotc planning doc.pdf contained 11 pages of Trello detail. Promoted missing items around role permissions/audits, event schedules/templates, expie configuration, eCe lifecycle, queue rules, notifications, SOTC attendee import/QR entry, and admin operations.",
+      linkedStoryIds: [
+        "story-role-permissions-audit",
+        "story-event-schedules-recurrence",
+        "story-event-type-templates",
+        "story-experience-configuration",
+        "story-ece-activation-reset",
+        "story-sotc-qr-entry",
+        "story-attendee-import",
+        "story-queue-rule-configuration",
+        "story-notification-policies"
+      ]
     }
   ],
   decisions: [

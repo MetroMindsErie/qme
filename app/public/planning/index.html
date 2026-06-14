@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>qME Product Roadmap</title>
+    <link rel="stylesheet" href="./planning.css" />
+  </head>
+  <body>
+    <section class="gate" id="accessGate">
+      <form class="gate-panel" id="accessForm">
+        <p class="eyebrow">qME Planning</p>
+        <h1>Enter Access Code</h1>
+        <label>
+          <span>Code</span>
+          <input id="accessCode" type="password" inputmode="numeric" autocomplete="off" />
+        </label>
+        <p class="gate-error" id="gateError" role="alert"></p>
+        <button type="submit">Open Roadmap</button>
+      </form>
+    </section>
+
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">qME Product Workspace</p>
+        <h1>Roadmap and Sprint Planning</h1>
+      </div>
+      <div class="event-chip" id="eventAnchor"></div>
+    </header>
+
+    <main>
+      <section class="summary-band">
+        <div>
+          <p class="label">Immediate Goal</p>
+          <p id="immediateGoal"></p>
+        </div>
+        <div class="stats" id="stats"></div>
+      </section>
+
+      <section class="toolbar" aria-label="Planning controls">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-view="roadmap" type="button">Roadmap</button>
+          <button class="tab" data-view="sprints" type="button">Sprints</button>
+          <button class="tab" data-view="stories" type="button">Stories</button>
+          <button class="tab" data-view="inbox" type="button">Inbox</button>
+          <button class="tab" data-view="review" type="button">Review</button>
+        </div>
+        <label class="search-wrap">
+          <span>Search</span>
+          <input id="searchInput" type="search" placeholder="Find epic, theme, story, note" />
+        </label>
+      </section>
+
+      <section class="view active" id="roadmapView">
+        <div class="section-heading">
+          <div>
+            <p class="label">Product Map</p>
+            <h2>Epic -> Theme -> Story</h2>
+          </div>
+          <div class="hint">Open epics and themes to inspect work without turning everything into sprint cards yet.</div>
+        </div>
+        <div class="roadmap-grid" id="roadmapGrid"></div>
+      </section>
+
+      <section class="view" id="sprintsView">
+        <div class="section-heading">
+          <div>
+            <p class="label">Execution View</p>
+            <h2>Current and Future Sprints</h2>
+          </div>
+          <div class="hint">Same stories, grouped by sprint focus.</div>
+        </div>
+        <div class="sprint-grid" id="sprintGrid"></div>
+      </section>
+
+      <section class="view" id="storiesView">
+        <div class="section-heading">
+          <div>
+            <p class="label">Backlog</p>
+            <h2>Story Cards</h2>
+          </div>
+          <div class="hint">Use this view when we are spilling themes into buildable stories.</div>
+        </div>
+        <div class="story-table" id="storyTable"></div>
+      </section>
+
+      <section class="view" id="inboxView">
+        <div class="section-heading">
+          <div>
+            <p class="label">Product Inbox</p>
+            <h2>Raw Notes to Triage</h2>
+          </div>
+          <div class="hint">A place for emailed thoughts before they become stories or get parked.</div>
+        </div>
+        <div class="inbox-grid" id="inboxGrid"></div>
+      </section>
+
+      <section class="view" id="reviewView">
+        <div class="section-heading">
+          <div>
+            <p class="label">Sprint Review</p>
+            <h2>Decisions and Checkpoint</h2>
+          </div>
+          <div class="hint">Use this to decide what is real, what moves, and what waits.</div>
+        </div>
+        <div class="review-layout">
+          <div class="review-panel">
+            <h3>Current Sprint Review</h3>
+            <div id="reviewCurrent"></div>
+          </div>
+          <div class="review-panel">
+            <h3>Open Decisions</h3>
+            <div id="decisionList"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="drawer" id="storyDrawer" aria-live="polite" aria-hidden="true">
+      <button class="drawer-close" id="drawerClose" type="button" aria-label="Close story detail">x</button>
+      <div id="drawerContent"></div>
+    </aside>
+
+    <script src="./planning.js"></script>
+  </body>
+</html>

@@ -2,7 +2,7 @@
  * Tests for hooks/useQueueTicket.ts
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 
 vi.mock('../lib/queueService', () => ({
   nextTicketForQueue: vi.fn(),
@@ -15,7 +15,6 @@ vi.mock('../lib/queueService', () => ({
 import {
   useQueueTicket,
   getStoredQueueTicket,
-  getStoredQueueTicketNumber,
   clearQueueTicket,
   getActiveQueueIds,
 } from '../hooks/useQueueTicket';

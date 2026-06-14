@@ -8,12 +8,15 @@ import Header from '../../components/Header';
 import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
 import { getStoredQueueTicket, clearQueueTicket } from '../../hooks/useQueueTicket';
+import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventBySlug } from '../../lib/eventService';
 import { getQueueBySlug, leaveQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
+
+type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
 
 export default function GuestQueueLanding() {
   const navigate = useNavigate();
@@ -23,6 +26,7 @@ export default function GuestQueueLanding() {
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queue, setQueue] = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
+  const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
 
   const { nowServing } = useQueueMetric(queue?.id);
 
@@ -37,6 +41,18 @@ export default function GuestQueueLanding() {
       try {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
+        const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
+        if (storedCheckIn) {
+          try {
+            const saved = JSON.parse(storedCheckIn) as { id?: string };
+            if (saved.id) {
+              const row = await getEventCheckIn(saved.id);
+              setBouquetAccess(row.ticket_type ?? 'checked-in');
+            }
+          } catch {
+            setBouquetAccess('none');
+          }
+        }
         const q = await getQueueBySlug(ev.id, queueSlug);
         setQueue(q);
       } catch (e) {
@@ -120,6 +136,60 @@ export default function GuestQueueLanding() {
     );
   }
 
+  const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const hasFlowersAccess = bouquetAccess === 'flowers';
+  const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
+  const hasAnyEventCheckIn = bouquetAccess !== 'none';
+
+  if (needsBouquetAccess) {
+    return (
+      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+        <Header
+          logoSrc={queue.image_url || event.image_url || '/images/qmeFirstLogo.jpg'}
+          titleLine1=""
+          titleLine2=""
+        />
+        <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#F0EEFF', borderRadius: 14, padding: '1.25rem', color: '#2f275f' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Festival + Flowers Access
+            </div>
+            <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
+              {hasAnyEventCheckIn
+                ? 'Bouquet Bar access is not on your check-in'
+                : 'Check in before joining the Bouquet Bar'}
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              {hasAnyEventCheckIn
+                ? 'You are checked in for general admission. Bouquet Bar queue access is reserved for Festival + Flowers ticket holders.'
+                : 'Bouquet Bar queue access is reserved for Festival + Flowers ticket holders. If you purchased Festival + Flowers, please check in at the mobile bar first.'}
+            </p>
+            <p style={{ margin: '0.85rem 0 0', lineHeight: 1.5 }}>
+              If you would like to buy a bouquet today, please visit the bouquet team for availability.
+            </p>
+          </div>
+
+          {!hasAnyEventCheckIn && (
+            <button
+              className="actionBtn actionBtn-primary"
+              style={{ marginTop: '1rem' }}
+              onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+            >
+              Check In at Mobile Bar
+            </button>
+          )}
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
@@ -165,6 +235,31 @@ export default function GuestQueueLanding() {
           )}
           <div className="miniText">
             <span className="miniLine">{queue.description}</span>
+          </div>
+        </div>
+      )}
+
+      {queue.slug === 'wrapped-bouquets' && hasFlowersAccess && (
+        <div style={{
+          margin: '0.75rem 1rem',
+          borderRadius: 14,
+          overflow: 'hidden',
+          background: '#F0EEFF',
+          border: '1px solid #D8D1FF',
+          color: '#2f275f',
+        }}>
+          <img
+            src={queue.image_url || '/images/market-fresh-peonies.png'}
+            alt="Festival and flowers access"
+            style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block' }}
+          />
+          <div style={{ padding: '0.85rem 1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Festival + Flowers Access
+            </div>
+            <div style={{ fontSize: '1.1rem', fontWeight: 900, marginTop: 4 }}>
+              Show this at the Bouquet Bar
+            </div>
           </div>
         </div>
       )}

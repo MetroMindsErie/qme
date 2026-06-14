@@ -1,16 +1,16 @@
 {
-  "name": "code",
+  "name": "qme",
   "version": "1.0.0",
-  "main": "server.js",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "npm --prefix app run dev",
+    "build": "npm --prefix app run build",
+    "test": "npm --prefix app test",
+    "mobile": "npm --prefix mobile start",
+    "planning:seed": "node scripts/seed-planning-document.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "express": "^5.1.0"
-  },
   "description": ""
 }

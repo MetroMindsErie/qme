@@ -10,12 +10,11 @@ import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
 import {
   getQueue,
-  peekTicketForQueue,
-  getLostCountForQueue,
   resetQueueTickets,
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
-import type { Queue as QueueType, QEvent } from '../../types';
+import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
+import type { Queue as QueueType, QEvent, EventCheckIn } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
@@ -26,8 +25,7 @@ export default function AdminQueueDashboard() {
 
   const [queue, setQueue] = useState<QueueType | null>(null);
   const [event, setEvent] = useState<QEvent | null>(null);
-  const [lastIssued, setLastIssued] = useState(0);
-  const [lostCount, setLostCount] = useState(0);
+  const [flowersCheckIns, setFlowersCheckIns] = useState<EventCheckIn[]>([]);
   const [loading, setLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAppliedRef = useRef<string | null>(null);
@@ -38,7 +36,7 @@ export default function AdminQueueDashboard() {
     setInputValue(String(nowServing));
   }, [nowServing]);
 
-  const queueCount = Math.max(0, lastIssued - nowServing + 1);
+  const isBouquetQueue = queue?.slug === 'wrapped-bouquets';
 
   // Load queue + event metadata
   useEffect(() => {
@@ -60,37 +58,33 @@ export default function AdminQueueDashboard() {
     })();
   }, [queueId, eventId, navigate]);
 
-  // Refresh ticket / lost counts
-  const refreshTicket = useCallback(async () => {
-    if (!queueId) return;
-    try {
-      const val = await peekTicketForQueue(queueId);
-      setLastIssued(val);
-    } catch (e) {
-      console.error('peek failed', e);
+  const refreshFlowersCheckIns = useCallback(async () => {
+    if (!eventId || !isBouquetQueue) {
+      setFlowersCheckIns([]);
+      return;
     }
-  }, [queueId]);
-
-  const refreshLost = useCallback(async () => {
-    if (!queueId) return;
     try {
-      const val = await getLostCountForQueue(queueId);
-      setLostCount(val);
+      const rows = await listEventCheckIns(eventId, null);
+      setFlowersCheckIns(
+        rows
+          .filter((row) => row.status === 'completed' && row.ticket_type === 'flowers')
+          .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+      );
     } catch (e) {
-      console.error('lost fetch failed', e);
+      console.error('flowers check-ins fetch failed', e);
     }
-  }, [queueId]);
+  }, [eventId, isBouquetQueue]);
 
   useEffect(() => {
-    refreshTicket();
-    refreshLost();
-    const t1 = setInterval(refreshTicket, 2000);
-    const t2 = setInterval(refreshLost, 2000);
+    refreshFlowersCheckIns();
+    if (!eventId || !isBouquetQueue) return;
+    const unsubscribe = onEventCheckInsChange(eventId, refreshFlowersCheckIns);
+    const interval = setInterval(refreshFlowersCheckIns, 3000);
     return () => {
-      clearInterval(t1);
-      clearInterval(t2);
+      unsubscribe();
+      clearInterval(interval);
     };
-  }, [refreshTicket, refreshLost]);
+  }, [eventId, isBouquetQueue, refreshFlowersCheckIns]);
 
   // ---------- Metric controls ----------
   function applyMetricFromUI() {
@@ -116,7 +110,6 @@ export default function AdminQueueDashboard() {
     try {
       await resetQueueTickets(queueId);
       setNowServing(1);
-      await refreshTicket();
       console.log('Queue reset, now_serving set to 1');
     } catch (e) {
       console.error('Reset failed', e);
@@ -134,7 +127,7 @@ export default function AdminQueueDashboard() {
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
-        logoSrc={queue?.image_url || '/images/lunaLogo.jpg'}
+        logoSrc={queue?.image_url || '/images/zippy.png'}
         titleLine1=""
         titleLine2=""
       />
@@ -153,8 +146,6 @@ export default function AdminQueueDashboard() {
         <div className="inputs" style={{ marginBottom: '0.5rem' }}>
           <DisplayField id="dsp1" label="Queue" value={queue?.name || ''} className="displayInput3" />
           <DisplayField id="dsp4" label="Event" value={event?.name || ''} className="displayInput2" />
-          <DisplayField id="dsp2" label="# in Queue" value={String(queueCount)} />
-          <DisplayField id="dsp5" label="Guests lost" value={String(lostCount)} />
         </div>
       </div>
 
@@ -229,6 +220,52 @@ export default function AdminQueueDashboard() {
           <img src="/images/right_arrow.jpg" alt="Right arrow" />
         </button>
       </div>
+
+        {isBouquetQueue && (
+          <div style={{
+            border: '1px solid #e0e0e0',
+            borderRadius: 10,
+            padding: '0.85rem',
+            margin: '0.75rem 1rem',
+            background: '#fafafa',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'baseline', marginBottom: '0.55rem' }}>
+              <h2 style={{ fontSize: '1rem', margin: 0, color: '#2f3e4f' }}>
+                Flowers Check-Ins
+              </h2>
+              <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#5B4FCE' }}>
+                {flowersCheckIns.length} guests
+              </span>
+            </div>
+            {flowersCheckIns.length === 0 ? (
+              <p style={{ margin: 0, color: '#999', fontSize: '0.85rem' }}>
+                No Festival + Flowers guests checked in yet.
+              </p>
+            ) : (
+              <div style={{ maxHeight: 150, overflowY: 'auto' }}>
+                {flowersCheckIns.map((row) => (
+                  <div
+                    key={row.id}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      gap: '0.75rem',
+                      padding: '0.5rem 0',
+                      borderTop: '1px solid #eee',
+                    }}
+                  >
+                    <span style={{ fontWeight: 700, color: '#2f3e4f' }}>
+                      {row.first_name} {row.last_name}
+                    </span>
+                    <span style={{ color: '#5B4FCE', fontSize: '0.74rem', fontWeight: 800 }}>
+                      FLOWERS
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Back link */}
         <div style={{ textAlign: 'center', padding: '0.75rem 0' }}>

@@ -50,7 +50,7 @@ export default function AdminEventList() {
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-      <Header logoSrc="/images/qmeFirstLogo.jpg" titleLine1="ADMIN" titleLine2="EVENTS" />
+      <Header logoSrc="/images/zippy.png" titleLine1="ADMIN" titleLine2="EVENTS" />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h1 className="headline" style={{ fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', margin: 0, fontWeight: 700 }}>Events</h1>

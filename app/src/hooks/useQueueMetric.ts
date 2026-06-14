@@ -46,7 +46,7 @@ export function useQueueMetric(queueId: string | undefined, pollMs = 2000) {
   useEffect(() => {
     if (!queueId) return;
 
-    refresh();
+    const initialRefresh = setTimeout(refresh, 0);
     const interval = setInterval(refresh, pollMs);
 
     // BroadcastChannel for same-device sync
@@ -70,6 +70,7 @@ export function useQueueMetric(queueId: string | undefined, pollMs = 2000) {
 
     return () => {
       clearInterval(interval);
+      clearTimeout(initialRefresh);
       bcRef.current?.close();
       unsubscribe();
     };

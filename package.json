@@ -6,7 +6,8 @@
     "start": "npm --prefix app run dev",
     "build": "npm --prefix app run build",
     "test": "npm --prefix app test",
-    "mobile": "npm --prefix mobile start"
+    "mobile": "npm --prefix mobile start",
+    "planning:seed": "node scripts/seed-planning-document.js"
   },
   "keywords": [],
   "author": "",

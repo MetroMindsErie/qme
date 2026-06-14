@@ -1,9 +1,10 @@
 const crypto = require("crypto");
-const roadmap = require("../planning/roadmap-data.js");
+const fallbackRoadmap = require("../planning/roadmap-data.js");
 
 const ACCESS_HASH = "710a141a6043f2f350c0a14076ceae0681224c460931add70fc620e330d42046";
 const COOKIE_NAME = "qme_planning_access";
 const ONE_DAY = 60 * 60 * 24;
+const PLANNING_DOCUMENT_ID = "qme-roadmap";
 
 function hash(value = "") {
   return crypto.createHash("sha256").update(String(value)).digest("hex");
@@ -17,15 +18,62 @@ function hasAccessCookie(req) {
     .some((part) => part === `${COOKIE_NAME}=${ACCESS_HASH}`);
 }
 
-function sendRoadmap(res) {
+function getSupabaseConfig() {
+  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ||
+    process.env.SUPABASE_SERVICE_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.VITE_SUPABASE_ANON_KEY;
+
+  if (!url || !key) return null;
+  return { url: url.replace(/\/$/, ""), key };
+}
+
+async function fetchRoadmapFromSupabase() {
+  const config = getSupabaseConfig();
+  if (!config || typeof fetch !== "function") return null;
+
+  const response = await fetch(
+    `${config.url}/rest/v1/planning_documents?id=eq.${encodeURIComponent(
+      PLANNING_DOCUMENT_ID
+    )}&select=data`,
+    {
+      headers: {
+        apikey: config.key,
+        Authorization: `Bearer ${config.key}`,
+        Accept: "application/json"
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Supabase planning fetch failed: ${response.status}`);
+  }
+
+  const rows = await response.json();
+  return rows && rows[0] && rows[0].data ? rows[0].data : null;
+}
+
+async function getRoadmap() {
+  try {
+    return (await fetchRoadmapFromSupabase()) || fallbackRoadmap;
+  } catch (error) {
+    console.error(error);
+    return fallbackRoadmap;
+  }
+}
+
+async function sendRoadmap(res) {
+  const roadmap = await getRoadmap();
   res.setHeader("Cache-Control", "private, no-store");
   res.status(200).json(roadmap);
 }
 
-module.exports = function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method === "GET") {
     if (hasAccessCookie(req)) {
-      sendRoadmap(res);
+      await sendRoadmap(res);
       return;
     }
     res.status(401).json({ error: "Access code required" });
@@ -49,7 +97,7 @@ module.exports = function handler(req, res) {
       "Set-Cookie",
       `${COOKIE_NAME}=${ACCESS_HASH}; Max-Age=${ONE_DAY}; Path=/; HttpOnly; Secure; SameSite=Strict`
     );
-    sendRoadmap(res);
+    await sendRoadmap(res);
     return;
   }
 

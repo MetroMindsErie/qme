@@ -32,6 +32,7 @@ const QME_ROADMAP = {
       storyIds: [
         "story-sotc-anchor-event",
         "story-sotc-experience-inventory",
+        "story-sotc-hardware-needs",
         "story-governance-principles-foundation",
         "story-image-ownership-model",
         "story-hardcoded-demo-assumptions-audit",
@@ -660,6 +661,22 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Do not overbuild this yet. Use the inventory to inform the foundation and later pick a thin SOTC MVP."
+            },
+            {
+              id: "story-sotc-hardware-needs",
+              title: "Analyze SOTC event hardware needs",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Decide what physical hardware is needed for the July 22 Rock Hall event, then purchase or source it in time for setup and testing.",
+              acceptanceCriteria: [
+                "Identify hardware needed for registration, QR display/signage, admin/staff use, host queues, and any guest-facing kiosk or display flow.",
+                "Decide what can be handled by personal phones/laptops versus dedicated event hardware.",
+                "Create a purchase/source list with quantities, owner, estimated cost, and needed-by date.",
+                "Confirm hardware can be tested before the event in a realistic setup."
+              ],
+              notes:
+                "This should happen before finalizing the operational July 22 scope. Include backup/power/connectivity considerations."
             }
           ]
         }

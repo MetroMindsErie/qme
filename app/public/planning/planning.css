@@ -702,6 +702,75 @@ summary::-webkit-details-marker {
   font-weight: 700;
 }
 
+.story-editor {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.story-editor label,
+.story-editor label span {
+  display: block;
+}
+
+.story-editor label span {
+  margin-bottom: 0.3rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.story-editor input,
+.story-editor select,
+.story-editor textarea {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.story-editor textarea {
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.editor-message {
+  min-height: 1.2rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.editor-save {
+  min-height: 2.45rem;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 900;
+}
+
+.editor-save:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .empty {
   margin: 0;
   padding: 1rem;
@@ -746,5 +815,9 @@ summary::-webkit-details-marker {
 
   .table-head {
     display: none;
+  }
+
+  .editor-grid {
+    grid-template-columns: 1fr;
   }
 }

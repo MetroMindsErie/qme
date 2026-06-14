@@ -5,7 +5,8 @@ let storyById = new Map();
 const state = {
   view: "roadmap",
   query: "",
-  selectedStoryId: null
+  selectedStoryId: null,
+  savingStoryId: null
 };
 
 const statusClass = {
@@ -51,6 +52,32 @@ function matchesQuery(...values) {
 
 function statusBadge(status) {
   return `<span class="status ${statusClass[status] || ""}">${status || "idea"}</span>`;
+}
+
+function statusOptions(selectedStatus) {
+  return Object.keys(statusClass)
+    .map(
+      (status) =>
+        `<option value="${status}" ${status === selectedStatus ? "selected" : ""}>${status}</option>`
+    )
+    .join("");
+}
+
+function sprintOptions(selectedSprint) {
+  const currentValue = selectedSprint || "backlog";
+  const options = [
+    { id: "backlog", title: "backlog" },
+    ...(data.sprints || []).map((sprint) => ({ id: sprint.id, title: sprint.title || sprint.id }))
+  ];
+
+  return options
+    .map(
+      (sprint) =>
+        `<option value="${escapeHtml(sprint.id)}" ${
+          sprint.id === currentValue ? "selected" : ""
+        }>${escapeHtml(sprint.title)}</option>`
+    )
+    .join("");
 }
 
 function escapeHtml(value = "") {
@@ -316,6 +343,35 @@ function renderDrawer(storyId) {
       ${(story.acceptanceCriteria || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
     </ul>
     ${story.notes ? `<h3>Notes</h3><p>${escapeHtml(story.notes)}</p>` : ""}
+    <h3>Edit Story</h3>
+    <form class="story-editor" data-editor-story-id="${escapeHtml(story.id)}">
+      <label>
+        <span>Title</span>
+        <input name="title" type="text" maxlength="160" value="${escapeHtml(story.title)}" required />
+      </label>
+      <div class="editor-grid">
+        <label>
+          <span>Status</span>
+          <select name="status">${statusOptions(story.status || "idea")}</select>
+        </label>
+        <label>
+          <span>Sprint</span>
+          <select name="sprint">${sprintOptions(story.sprint)}</select>
+        </label>
+      </div>
+      <label>
+        <span>Summary</span>
+        <textarea name="summary" rows="4" maxlength="1200">${escapeHtml(story.summary || "")}</textarea>
+      </label>
+      <label>
+        <span>Notes</span>
+        <textarea name="notes" rows="5" maxlength="2000">${escapeHtml(story.notes || "")}</textarea>
+      </label>
+      <p class="editor-message" data-editor-message></p>
+      <button class="editor-save" type="submit">${
+        state.savingStoryId === story.id ? "Saving..." : "Save Story"
+      }</button>
+    </form>
     ${
       story.references
         ? `<h3>References</h3><ul>${story.references
@@ -326,6 +382,40 @@ function renderDrawer(storyId) {
   `;
   drawer.classList.add("open");
   drawer.setAttribute("aria-hidden", "false");
+}
+
+async function saveStoryEdit(form) {
+  const storyId = form.dataset.editorStoryId;
+  const message = form.querySelector("[data-editor-message]");
+  const formData = new FormData(form);
+  const updates = {
+    title: formData.get("title"),
+    status: formData.get("status"),
+    sprint: formData.get("sprint"),
+    summary: formData.get("summary"),
+    notes: formData.get("notes")
+  };
+
+  state.savingStoryId = storyId;
+  message.textContent = "Saving...";
+  form.querySelector("button[type='submit']").disabled = true;
+
+  try {
+    const response = await fetchRoadmap({
+      method: "PATCH",
+      body: JSON.stringify({ storyId, updates })
+    });
+    state.savingStoryId = null;
+    setRoadmapData(response.roadmap);
+    renderDrawer(storyId);
+    const updatedMessage = document.querySelector("[data-editor-message]");
+    if (updatedMessage) updatedMessage.textContent = "Saved.";
+  } catch {
+    message.textContent = "Could not save this story. Refresh and try again.";
+    form.querySelector("button[type='submit']").disabled = false;
+  } finally {
+    state.savingStoryId = null;
+  }
 }
 
 function closeDrawer() {
@@ -415,6 +505,13 @@ document.addEventListener("click", (event) => {
 
   const tab = event.target.closest(".tab");
   if (tab) setView(tab.dataset.view);
+});
+
+document.addEventListener("submit", (event) => {
+  const editor = event.target.closest("[data-editor-story-id]");
+  if (!editor) return;
+  event.preventDefault();
+  saveStoryEdit(editor);
 });
 
 document.getElementById("drawerClose").addEventListener("click", closeDrawer);

@@ -486,6 +486,7 @@ async function initAccessGate() {
   const error = document.getElementById("gateError");
 
   function unlock() {
+    document.body.classList.remove("planning-locked");
     gate.classList.add("unlocked");
     gate.setAttribute("aria-hidden", "true");
   }

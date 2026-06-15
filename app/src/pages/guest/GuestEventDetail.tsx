@@ -9,7 +9,7 @@ import { listQueuesForEvent, getNowServing } from '../../lib/queueService';
 import { listExperiencesForEvent } from '../../lib/experienceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { formatTime } from '../../lib/utils';
-import { getStoredQueueTicket, clearQueueTicket } from '../../hooks/useQueueTicket';
+import { getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
 import type { QEvent, Queue, Experience } from '../../types';
 import '../../styles/shared.css';
@@ -271,7 +271,7 @@ export default function GuestEventDetail() {
         qs
           .filter((q) => q.status === 'active')
           .map(async (q) => {
-            const ticket = getStoredQueueTicket(q.id);
+            const ticket = getStoredQueueTicketNumber(q.id);
             let ns = q.now_serving;
             try { ns = await getNowServing(q.id); } catch { /* */ }
             return { ...q, _myTicket: ticket || undefined, _nowServing: ns };

@@ -15,6 +15,7 @@ vi.mock('../lib/queueService', () => ({
 import {
   useQueueTicket,
   getStoredQueueTicket,
+  getStoredQueueTicketNumber,
   clearQueueTicket,
   getActiveQueueIds,
 } from '../hooks/useQueueTicket';
@@ -136,6 +137,21 @@ describe('getStoredQueueTicket', () => {
 
   it('returns empty string if none', () => {
     expect(getStoredQueueTicket('q999')).toBe('');
+  });
+});
+
+describe('getStoredQueueTicketNumber', () => {
+  beforeEach(() => { localStorage.clear(); });
+
+  it('returns stored guest-facing ticket number instead of internal ticket id', () => {
+    localStorage.setItem('qme:ticket:q1', '490');
+    localStorage.setItem('qme:ticketNum:q1', '23');
+    expect(getStoredQueueTicketNumber('q1')).toBe('23');
+  });
+
+  it('falls back to stored ticket id for legacy tickets without ticket number', () => {
+    localStorage.setItem('qme:ticket:q1', '42');
+    expect(getStoredQueueTicketNumber('q1')).toBe('42');
   });
 });
 

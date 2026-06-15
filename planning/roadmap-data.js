@@ -33,6 +33,7 @@ const QME_ROADMAP = {
         "story-sotc-anchor-event",
         "story-sotc-experience-inventory",
         "story-sotc-hardware-needs",
+        "story-peony-main-event-weird-queue-number",
         "story-governance-principles-foundation",
         "story-image-ownership-model",
         "story-hardcoded-demo-assumptions-audit",
@@ -140,6 +141,23 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Verified on phone after Vercel deploy."
+            },
+            {
+              id: "story-peony-main-event-weird-queue-number",
+              title: "Hotfix Peony main event weird queue number",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Fix the Peony event main guest screen showing a stale or incorrect line number that does not match the guest's actual queue position.",
+              acceptanceCriteria: [
+                "Reproduce the case where the main event screen shows a number like #490 while the actual guest queue position is 23.",
+                "Identify whether the page is displaying ticket id, stale localStorage state, the wrong queue, or an aggregate queue value.",
+                "Main event guest messaging displays the correct queue status or does not display a misleading queue number.",
+                "Flower Photos and Wrapped Bouquets queue ticket displays remain correct.",
+                "The fix does not break admin queue advancement or guest served/removed behavior."
+              ],
+              notes:
+                "Captured from Product Inbox bug: Peony event - main event guest shows a weird queue number. Treat as a hotfix before deeper multi-org work."
             },
             {
               id: "story-cleanup-before-multi-org",
@@ -1416,6 +1434,15 @@ const QME_ROADMAP = {
     }
   ],
   inbox: [
+    {
+      id: "inbox-queue-length-readiness-states",
+      title: "Queue length and guest readiness states",
+      disposition: "idea",
+      summary:
+        "Explore queue messaging beyond now-serving numbers. Guests may need to know approximate queue length or progress, plus states such as getting closer, almost ready, gather nearby, ready to order/check in, and served. Useful for SOTC/headshots/resume reviews but not necessarily a current priority.",
+      linkedStoryIds: [],
+      createdAt: "2026-06-14T00:00:00.000Z"
+    },
     {
       id: "inbox-testing-workspace-issue-capture",
       title: "Testing workspace and issue capture",

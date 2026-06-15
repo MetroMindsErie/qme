@@ -5,11 +5,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
-import { listQueuesForEvent, getNowServing } from '../../lib/queueService';
+import { listQueuesForEvent, getNowServing, restoreTicketForQueue } from '../../lib/queueService';
 import { listExperiencesForEvent } from '../../lib/experienceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { formatTime } from '../../lib/utils';
-import { getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
+import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
 import type { QEvent, Queue, Experience } from '../../types';
 import '../../styles/shared.css';
@@ -271,7 +271,18 @@ export default function GuestEventDetail() {
         qs
           .filter((q) => q.status === 'active')
           .map(async (q) => {
-            const ticket = getStoredQueueTicketNumber(q.id);
+            const storedTicketId = getStoredQueueTicket(q.id);
+            let ticket = getStoredQueueTicketNumber(q.id);
+            if (storedTicketId) {
+              try {
+                const restored = await restoreTicketForQueue(Number(storedTicketId), q.id);
+                ticket = String(restored.ticketNumber);
+                localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
+                localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
+              } catch {
+                /* keep local display value when restore is unavailable */
+              }
+            }
             let ns = q.now_serving;
             try { ns = await getNowServing(q.id); } catch { /* */ }
             return { ...q, _myTicket: ticket || undefined, _nowServing: ns };

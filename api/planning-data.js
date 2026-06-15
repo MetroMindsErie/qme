@@ -129,6 +129,32 @@ function sanitizeStoryUpdates(updates = {}) {
   return clean;
 }
 
+function slugify(value = "note") {
+  return String(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 48) || "note";
+}
+
+function sanitizeInboxItem(item = {}) {
+  const allowedDispositions = new Set(["idea", "bug", "question", "risk"]);
+  const title = typeof item.title === "string" ? item.title.trim().slice(0, 160) : "";
+  const summary = typeof item.summary === "string" ? item.summary.trim().slice(0, 2500) : "";
+  const disposition = allowedDispositions.has(item.disposition) ? item.disposition : "idea";
+
+  if (!title || !summary) return null;
+
+  return {
+    id: `inbox-${slugify(title)}-${Date.now().toString(36)}`,
+    title,
+    disposition,
+    summary,
+    linkedStoryIds: [],
+    createdAt: new Date().toISOString()
+  };
+}
+
 function applyStoryUpdate(roadmap, storyId, updates) {
   let updatedStory = null;
 
@@ -155,6 +181,12 @@ function applyStoryUpdate(roadmap, storyId, updates) {
   }
 
   return updatedStory;
+}
+
+function addInboxItem(roadmap, item) {
+  roadmap.inbox = roadmap.inbox || [];
+  roadmap.inbox.unshift(item);
+  return item;
 }
 
 module.exports = async function handler(req, res) {
@@ -190,6 +222,27 @@ module.exports = async function handler(req, res) {
     }
 
     const body = parseBody(req);
+    if (body.inboxItem) {
+      const item = sanitizeInboxItem(body.inboxItem);
+      if (!item) {
+        res.status(400).json({ error: "Inbox item title and notes are required" });
+        return;
+      }
+
+      try {
+        const roadmap = await getRoadmap();
+        addInboxItem(roadmap, item);
+        await saveRoadmapToSupabase(roadmap);
+        res.setHeader("Cache-Control", "private, no-store");
+        res.status(200).json({ roadmap, inboxItem: item });
+        return;
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Unable to save inbox item" });
+        return;
+      }
+    }
+
     const storyId = String(body.storyId || "");
     const updates = sanitizeStoryUpdates(body.updates || {});
     if (!storyId || Object.keys(updates).length === 0) {

@@ -267,14 +267,16 @@ function renderStories() {
 
 function renderInbox() {
   const grid = document.getElementById("inboxGrid");
-  const notes = data.inbox.filter((item) =>
-    matchesQuery(
-      item.title,
-      item.summary,
-      item.disposition,
-      item.linkedStoryIds ? item.linkedStoryIds.join(" ") : ""
+  const notes = (data.inbox || [])
+    .filter((item) =>
+      matchesQuery(
+        item.title,
+        item.summary,
+        item.disposition,
+        item.linkedStoryIds ? item.linkedStoryIds.join(" ") : ""
+      )
     )
-  );
+    .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   grid.innerHTML = notes
     .map(
       (item) => `
@@ -325,6 +327,34 @@ function renderReview() {
       `
     )
     .join("");
+}
+
+async function saveQuickCapture(form) {
+  const message = document.getElementById("quickCaptureMessage");
+  const button = form.querySelector("button[type='submit']");
+  const formData = new FormData(form);
+  const inboxItem = {
+    title: formData.get("title"),
+    disposition: formData.get("disposition"),
+    summary: formData.get("summary")
+  };
+
+  message.textContent = "Saving...";
+  button.disabled = true;
+
+  try {
+    const response = await fetchRoadmap({
+      method: "PATCH",
+      body: JSON.stringify({ inboxItem })
+    });
+    setRoadmapData(response.roadmap);
+    form.reset();
+    document.getElementById("quickCaptureMessage").textContent = "Saved to Product Inbox. Ready for another.";
+  } catch {
+    message.textContent = "Could not save this note. Refresh and try again.";
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function renderDrawer(storyId) {
@@ -531,9 +561,16 @@ document.addEventListener("click", (event) => {
 
 document.addEventListener("submit", (event) => {
   const editor = event.target.closest("[data-editor-story-id]");
-  if (!editor) return;
-  event.preventDefault();
-  saveStoryEdit(editor);
+  const captureForm = event.target.closest("#quickCaptureForm");
+  if (editor) {
+    event.preventDefault();
+    saveStoryEdit(editor);
+    return;
+  }
+  if (captureForm) {
+    event.preventDefault();
+    saveQuickCapture(captureForm);
+  }
 });
 
 document.getElementById("drawerClose").addEventListener("click", closeDrawer);

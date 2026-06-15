@@ -1417,6 +1417,15 @@ const QME_ROADMAP = {
   ],
   inbox: [
     {
+      id: "inbox-testing-workspace-issue-capture",
+      title: "Testing workspace and issue capture",
+      disposition: "idea",
+      summary:
+        "Consider a separate testing environment or planning tab for QA notes, test plans, issue reports, screenshots/images, and event testing evidence. Start with quick text capture; image support needs a storage/security decision.",
+      linkedStoryIds: [],
+      createdAt: "2026-06-14T00:00:00.000Z"
+    },
+    {
       id: "inbox-headshot-tags",
       title: "Headshot tags from user notes",
       disposition: "promote",

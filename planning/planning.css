@@ -488,6 +488,21 @@ summary::-webkit-details-marker {
   color: #475466;
 }
 
+.status-bug {
+  background: #f3e8e8;
+  color: var(--red);
+}
+
+.status-question {
+  background: #e8f0fb;
+  color: var(--blue);
+}
+
+.status-risk {
+  background: #fff4dd;
+  color: var(--gold);
+}
+
 .sprint-grid {
   display: grid;
   gap: 1rem;
@@ -616,7 +631,7 @@ summary::-webkit-details-marker {
 
 .review-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.1fr) minmax(300px, 0.8fr);
   gap: 1rem;
 }
 
@@ -716,6 +731,42 @@ summary::-webkit-details-marker {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-soft);
+}
+
+.capture-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.capture-form label,
+.capture-form label span {
+  display: block;
+}
+
+.capture-form label span {
+  margin-bottom: 0.3rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.capture-form input,
+.capture-form select,
+.capture-form textarea {
+  width: 100%;
+  min-height: 2.35rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.capture-form textarea {
+  resize: vertical;
+  line-height: 1.45;
 }
 
 .story-editor label,

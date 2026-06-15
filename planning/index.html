@@ -104,6 +104,30 @@
           <div class="hint">Use this to decide what is real, what moves, and what waits.</div>
         </div>
         <div class="review-layout">
+          <div class="review-panel capture-panel">
+            <h3>Quick Capture</h3>
+            <form class="capture-form" id="quickCaptureForm">
+              <label>
+                <span>Title</span>
+                <input name="title" type="text" maxlength="160" placeholder="Short name for the thought" required />
+              </label>
+              <label>
+                <span>Type</span>
+                <select name="disposition">
+                  <option value="idea">Idea</option>
+                  <option value="bug">Bug</option>
+                  <option value="question">Question</option>
+                  <option value="risk">Risk</option>
+                </select>
+              </label>
+              <label>
+                <span>Notes</span>
+                <textarea name="summary" rows="6" maxlength="2500" placeholder="Drop the thought here. We can triage it later." required></textarea>
+              </label>
+              <p class="editor-message" id="quickCaptureMessage"></p>
+              <button class="editor-save" type="submit">Save to Inbox</button>
+            </form>
+          </div>
           <div class="review-panel">
             <h3>Current Sprint Review</h3>
             <div id="reviewCurrent"></div>

@@ -142,6 +142,28 @@ function sanitizeInboxItem(item = {}) {
   const title = typeof item.title === "string" ? item.title.trim().slice(0, 160) : "";
   const summary = typeof item.summary === "string" ? item.summary.trim().slice(0, 2500) : "";
   const disposition = allowedDispositions.has(item.disposition) ? item.disposition : "idea";
+  const attachments = Array.isArray(item.attachments)
+    ? item.attachments
+        .slice(0, 4)
+        .filter((attachment) => {
+          return (
+            attachment &&
+            typeof attachment.dataUrl === "string" &&
+            attachment.dataUrl.startsWith("data:image/") &&
+            attachment.dataUrl.length <= 900000
+          );
+        })
+        .map((attachment) => ({
+          name: typeof attachment.name === "string" ? attachment.name.slice(0, 120) : "capture.jpg",
+          type: typeof attachment.type === "string" ? attachment.type.slice(0, 80) : "image/jpeg",
+          dataUrl: attachment.dataUrl,
+          size: Number(attachment.size) || attachment.dataUrl.length,
+          originalType:
+            typeof attachment.originalType === "string" ? attachment.originalType.slice(0, 80) : "",
+          createdAt:
+            typeof attachment.createdAt === "string" ? attachment.createdAt : new Date().toISOString()
+        }))
+    : [];
 
   if (!title || !summary) return null;
 
@@ -150,6 +172,7 @@ function sanitizeInboxItem(item = {}) {
     title,
     disposition,
     summary,
+    attachments,
     linkedStoryIds: [],
     createdAt: new Date().toISOString()
   };

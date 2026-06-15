@@ -286,6 +286,7 @@ function renderInbox() {
             <span class="status status-${escapeHtml(item.disposition)}">${escapeHtml(item.disposition)}</span>
           </div>
           <p>${escapeHtml(item.summary)}</p>
+          ${renderAttachments(item.attachments)}
           <div class="linked-list">
             ${(item.linkedStoryIds || [])
               .map((id) => {
@@ -299,6 +300,23 @@ function renderInbox() {
       `
     )
     .join("");
+}
+
+function renderAttachments(attachments = []) {
+  if (!attachments.length) return "";
+  return `
+    <div class="attachment-grid">
+      ${attachments
+        .map(
+          (attachment) => `
+            <a class="attachment-thumb" href="${escapeHtml(attachment.dataUrl)}" target="_blank" rel="noreferrer">
+              <img src="${escapeHtml(attachment.dataUrl)}" alt="${escapeHtml(attachment.name || "Attached image")}" />
+            </a>
+          `
+        )
+        .join("")}
+    </div>
+  `;
 }
 
 function renderReview() {
@@ -329,6 +347,65 @@ function renderReview() {
     .join("");
 }
 
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+function loadImage(dataUrl) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = dataUrl;
+  });
+}
+
+async function compressImage(file) {
+  const dataUrl = await readFileAsDataUrl(file);
+  const image = await loadImage(dataUrl);
+  const maxSide = 1400;
+  const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+  const width = Math.max(1, Math.round(image.width * scale));
+  const height = Math.max(1, Math.round(image.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  context.drawImage(image, 0, 0, width, height);
+  const compressed = canvas.toDataURL("image/jpeg", 0.78);
+  return {
+    name: file.name || "capture.jpg",
+    type: "image/jpeg",
+    dataUrl: compressed,
+    size: compressed.length,
+    originalType: file.type || "",
+    createdAt: new Date().toISOString()
+  };
+}
+
+async function collectCaptureAttachments(form) {
+  const input = form.querySelector("input[name='images']");
+  const files = Array.from(input && input.files ? input.files : []).slice(0, 4);
+  const attachments = [];
+
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) continue;
+    attachments.push(await compressImage(file));
+  }
+
+  const totalSize = attachments.reduce((sum, attachment) => sum + attachment.size, 0);
+  if (totalSize > 3_000_000) {
+    throw new Error("Images are too large after compression");
+  }
+
+  return attachments;
+}
+
 async function saveQuickCapture(form) {
   const message = document.getElementById("quickCaptureMessage");
   const button = form.querySelector("button[type='submit']");
@@ -336,25 +413,38 @@ async function saveQuickCapture(form) {
   const inboxItem = {
     title: formData.get("title"),
     disposition: formData.get("disposition"),
-    summary: formData.get("summary")
+    summary: formData.get("summary"),
+    attachments: []
   };
 
-  message.textContent = "Saving...";
+  message.textContent = "Preparing...";
   button.disabled = true;
 
   try {
+    inboxItem.attachments = await collectCaptureAttachments(form);
+    message.textContent = "Saving...";
     const response = await fetchRoadmap({
       method: "PATCH",
       body: JSON.stringify({ inboxItem })
     });
     setRoadmapData(response.roadmap);
     form.reset();
+    document.getElementById("quickCapturePreview").innerHTML = "";
     document.getElementById("quickCaptureMessage").textContent = "Saved to Product Inbox. Ready for another.";
   } catch {
-    message.textContent = "Could not save this note. Refresh and try again.";
+    message.textContent = "Could not save this note. Try fewer/smaller images or refresh and try again.";
   } finally {
     button.disabled = false;
   }
+}
+
+async function previewCaptureImages(input) {
+  const preview = document.getElementById("quickCapturePreview");
+  if (!preview) return;
+  const files = Array.from(input.files || []).filter((file) => file.type.startsWith("image/")).slice(0, 4);
+  preview.innerHTML = files
+    .map((file) => `<div class="capture-preview-item">${escapeHtml(file.name || "image")}</div>`)
+    .join("");
 }
 
 function renderDrawer(storyId) {
@@ -577,6 +667,12 @@ document.getElementById("drawerClose").addEventListener("click", closeDrawer);
 document.getElementById("searchInput").addEventListener("input", (event) => {
   state.query = event.target.value.trim();
   renderAll();
+});
+
+document.addEventListener("change", (event) => {
+  if (event.target.matches("#quickCaptureForm input[name='images']")) {
+    previewCaptureImages(event.target);
+  }
 });
 
 document.addEventListener("keydown", (event) => {

@@ -124,6 +124,11 @@
                 <span>Notes</span>
                 <textarea name="summary" rows="6" maxlength="2500" placeholder="Drop the thought here. We can triage it later." required></textarea>
               </label>
+              <label>
+                <span>Images</span>
+                <input name="images" type="file" accept="image/*" multiple />
+              </label>
+              <div class="capture-preview" id="quickCapturePreview"></div>
               <p class="editor-message" id="quickCaptureMessage"></p>
               <button class="editor-save" type="submit">Save to Inbox</button>
             </form>

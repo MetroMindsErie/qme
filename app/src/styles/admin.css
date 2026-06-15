@@ -121,6 +121,26 @@
 
 /* ---- Admin responsive list item layout ---- */
 @media (max-width: 480px) {
+  .admin-event-detail-card {
+    width: 100vw !important;
+    min-height: 100svh !important;
+    max-height: none !important;
+    height: auto !important;
+    border-width: 0 !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  .admin-event-detail-card .scrollable-content {
+    flex: none !important;
+    overflow: visible !important;
+    padding-bottom: max(2rem, env(safe-area-inset-bottom)) !important;
+  }
+
+  .admin-event-detail-card .actionBtn {
+    max-width: none;
+  }
+
   .admin-list-item {
     flex-direction: column !important;
     align-items: flex-start !important;

@@ -68,7 +68,7 @@ export default function AdminEventDetail() {
   };
 
   return (
-    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+    <div className="card card-scrollable admin-event-detail-card" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header logoSrc="/images/qmeFirstLogo.jpg" titleLine1="ADMIN" titleLine2="EVENT" />
 
       {/* Event summary */}

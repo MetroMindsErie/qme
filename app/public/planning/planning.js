@@ -24,13 +24,12 @@ function flattenStories() {
   data.epics.forEach((epic) => {
     epic.themes.forEach((theme) => {
       theme.stories.forEach((story) => {
-        stories.push({
-          ...story,
+        stories.push(Object.assign({}, story, {
           epicId: epic.id,
           epicTitle: epic.title,
           themeId: theme.id,
           themeTitle: theme.title
-        });
+        }));
       });
     });
   });
@@ -82,11 +81,11 @@ function sprintOptions(selectedSprint) {
 
 function escapeHtml(value = "") {
   return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 function storyButton(story, extraClass = "") {
@@ -179,7 +178,8 @@ function renderRoadmap() {
 function renderSprints() {
   const grid = document.getElementById("sprintGrid");
   const currentSprint = data.sprints.find((sprint) => sprint.id === "now") || data.sprints[0];
-  const otherSprints = data.sprints.filter((sprint) => sprint.id !== currentSprint?.id);
+  const currentSprintId = currentSprint ? currentSprint.id : "";
+  const otherSprints = data.sprints.filter((sprint) => sprint.id !== currentSprintId);
   const completedSprints = data.completedSprints || [];
 
   function sprintColumn(sprint, variant = "") {
@@ -268,7 +268,12 @@ function renderStories() {
 function renderInbox() {
   const grid = document.getElementById("inboxGrid");
   const notes = data.inbox.filter((item) =>
-    matchesQuery(item.title, item.summary, item.disposition, item.linkedStoryIds?.join(" "))
+    matchesQuery(
+      item.title,
+      item.summary,
+      item.disposition,
+      item.linkedStoryIds ? item.linkedStoryIds.join(" ") : ""
+    )
   );
   grid.innerHTML = notes
     .map(
@@ -296,9 +301,11 @@ function renderInbox() {
 
 function renderReview() {
   const currentSprint = data.sprints.find((sprint) => sprint.id === "now");
-  const currentStories = (currentSprint?.storyIds || []).map((id) => storyById.get(id)).filter(Boolean);
+  const currentStories = ((currentSprint && currentSprint.storyIds) || [])
+    .map((id) => storyById.get(id))
+    .filter(Boolean);
   document.getElementById("reviewCurrent").innerHTML = `
-    <p class="review-goal">${escapeHtml(currentSprint?.goal || "")}</p>
+    <p class="review-goal">${escapeHtml((currentSprint && currentSprint.goal) || "")}</p>
     <div class="review-list">
       ${currentStories.map((story) => storyButton(story, "compact")).join("")}
     </div>
@@ -436,12 +443,26 @@ function setView(view) {
 }
 
 function renderAll() {
-  renderMeta();
-  renderRoadmap();
-  renderSprints();
-  renderStories();
-  renderInbox();
-  renderReview();
+  try {
+    renderMeta();
+    renderRoadmap();
+    renderSprints();
+    renderStories();
+    renderInbox();
+    renderReview();
+  } catch (error) {
+    console.error(error);
+    const activeView = document.querySelector(".view.active");
+    if (activeView) {
+      activeView.innerHTML = `
+        <div class="render-error">
+          <h2>Roadmap data could not render</h2>
+          <p>Refresh the page and try again. If this keeps happening, the browser may be using an old cached script.</p>
+        </div>
+      `;
+    }
+    throw error;
+  }
 }
 
 async function fetchRoadmap(options = {}) {

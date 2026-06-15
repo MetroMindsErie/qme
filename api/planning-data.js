@@ -129,6 +129,32 @@ function sanitizeStoryUpdates(updates = {}) {
   return clean;
 }
 
+function sanitizeNewStory(story = {}) {
+  const clean = sanitizeStoryUpdates(story);
+  const id =
+    typeof story.id === "string" && /^story-[a-z0-9-]+$/.test(story.id)
+      ? story.id
+      : "";
+
+  if (!id || !clean.title || !clean.summary) return null;
+
+  return {
+    id,
+    title: clean.title,
+    status: clean.status || "idea",
+    sprint: clean.sprint || "",
+    summary: clean.summary,
+    acceptanceCriteria: Array.isArray(story.acceptanceCriteria)
+      ? story.acceptanceCriteria
+          .filter((item) => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+          .slice(0, 8)
+      : [],
+    notes: clean.notes || ""
+  };
+}
+
 function slugify(value = "note") {
   return String(value)
     .toLowerCase()
@@ -206,6 +232,50 @@ function applyStoryUpdate(roadmap, storyId, updates) {
   return updatedStory;
 }
 
+function addStoryToTheme(roadmap, themeId, story, inboxId = "") {
+  let targetTheme = null;
+  let existingStory = null;
+
+  for (const epic of roadmap.epics || []) {
+    for (const theme of epic.themes || []) {
+      for (const existing of theme.stories || []) {
+        if (existing.id === story.id) existingStory = existing;
+      }
+      if (theme.id === themeId) targetTheme = theme;
+    }
+  }
+
+  if (!targetTheme) return null;
+
+  if (existingStory) {
+    Object.assign(existingStory, story);
+  } else {
+    targetTheme.stories = targetTheme.stories || [];
+    targetTheme.stories.push(story);
+    existingStory = story;
+  }
+
+  if (story.sprint) {
+    for (const sprint of roadmap.sprints || []) {
+      sprint.storyIds = (sprint.storyIds || []).filter((id) => id !== story.id);
+    }
+    const targetSprint = (roadmap.sprints || []).find((sprint) => sprint.id === story.sprint);
+    if (targetSprint) {
+      targetSprint.storyIds = Array.from(new Set([...(targetSprint.storyIds || []), story.id]));
+    }
+  }
+
+  if (inboxId) {
+    for (const item of roadmap.inbox || []) {
+      if (item.id !== inboxId) continue;
+      item.disposition = "promote";
+      item.linkedStoryIds = Array.from(new Set([...(item.linkedStoryIds || []), story.id]));
+    }
+  }
+
+  return existingStory;
+}
+
 function addInboxItem(roadmap, item) {
   roadmap.inbox = roadmap.inbox || [];
   roadmap.inbox.unshift(item);
@@ -262,6 +332,33 @@ module.exports = async function handler(req, res) {
       } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Unable to save inbox item" });
+        return;
+      }
+    }
+
+    if (body.newStory) {
+      const story = sanitizeNewStory(body.newStory);
+      const themeId = String(body.themeId || "");
+      const inboxId = String(body.inboxId || "");
+      if (!story || !themeId) {
+        res.status(400).json({ error: "New story and target theme are required" });
+        return;
+      }
+
+      try {
+        const roadmap = await getRoadmap();
+        const addedStory = addStoryToTheme(roadmap, themeId, story, inboxId);
+        if (!addedStory) {
+          res.status(404).json({ error: "Theme not found" });
+          return;
+        }
+        await saveRoadmapToSupabase(roadmap);
+        res.setHeader("Cache-Control", "private, no-store");
+        res.status(200).json({ roadmap, story: addedStory });
+        return;
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Unable to save new story" });
         return;
       }
     }

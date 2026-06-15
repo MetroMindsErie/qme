@@ -6,7 +6,9 @@ const state = {
   view: "roadmap",
   query: "",
   selectedStoryId: null,
-  savingStoryId: null
+  savingStoryId: null,
+  inboxDisposition: "all",
+  inboxImages: "all"
 };
 
 const statusClass = {
@@ -276,8 +278,16 @@ function renderInbox() {
         item.linkedStoryIds ? item.linkedStoryIds.join(" ") : ""
       )
     )
+    .filter((item) => state.inboxDisposition === "all" || item.disposition === state.inboxDisposition)
+    .filter((item) => {
+      const hasImages = Boolean(item.attachments && item.attachments.length);
+      if (state.inboxImages === "with") return hasImages;
+      if (state.inboxImages === "without") return !hasImages;
+      return true;
+    })
     .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-  grid.innerHTML = notes
+  grid.innerHTML = notes.length
+    ? notes
     .map(
       (item) => `
         <article class="inbox-card">
@@ -299,7 +309,8 @@ function renderInbox() {
         </article>
       `
     )
-    .join("");
+    .join("")
+    : `<p class="empty">No inbox items match these filters.</p>`;
 }
 
 function renderAttachments(attachments = []) {
@@ -667,6 +678,24 @@ document.getElementById("drawerClose").addEventListener("click", closeDrawer);
 document.getElementById("searchInput").addEventListener("input", (event) => {
   state.query = event.target.value.trim();
   renderAll();
+});
+
+document.getElementById("inboxDispositionFilter").addEventListener("change", (event) => {
+  state.inboxDisposition = event.target.value;
+  renderInbox();
+});
+
+document.getElementById("inboxImageFilter").addEventListener("change", (event) => {
+  state.inboxImages = event.target.value;
+  renderInbox();
+});
+
+document.getElementById("clearInboxFilters").addEventListener("click", () => {
+  state.inboxDisposition = "all";
+  state.inboxImages = "all";
+  document.getElementById("inboxDispositionFilter").value = "all";
+  document.getElementById("inboxImageFilter").value = "all";
+  renderInbox();
 });
 
 document.addEventListener("change", (event) => {

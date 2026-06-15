@@ -608,6 +608,52 @@ summary::-webkit-details-marker {
   gap: 1rem;
 }
 
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.65rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.filter-bar label,
+.filter-bar label span {
+  display: block;
+}
+
+.filter-bar label span {
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.filter-bar select,
+.filter-clear {
+  min-height: 2.35rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.filter-bar select {
+  min-width: 10rem;
+  padding: 0 0.65rem;
+}
+
+.filter-clear {
+  padding: 0 0.8rem;
+  color: #39465a;
+  font-weight: 800;
+}
+
 .inbox-card,
 .review-panel,
 .decision-card {
@@ -933,6 +979,16 @@ summary::-webkit-details-marker {
 
   .table-head {
     display: none;
+  }
+
+  .filter-bar {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .filter-bar select,
+  .filter-clear {
+    width: 100%;
   }
 
   .editor-grid {

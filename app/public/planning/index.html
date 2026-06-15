@@ -92,6 +92,30 @@
           </div>
           <div class="hint">A place for emailed thoughts before they become stories or get parked.</div>
         </div>
+        <div class="filter-bar" aria-label="Product Inbox filters">
+          <label>
+            <span>Type</span>
+            <select id="inboxDispositionFilter">
+              <option value="all">All</option>
+              <option value="bug">Bug</option>
+              <option value="idea">Idea</option>
+              <option value="question">Question</option>
+              <option value="risk">Risk</option>
+              <option value="promote">Promote</option>
+              <option value="consider">Consider</option>
+              <option value="future">Future</option>
+            </select>
+          </label>
+          <label>
+            <span>Images</span>
+            <select id="inboxImageFilter">
+              <option value="all">All</option>
+              <option value="with">With images</option>
+              <option value="without">Without images</option>
+            </select>
+          </label>
+          <button class="filter-clear" id="clearInboxFilters" type="button">Clear</button>
+        </div>
         <div class="inbox-grid" id="inboxGrid"></div>
       </section>
 

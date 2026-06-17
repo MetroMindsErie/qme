@@ -1,0 +1,247 @@
+:root {
+  --flexlink-blue: #001f9f;
+  --growu-green: #8bc447;
+  --ink: #1f2430;
+  --muted: #657083;
+  --paper: #fffdf7;
+  --line: rgba(107, 160, 194, 0.34);
+  --rule: rgba(0, 31, 159, 0.14);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background:
+    linear-gradient(var(--line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line) 1px, transparent 1px),
+    #f7fbff;
+  background-size: 32px 32px;
+}
+
+body {
+  margin: 0;
+  min-height: 100%;
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.page-shell {
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: 28px 16px 56px;
+}
+
+.sheet {
+  min-height: calc(100vh - 56px);
+  padding: clamp(22px, 4vw, 46px);
+  background:
+    linear-gradient(90deg, rgba(220, 90, 90, 0.22) 0 2px, transparent 2px 100%),
+    repeating-linear-gradient(to bottom, transparent 0 31px, var(--line) 31px 32px),
+    rgba(255, 253, 247, 0.94);
+  background-position: 78px 0, 0 0, 0 0;
+  border: 1px solid rgba(0, 31, 159, 0.12);
+  box-shadow: 0 18px 48px rgba(30, 45, 80, 0.16);
+}
+
+.brand-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+  padding-left: clamp(12px, 3vw, 42px);
+}
+
+.flexlink-logo {
+  width: min(48vw, 340px);
+  height: auto;
+  margin-top: 18px;
+  display: block;
+}
+
+.growu-logo {
+  width: min(26vw, 150px);
+  height: auto;
+  display: block;
+  border-radius: 2px;
+}
+
+.intro {
+  margin: clamp(28px, 6vw, 54px) 0 26px;
+  padding-left: clamp(12px, 3vw, 42px);
+  border-bottom: 2px solid var(--rule);
+  padding-bottom: 20px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--flexlink-blue);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  max-width: 720px;
+  color: var(--ink);
+  font-size: clamp(2rem, 5vw, 3.35rem);
+  line-height: 1.04;
+  font-weight: 750;
+  letter-spacing: 0;
+}
+
+.lede {
+  max-width: 680px;
+  margin: 14px 0 0;
+  color: #334056;
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.5;
+}
+
+.deadline {
+  display: inline-block;
+  margin: 16px 0 0;
+  color: var(--flexlink-blue);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.question-form {
+  display: grid;
+  gap: 28px;
+  padding-left: clamp(12px, 3vw, 42px);
+}
+
+.question {
+  display: grid;
+  gap: 8px;
+}
+
+.question-text {
+  color: var(--flexlink-blue);
+  font-size: 0.96rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.line-answer {
+  width: 100%;
+  min-height: 48px;
+  padding: 3px 0 0;
+  border: 0;
+  border-radius: 0;
+  outline: 0;
+  resize: none;
+  overflow: hidden;
+  color: var(--ink);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(0, 31, 159, 0.3) 31px 32px);
+  font: 1.08rem/32px Arial, Helvetica, sans-serif;
+}
+
+.line-answer:focus {
+  background:
+    linear-gradient(to right, rgba(139, 196, 71, 0.18), transparent 28%),
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(0, 31, 159, 0.42) 31px 32px);
+}
+
+.line-answer.short {
+  min-height: 38px;
+}
+
+.line-answer.medium {
+  min-height: 96px;
+}
+
+.line-answer.long {
+  min-height: 224px;
+}
+
+.bot-field {
+  position: absolute;
+  left: -9999px;
+  opacity: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 8px 0 16px;
+}
+
+button {
+  min-height: 44px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 3px;
+  color: white;
+  background: var(--flexlink-blue);
+  font-size: 0.95rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+button:hover,
+button:focus {
+  background: #00166f;
+}
+
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.message {
+  min-height: 24px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.message.success {
+  color: #3d7d18;
+}
+
+.message.error {
+  color: #a53030;
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    padding: 0;
+  }
+
+  .sheet {
+    min-height: 100vh;
+    border: 0;
+    box-shadow: none;
+    background-position: 34px 0, 0 0, 0 0;
+  }
+
+  .brand-row {
+    align-items: center;
+    gap: 14px;
+  }
+
+  .flexlink-logo {
+    width: min(62vw, 280px);
+    margin-top: 8px;
+  }
+
+  .growu-logo {
+    width: min(28vw, 104px);
+  }
+
+  .intro,
+  .question-form,
+  .brand-row {
+    padding-left: 0;
+  }
+}

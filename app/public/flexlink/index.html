@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Flexlink Meeting Input</title>
+    <link rel="stylesheet" href="/flexlink/styles.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="sheet" aria-labelledby="page-title">
+        <header class="brand-row">
+          <img class="flexlink-logo" src="/flexlink/image2.png" alt="Flexlink LLC - Defining Material Innovation" />
+          <img class="growu-logo" src="/flexlink/image3.jpg" alt="growU" />
+        </header>
+
+        <div class="intro">
+          <p class="eyebrow">Pre-meeting input</p>
+          <h1 id="page-title">Flexlink digital transformation discussion</h1>
+          <p class="lede">
+            Please share a few notes before Thursday's meeting. Short answers are fine; longer context is welcome.
+          </p>
+          <p class="deadline">Requested by 9:00 AM Thursday for the 10:30 AM discussion.</p>
+        </div>
+
+        <form id="flexlink-form" class="question-form" autocomplete="on">
+          <label class="question">
+            <span class="question-text">First and last name</span>
+            <textarea name="name" class="line-answer short" rows="1" required></textarea>
+          </label>
+
+          <label class="question">
+            <span class="question-text">Title</span>
+            <textarea name="title" class="line-answer short" rows="1" required></textarea>
+          </label>
+
+          <label class="question">
+            <span class="question-text">Short job description</span>
+            <textarea name="jobDescription" class="line-answer medium" rows="3" required></textarea>
+          </label>
+
+          <label class="question">
+            <span class="question-text">Reason for software changes / top reasons for change / top concerns</span>
+            <textarea name="changeReasons" class="line-answer long" rows="7" required></textarea>
+          </label>
+
+          <label class="bot-field">
+            Website
+            <input name="website" tabindex="-1" autocomplete="off" />
+          </label>
+
+          <div class="actions">
+            <button type="submit">Submit notes</button>
+            <p id="form-message" class="message" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <script src="/flexlink/script.js"></script>
+  </body>
+</html>

@@ -12,6 +12,14 @@
       "destination": "/planning/index.html"
     },
     {
+      "source": "/flexlink",
+      "destination": "/flexlink/index.html"
+    },
+    {
+      "source": "/flexlink/",
+      "destination": "/flexlink/index.html"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

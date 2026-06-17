@@ -1,5 +1,7 @@
 (function () {
+  const accessForm = document.getElementById("access-form");
   const form = document.getElementById("flexlink-form");
+  const accessMessage = document.getElementById("access-message");
   const message = document.getElementById("form-message");
   const fields = Array.from(document.querySelectorAll(".line-answer"));
 
@@ -17,6 +19,46 @@
     message.textContent = text;
     message.className = `message ${type || ""}`.trim();
   }
+
+  function setAccessMessage(text, type) {
+    accessMessage.textContent = text;
+    accessMessage.className = `message ${type || ""}`.trim();
+  }
+
+  function unlockForm() {
+    accessForm.classList.add("is-hidden");
+    form.classList.remove("is-hidden");
+  }
+
+  accessForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const submitButton = accessForm.querySelector("button[type='submit']");
+    const data = Object.fromEntries(new FormData(accessForm).entries());
+
+    submitButton.disabled = true;
+    setAccessMessage("Checking...", "");
+
+    try {
+      const response = await fetch("/api/flexlink-intake", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "verify",
+          pin: String(data.pin || "").trim()
+        })
+      });
+
+      if (!response.ok) throw new Error("Access denied");
+
+      setAccessMessage("", "");
+      unlockForm();
+    } catch (error) {
+      console.error(error);
+      setAccessMessage("Access code not recognized.", "error");
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();

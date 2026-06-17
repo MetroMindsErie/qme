@@ -24,7 +24,18 @@
           <p class="deadline">Requested by 9:00 AM on 6/18 for the 10:30 AM discussion.</p>
         </div>
 
-        <form id="flexlink-form" class="question-form" autocomplete="on">
+        <form id="access-form" class="access-form" autocomplete="off">
+          <label class="question">
+            <span class="question-text">Access code</span>
+            <input name="pin" class="access-input" inputmode="numeric" autocomplete="off" required />
+          </label>
+          <div class="actions">
+            <button type="submit">Continue</button>
+            <p id="access-message" class="message" role="status" aria-live="polite"></p>
+          </div>
+        </form>
+
+        <form id="flexlink-form" class="question-form is-hidden" autocomplete="on">
           <label class="question">
             <span class="question-text">First and last name</span>
             <textarea name="name" class="line-answer short" rows="1" required></textarea>

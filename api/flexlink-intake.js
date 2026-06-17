@@ -1,4 +1,21 @@
+const crypto = require("crypto");
+
 const INTAKE_DOCUMENT_ID = "flexlink-intake-2026-06-18";
+const ACCESS_HASH = "3d1d6f19aaabe37e908b01aabe9314e61efc9d3e3db37c2f45926f08c11d6cbe";
+const COOKIE_NAME = "flexlink_intake_access";
+const ONE_DAY = 60 * 60 * 24;
+
+function hash(value = "") {
+  return crypto.createHash("sha256").update(String(value)).digest("hex");
+}
+
+function hasAccessCookie(req) {
+  const cookie = req.headers.cookie || "";
+  return cookie
+    .split(";")
+    .map((part) => part.trim())
+    .some((part) => part === `${COOKIE_NAME}=${ACCESS_HASH}`);
+}
 
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -84,6 +101,25 @@ module.exports = async function handler(req, res) {
   }
 
   const body = parseBody(req);
+  if (body.action === "verify") {
+    if (hash(String(body.pin || "").trim()) !== ACCESS_HASH) {
+      res.status(401).json({ error: "Invalid access code" });
+      return;
+    }
+
+    res.setHeader(
+      "Set-Cookie",
+      `${COOKIE_NAME}=${ACCESS_HASH}; Max-Age=${ONE_DAY}; Path=/; HttpOnly; Secure; SameSite=Strict`
+    );
+    res.status(200).json({ ok: true });
+    return;
+  }
+
+  if (!hasAccessCookie(req)) {
+    res.status(401).json({ error: "Access code required" });
+    return;
+  }
+
   const entry = {
     id: `flexlink-${Date.now().toString(36)}`,
     name: cleanText(body.name, 160),

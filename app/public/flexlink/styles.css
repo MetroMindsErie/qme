@@ -37,7 +37,7 @@ body {
 .sheet {
   min-height: calc(100vh - 56px);
   padding: clamp(22px, 4vw, 46px);
-  background: rgba(255, 255, 255, 0.58);
+  background: transparent;
   background-position: 78px 0, 0 0, 0 0;
   border: 0;
   box-shadow: none;
@@ -63,6 +63,8 @@ body {
   height: auto;
   display: block;
   border-radius: 2px;
+  opacity: 0.72;
+  mix-blend-mode: multiply;
 }
 
 .intro {
@@ -83,20 +85,21 @@ body {
 
 h1 {
   margin: 0;
-  max-width: 720px;
+  max-width: 920px;
   color: var(--ink);
-  font-size: clamp(2rem, 5vw, 3.35rem);
+  font-size: clamp(2rem, 4.2vw, 3rem);
   line-height: 1.04;
   font-weight: 750;
   letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .lede {
-  max-width: 680px;
+  max-width: 860px;
   margin: 14px 0 0;
   color: #334056;
-  font-size: clamp(1rem, 2vw, 1.18rem);
-  line-height: 1.5;
+  font-size: clamp(0.98rem, 1.55vw, 1.08rem);
+  line-height: 1.42;
 }
 
 .deadline {
@@ -135,9 +138,7 @@ h1 {
   resize: none;
   overflow: hidden;
   color: var(--ink);
-  background:
-    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(0, 31, 159, 0.22) 31px 32px),
-    rgba(255, 255, 255, 0.96);
+  background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 7px 20px rgba(30, 45, 80, 0.08);
   font: 1.08rem/32px Arial, Helvetica, sans-serif;
 }
@@ -146,7 +147,6 @@ h1 {
   border-color: rgba(0, 31, 159, 0.52);
   background:
     linear-gradient(to right, rgba(139, 196, 71, 0.18), transparent 28%),
-    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(0, 31, 159, 0.34) 31px 32px),
     #ffffff;
   box-shadow: 0 0 0 3px rgba(139, 196, 71, 0.22), 0 7px 20px rgba(30, 45, 80, 0.08);
 }
@@ -245,5 +245,9 @@ button:disabled {
   .question-form,
   .brand-row {
     padding-left: 0;
+  }
+
+  h1 {
+    white-space: normal;
   }
 }

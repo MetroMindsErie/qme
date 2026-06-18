@@ -4,7 +4,7 @@ import Header from '../../components/Header';
 import { createEce, getEce, updateEce } from '../../lib/eceService';
 import { getEvent } from '../../lib/eventService';
 import { listExpiesForOrganization } from '../../lib/expieService';
-import { listQueuesForEvent } from '../../lib/queueService';
+import { createQueue, listQueuesForEvent } from '../../lib/queueService';
 import { slugify } from '../../lib/utils';
 import type { CreateEceInput, Expie, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
@@ -138,11 +138,36 @@ export default function AdminEceForm() {
 
     setSaving(true);
     try {
+      let queueId = form.queue_id;
+
+      if (form.type === 'queue' && !queueId) {
+        const existingQueue = queues.find((queue) => queue.slug === form.slug);
+
+        if (existingQueue) {
+          queueId = existingQueue.id;
+        } else {
+          const queue = await createQueue({
+            event_id: eventId,
+            name: form.name.trim(),
+            slug: form.slug.trim(),
+            description: form.description || '',
+            image_url: form.image_url || '',
+            status: 'active',
+          });
+          queueId = queue.id;
+        }
+      }
+
+      const payload = {
+        ...form,
+        queue_id: form.type === 'queue' ? queueId : null,
+      };
+
       if (isEdit && eceId) {
-        await updateEce(eceId, form);
+        await updateEce(eceId, payload);
       } else {
         await createEce({
-          ...form,
+          ...payload,
           event_id: eventId,
         });
       }

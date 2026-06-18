@@ -206,7 +206,7 @@ export default function AdminEventDetail() {
 
         {queues.length === 0 && (
           <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
-            No standalone queue engines yet. Queue-type eCes will create or link these automatically in a later pass.
+            No standalone queue engines yet. Queue-type eCes create or link these automatically when saved.
           </p>
         )}
 

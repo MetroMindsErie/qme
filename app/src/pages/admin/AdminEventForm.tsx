@@ -2,20 +2,24 @@
  * Admin: Create or Edit an event.
  */
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { createEvent, getEvent, updateEvent } from '../../lib/eventService';
+import { listOrganizations } from '../../lib/organizationService';
 import { slugify } from '../../lib/utils';
-import type { CreateEventInput } from '../../types';
+import type { CreateEventInput, Organization } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
 export default function AdminEventForm() {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
+  const [searchParams] = useSearchParams();
   const isEdit = Boolean(eventId);
+  const requestedOrganizationId = searchParams.get('organizationId');
 
   const [form, setForm] = useState<CreateEventInput>({
+    organization_id: null,
     name: '',
     slug: '',
     description: '',
@@ -28,37 +32,46 @@ export default function AdminEventForm() {
     status: 'draft',
   });
   const [autoSlug, setAutoSlug] = useState(true);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(isEdit);
 
-  // Load existing event for editing
   useEffect(() => {
-    if (!eventId) return;
     (async () => {
       try {
-        const ev = await getEvent(eventId);
-        setForm({
-          name: ev.name,
-          slug: ev.slug,
-          description: ev.description,
-          location: ev.location,
-          image_url: ev.image_url,
-          event_date: ev.event_date,
-          start_time: ev.start_time,
-          end_time: ev.end_time,
-          timezone: ev.timezone,
-          status: ev.status,
-        });
-        setAutoSlug(false);
+        const orgs = await listOrganizations();
+        setOrganizations(orgs);
+
+        if (eventId) {
+          const ev = await getEvent(eventId);
+          setForm({
+            organization_id: ev.organization_id,
+            name: ev.name,
+            slug: ev.slug,
+            description: ev.description,
+            location: ev.location,
+            image_url: ev.image_url,
+            event_date: ev.event_date,
+            start_time: ev.start_time,
+            end_time: ev.end_time,
+            timezone: ev.timezone,
+            status: ev.status,
+          });
+          setAutoSlug(false);
+        } else if (requestedOrganizationId && orgs.some((org) => org.id === requestedOrganizationId)) {
+          setForm((prev) => ({ ...prev, organization_id: requestedOrganizationId }));
+        } else if (orgs.length === 1) {
+          setForm((prev) => ({ ...prev, organization_id: orgs[0].id }));
+        }
       } catch (e) {
         console.error('Failed to load event', e);
-        alert('Event not found');
-        navigate('/admin/events');
+        alert(eventId ? 'Event not found' : 'Could not load organizations');
+        if (eventId) navigate('/admin/events');
       } finally {
         setLoading(false);
       }
     })();
-  }, [eventId, navigate]);
+  }, [eventId, navigate, requestedOrganizationId]);
 
   function handleChange(field: keyof CreateEventInput, value: string) {
     setForm((prev) => {
@@ -139,6 +152,22 @@ export default function AdminEventForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
+        <div style={fieldStyle}>
+          <label style={labelStyle}>Organization</label>
+          <select
+            style={inputStyle}
+            value={form.organization_id || ''}
+            onChange={(e) => handleChange('organization_id', e.target.value)}
+          >
+            <option value="">No organization assigned</option>
+            {organizations.map((org) => (
+              <option key={org.id} value={org.id}>
+                {org.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <div style={fieldStyle}>
           <label style={labelStyle}>Event Name *</label>
           <input

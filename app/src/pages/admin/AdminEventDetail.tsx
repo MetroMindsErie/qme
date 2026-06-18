@@ -5,9 +5,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { getEvent } from '../../lib/eventService';
+import { deleteExperience, listExperiencesForEvent } from '../../lib/experienceService';
 import { listQueuesForEvent, deleteQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
-import type { QEvent, Queue } from '../../types';
+import type { Experience, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
@@ -16,17 +17,20 @@ export default function AdminEventDetail() {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<Queue[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
     try {
-      const [ev, qs] = await Promise.all([
+      const [ev, qs, exps] = await Promise.all([
         getEvent(eventId),
         listQueuesForEvent(eventId),
+        listExperiencesForEvent(eventId),
       ]);
       setEvent(ev);
       setQueues(qs);
+      setExperiences(exps);
     } catch (e) {
       console.error('Failed to load event', e);
       alert('Event not found');
@@ -48,6 +52,17 @@ export default function AdminEventDetail() {
     } catch (e) {
       console.error('Delete queue failed', e);
       alert('Failed to delete queue.');
+    }
+  }
+
+  async function handleDeleteExperience(expId: string, name: string) {
+    if (!confirm(`Delete experience "${name}"?`)) return;
+    try {
+      await deleteExperience(expId);
+      setExperiences((prev) => prev.filter((exp) => exp.id !== expId));
+    } catch (e) {
+      console.error('Delete experience failed', e);
+      alert('Failed to delete experience.');
     }
   }
 
@@ -107,6 +122,75 @@ export default function AdminEventDetail() {
 
       {/* Queues section */}
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Experiences</h2>
+            <button
+              className="actionBtn actionBtn-primary"
+              style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={() => navigate(`/admin/events/${eventId}/experiences/new`)}
+            >
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Experience
+            </button>
+          </div>
+
+          {experiences.length === 0 && (
+            <p style={{ color: '#999', padding: '1.5rem 0', textAlign: 'center' }}>
+              No experiences yet. Add one to model check-in, queues, resources, sessions, or information cards.
+            </p>
+          )}
+
+          {experiences.map((exp) => (
+            <div
+              key={exp.id}
+              style={{
+                border: '1px solid #e0e0e0',
+                borderRadius: 10,
+                padding: 'clamp(0.75rem, 2vw, 1rem)',
+                marginBottom: '0.75rem',
+                background: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap' as const,
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontWeight: 800, fontSize: '1.02rem', color: '#2f3e4f', display: 'block', marginBottom: '0.35rem' }}>
+                  {exp.name}
+                </span>
+                <div style={{ fontSize: '0.82rem', color: '#555', lineHeight: 1.5 }}>
+                  {exp.type.replace('_', '-')} · {exp.status}
+                  {exp.location ? ` · ${exp.location}` : ''}
+                  {exp.queue_id ? ' · linked queue' : ''}
+                </div>
+                {exp.description && (
+                  <div style={{ fontSize: '0.88rem', color: '#666', marginTop: '0.35rem' }}>
+                    {exp.description}
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' as const }}>
+                <button
+                  className="actionBtn actionBtn-secondary"
+                  style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                  onClick={() => navigate(`/admin/events/${eventId}/experiences/${exp.id}/edit`)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="actionBtn actionBtn-danger"
+                  style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                  onClick={() => handleDeleteExperience(exp.id, exp.name)}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
           <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Queues</h2>
           <button

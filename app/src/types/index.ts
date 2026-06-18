@@ -2,6 +2,7 @@
 
 export interface QEvent {
   id: string;           // UUID
+  organization_id: string | null;
   name: string;
   slug: string;
   description: string;
@@ -12,6 +13,17 @@ export interface QEvent {
   end_time: string | null;
   timezone: string;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  logo_url: string;
+  status: 'active' | 'inactive' | 'archived';
   created_at: string;
   updated_at: string;
 }
@@ -45,6 +57,7 @@ export type CreateEventInput = Pick<
   QEvent,
   'name' | 'slug' | 'description' | 'location' | 'image_url' | 'timezone' | 'status'
 > & {
+  organization_id?: string | null;
   event_date?: string | null;
   start_time?: string | null;
   end_time?: string | null;
@@ -65,14 +78,43 @@ export interface Experience {
   id: string;
   event_id: string;
   org_id: string | null;
+  type: 'info' | 'check_in' | 'queue' | 'resource' | 'session';
+  queue_id: string | null;
   name: string;
   slug: string;
   description: string;
   image_url: string;
+  location: string;
+  sort_order: number;
+  starts_at: string | null;
+  ends_at: string | null;
+  metadata: Record<string, unknown>;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
   created_at: string;
   updated_at: string;
 }
+
+export type CreateOrganizationInput = Pick<
+  Organization,
+  'name' | 'slug' | 'description' | 'logo_url' | 'status'
+>;
+
+export type UpdateOrganizationInput = Partial<CreateOrganizationInput>;
+
+export type CreateExperienceInput = Pick<
+  Experience,
+  'event_id' | 'name' | 'slug' | 'description' | 'image_url' | 'type' | 'status'
+> & {
+  org_id?: string | null;
+  queue_id?: string | null;
+  location?: string;
+  sort_order?: number;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type UpdateExperienceInput = Partial<Omit<CreateExperienceInput, 'event_id' | 'org_id'>>;
 
 export interface EventCheckIn {
   id: string;

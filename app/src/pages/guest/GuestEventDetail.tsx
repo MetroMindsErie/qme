@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
 import { listQueuesForEvent, getNowServing, restoreTicketForQueue } from '../../lib/queueService';
-import { listExperiencesForEvent } from '../../lib/experienceService';
+import { listActiveExperiencesForEvent } from '../../lib/experienceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
@@ -36,9 +36,7 @@ interface StaticActivity {
   menuConfig?: MenuConfig;
 }
 
-// Demo toggles: keep these sections available in code without showing them.
-const SHOW_DB_EXPERIENCES = false;
-const SHOW_STATIC_ACTIVITIES = true;
+const PEONY_EVENT_SLUG = 'peony-festival';
 
 const PICK_YOUR_OWN_MENU: MenuConfig = {
   id: 'pick-your-own',
@@ -227,6 +225,7 @@ export default function GuestEventDetail() {
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
   const [hasEventCheckIn, setHasEventCheckIn] = useState(false);
   const [eventCheckInTicketType, setEventCheckInTicketType] = useState<'general' | 'flowers' | null>(null);
+  const isPeonyEvent = eventSlug === PEONY_EVENT_SLUG;
 
   const refresh = useCallback(async () => {
     if (!eventSlug) return;
@@ -290,7 +289,7 @@ export default function GuestEventDetail() {
       );
       setQueues(enriched.filter((q) => q.slug !== 'wrapped-bouquets' || checkInTicketType === 'flowers'));
 
-      const exps = SHOW_DB_EXPERIENCES ? await listExperiencesForEvent(ev.id) : [];
+      const exps = eventSlug === PEONY_EVENT_SLUG ? [] : await listActiveExperiencesForEvent(ev.id);
       setExperiences(exps);
 
       setLastUpdated('just now');
@@ -327,7 +326,7 @@ export default function GuestEventDetail() {
     );
   }
 
-  const visibleStaticActivities = SHOW_STATIC_ACTIVITIES ? PEONY_ACTIVITIES : [];
+  const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
   const sessionCount = queues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + experiences.length;
 
   return (
@@ -390,11 +389,15 @@ export default function GuestEventDetail() {
             </div>
             <div className="ed-activity-body">
               <div className="ed-activity-name-row">
-                <span className="ed-activity-name">Check In at Mobile Bar</span>
+                <span className="ed-activity-name">{isPeonyEvent ? 'Check In at Mobile Bar' : 'Event Check-In'}</span>
                 <span className="ed-badge ed-badge-active">{hasEventCheckIn ? 'DONE' : 'START HERE'}</span>
               </div>
               <div className="ed-activity-desc">
-                {eventCheckInTicketType === 'flowers'
+                {!isPeonyEvent && hasEventCheckIn
+                  ? 'You are checked in for this event.'
+                  : !isPeonyEvent
+                  ? 'Enter your name when you arrive so the event team can confirm your check-in.'
+                  : eventCheckInTicketType === 'flowers'
                   ? 'You are checked in with flowers access. Use the Bouquet Bar option below when ready.'
                   : hasEventCheckIn
                   ? 'You are checked in. Please stay near the mobile bar if the team needs you.'
@@ -466,7 +469,14 @@ export default function GuestEventDetail() {
           })}
 
           {/* Dynamic experiences from DB */}
-          {experiences.map((exp) => (
+          {experiences.map((exp) => {
+            const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
+            const actionHref = exp.type === 'check_in'
+              ? `/events/${eventSlug}/check-in`
+              : linkedQueue
+              ? `/events/${eventSlug}/q/${linkedQueue.slug}`
+              : '';
+            return (
             <div key={exp.id} className="ed-activity-card ed-activity-card-info">
               <div className="ed-activity-icon-wrap" style={{ background: '#E8F5E9' }}>
                 {exp.image_url
@@ -485,7 +495,8 @@ export default function GuestEventDetail() {
                 <span style={{ color: '#e0e0e0' }}>›</span>
               </div>
             </div>
-          ))}
+            );
+          })}
 
           {/* Static informational activities */}
           {visibleStaticActivities.map((act) => {

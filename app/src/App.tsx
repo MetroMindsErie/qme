@@ -7,6 +7,9 @@ import AdminEventDetail from './pages/admin/AdminEventDetail';
 import AdminEventCheckIns from './pages/admin/AdminEventCheckIns';
 import AdminQueueForm from './pages/admin/AdminQueueForm';
 import AdminQueueDashboard from './pages/admin/AdminQueueDashboard';
+import AdminOrganizationList from './pages/admin/AdminOrganizationList';
+import AdminOrganizationDetail from './pages/admin/AdminOrganizationDetail';
+import AdminExperienceForm from './pages/admin/AdminExperienceForm';
 
 // ----- Demo pages -----
 import GuestEventDetail from './pages/guest/GuestEventDetail';
@@ -20,31 +23,31 @@ import './styles/shared.css';
 const DEMO_EVENT = 'peony-festival';
 
 // Guard: only allow the demo event slug, else redirect to /demo
-function DemoEventGuard() {
+function EventPage() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
-  if (eventSlug !== DEMO_EVENT) return <Navigate to="/demo" replace />;
+  if (!eventSlug) return <Navigate to="/demo" replace />;
   return <GuestEventDetail />;
 }
 
-function DemoCheckInGuard() {
+function EventCheckInPage() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
-  if (eventSlug !== DEMO_EVENT) return <Navigate to="/demo" replace />;
+  if (!eventSlug) return <Navigate to="/demo" replace />;
   return <GuestEventCheckIn />;
 }
 
 // Skip the queue landing page — go directly to ticket claim
-function DemoQueueSkip() {
+function QueueSkip() {
   const { eventSlug, queueSlug } = useParams<{ eventSlug: string; queueSlug: string }>();
-  if (eventSlug !== DEMO_EVENT || !queueSlug) {
+  if (!eventSlug || !queueSlug) {
     return <Navigate to="/demo" replace />;
   }
   return <Navigate to={`/events/${eventSlug}/q/${queueSlug}/ticket`} replace />;
 }
 
 // Guard: allow any queue under the demo event
-function DemoTicketGuard() {
+function QueueTicketPage() {
   const { eventSlug, queueSlug } = useParams<{ eventSlug: string; queueSlug: string }>();
-  if (eventSlug !== DEMO_EVENT || !queueSlug) {
+  if (!eventSlug || !queueSlug) {
     return <Navigate to="/demo" replace />;
   }
   return <GuestQueueTicket />;
@@ -64,19 +67,23 @@ function App() {
 
         {/* ===== Guest demo flow ===== */}
         {/* Event detail — guarded to ipitch-2026 only */}
-        <Route path="/events/:eventSlug" element={<DemoEventGuard />} />
-        <Route path="/events/:eventSlug/check-in" element={<DemoCheckInGuard />} />
+        <Route path="/events/:eventSlug" element={<EventPage />} />
+        <Route path="/events/:eventSlug/check-in" element={<EventCheckInPage />} />
         {/* Queue landing skipped — jumps straight to ticket */}
-        <Route path="/events/:eventSlug/q/:queueSlug" element={<DemoQueueSkip />} />
+        <Route path="/events/:eventSlug/q/:queueSlug" element={<QueueSkip />} />
         {/* Ticket page — guarded to demo queue only */}
-        <Route path="/events/:eventSlug/q/:queueSlug/ticket" element={<DemoTicketGuard />} />
+        <Route path="/events/:eventSlug/q/:queueSlug/ticket" element={<QueueTicketPage />} />
 
         {/* ===== Admin: kept for operator use ===== */}
+        <Route path="/admin/organizations" element={<AdminOrganizationList />} />
+        <Route path="/admin/organizations/:organizationId" element={<AdminOrganizationDetail />} />
         <Route path="/admin/events" element={<AdminEventList />} />
         <Route path="/admin/events/new" element={<AdminEventForm />} />
         <Route path="/admin/events/:eventId" element={<AdminEventDetail />} />
         <Route path="/admin/events/:eventId/check-ins" element={<AdminEventCheckIns />} />
         <Route path="/admin/events/:eventId/edit" element={<AdminEventForm />} />
+        <Route path="/admin/events/:eventId/experiences/new" element={<AdminExperienceForm />} />
+        <Route path="/admin/events/:eventId/experiences/:experienceId/edit" element={<AdminExperienceForm />} />
         <Route path="/admin/events/:eventId/queues/new" element={<AdminQueueForm />} />
         <Route path="/admin/events/:eventId/queues/:queueId" element={<AdminQueueDashboard />} />
         <Route path="/admin/events/:eventId/queues/:queueId/edit" element={<AdminQueueForm />} />

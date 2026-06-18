@@ -20,9 +20,9 @@ interface GuestEventCheckInProps {
 
 export default function GuestEventCheckIn({
   checkInCode = null,
-  title = 'Check In at Mobile Bar',
-  intro = 'Start here when you arrive. Enter your name so the festival team can prepare your admission and bouquet access.',
-  confirmation = 'Please stay near the mobile bar while the team gets ready for you.',
+  title = 'Event Check-In',
+  intro = 'Start here when you arrive. Enter your name so the event team can confirm your check-in.',
+  confirmation = 'You are checked in. Please return to the event page for next steps.',
 }: GuestEventCheckInProps) {
   const navigate = useNavigate();
   const { eventSlug } = useParams<{ eventSlug: string }>();

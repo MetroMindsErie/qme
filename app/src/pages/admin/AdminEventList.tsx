@@ -54,13 +54,22 @@ export default function AdminEventList() {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0', flexWrap: 'wrap', gap: '0.5rem' }}>
         <h1 className="headline" style={{ fontSize: 'clamp(1.1rem, 3vw, 1.5rem)', margin: 0, fontWeight: 700 }}>Events</h1>
-        <button
-          className="actionBtn actionBtn-primary"
-          style={{ margin: 0, width: 'auto', padding: '0.6rem 1.4rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-          onClick={() => navigate('/admin/events/new')}
-        >
-          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>+</span> New Event
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ margin: 0, width: 'auto', padding: '0.6rem 1rem', fontSize: '0.9rem' }}
+            onClick={() => navigate('/admin/organizations')}
+          >
+            Organizations
+          </button>
+          <button
+            className="actionBtn actionBtn-primary"
+            style={{ margin: 0, width: 'auto', padding: '0.6rem 1.4rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            onClick={() => navigate('/admin/events/new')}
+          >
+            <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>+</span> New Event
+          </button>
+        </div>
       </div>
 
       {loading && <p style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>Loading…</p>}

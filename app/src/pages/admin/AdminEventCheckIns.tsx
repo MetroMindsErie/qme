@@ -24,7 +24,7 @@ interface AdminEventCheckInsProps {
 
 export default function AdminEventCheckIns({
   checkInCode = null,
-  title = 'Mobile Bar Check-In',
+  title = 'Event Check-In',
   completedLabel = 'Checked In Today',
 }: AdminEventCheckInsProps) {
   const navigate = useNavigate();
@@ -145,7 +145,7 @@ export default function AdminEventCheckIns({
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {checkInCode ? (
+                {checkInCode || event?.slug !== 'peony-festival' ? (
                   <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id)}>
                     Check In
                   </button>
@@ -180,10 +180,10 @@ export default function AdminEventCheckIns({
                     {row.first_name} {row.last_name}
                   </div>
                   <div style={{ color: hasFlowersAccess ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800, marginTop: 2 }}>
-                    {checkInCode ? 'CHECKED IN' : accessLabel}
+                    {checkInCode || event?.slug !== 'peony-festival' ? 'CHECKED IN' : accessLabel}
                   </div>
                 </div>
-                {!checkInCode && !hasFlowersAccess && (
+                {!checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (
                   <button
                     className="actionBtn actionBtn-primary"
                     style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}

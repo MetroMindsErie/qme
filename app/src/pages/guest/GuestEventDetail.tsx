@@ -6,12 +6,12 @@ import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
 import { listQueuesForEvent, getNowServing, restoreTicketForQueue } from '../../lib/queueService';
-import { listActiveExperiencesForEvent } from '../../lib/experienceService';
+import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
-import type { QEvent, Queue, Experience } from '../../types';
+import type { Ece, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 import '../../styles/eventDetail.css';
@@ -219,7 +219,7 @@ export default function GuestEventDetail() {
 
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<QueueWithMeta[]>([]);
-  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [eces, setEces] = useState<Ece[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('just now');
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
@@ -289,8 +289,8 @@ export default function GuestEventDetail() {
       );
       setQueues(enriched.filter((q) => q.slug !== 'wrapped-bouquets' || checkInTicketType === 'flowers'));
 
-      const exps = eventSlug === PEONY_EVENT_SLUG ? [] : await listActiveExperiencesForEvent(ev.id);
-      setExperiences(exps);
+      const eventEces = eventSlug === PEONY_EVENT_SLUG ? [] : await listActiveEcesForEvent(ev.id);
+      setEces(eventEces);
 
       setLastUpdated('just now');
     } catch (e) {
@@ -327,7 +327,7 @@ export default function GuestEventDetail() {
   }
 
   const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
-  const sessionCount = queues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + experiences.length;
+  const sessionCount = queues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + eces.length;
 
   return (
     <>
@@ -468,8 +468,8 @@ export default function GuestEventDetail() {
             );
           })}
 
-          {/* Dynamic experiences from DB */}
-          {experiences.map((exp) => {
+          {/* Dynamic event eCes from DB */}
+          {eces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
             const actionHref = exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`

@@ -5,10 +5,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { getEvent } from '../../lib/eventService';
-import { deleteExperience, listExperiencesForEvent } from '../../lib/experienceService';
+import { deleteEce, listEcesForEvent } from '../../lib/eceService';
 import { listQueuesForEvent, deleteQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
-import type { Experience, QEvent, Queue } from '../../types';
+import type { Ece, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
@@ -17,7 +17,7 @@ export default function AdminEventDetail() {
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<Queue[]>([]);
-  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [eces, setEces] = useState<Ece[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -26,11 +26,11 @@ export default function AdminEventDetail() {
       const [ev, qs, exps] = await Promise.all([
         getEvent(eventId),
         listQueuesForEvent(eventId),
-        listExperiencesForEvent(eventId),
+        listEcesForEvent(eventId),
       ]);
       setEvent(ev);
       setQueues(qs);
-      setExperiences(exps);
+      setEces(exps);
     } catch (e) {
       console.error('Failed to load event', e);
       alert('Event not found');
@@ -55,14 +55,14 @@ export default function AdminEventDetail() {
     }
   }
 
-  async function handleDeleteExperience(expId: string, name: string) {
-    if (!confirm(`Delete experience "${name}"?`)) return;
+  async function handleDeleteEce(eceId: string, name: string) {
+    if (!confirm(`Delete eCe "${name}"?`)) return;
     try {
-      await deleteExperience(expId);
-      setExperiences((prev) => prev.filter((exp) => exp.id !== expId));
+      await deleteEce(eceId);
+      setEces((prev) => prev.filter((ece) => ece.id !== eceId));
     } catch (e) {
-      console.error('Delete experience failed', e);
-      alert('Failed to delete experience.');
+      console.error('Delete eCe failed', e);
+      alert('Failed to delete eCe.');
     }
   }
 
@@ -108,7 +108,7 @@ export default function AdminEventDetail() {
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
             onClick={() => navigate(`/admin/events/${eventId}/check-ins`)}
           >
-            Mobile Bar Check-Ins
+            {event.slug === 'peony-festival' ? 'Mobile Bar Check-Ins' : 'Event Check-Ins'}
           </button>
           <button
             className="actionBtn actionBtn-secondary"
@@ -124,23 +124,23 @@ export default function AdminEventDetail() {
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Experiences</h2>
+            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event eCes</h2>
             <button
               className="actionBtn actionBtn-primary"
               style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-              onClick={() => navigate(`/admin/events/${eventId}/experiences/new`)}
+              onClick={() => navigate(`/admin/events/${eventId}/eces/new`)}
             >
-              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Experience
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add eCe
             </button>
           </div>
 
-          {experiences.length === 0 && (
+          {eces.length === 0 && (
             <p style={{ color: '#999', padding: '1.5rem 0', textAlign: 'center' }}>
-              No experiences yet. Add one to model check-in, queues, resources, sessions, or information cards.
+              No eCes yet. Add one to place a reusable expie or event-specific activity into this event.
             </p>
           )}
 
-          {experiences.map((exp) => (
+          {eces.map((exp) => (
             <div
               key={exp.id}
               style={{
@@ -175,14 +175,14 @@ export default function AdminEventDetail() {
                 <button
                   className="actionBtn actionBtn-secondary"
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  onClick={() => navigate(`/admin/events/${eventId}/experiences/${exp.id}/edit`)}
+                  onClick={() => navigate(`/admin/events/${eventId}/eces/${exp.id}/edit`)}
                 >
                   Edit
                 </button>
                 <button
                   className="actionBtn actionBtn-danger"
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  onClick={() => handleDeleteExperience(exp.id, exp.name)}
+                  onClick={() => handleDeleteEce(exp.id, exp.name)}
                 >
                   Delete
                 </button>
@@ -192,7 +192,9 @@ export default function AdminEventDetail() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Queues</h2>
+          <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>
+            Advanced Queue Engines
+          </h2>
           <button
             className="actionBtn actionBtn-primary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -204,7 +206,7 @@ export default function AdminEventDetail() {
 
         {queues.length === 0 && (
           <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
-            No queues yet. Add one to get started.
+            No standalone queue engines yet. Queue-type eCes will create or link these automatically in a later pass.
           </p>
         )}
 

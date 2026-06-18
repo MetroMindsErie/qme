@@ -9,7 +9,7 @@ import AdminQueueForm from './pages/admin/AdminQueueForm';
 import AdminQueueDashboard from './pages/admin/AdminQueueDashboard';
 import AdminOrganizationList from './pages/admin/AdminOrganizationList';
 import AdminOrganizationDetail from './pages/admin/AdminOrganizationDetail';
-import AdminExperienceForm from './pages/admin/AdminExperienceForm';
+import AdminEceForm from './pages/admin/AdminEceForm';
 
 // ----- Demo pages -----
 import GuestEventDetail from './pages/guest/GuestEventDetail';
@@ -82,8 +82,10 @@ function App() {
         <Route path="/admin/events/:eventId" element={<AdminEventDetail />} />
         <Route path="/admin/events/:eventId/check-ins" element={<AdminEventCheckIns />} />
         <Route path="/admin/events/:eventId/edit" element={<AdminEventForm />} />
-        <Route path="/admin/events/:eventId/experiences/new" element={<AdminExperienceForm />} />
-        <Route path="/admin/events/:eventId/experiences/:experienceId/edit" element={<AdminExperienceForm />} />
+        <Route path="/admin/events/:eventId/eces/new" element={<AdminEceForm />} />
+        <Route path="/admin/events/:eventId/eces/:eceId/edit" element={<AdminEceForm />} />
+        <Route path="/admin/events/:eventId/experiences/new" element={<AdminEceForm />} />
+        <Route path="/admin/events/:eventId/experiences/:eceId/edit" element={<AdminEceForm />} />
         <Route path="/admin/events/:eventId/queues/new" element={<AdminQueueForm />} />
         <Route path="/admin/events/:eventId/queues/:queueId" element={<AdminQueueDashboard />} />
         <Route path="/admin/events/:eventId/queues/:queueId/edit" element={<AdminQueueForm />} />

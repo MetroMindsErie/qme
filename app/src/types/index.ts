@@ -74,12 +74,29 @@ export type CreateQueueInput = Pick<
 
 export type UpdateQueueInput = Partial<Omit<CreateQueueInput, 'event_id'>>;
 
-export interface Experience {
+export interface Expie {
+  id: string;
+  organization_id: string | null;
+  name: string;
+  slug: string;
+  description: string;
+  image_url: string;
+  type: 'info' | 'check_in' | 'queue' | 'resource' | 'session';
+  default_queue_behavior: string;
+  default_metadata: Record<string, unknown>;
+  status: 'draft' | 'active' | 'archived';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Ece {
   id: string;
   event_id: string;
+  expie_id: string | null;
   org_id: string | null;
   type: 'info' | 'check_in' | 'queue' | 'resource' | 'session';
   queue_id: string | null;
+  queue_behavior: string;
   name: string;
   slug: string;
   description: string;
@@ -101,12 +118,14 @@ export type CreateOrganizationInput = Pick<
 
 export type UpdateOrganizationInput = Partial<CreateOrganizationInput>;
 
-export type CreateExperienceInput = Pick<
-  Experience,
+export type CreateEceInput = Pick<
+  Ece,
   'event_id' | 'name' | 'slug' | 'description' | 'image_url' | 'type' | 'status'
 > & {
+  expie_id?: string | null;
   org_id?: string | null;
   queue_id?: string | null;
+  queue_behavior?: string;
   location?: string;
   sort_order?: number;
   starts_at?: string | null;
@@ -114,7 +133,11 @@ export type CreateExperienceInput = Pick<
   metadata?: Record<string, unknown>;
 };
 
-export type UpdateExperienceInput = Partial<Omit<CreateExperienceInput, 'event_id' | 'org_id'>>;
+export type UpdateEceInput = Partial<Omit<CreateEceInput, 'event_id' | 'org_id'>>;
+
+export type Experience = Ece;
+export type CreateExperienceInput = CreateEceInput;
+export type UpdateExperienceInput = UpdateEceInput;
 
 export interface EventCheckIn {
   id: string;

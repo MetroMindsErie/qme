@@ -2,9 +2,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { listEvents } from '../../lib/eventService';
+import { listExpiesForOrganization } from '../../lib/expieService';
 import { getOrganization } from '../../lib/organizationService';
 import { formatDate } from '../../lib/utils';
-import type { Organization, QEvent } from '../../types';
+import type { Expie, Organization, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
@@ -13,17 +14,20 @@ export default function AdminOrganizationDetail() {
   const { organizationId } = useParams<{ organizationId: string }>();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [events, setEvents] = useState<QEvent[]>([]);
+  const [expies, setExpies] = useState<Expie[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!organizationId) return;
     try {
-      const [org, orgEvents] = await Promise.all([
+      const [org, orgEvents, orgExpies] = await Promise.all([
         getOrganization(organizationId),
         listEvents({ organizationId }),
+        listExpiesForOrganization(organizationId),
       ]);
       setOrganization(org);
       setEvents(orgEvents);
+      setExpies(orgExpies);
     } catch (error) {
       console.error('Failed to load organization', error);
       alert('Organization not found');
@@ -65,6 +69,13 @@ export default function AdminOrganizationDetail() {
             onClick={() => navigate(`/admin/events/new?organizationId=${organization.id}`)}
           >
             + New Event
+          </button>
+          <button
+            className="actionBtn actionBtn-primary"
+            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
+            onClick={() => navigate(`/admin/organizations/${organization.id}/expies/new`)}
+          >
+            + New Expie
           </button>
           <button
             className="actionBtn actionBtn-secondary"
@@ -118,6 +129,57 @@ export default function AdminOrganizationDetail() {
             </button>
           </div>
         ))}
+
+        <div style={{ marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e0e0e0' }}>
+          <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.8rem', color: '#2f3e4f' }}>
+            Reusable Expies
+          </h2>
+
+          {expies.length === 0 && (
+            <p style={{ color: '#999', padding: '1.25rem 0', textAlign: 'center' }}>
+              No reusable expies yet. Create expies here, then place them into events as eCes.
+            </p>
+          )}
+
+          {expies.map((expie) => (
+            <div
+              key={expie.id}
+              style={{
+                border: '1px solid #e0e0e0',
+                borderRadius: 10,
+                padding: '1rem',
+                marginBottom: '0.75rem',
+                background: '#fff',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+              }}
+            >
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontWeight: 800, color: '#2f3e4f', fontSize: '1.05rem' }}>
+                  {expie.name}
+                </div>
+                <div style={{ color: '#666', fontSize: '0.85rem', marginTop: 4 }}>
+                  {expie.type.replace('_', '-')} · /{expie.slug} · {expie.status}
+                </div>
+                {expie.description && (
+                  <div style={{ color: '#555', fontSize: '0.9rem', marginTop: 6 }}>
+                    {expie.description}
+                  </div>
+                )}
+              </div>
+              <button
+                className="actionBtn actionBtn-secondary"
+                style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+                onClick={() => navigate(`/admin/organizations/${organization.id}/expies/${expie.id}/edit`)}
+              >
+                Edit
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -3,9 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { createEce, getEce, updateEce } from '../../lib/eceService';
 import { getEvent } from '../../lib/eventService';
+import { listExpiesForOrganization } from '../../lib/expieService';
 import { listQueuesForEvent } from '../../lib/queueService';
 import { slugify } from '../../lib/utils';
-import type { CreateEceInput, QEvent, Queue } from '../../types';
+import type { CreateEceInput, Expie, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
@@ -15,6 +16,7 @@ export default function AdminEceForm() {
   const isEdit = Boolean(eceId);
 
   const [event, setEvent] = useState<QEvent | null>(null);
+  const [expies, setExpies] = useState<Expie[]>([]);
   const [queues, setQueues] = useState<Queue[]>([]);
   const [form, setForm] = useState<Omit<CreateEceInput, 'event_id'>>({
     expie_id: null,
@@ -48,6 +50,10 @@ export default function AdminEceForm() {
         setEvent(ev);
         setQueues(qs);
         setForm((prev) => ({ ...prev, org_id: ev.organization_id }));
+
+        if (ev.organization_id) {
+          setExpies(await listExpiesForOrganization(ev.organization_id));
+        }
 
         if (eceId) {
           const ece = await getEce(eceId);
@@ -101,6 +107,19 @@ export default function AdminEceForm() {
       if (field === 'name' && autoSlug) {
         next.slug = slugify(value);
       }
+      if (field === 'expie_id') {
+        const selectedExpie = expies.find((expie) => expie.id === value);
+        if (selectedExpie) {
+          next.name = selectedExpie.name;
+          next.slug = selectedExpie.slug;
+          next.description = selectedExpie.description;
+          next.image_url = selectedExpie.image_url;
+          next.type = selectedExpie.type;
+          next.queue_behavior = selectedExpie.default_queue_behavior;
+          next.metadata = selectedExpie.default_metadata;
+          setAutoSlug(false);
+        }
+      }
       if (field === 'type' && value !== 'queue') {
         next.queue_id = null;
         next.queue_behavior = '';
@@ -112,8 +131,8 @@ export default function AdminEceForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!eventId || !form.name.trim() || !form.slug?.trim()) {
-      alert('Name and slug are required.');
+    if (!eventId || !form.expie_id || !form.name.trim() || !form.slug?.trim()) {
+      alert('Choose an expie, and confirm name and slug are filled in.');
       return;
     }
 
@@ -178,6 +197,28 @@ export default function AdminEceForm() {
       </div>
 
       <form onSubmit={handleSubmit} className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
+        <div style={fieldStyle}>
+          <label style={labelStyle}>Reusable Expie *</label>
+          <select
+            style={inputStyle}
+            value={form.expie_id || ''}
+            onChange={(e) => handleChange('expie_id', e.target.value)}
+            required
+          >
+            <option value="">Choose an expie</option>
+            {expies.map((expie) => (
+              <option key={expie.id} value={expie.id}>
+                {expie.name} ({expie.type.replace('_', '-')})
+              </option>
+            ))}
+          </select>
+          {expies.length === 0 && (
+            <span style={{ color: '#B71C1C', fontSize: '0.82rem', marginTop: 6 }}>
+              This organization needs a reusable expie before you can add an eCe.
+            </span>
+          )}
+        </div>
+
         <div style={fieldStyle}>
           <label style={labelStyle}>eCe Name *</label>
           <input
@@ -286,7 +327,7 @@ export default function AdminEceForm() {
         </div>
 
         <div style={fieldStyle}>
-          <label style={labelStyle}>Event Location</label>
+          <label style={labelStyle}>Location at Event</label>
           <input
             style={inputStyle}
             value={form.location || ''}

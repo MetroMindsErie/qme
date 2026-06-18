@@ -9,6 +9,7 @@ import AdminQueueForm from './pages/admin/AdminQueueForm';
 import AdminQueueDashboard from './pages/admin/AdminQueueDashboard';
 import AdminOrganizationList from './pages/admin/AdminOrganizationList';
 import AdminOrganizationDetail from './pages/admin/AdminOrganizationDetail';
+import AdminExpieForm from './pages/admin/AdminExpieForm';
 import AdminEceForm from './pages/admin/AdminEceForm';
 
 // ----- Demo pages -----
@@ -77,6 +78,8 @@ function App() {
         {/* ===== Admin: kept for operator use ===== */}
         <Route path="/admin/organizations" element={<AdminOrganizationList />} />
         <Route path="/admin/organizations/:organizationId" element={<AdminOrganizationDetail />} />
+        <Route path="/admin/organizations/:organizationId/expies/new" element={<AdminExpieForm />} />
+        <Route path="/admin/organizations/:organizationId/expies/:expieId/edit" element={<AdminExpieForm />} />
         <Route path="/admin/events" element={<AdminEventList />} />
         <Route path="/admin/events/new" element={<AdminEventForm />} />
         <Route path="/admin/events/:eventId" element={<AdminEventDetail />} />

@@ -140,8 +140,11 @@ export default function AdminEventDetail() {
             </p>
           )}
 
-          {eces.map((exp) => (
-            <div
+          {eces.map((exp) => {
+            const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
+
+            return (
+              <div
               key={exp.id}
               style={{
                 border: '1px solid #e0e0e0',
@@ -172,6 +175,15 @@ export default function AdminEventDetail() {
                 )}
               </div>
               <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' as const }}>
+                {linkedQueue && (
+                  <button
+                    className="actionBtn actionBtn-primary"
+                    style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                    onClick={() => navigate(`/admin/events/${eventId}/queues/${linkedQueue.id}`)}
+                  >
+                    Manage Queue
+                  </button>
+                )}
                 <button
                   className="actionBtn actionBtn-secondary"
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
@@ -187,14 +199,20 @@ export default function AdminEventDetail() {
                   Delete
                 </button>
               </div>
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-          <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>
-            Advanced Queue Engines
-          </h2>
+        <details style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: '1rem', color: '#2f3e4f' }}>
+            Technical / Advanced Queue Engines
+          </summary>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem 0 0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <p style={{ color: '#777', margin: 0, fontSize: '0.85rem', lineHeight: 1.4 }}>
+            Queue engines power queue eCes. Most queue work should happen from the eCe row above.
+          </p>
           <button
             className="actionBtn actionBtn-primary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -276,6 +294,7 @@ export default function AdminEventDetail() {
             </div>
           </div>
         ))}
+        </details>
       </div>
     </div>
   );

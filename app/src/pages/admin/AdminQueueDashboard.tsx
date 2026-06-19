@@ -36,6 +36,10 @@ function isNearbyConfirmed(ticket: Ticket) {
   return !hasNearbyConfirmationField(ticket) || Boolean(ticket.nearby_confirmed_at);
 }
 
+function ticketDisplayTime(ticket: Ticket) {
+  return Date.parse(ticket.completed_at ?? ticket.released_at ?? ticket.stage_updated_at ?? ticket.created_at);
+}
+
 export default function AdminQueueDashboard() {
   const navigate = useNavigate();
   const { eventId, queueId } = useParams<{ eventId: string; queueId: string }>();
@@ -280,6 +284,11 @@ export default function AdminQueueDashboard() {
     const standbyTarget = queue.standby_threshold ?? 3;
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
+    const displayTickets = [...pilotTickets].sort((a, b) => {
+      const byTime = ticketDisplayTime(b) - ticketDisplayTime(a);
+      if (byTime !== 0) return byTime;
+      return (b.ticket_number ?? b.id) - (a.ticket_number ?? a.id);
+    });
     const stageColor: Record<string, string> = {
       waiting: '#6b7280',
       standby: '#8a5a00',
@@ -376,7 +385,7 @@ export default function AdminQueueDashboard() {
           {pilotTickets.length === 0 ? (
             <p style={{ color: '#999', textAlign: 'center', padding: '2rem 0' }}>No guests have joined this queue yet.</p>
           ) : (
-            pilotTickets.map((ticket) => {
+            displayTickets.map((ticket) => {
               const stage = ticket.stage ?? 'waiting';
               const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
               const isDone = ['completed', 'cancelled', 'left'].includes(stage);

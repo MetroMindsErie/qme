@@ -201,8 +201,8 @@ export async function listQueuePilotTickets(queueId: string): Promise<Ticket[]> 
     .from('tickets')
     .select('*')
     .eq('queue_id', queueId)
-    .order('ticket_number', { ascending: false, nullsFirst: false })
-    .order('id', { ascending: false });
+    .order('ticket_number', { ascending: true, nullsFirst: false })
+    .order('id', { ascending: true });
   if (error) throw error;
   return (data ?? []) as Ticket[];
 }

@@ -176,7 +176,9 @@ select
   'standby_gather',
   jsonb_build_object(
     'pilot', true,
+    'completion_mode', 'guest_code',
     'completion_code', '4729',
+    'mark_key', 'scan_code_adventure_complete',
     'stage_copy', jsonb_build_object(
       'waiting', jsonb_build_object(
         'title', 'Waiting',
@@ -258,7 +260,9 @@ set
   location = coalesce(nullif(eces.location, ''), 'Adventure station'),
   metadata = coalesce(eces.metadata, '{}'::jsonb) || jsonb_build_object(
     'pilot', true,
+    'completion_mode', 'guest_code',
     'completion_code', '4729',
+    'mark_key', 'scan_code_adventure_complete',
     'stage_copy', jsonb_build_object(
       'waiting', jsonb_build_object(
         'title', 'Waiting',
@@ -304,7 +308,9 @@ set
   location = coalesce(nullif(eces.location, ''), 'Adventure station'),
   metadata = coalesce(eces.metadata, '{}'::jsonb) || jsonb_build_object(
     'pilot', true,
+    'completion_mode', 'guest_code',
     'completion_code', '4729',
+    'mark_key', 'scan_code_adventure_complete',
     'stage_copy', jsonb_build_object(
       'waiting', jsonb_build_object(
         'title', 'Waiting',
@@ -332,3 +338,216 @@ join public.expies on expies.organization_id = organizations.id
 where eces.event_id = events.id
   and events.slug = 'sotc-test-check-in'
   and eces.slug = 'scan-code-adventure';
+
+insert into public.expies (
+  organization_id,
+  name,
+  slug,
+  description,
+  image_url,
+  type,
+  default_queue_behavior,
+  default_metadata,
+  status
+)
+select
+  organizations.id,
+  'Headshot Photo Station',
+  'headshot-photo-station',
+  'A staff-served queue for professional headshots.',
+  '/images/zippy.png',
+  'queue',
+  'standby_gather',
+  jsonb_build_object(
+    'pilot', true,
+    'completion_mode', 'staff_served',
+    'mark_key', 'professional_headshot_complete',
+    'stage_copy', jsonb_build_object(
+      'waiting', jsonb_build_object(
+        'title', 'Waiting',
+        'detail', 'You are checked in and in line for your headshot.'
+      ),
+      'standby', jsonb_build_object(
+        'title', 'Almost Ready',
+        'detail', 'You are almost ready. Please make your way closer to {{location}}.',
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
+      ),
+      'released', jsonb_build_object(
+        'title', 'Your Turn',
+        'detail', 'Go to {{location}}. Staff will complete this step when your photo is taken.'
+      ),
+      'completed', jsonb_build_object(
+        'title', 'Completed',
+        'detail', 'Your headshot step is complete. You can return to the event.'
+      )
+    )
+  ),
+  'active'
+from public.organizations
+where organizations.slug = 'summer-on-the-cuyahoga'
+on conflict (organization_id, slug) do update
+set
+  name = excluded.name,
+  description = excluded.description,
+  image_url = excluded.image_url,
+  type = excluded.type,
+  default_queue_behavior = excluded.default_queue_behavior,
+  default_metadata = excluded.default_metadata,
+  status = excluded.status,
+  updated_at = now();
+
+insert into public.queues (
+  event_id,
+  name,
+  slug,
+  description,
+  image_url,
+  status,
+  join_status,
+  run_mode,
+  standby_threshold,
+  max_active_released
+)
+select
+  events.id,
+  'Headshot Photo Station',
+  'headshot-photo-station',
+  'Join the headshot queue, come nearby when prompted, then step up when called.',
+  '/images/zippy.png',
+  'active',
+  'open',
+  'manual',
+  3,
+  1
+from public.events
+where events.slug = 'sotc-test-check-in'
+  and not exists (
+    select 1
+    from public.queues existing
+    where existing.event_id = events.id
+      and existing.slug = 'headshot-photo-station'
+  );
+
+update public.queues
+set
+  name = 'Headshot Photo Station',
+  description = 'Join the headshot queue, come nearby when prompted, then step up when called.',
+  image_url = '/images/zippy.png',
+  join_status = 'open',
+  run_mode = 'manual',
+  standby_threshold = 3,
+  max_active_released = 1
+from public.events
+where queues.event_id = events.id
+  and events.slug = 'sotc-test-check-in'
+  and queues.slug = 'headshot-photo-station';
+
+insert into public.eces (
+  event_id,
+  expie_id,
+  org_id,
+  name,
+  slug,
+  description,
+  image_url,
+  type,
+  queue_id,
+  queue_behavior,
+  location,
+  metadata,
+  status
+)
+select
+  events.id,
+  expies.id,
+  organizations.id,
+  'Headshot Photo Station',
+  'headshot-photo-station',
+  'Stay nearby while you wait. When it is your turn, step up for your professional headshot.',
+  '/images/zippy.png',
+  'queue',
+  queues.id,
+  'standby_gather',
+  'Headshot photo station',
+  jsonb_build_object(
+    'pilot', true,
+    'completion_mode', 'staff_served',
+    'mark_key', 'professional_headshot_complete',
+    'stage_copy', jsonb_build_object(
+      'waiting', jsonb_build_object(
+        'title', 'Waiting',
+        'detail', 'You are checked in and in line for your headshot.'
+      ),
+      'standby', jsonb_build_object(
+        'title', 'Almost Ready',
+        'detail', 'You are almost ready. Please make your way closer to {{location}}.',
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
+      ),
+      'released', jsonb_build_object(
+        'title', 'Your Turn',
+        'detail', 'Go to {{location}}. Staff will complete this step when your photo is taken.'
+      ),
+      'completed', jsonb_build_object(
+        'title', 'Completed',
+        'detail', 'Your headshot step is complete. You can return to the event.'
+      )
+    )
+  ),
+  'active'
+from public.events
+join public.organizations on organizations.id = events.organization_id
+join public.expies on expies.organization_id = organizations.id
+  and expies.slug = 'headshot-photo-station'
+join public.queues on queues.event_id = events.id
+  and queues.slug = 'headshot-photo-station'
+where events.slug = 'sotc-test-check-in'
+  and not exists (
+    select 1
+    from public.eces existing
+    where existing.event_id = events.id
+      and existing.slug = 'headshot-photo-station'
+  );
+
+update public.eces
+set
+  expie_id = expies.id,
+  name = 'Headshot Photo Station',
+  description = 'Stay nearby while you wait. When it is your turn, step up for your professional headshot.',
+  image_url = '/images/zippy.png',
+  type = 'queue',
+  queue_id = queues.id,
+  queue_behavior = 'standby_gather',
+  location = 'Headshot photo station',
+  metadata = jsonb_build_object(
+    'pilot', true,
+    'completion_mode', 'staff_served',
+    'mark_key', 'professional_headshot_complete',
+    'stage_copy', jsonb_build_object(
+      'waiting', jsonb_build_object(
+        'title', 'Waiting',
+        'detail', 'You are checked in and in line for your headshot.'
+      ),
+      'standby', jsonb_build_object(
+        'title', 'Almost Ready',
+        'detail', 'You are almost ready. Please make your way closer to {{location}}.',
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
+      ),
+      'released', jsonb_build_object(
+        'title', 'Your Turn',
+        'detail', 'Go to {{location}}. Staff will complete this step when your photo is taken.'
+      ),
+      'completed', jsonb_build_object(
+        'title', 'Completed',
+        'detail', 'Your headshot step is complete. You can return to the event.'
+      )
+    )
+  )
+from public.events
+join public.organizations on organizations.id = events.organization_id
+join public.expies on expies.organization_id = organizations.id
+  and expies.slug = 'headshot-photo-station'
+join public.queues on queues.event_id = events.id
+  and queues.slug = 'headshot-photo-station'
+where eces.event_id = events.id
+  and events.slug = 'sotc-test-check-in'
+  and eces.slug = 'headshot-photo-station';

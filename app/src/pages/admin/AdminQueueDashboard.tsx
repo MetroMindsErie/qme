@@ -9,6 +9,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import Header from '../../components/Header';
 import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
+import { listActiveEcesForEvent } from '../../lib/eceService';
 import {
   applyQueuePilotFlow,
   completeQueueTicketAction,
@@ -22,11 +23,22 @@ import {
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
-import type { Queue as QueueType, QEvent, EventCheckIn, Ticket } from '../../types';
+import type { Queue as QueueType, QEvent, EventCheckIn, Ticket, Ece } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+type PilotCompletionMode = 'guest_code' | 'staff_served';
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
 
 function hasNearbyConfirmationField(ticket: Ticket) {
   return Object.prototype.hasOwnProperty.call(ticket, 'nearby_confirmed_at');
@@ -40,12 +52,23 @@ function ticketDisplayTime(ticket: Ticket) {
   return Date.parse(ticket.completed_at ?? ticket.released_at ?? ticket.stage_updated_at ?? ticket.created_at);
 }
 
+function getPilotCompletionMode(ece: Ece | null, queueSlug?: string): PilotCompletionMode {
+  const mode = asString(asRecord(ece?.metadata).completion_mode);
+  if (!mode && queueSlug === 'headshot-photo-station') return 'staff_served';
+  return mode === 'staff_served' ? 'staff_served' : 'guest_code';
+}
+
+function getPilotMarkKey(ece: Ece | null, queueSlug = 'queue') {
+  return asString(asRecord(ece?.metadata).mark_key) ?? `${queueSlug.replaceAll('-', '_')}_complete`;
+}
+
 export default function AdminQueueDashboard() {
   const navigate = useNavigate();
   const { eventId, queueId } = useParams<{ eventId: string; queueId: string }>();
 
   const [queue, setQueue] = useState<QueueType | null>(null);
   const [event, setEvent] = useState<QEvent | null>(null);
+  const [linkedEce, setLinkedEce] = useState<Ece | null>(null);
   const metricQueueId = queue?.id ?? (queueId && UUID_RE.test(queueId) ? queueId : undefined);
   const { nowServing, setNowServing } = useQueueMetric(metricQueueId);
   const [flowersCheckIns, setFlowersCheckIns] = useState<EventCheckIn[]>([]);
@@ -66,6 +89,7 @@ export default function AdminQueueDashboard() {
 
   const isBouquetQueue = queue?.slug === 'wrapped-bouquets';
   const isPilotQueue = Boolean(event?.slug === 'sotc-test-check-in' && queue);
+  const pilotCompletionMode = getPilotCompletionMode(linkedEce, queue?.slug);
   const stationCode = '4729';
   const stationUrl = event && queue
     ? `${window.location.origin}/events/${event.slug}/q/${queue.slug}/ticket?code=${encodeURIComponent(stationCode)}`
@@ -85,6 +109,8 @@ export default function AdminQueueDashboard() {
         }
         setQueue(q);
         setEvent(ev);
+        const eces = await listActiveEcesForEvent(ev.id);
+        setLinkedEce(eces.find((ece) => ece.queue_id === q.id || ece.slug === q.slug) ?? null);
       } catch (e) {
         console.error('Failed to load queue', e);
         navigate(`/admin/events/${eventId}`);
@@ -225,10 +251,11 @@ export default function AdminQueueDashboard() {
         await completeQueueTicketAction({
           eventId: event.id,
           ticketId,
-          markKey: 'scan_code_adventure_complete',
+          markKey: getPilotMarkKey(linkedEce, queue?.slug),
           source: 'admin',
           metadata: {
             queue_slug: queue?.slug,
+            completion_mode: pilotCompletionMode,
           },
         });
       } else {
@@ -361,14 +388,20 @@ export default function AdminQueueDashboard() {
             </div>
           </div>
 
-          <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#fff', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.85rem', alignItems: 'center' }}>
-            {stationUrl && <QRCodeSVG value={stationUrl} size={96} bgColor="#fff" fgColor="#1a1a2e" level="M" />}
-            <div>
-              <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: '#6b7280' }}>Station Code</div>
-              <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#24364a' }}>{stationCode}</div>
-              <div style={{ fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.35 }}>Display this four digit code at the station. QR deep links work when the guest device can reach this app URL.</div>
+          {pilotCompletionMode === 'guest_code' ? (
+            <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#fff', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.85rem', alignItems: 'center' }}>
+              {stationUrl && <QRCodeSVG value={stationUrl} size={96} bgColor="#fff" fgColor="#1a1a2e" level="M" />}
+              <div>
+                <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: '#6b7280' }}>Station Code</div>
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#24364a' }}>{stationCode}</div>
+                <div style={{ fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.35 }}>Display this four digit code at the station. QR deep links work when the guest device can reach this app URL.</div>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div style={{ border: '1px solid #bbf7d0', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f0fdf4', color: '#166534', fontWeight: 900 }}>
+              Click the current guest row when they step up to be served.
+            </div>
+          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
             {['waiting', 'standby', 'released', 'completed'].map((stage) => (
@@ -391,22 +424,71 @@ export default function AdminQueueDashboard() {
               const isDone = ['completed', 'cancelled', 'left'].includes(stage);
               const nearbyConfirmed = isNearbyConfirmed(ticket);
               const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
+              const canClickToServe = pilotCompletionMode === 'staff_served' && stage === 'released' && !isDone;
+              const rowStyle = canClickToServe
+                ? {
+                    border: '2px solid #22c55e',
+                    borderRadius: 10,
+                    padding: '1rem',
+                    marginBottom: '0.65rem',
+                    background: '#f0fdf4',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    alignItems: 'center',
+                    flexWrap: 'wrap' as const,
+                    cursor: 'pointer',
+                    boxShadow: '0 5px 0 #15803d',
+                    transform: 'translateY(-2px)',
+                  }
+                : {
+                    border: '1px solid #e0e0e0',
+                    borderRadius: 10,
+                    padding: '0.85rem',
+                    marginBottom: '0.65rem',
+                    background: '#fff',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    alignItems: 'center',
+                    flexWrap: 'wrap' as const,
+                  };
               return (
-                <div key={ticket.id} style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '0.85rem', marginBottom: '0.65rem', background: '#fff', display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div
+                  key={ticket.id}
+                  role={canClickToServe ? 'button' : undefined}
+                  tabIndex={canClickToServe ? 0 : undefined}
+                  onClick={canClickToServe ? () => setPilotStage(ticket.id, 'completed') : undefined}
+                  onKeyDown={canClickToServe ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      void setPilotStage(ticket.id, 'completed');
+                    }
+                  } : undefined}
+                  style={rowStyle}
+                >
                   <div>
                     <div style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</div>
                     <div style={{ color: stageColor[stage], fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', marginTop: 3 }}>
                       {stage}{stage === 'standby' && nearbyConfirmed ? ' - nearby' : ''}
                     </div>
+                    {canClickToServe && (
+                      <div style={{ color: '#166534', fontSize: '0.78rem', fontWeight: 900, marginTop: 5 }}>
+                        Click name when guest steps up
+                      </div>
+                    )}
                   </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  <div
+                    style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}
+                    onClick={(event) => event.stopPropagation()}
+                  >
                     {!isDone && stage !== 'standby' && (
                       <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'standby')}>Standby</button>
                     )}
                     {!isDone && stage !== 'released' && (
                       <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} disabled={!canReleaseTicket} onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
                     )}
-                    {!isDone && (
+                    {!isDone && pilotCompletionMode !== 'staff_served' && (
                       <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'completed')}>Complete</button>
                     )}
                     {!isDone && (

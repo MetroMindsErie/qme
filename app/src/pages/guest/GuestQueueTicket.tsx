@@ -40,6 +40,7 @@ const PILOT_COMPLETION_CODE = '4729';
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
+type PilotCompletionMode = 'guest_code' | 'staff_served';
 type PilotStageCopy = {
   title?: string;
   detail?: string;
@@ -86,6 +87,20 @@ function getPilotStageCopy(
       ? hydrateTemplate(asString(stageConfig.instruction)!, vars)
       : undefined,
   };
+}
+
+function getPilotCompletionMode(ece: Ece | null, queueSlug?: string): PilotCompletionMode {
+  const mode = asString(asRecord(ece?.metadata).completion_mode);
+  if (!mode && queueSlug === 'headshot-photo-station') return 'staff_served';
+  return mode === 'staff_served' ? 'staff_served' : 'guest_code';
+}
+
+function getPilotCompletionCode(ece: Ece | null) {
+  return asString(asRecord(ece?.metadata).completion_code) ?? PILOT_COMPLETION_CODE;
+}
+
+function getPilotMarkKey(ece: Ece | null, queueSlug = 'queue') {
+  return asString(asRecord(ece?.metadata).mark_key) ?? `${queueSlug.replaceAll('-', '_')}_complete`;
 }
 
 function getStepStates(
@@ -185,6 +200,8 @@ export default function GuestQueueTicketPage() {
   const isPilotQueue = event?.slug === 'sotc-test-check-in';
   const hasRequiredEventCheckIn = !checkInConfig.requireCompletedForParticipation || bouquetAccess !== 'none';
   const pilotStage = pilotTicket?.stage ?? 'waiting';
+  const pilotCompletionMode = getPilotCompletionMode(linkedEce, queue?.slug);
+  const pilotCompletionCode = getPilotCompletionCode(linkedEce);
   const queueImageSrc = queue?.slug === 'scan-code-adventure'
     ? '/images/dog-through-hoop.png'
     : queue?.image_url || '';
@@ -269,11 +286,12 @@ export default function GuestQueueTicketPage() {
   useEffect(() => {
     const code = searchParams.get('code');
     if (!code || !isPilotQueue || !event || !ticketId) return;
-    if (code.trim().toUpperCase() !== PILOT_COMPLETION_CODE) return;
+    if (pilotCompletionMode !== 'guest_code') return;
+    if (code.trim().toUpperCase() !== pilotCompletionCode.toUpperCase()) return;
     if (pilotStage === 'completed') return;
     void completePilotAction(code);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, isPilotQueue, event, ticketId, pilotStage]);
+  }, [searchParams, isPilotQueue, event, ticketId, pilotStage, pilotCompletionMode, pilotCompletionCode]);
 
   // Countdown timer shown on the served screen
   useEffect(() => {
@@ -383,7 +401,11 @@ export default function GuestQueueTicketPage() {
   async function completePilotAction(rawCode = completionCode) {
     if (!event || !ticketId) return;
     const normalized = rawCode.trim().toUpperCase();
-    if (normalized !== PILOT_COMPLETION_CODE) {
+    if (pilotCompletionMode !== 'guest_code') {
+      setCompletionError('This step is completed by staff.');
+      return;
+    }
+    if (normalized !== pilotCompletionCode.toUpperCase()) {
       setCompletionError('That code does not match this station.');
       return;
     }
@@ -393,7 +415,7 @@ export default function GuestQueueTicketPage() {
       const mark = await completeQueueTicketAction({
         eventId: event.id,
         ticketId,
-        markKey: 'scan_code_adventure_complete',
+        markKey: getPilotMarkKey(linkedEce, queue?.slug),
         metadata: {
           queue_slug: queue?.slug,
           code: normalized,
@@ -692,7 +714,9 @@ export default function GuestQueueTicketPage() {
       },
       released: {
         title: 'Your Turn',
-        detail: `Go to ${locationText}. Enter the station code there to complete this step.`,
+        detail: pilotCompletionMode === 'staff_served'
+          ? `Go to ${locationText}. Staff will complete this step when you are served.`
+          : `Go to ${locationText}. Enter the station code there to complete this step.`,
       },
       completed: {
         title: 'Completed',
@@ -798,7 +822,7 @@ export default function GuestQueueTicketPage() {
             </div>
           )}
 
-          {pilotStage === 'released' && (
+          {pilotStage === 'released' && pilotCompletionMode === 'guest_code' && (
             <div style={{
               border: '1px solid #d1d5db',
               borderRadius: 12,

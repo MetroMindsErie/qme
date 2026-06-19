@@ -491,7 +491,7 @@ export default function GuestQueueTicketPage() {
   const isHeadshotQueue = queue.slug === 'headshot-photo-station';
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
-  const needsHeadshotCredit = isHeadshotQueue && headshotCreditStatus !== 'available';
+  const needsHeadshotCredit = isHeadshotQueue && !ticketId && headshotCreditStatus !== 'available';
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const pilotJoinStatus = queue.join_status ?? 'open';
 

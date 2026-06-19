@@ -155,7 +155,8 @@ export default function GuestQueueLanding() {
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
-  const needsHeadshotCredit = isHeadshotQueue && headshotCreditStatus !== 'available';
+  const hasStoredTicket = Boolean(getStoredQueueTicket(queue.id));
+  const needsHeadshotCredit = isHeadshotQueue && !hasStoredTicket && headshotCreditStatus !== 'available';
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const eventLogoSrc = event.slug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'

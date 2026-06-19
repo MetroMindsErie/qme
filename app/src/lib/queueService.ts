@@ -243,6 +243,17 @@ export async function updateTicketStage(
   return data as Ticket;
 }
 
+export async function confirmTicketNearby(ticketId: number): Promise<Ticket> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .update({ nearby_confirmed_at: new Date().toISOString() })
+    .eq('id', ticketId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Ticket;
+}
+
 export async function releaseQueueTicket(ticketId: number): Promise<Ticket> {
   return updateTicketStage(ticketId, 'released');
 }

@@ -17,6 +17,7 @@ import { getEventCheckIn } from '../../lib/checkInService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import {
+  confirmTicketNearby,
   completeQueueTicketAction,
   getQueueBySlug,
   getQueueTicket,
@@ -117,6 +118,7 @@ export default function GuestQueueTicketPage() {
   const [completionCode, setCompletionCode] = useState('');
   const [completionError, setCompletionError] = useState('');
   const [completionSaving, setCompletionSaving] = useState(false);
+  const [nearbySaving, setNearbySaving] = useState(false);
 
   useEffect(() => {
     if (!eventSlug || !queueSlug) return;
@@ -408,6 +410,21 @@ export default function GuestQueueTicketPage() {
     }
   }
 
+  async function confirmNearby() {
+    if (!ticketId) return;
+    setNearbySaving(true);
+    setCompletionError('');
+    try {
+      const row = await confirmTicketNearby(ticketId);
+      setPilotTicket(row);
+    } catch (err) {
+      console.error('Failed to confirm nearby status', err);
+      setCompletionError('Could not mark you nearby. Please try again or show staff this screen.');
+    } finally {
+      setNearbySaving(false);
+    }
+  }
+
   // ── Loading / error states ────────────────────────────────────────────────
 
   if (loading) {
@@ -651,10 +668,17 @@ export default function GuestQueueTicketPage() {
     const locationText = linkedEce?.location || event.location || queue.name;
     const copyVars = { location: locationText, queue: queue.name, event: event.name };
     const metadataCopy = getPilotStageCopy(linkedEce, pilotStage, copyVars);
+    const hasNearbyField = pilotTicket ? Object.prototype.hasOwnProperty.call(pilotTicket, 'nearby_confirmed_at') : false;
+    const nearbyConfirmed = Boolean(pilotTicket?.nearby_confirmed_at);
+    const needsNearbyConfirmation = pilotStage === 'standby' && hasNearbyField && !nearbyConfirmed;
     const defaultInstruction = pilotStage === 'standby'
-      ? `Stay nearby and keep this page open. You will be sent to ${locationText} soon.`
+      ? nearbyConfirmed
+        ? "You're marked nearby. Keep this page open."
+        : `When you are close to ${locationText}, tap I'm Nearby. Keep this page open.`
       : linkedEce?.description || queue.description || 'Keep this page open for the next step.';
-    const instructionText = metadataCopy.instruction ?? defaultInstruction;
+    const instructionText = pilotStage === 'standby' && nearbyConfirmed
+      ? defaultInstruction
+      : metadataCopy.instruction ?? defaultInstruction;
     const statusCopy: Record<string, { title: string; detail: string }> = {
       waiting: {
         title: 'Waiting',
@@ -662,7 +686,9 @@ export default function GuestQueueTicketPage() {
       },
       standby: {
         title: 'Standby',
-        detail: `You are almost ready. Please make your way closer to ${locationText}.`,
+        detail: nearbyConfirmed
+          ? 'Thanks. Stay nearby. You will be called soon.'
+          : `You are almost ready. Please make your way closer to ${locationText}.`,
       },
       released: {
         title: 'Your Turn',
@@ -684,7 +710,9 @@ export default function GuestQueueTicketPage() {
     const defaultStatus = statusCopy[pilotStage] ?? statusCopy.waiting;
     const status = {
       title: metadataCopy.title ?? defaultStatus.title,
-      detail: metadataCopy.detail ?? defaultStatus.detail,
+      detail: pilotStage === 'standby' && nearbyConfirmed
+        ? defaultStatus.detail
+        : metadataCopy.detail ?? defaultStatus.detail,
     };
     const statusTheme: Record<string, { border: string; background: string; title: string; label: string }> = {
       waiting: { border: '#7c3aed', background: '#f5f3ff', title: '#4c1d95', label: '#6d28d9' },
@@ -751,6 +779,22 @@ export default function GuestQueueTicketPage() {
           {showInstruction && (
             <div style={{ color: '#4b5563', fontSize: '1rem', lineHeight: 1.45 }}>
               {instructionText}
+            </div>
+          )}
+
+          {needsNearbyConfirmation && (
+            <button
+              className="tkt-btn-checkin"
+              onClick={confirmNearby}
+              disabled={nearbySaving}
+            >
+              {nearbySaving ? 'Marking Nearby...' : "I'm Nearby"}
+            </button>
+          )}
+
+          {completionError && pilotStage === 'standby' && (
+            <div style={{ background: '#FFEBEE', borderRadius: 8, padding: '0.65rem', color: '#B71C1C', fontWeight: 800 }}>
+              {completionError}
             </div>
           )}
 

@@ -2,7 +2,7 @@
 -- Run after supabase-org-event-foundation.sql and supabase-expie-ece-foundation.sql.
 --
 -- This keeps the first test narrow:
--- - tickets can carry guest names and queue-stage state
+-- - tickets can carry guest names, queue-stage state, and nearby confirmation
 -- - completed scan/code actions leave durable marks on an event guest/ticket
 -- - designations and credits are separated for the SOTC check-in model
 
@@ -22,6 +22,7 @@ alter table public.tickets
   add column if not exists stage text not null default 'waiting'
     check (stage in ('waiting', 'standby', 'released', 'completed', 'cancelled', 'left')),
   add column if not exists stage_updated_at timestamptz not null default now(),
+  add column if not exists nearby_confirmed_at timestamptz,
   add column if not exists released_at timestamptz,
   add column if not exists completed_at timestamptz;
 
@@ -94,6 +95,9 @@ as $$
 begin
   if new.stage is distinct from old.stage then
     new.stage_updated_at = now();
+    if new.stage in ('waiting', 'standby') then
+      new.nearby_confirmed_at = null;
+    end if;
     if new.stage = 'released' and old.stage is distinct from 'released' then
       new.released_at = now();
     end if;
@@ -176,7 +180,7 @@ select
       'standby', jsonb_build_object(
         'title', 'Standby',
         'detail', 'You are almost ready. Please make your way closer to {{location}}.',
-        'instruction', 'Stay nearby and keep this page open. You will be sent to {{location}} soon.'
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
@@ -258,7 +262,7 @@ set
       'standby', jsonb_build_object(
         'title', 'Standby',
         'detail', 'You are almost ready. Please make your way closer to {{location}}.',
-        'instruction', 'Stay nearby and keep this page open. You will be sent to {{location}} soon.'
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
@@ -304,7 +308,7 @@ set
       'standby', jsonb_build_object(
         'title', 'Standby',
         'detail', 'You are almost ready. Please make your way closer to {{location}}.',
-        'instruction', 'Stay nearby and keep this page open. You will be sent to {{location}} soon.'
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',

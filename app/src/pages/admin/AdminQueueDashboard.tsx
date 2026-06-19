@@ -27,6 +27,14 @@ import '../../styles/admin.css';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function hasNearbyConfirmationField(ticket: Ticket) {
+  return Object.prototype.hasOwnProperty.call(ticket, 'nearby_confirmed_at');
+}
+
+function isNearbyConfirmed(ticket: Ticket) {
+  return !hasNearbyConfirmationField(ticket) || Boolean(ticket.nearby_confirmed_at);
+}
+
 export default function AdminQueueDashboard() {
   const navigate = useNavigate();
   const { eventId, queueId } = useParams<{ eventId: string; queueId: string }>();
@@ -241,6 +249,7 @@ export default function AdminQueueDashboard() {
     );
     const waiting = activeTickets.filter((t) => (t.stage ?? 'waiting') === 'waiting');
     const standby = activeTickets.filter((t) => t.stage === 'standby');
+    const confirmedStandby = standby.filter(isNearbyConfirmed);
 
     try {
       for (const ticket of waiting.slice(0, Math.max(0, standbyTarget - standby.length))) {
@@ -248,7 +257,7 @@ export default function AdminQueueDashboard() {
       }
 
       const slots = Math.max(0, maxActive - activeReleased);
-      const releaseCandidates = [...standby, ...waiting].slice(0, slots);
+      const releaseCandidates = confirmedStandby.slice(0, slots);
       for (const ticket of releaseCandidates) {
         await releaseQueueTicket(ticket.id);
       }
@@ -288,6 +297,7 @@ export default function AdminQueueDashboard() {
     const maxActive = queue.max_active_released ?? 1;
     const standbyTarget = queue.standby_threshold ?? 3;
     const canReleaseMore = activeReleased < maxActive;
+    const nearbyConfirmedCount = pilotTickets.filter((ticket) => ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
     const stageColor: Record<string, string> = {
       waiting: '#6b7280',
       standby: '#8a5a00',
@@ -356,7 +366,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist uses the same thresholds: {standbyTarget} standby nearby + {maxActive} active released = {standbyTarget + maxActive} guests in motion.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby.
             </div>
           </div>
 
@@ -374,6 +384,9 @@ export default function AdminQueueDashboard() {
               <div key={stage} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.65rem', textAlign: 'center' }}>
                 <div style={{ fontSize: '1.2rem', fontWeight: 900, color: stageColor[stage] }}>{counts[stage] ?? 0}</div>
                 <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 800, color: '#6b7280' }}>{stage}</div>
+                {stage === 'standby' && (
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', marginTop: 2 }}>{nearbyConfirmedCount} nearby</div>
+                )}
               </div>
             ))}
           </div>
@@ -385,18 +398,22 @@ export default function AdminQueueDashboard() {
               const stage = ticket.stage ?? 'waiting';
               const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
               const isDone = ['completed', 'cancelled', 'left'].includes(stage);
+              const nearbyConfirmed = isNearbyConfirmed(ticket);
+              const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
               return (
                 <div key={ticket.id} style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '0.85rem', marginBottom: '0.65rem', background: '#fff', display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <div>
                     <div style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</div>
-                    <div style={{ color: stageColor[stage], fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', marginTop: 3 }}>{stage}</div>
+                    <div style={{ color: stageColor[stage], fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', marginTop: 3 }}>
+                      {stage}{stage === 'standby' && nearbyConfirmed ? ' - nearby' : ''}
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                     {!isDone && stage !== 'standby' && (
                       <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'standby')}>Standby</button>
                     )}
                     {!isDone && stage !== 'released' && (
-                      <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} disabled={!canReleaseMore} onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
+                      <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} disabled={!canReleaseTicket} onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
                     )}
                     {!isDone && (
                       <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'completed')}>Complete</button>

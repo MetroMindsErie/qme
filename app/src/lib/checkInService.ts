@@ -37,7 +37,7 @@ export async function listEventCheckIns(
     query = query.eq('code', code);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: true });
+  const { data, error } = await query.order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []) as EventCheckIn[];
 }

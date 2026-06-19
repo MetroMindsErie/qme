@@ -14,9 +14,16 @@ import { useQueueMetric } from '../../hooks/useQueueMetric';
 import { useQueueTicket, clearQueueTicket } from '../../hooks/useQueueTicket';
 import { getEventBySlug } from '../../lib/eventService';
 import { getEventCheckIn } from '../../lib/checkInService';
-import { getQueueBySlug } from '../../lib/queueService';
+import { listActiveEcesForEvent } from '../../lib/eceService';
+import { getEventCheckInConfig } from '../../lib/eventConfig';
+import {
+  completeQueueTicketAction,
+  getQueueBySlug,
+  getQueueTicket,
+  updateTicketGuestName,
+} from '../../lib/queueService';
 import { formatTime } from '../../lib/utils';
-import type { QEvent, Queue } from '../../types';
+import type { Ece, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 import '../../styles/ticket.css';
@@ -28,6 +35,7 @@ const TIME_2_CHECKIN = 3;  // start prompting check-in when this many ahead
 
 // Delay (ms) the "Enjoy!" screen stays visible before navigating away
 const SERVED_LINGER_MS = 4000;
+const PILOT_COMPLETION_CODE = '4729';
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
@@ -53,8 +61,16 @@ export default function GuestQueueTicketPage() {
 
   const [event, setEvent]   = useState<QEvent | null>(null);
   const [queue, setQueue]   = useState<Queue | null>(null);
+  const [linkedEce, setLinkedEce] = useState<Ece | null>(null);
   const [loading, setLoading] = useState(true);
   const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
+  const [guestFirstName, setGuestFirstName] = useState('');
+  const [guestLastName, setGuestLastName] = useState('');
+  const [guestNameSaved, setGuestNameSaved] = useState(false);
+  const [pilotTicket, setPilotTicket] = useState<Ticket | null>(null);
+  const [completionCode, setCompletionCode] = useState('');
+  const [completionError, setCompletionError] = useState('');
+  const [completionSaving, setCompletionSaving] = useState(false);
 
   useEffect(() => {
     if (!eventSlug || !queueSlug) return;
@@ -63,12 +79,24 @@ export default function GuestQueueTicketPage() {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
         const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
+        let checkInGuestName: { firstName: string; lastName: string } | null = null;
         if (storedCheckIn) {
           try {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
             if (saved.id) {
               const row = await getEventCheckIn(saved.id);
-              setBouquetAccess(row.ticket_type ?? 'checked-in');
+              if (row.status === 'completed') {
+                checkInGuestName = {
+                  firstName: row.first_name || '',
+                  lastName: row.last_name || '',
+                };
+                setGuestFirstName(checkInGuestName.firstName);
+                setGuestLastName(checkInGuestName.lastName);
+                setGuestNameSaved(Boolean(checkInGuestName.firstName || checkInGuestName.lastName));
+                setBouquetAccess(row.ticket_type ?? 'checked-in');
+              } else {
+                setBouquetAccess('none');
+              }
             }
           } catch {
             setBouquetAccess('none');
@@ -76,6 +104,11 @@ export default function GuestQueueTicketPage() {
         }
         const q  = await getQueueBySlug(ev.id, queueSlug);
         setQueue(q);
+        if (checkInGuestName) {
+          localStorage.setItem(queueGuestStorageKey(q.id), JSON.stringify(checkInGuestName));
+        }
+        const eces = await listActiveEcesForEvent(ev.id);
+        setLinkedEce(eces.find((ece) => ece.queue_id === q.id) ?? null);
       } catch (e) {
         console.error('Failed to load queue', e);
       } finally {
@@ -85,7 +118,7 @@ export default function GuestQueueTicketPage() {
   }, [eventSlug, queueSlug]);
 
   const { nowServing } = useQueueMetric(queue?.id);
-  const { ticketNumber, hasCheckedIn, claimTicket, checkIn, leave } = useQueueTicket(queue?.id);
+  const { ticketId, ticketNumber, hasCheckedIn, claimTicket, checkIn, leave } = useQueueTicket(queue?.id);
 
   const [note1, setNote1]             = useState('');
   const [showCheckIn, setShowCheckIn] = useState(false);
@@ -98,6 +131,37 @@ export default function GuestQueueTicketPage() {
   const didApproachRef    = useRef(false);
   const didNowServingRef  = useRef(false);
   const didAutoLeaveRef   = useRef(false);
+  const didSyncGuestNameRef = useRef(false);
+
+  const checkInConfig = getEventCheckInConfig(event);
+  const isPilotQueue = event?.slug === 'sotc-test-check-in';
+  const hasRequiredEventCheckIn = !checkInConfig.requireCompletedForParticipation || bouquetAccess !== 'none';
+  const pilotStage = pilotTicket?.stage ?? 'waiting';
+  const queueImageSrc = queue?.slug === 'scan-code-adventure'
+    ? '/images/dog-through-hoop.png'
+    : queue?.image_url || '';
+
+  function queueGuestStorageKey(qId: string) {
+    return `qme:queueGuest:${qId}`;
+  }
+
+  useEffect(() => {
+    if (!queue) return;
+    try {
+      const stored = localStorage.getItem(queueGuestStorageKey(queue.id));
+      if (!stored) return;
+      const saved = JSON.parse(stored) as { firstName?: string; lastName?: string };
+      setGuestFirstName(saved.firstName || '');
+      setGuestLastName(saved.lastName || '');
+      setGuestNameSaved(Boolean(saved.firstName || saved.lastName));
+    } catch {
+      setGuestNameSaved(false);
+    }
+  }, [queue]);
+
+  useEffect(() => {
+    didSyncGuestNameRef.current = false;
+  }, [queue?.id]);
 
   // Nuke param (dev reset)
   useEffect(() => {
@@ -111,9 +175,56 @@ export default function GuestQueueTicketPage() {
   useEffect(() => {
     if (!queue) return;
     if (queue.slug === 'wrapped-bouquets' && bouquetAccess !== 'flowers') return;
+    if (!hasRequiredEventCheckIn) return;
+    if (isPilotQueue && !guestNameSaved) return;
     claimTicket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, bouquetAccess]);
+  }, [queue, bouquetAccess, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved]);
+
+  useEffect(() => {
+    if (!isPilotQueue || !ticketId || didSyncGuestNameRef.current) return;
+    if (!guestFirstName.trim() && !guestLastName.trim()) return;
+    didSyncGuestNameRef.current = true;
+    updateTicketGuestName(ticketId, {
+      firstName: guestFirstName,
+      lastName: guestLastName,
+    })
+      .then((row) => setPilotTicket(row))
+      .catch((err) => {
+        didSyncGuestNameRef.current = false;
+        console.error('Failed to sync event check-in name to queue ticket', err);
+      });
+  }, [isPilotQueue, ticketId, guestFirstName, guestLastName]);
+
+  useEffect(() => {
+    if (!queue || !ticketId || !isPilotQueue) return;
+
+    let stopped = false;
+    async function refreshTicket() {
+      try {
+        const row = await getQueueTicket(ticketId);
+        if (!stopped) setPilotTicket(row);
+      } catch (e) {
+        console.warn('pilot ticket refresh failed', e);
+      }
+    }
+
+    refreshTicket();
+    const interval = setInterval(refreshTicket, 2500);
+    return () => {
+      stopped = true;
+      clearInterval(interval);
+    };
+  }, [queue, ticketId, isPilotQueue]);
+
+  useEffect(() => {
+    const code = searchParams.get('code');
+    if (!code || !isPilotQueue || !event || !ticketId) return;
+    if (code.trim().toUpperCase() !== PILOT_COMPLETION_CODE) return;
+    if (pilotStage === 'completed') return;
+    void completePilotAction(code);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isPilotQueue, event, ticketId, pilotStage]);
 
   // Countdown timer shown on the served screen
   useEffect(() => {
@@ -130,6 +241,7 @@ export default function GuestQueueTicketPage() {
   }, [servedView]);
 
   const evaluateProximity = useCallback(() => {
+    if (isPilotQueue) return;
     if (nowServing == null || ticketNumber == null) return;
 
     const gap   = nowServing - ticketNumber;   // positive = nowServing has passed you
@@ -198,7 +310,7 @@ export default function GuestQueueTicketPage() {
         setNote1('Please check in now — tap Check In to continue.');
       }
     }
-  }, [nowServing, ticketNumber, hasCheckedIn, leave, navigate, eventSlug]);
+  }, [isPilotQueue, nowServing, ticketNumber, hasCheckedIn, leave, navigate, eventSlug]);
 
   useEffect(() => { evaluateProximity(); }, [evaluateProximity]);
 
@@ -217,6 +329,36 @@ export default function GuestQueueTicketPage() {
     setCheckInDisabled(true);
     await leave('user');
     navigate(`/events/${eventSlug}`);
+  }
+
+  async function completePilotAction(rawCode = completionCode) {
+    if (!event || !ticketId) return;
+    const normalized = rawCode.trim().toUpperCase();
+    if (normalized !== PILOT_COMPLETION_CODE) {
+      setCompletionError('That code does not match this station.');
+      return;
+    }
+    setCompletionSaving(true);
+    setCompletionError('');
+    try {
+      const mark = await completeQueueTicketAction({
+        eventId: event.id,
+        ticketId,
+        markKey: 'scan_code_adventure_complete',
+        metadata: {
+          queue_slug: queue?.slug,
+          code: normalized,
+        },
+      });
+      setPilotTicket((prev) => prev ? { ...prev, stage: 'completed', completed_at: mark.created_at } : prev);
+      setServedView(true);
+      setTimeout(() => navigate(`/events/${eventSlug}`), SERVED_LINGER_MS);
+    } catch (err) {
+      console.error('Failed to complete pilot action', err);
+      setCompletionError('Could not record completion. Please show staff this screen.');
+    } finally {
+      setCompletionSaving(false);
+    }
   }
 
   // ── Loading / error states ────────────────────────────────────────────────
@@ -241,6 +383,50 @@ export default function GuestQueueTicketPage() {
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
+  const pilotJoinStatus = queue.join_status ?? 'open';
+
+  if (isPilotQueue && !hasRequiredEventCheckIn) {
+    return (
+      <div className="card card-scrollable tkt-card">
+        <div className="tkt-header">
+          <div className="tkt-header-left">
+            <img
+              src={queueImageSrc || '/images/zippy.png'}
+              alt={queue.name}
+              className="tkt-logo"
+            />
+            <div className="tkt-header-info">
+              <div className="tkt-queue-name">{queue.name}</div>
+              <div className="tkt-event-name">{event.name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+          <h1 className="headline" style={{ fontSize: '1.75rem', margin: '0 0 0.65rem' }}>
+            Check in first
+          </h1>
+          <p style={{ color: '#4b5563', lineHeight: 1.5, margin: 0 }}>
+            Complete event check-in before joining this experience.
+          </p>
+          <button
+            className="tkt-btn-checkin"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+          >
+            Check In
+          </button>
+          <button
+            className="tkt-leave-btn"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (needsBouquetAccess) {
     return (
@@ -248,7 +434,7 @@ export default function GuestQueueTicketPage() {
         <div className="tkt-header">
           <div className="tkt-header-left">
             <img
-              src={queue.image_url || '/images/market-fresh-peonies.png'}
+              src={queueImageSrc || '/images/market-fresh-peonies.png'}
               alt="Bouquet Bar"
               className="tkt-logo"
             />
@@ -300,6 +486,89 @@ export default function GuestQueueTicketPage() {
     );
   }
 
+  if (isPilotQueue && !guestNameSaved && pilotJoinStatus !== 'open') {
+    const title = pilotJoinStatus === 'paused' ? 'Queue is paused' : 'Queue is closed';
+    const detail = pilotJoinStatus === 'paused'
+      ? 'Please stay nearby. Staff will reopen the queue when ready.'
+      : 'This step is not accepting new guests right now.';
+
+    return (
+      <div className="card card-scrollable tkt-card">
+        <div className="tkt-header">
+          <div className="tkt-header-left">
+            <img
+              src={queueImageSrc || '/images/zippy.png'}
+              alt={queue.name}
+              className="tkt-logo"
+            />
+            <div className="tkt-header-info">
+              <div className="tkt-queue-name">{queue.name}</div>
+              <div className="tkt-event-name">{event.name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+          <h1 className="headline" style={{ fontSize: '1.75rem', margin: '0 0 0.65rem' }}>
+            {title}
+          </h1>
+          <p style={{ color: '#4b5563', lineHeight: 1.5, margin: 0 }}>
+            {detail}
+          </p>
+          <button
+            className="tkt-leave-btn"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPilotQueue && !guestNameSaved) {
+    return (
+      <div className="card card-scrollable tkt-card">
+        <div className="tkt-header">
+          <div className="tkt-header-left">
+            <img
+              src={queueImageSrc || '/images/zippy.png'}
+              alt={queue.name}
+              className="tkt-logo"
+            />
+            <div className="tkt-header-info">
+              <div className="tkt-queue-name">{queue.name}</div>
+              <div className="tkt-event-name">{event.name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1.25rem' }}>
+          <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
+            Event Check-In Needed
+          </h1>
+          <p style={{ color: '#666', lineHeight: 1.5, marginTop: 0 }}>
+            Complete Event Check-In first so we know who is joining this experience.
+          </p>
+          <button
+            className="tkt-btn-checkin"
+            onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+          >
+            Event Check-In
+          </button>
+          <button
+            className="tkt-leave-btn"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   // ── Served celebration screen ─────────────────────────────────────────────
 
   if (servedView) {
@@ -331,6 +600,168 @@ export default function GuestQueueTicketPage() {
     );
   }
 
+  if (isPilotQueue) {
+    const locationText = linkedEce?.location || event.location || queue.name;
+    const instructionText = linkedEce?.description || queue.description || 'Staff will tell you when it is time for the next step.';
+    const statusCopy: Record<string, { title: string; detail: string }> = {
+      waiting: {
+        title: 'Waiting',
+        detail: 'You are checked in and in line. No action is needed yet.',
+      },
+      standby: {
+        title: 'Standby',
+        detail: `You are almost ready. Please make your way closer to ${locationText}.`,
+      },
+      released: {
+        title: 'Your Turn',
+        detail: `Go to ${locationText}. Enter the station code there to complete this step.`,
+      },
+      completed: {
+        title: 'Completed',
+        detail: 'This step is complete. You can return to the event.',
+      },
+      cancelled: {
+        title: 'Cancelled',
+        detail: 'Please check with staff if you still need help.',
+      },
+      left: {
+        title: 'Left Queue',
+        detail: 'You are no longer active in this queue.',
+      },
+    };
+    const status = statusCopy[pilotStage] ?? statusCopy.waiting;
+    const statusTheme: Record<string, { border: string; background: string; title: string; label: string }> = {
+      waiting: { border: '#7c3aed', background: '#f5f3ff', title: '#4c1d95', label: '#6d28d9' },
+      standby: { border: '#eab308', background: '#fefce8', title: '#854d0e', label: '#a16207' },
+      released: { border: '#22c55e', background: '#f0fdf4', title: '#166534', label: '#16a34a' },
+      completed: { border: '#15803d', background: '#ecfdf5', title: '#14532d', label: '#15803d' },
+      cancelled: { border: '#991b1b', background: '#fef2f2', title: '#7f1d1d', label: '#991b1b' },
+      left: { border: '#6b7280', background: '#f8fafc', title: '#374151', label: '#6b7280' },
+    };
+    const theme = statusTheme[pilotStage] ?? statusTheme.waiting;
+    const showLocation = pilotStage === 'standby' || pilotStage === 'released' || pilotStage === 'completed';
+    const showInstruction = pilotStage === 'standby';
+
+    return (
+      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: '#6b7280' }}>
+                {event.name}
+              </div>
+              <h1 style={{ margin: '0.2rem 0 0', fontSize: 'clamp(1.45rem, 5vw, 2.4rem)', lineHeight: 1.05, color: '#24364a' }}>
+                {queue.name}
+              </h1>
+            </div>
+            <div style={{ textAlign: 'right', color: '#6b7280', fontWeight: 800 }}>
+              #{ticketNumber ?? '--'}
+            </div>
+          </div>
+
+          <div style={{
+            border: `2px solid ${theme.border}`,
+            borderRadius: 12,
+            padding: '1.25rem',
+            background: theme.background,
+          }}>
+            <div style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: theme.label, marginBottom: '0.35rem' }}>
+              Status
+            </div>
+            <div style={{ fontSize: 'clamp(2rem, 8vw, 4rem)', lineHeight: 1, fontWeight: 900, color: theme.title }}>
+              {status.title}
+            </div>
+            <p style={{ margin: '0.85rem 0 0', fontSize: 'clamp(1rem, 3vw, 1.35rem)', lineHeight: 1.35, color: '#374151' }}>
+              {status.detail}
+            </p>
+          </div>
+
+          {showLocation && (
+            <div style={{
+              border: '1px solid #d1d5db',
+              borderRadius: 12,
+              padding: '1rem',
+              background: '#fff',
+            }}>
+              <div style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: '#6b7280' }}>
+                Location
+              </div>
+              <div style={{ fontSize: 'clamp(1.3rem, 4vw, 2rem)', fontWeight: 900, color: '#24364a', marginTop: '0.25rem' }}>
+                {locationText}
+              </div>
+            </div>
+          )}
+
+          {showInstruction && (
+            <div style={{ color: '#4b5563', fontSize: '1rem', lineHeight: 1.45 }}>
+              {instructionText}
+            </div>
+          )}
+
+          {pilotStage === 'released' && (
+            <div style={{
+              border: '1px solid #d1d5db',
+              borderRadius: 12,
+              padding: '1rem',
+              background: '#fff',
+            }}>
+              <h2 style={{ margin: '0 0 0.45rem', fontSize: '1.25rem', color: '#24364a' }}>
+                Enter the station code
+              </h2>
+              <p style={{ margin: '0 0 0.75rem', color: '#4b5563', lineHeight: 1.4 }}>
+                Find the posted four digit code at the station.
+              </p>
+              {completionError && (
+                <div style={{ background: '#FFEBEE', borderRadius: 8, padding: '0.65rem', marginBottom: '0.75rem', color: '#B71C1C', fontWeight: 800 }}>
+                  {completionError}
+                </div>
+              )}
+              <input
+                value={completionCode}
+                onChange={(e) => setCompletionCode(e.target.value)}
+                placeholder="Station code"
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.85rem', borderRadius: 8, border: '1px solid #d1d5db', marginBottom: '0.75rem', fontSize: '1rem' }}
+              />
+              <button
+                className="tkt-btn-checkin"
+                onClick={() => completePilotAction()}
+                disabled={completionSaving}
+              >
+                {completionSaving ? 'Completing...' : 'Complete Step'}
+              </button>
+            </div>
+          )}
+
+          {pilotStage === 'completed' ? (
+            <button
+              className="tkt-btn-checkin"
+              style={{ marginTop: 'auto' }}
+              onClick={() => navigate(`/events/${eventSlug}`)}
+            >
+              Back to Event
+            </button>
+          ) : (
+            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+              <button
+                className="tkt-btn-checkin"
+                onClick={() => navigate(`/events/${eventSlug}`)}
+              >
+                Back to Event
+              </button>
+              <button
+                className="tkt-leave-btn"
+                onClick={handleLeave}
+                disabled={leaveDisabled}
+              >
+                Leave Queue
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // ── Normal ticket view ────────────────────────────────────────────────────
 
   const stepStates  = getStepStates(hasCheckedIn, nowServing, ticketNumber);
@@ -345,7 +776,7 @@ export default function GuestQueueTicketPage() {
       <div className="tkt-header">
         <div className="tkt-header-left">
           <img
-            src={queue.image_url || '/images/zippy.png'}
+            src={queueImageSrc || '/images/zippy.png'}
             alt={queue.name}
             className="tkt-logo"
           />
@@ -374,7 +805,7 @@ export default function GuestQueueTicketPage() {
           color: '#2f275f',
         }}>
           <img
-            src={queue.image_url || '/images/market-fresh-peonies.png'}
+            src={queueImageSrc || '/images/market-fresh-peonies.png'}
             alt="Festival and flowers access"
             style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block' }}
           />

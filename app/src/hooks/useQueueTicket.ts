@@ -130,7 +130,7 @@ export function useQueueTicket(queueId: string | undefined) {
       setTicketId(result.id);
       setTicketNumber(result.ticketNumber);
       storeTicket(queueId, result.id, result.ticketNumber);
-      return result.ticketNumber;
+      return result.id;
     } catch (e) {
       console.error('ticket claim failed', e);
       return null;

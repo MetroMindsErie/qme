@@ -207,10 +207,13 @@ export default function AdminEceForm() {
     width: '100%',
     boxSizing: 'border-box',
   };
+  const eventLogoSrc = event?.slug === 'sotc-test-check-in'
+    ? '/images/sotc-logo.png'
+    : event?.image_url || '/images/qmeFirstLogo.jpg';
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-      <Header logoSrc={event?.image_url || '/images/qmeFirstLogo.jpg'} titleLine1="ADMIN" titleLine2="eCe" />
+      <Header logoSrc={eventLogoSrc} titleLine1="ADMIN" titleLine2="eCe" />
 
       <div style={{ padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>
         <h1 className="headline" style={{ fontSize: '1.35rem', margin: 0, fontWeight: 800 }}>

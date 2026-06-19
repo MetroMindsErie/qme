@@ -9,6 +9,7 @@ import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
 import { getStoredQueueTicket, clearQueueTicket } from '../../hooks/useQueueTicket';
 import { getEventCheckIn } from '../../lib/checkInService';
+import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import { getQueueBySlug, leaveQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
@@ -47,7 +48,7 @@ export default function GuestQueueLanding() {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
             if (saved.id) {
               const row = await getEventCheckIn(saved.id);
-              setBouquetAccess(row.ticket_type ?? 'checked-in');
+              setBouquetAccess(row.status === 'completed' ? row.ticket_type ?? 'checked-in' : 'none');
             }
           } catch {
             setBouquetAccess('none');
@@ -137,15 +138,60 @@ export default function GuestQueueLanding() {
   }
 
   const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const checkInConfig = getEventCheckInConfig(event);
+  const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
+  const eventLogoSrc = event.slug === 'sotc-test-check-in'
+    ? '/images/sotc-logo.png'
+    : event.image_url || '/images/qmeFirstLogo.jpg';
+  const queueImageSrc = queue.slug === 'scan-code-adventure'
+    ? '/images/dog-through-hoop.png'
+    : queue.image_url || '';
+  const queueHeaderLogoSrc = queueImageSrc || eventLogoSrc;
+
+  if (requiresCompletedCheckIn && !hasAnyEventCheckIn) {
+    return (
+      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+        <Header
+          logoSrc={queueHeaderLogoSrc}
+          titleLine1="CHECK"
+          titleLine2="IN"
+        />
+        <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#E8F5E9', borderRadius: 14, padding: '1.25rem', color: '#1B5E20' }}>
+            <h1 style={{ fontSize: '1.35rem', margin: '0 0 0.65rem' }}>
+              Check in before joining
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              You can view event information now. Complete event check-in before joining this experience.
+            </p>
+          </div>
+          <button
+            className="actionBtn actionBtn-primary"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}/check-in`)}
+          >
+            Check In
+          </button>
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (needsBouquetAccess) {
     return (
       <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
         <Header
-          logoSrc={queue.image_url || event.image_url || '/images/qmeFirstLogo.jpg'}
+          logoSrc={queueHeaderLogoSrc}
           titleLine1=""
           titleLine2=""
         />
@@ -193,7 +239,7 @@ export default function GuestQueueLanding() {
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
-        logoSrc={queue.image_url || event.image_url || '/images/qmeFirstLogo.jpg'}
+        logoSrc={queueHeaderLogoSrc}
         titleLine1=""
         titleLine2=""
       />
@@ -228,9 +274,9 @@ export default function GuestQueueLanding() {
       {/* Queue description */}
       {queue.description && (
         <div className="miniGroup">
-          {queue.image_url && (
+          {queueImageSrc && (
             <div className="mini">
-              <img id="miniImg" src={queue.image_url} alt="Badge" className="miniImg" />
+              <img id="miniImg" src={queueImageSrc} alt="Badge" className="miniImg" />
             </div>
           )}
           <div className="miniText">
@@ -249,7 +295,7 @@ export default function GuestQueueLanding() {
           color: '#2f275f',
         }}>
           <img
-            src={queue.image_url || '/images/market-fresh-peonies.png'}
+            src={queueImageSrc || '/images/market-fresh-peonies.png'}
             alt="Festival and flowers access"
             style={{ width: '100%', maxHeight: 180, objectFit: 'cover', display: 'block' }}
           />

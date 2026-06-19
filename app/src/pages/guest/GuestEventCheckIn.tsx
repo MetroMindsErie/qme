@@ -5,7 +5,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
-import { createEventCheckIn, getEventCheckIn } from '../../lib/checkInService';
+import { checkInEventGuest, createEventCheckIn, getEventCheckIn } from '../../lib/checkInService';
+import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import type { EventCheckIn, QEvent } from '../../types';
 import '../../styles/shared.css';
@@ -53,7 +54,11 @@ export default function GuestEventCheckIn({
           setSubmitted(true);
           if (saved.id) {
             try {
-              setCheckIn(await getEventCheckIn(saved.id));
+              const row = await getEventCheckIn(saved.id);
+              const config = getEventCheckInConfig(ev);
+              setCheckIn(config.completionMode === 'auto' && row.status !== 'completed'
+                ? await checkInEventGuest(row.id, row.ticket_type ?? 'general')
+                : row);
             } catch { /* keep local confirmation even if fetch fails */ }
           }
         }
@@ -68,15 +73,20 @@ export default function GuestEventCheckIn({
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!event) return;
+    const checkInConfig = getEventCheckInConfig(event);
+    const shouldAutoComplete = checkInConfig.completionMode === 'auto';
     setSaving(true);
     setError('');
     try {
-      const row = await createEventCheckIn({
+      const created = await createEventCheckIn({
         event_id: event.id,
         first_name: firstName,
         last_name: lastName,
         code: checkInCode,
       });
+      const row = shouldAutoComplete
+        ? await checkInEventGuest(created.id, 'general')
+        : created;
       localStorage.setItem(storageKey(event.id), JSON.stringify({
         id: row.id,
         firstName,
@@ -131,10 +141,42 @@ export default function GuestEventCheckIn({
     );
   }
 
+  const checkInConfig = getEventCheckInConfig(event);
+  const eventLogoSrc = event.slug === 'sotc-test-check-in' || eventSlug === 'sotc-test-check-in'
+    ? '/images/sotc-logo.png'
+    : event.image_url || '/images/qmeFirstLogo.jpg';
+
+  if (!checkInConfig.enabled) {
+    return (
+      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+        <Header
+          logoSrc={eventLogoSrc}
+          titleLine1="EVENT"
+          titleLine2="INFO"
+        />
+        <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
+          <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
+            Check-in is not needed
+          </h1>
+          <p style={{ color: '#666', lineHeight: 1.5, marginTop: 0 }}>
+            This event does not require guest check-in before viewing or joining activities.
+          </p>
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
-        logoSrc={event.image_url || '/images/qmeFirstLogo.jpg'}
+        logoSrc={eventLogoSrc}
         titleLine1="CHECK"
         titleLine2="IN"
       />

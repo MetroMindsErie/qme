@@ -13,6 +13,7 @@ export interface QEvent {
   end_time: string | null;
   timezone: string;
   status: 'draft' | 'active' | 'completed' | 'cancelled';
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -37,6 +38,10 @@ export interface Queue {
   image_url: string;
   now_serving: number;
   status: 'active' | 'paused' | 'closed';
+  join_status?: 'open' | 'paused' | 'closed';
+  run_mode?: 'manual' | 'auto';
+  standby_threshold?: number;
+  max_active_released?: number;
   created_at: string;
   updated_at: string;
 }
@@ -44,11 +49,18 @@ export interface Queue {
 export interface Ticket {
   id: number;
   queue_id: string | null;
+  ticket_number?: number | null;
+  first_name?: string;
+  last_name?: string;
+  stage?: 'waiting' | 'standby' | 'released' | 'completed' | 'cancelled' | 'left';
   status: 'waiting' | 'checked_in' | 'left' | 'served';
   created_at: string;
   checked_in_at: string | null;
   left_reason: string | null;
   left_at: string | null;
+  stage_updated_at?: string;
+  released_at?: string | null;
+  completed_at?: string | null;
 }
 
 // ===================== Input DTOs =====================
@@ -61,6 +73,7 @@ export type CreateEventInput = Pick<
   event_date?: string | null;
   start_time?: string | null;
   end_time?: string | null;
+  metadata?: Record<string, unknown>;
 };
 
 export type UpdateEventInput = Partial<CreateEventInput>;
@@ -72,7 +85,10 @@ export type CreateQueueInput = Pick<
   status?: Queue['status'];
 };
 
-export type UpdateQueueInput = Partial<Omit<CreateQueueInput, 'event_id'>>;
+export type UpdateQueueInput = Partial<Omit<CreateQueueInput, 'event_id'>> & Partial<Pick<
+  Queue,
+  'join_status' | 'run_mode' | 'standby_threshold' | 'max_active_released'
+>>;
 
 export interface Expie {
   id: string;
@@ -157,6 +173,18 @@ export type CreateEventCheckInInput = Pick<
 > & {
   code?: string | null;
 };
+
+export interface EventGuestMark {
+  id: string;
+  event_id: string;
+  ticket_id: number | null;
+  check_in_id: string | null;
+  mark_key: string;
+  mark_value: string;
+  source: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
 
 // ===================== Snapshot =====================
 

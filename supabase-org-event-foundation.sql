@@ -49,7 +49,8 @@ for each row
 execute function public.set_organizations_updated_at();
 
 alter table public.events
-  add column if not exists organization_id uuid references public.organizations(id);
+  add column if not exists organization_id uuid references public.organizations(id),
+  add column if not exists metadata jsonb not null default '{}'::jsonb;
 
 create index if not exists events_organization_id_idx
   on public.events(organization_id);
@@ -136,9 +137,16 @@ create policy "experiences_delete_all"
 insert into public.organizations (name, slug, description, logo_url, status)
 values
   (
+    'Walnut Ridge Farm',
+    'walnut-ridge-farm',
+    'Farm and event host organization for the Peony Festival demo and future Walnut Ridge events.',
+    '',
+    'active'
+  ),
+  (
     'qME Demo',
     'qme-demo',
-    'Internal demo organization used to preserve Peony Festival and other demo events while the multi-organization foundation is introduced.',
+    'Internal qME demo organization for generic product examples, test events, and non-client demo data.',
     '/images/qmeFirstLogo.jpg',
     'active'
   ),
@@ -146,7 +154,7 @@ values
     'Summer on the Cuyahoga',
     'summer-on-the-cuyahoga',
     'SOTC organization for Rock Hall and summer pilot event planning.',
-    '',
+    '/images/sotc-logo.png',
     'active'
   )
 on conflict (slug) do update
@@ -158,7 +166,28 @@ set
 
 update public.events
 set organization_id = (
-  select id from public.organizations where slug = 'qme-demo'
+  select id from public.organizations where slug = 'walnut-ridge-farm'
 )
 where slug = 'peony-festival'
-  and organization_id is null;
+  and (
+    organization_id is null
+    or organization_id = (
+      select id from public.organizations where slug = 'qme-demo'
+    )
+  );
+
+update public.events
+set metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
+  'check_in',
+  jsonb_build_object(
+    'enabled', true,
+    'completion_mode', 'auto',
+    'require_completed_for_participation', true
+  )
+)
+where slug = 'sotc-test-check-in';
+
+update public.events
+set image_url = '/images/sotc-logo.png'
+where slug = 'sotc-test-check-in'
+  and coalesce(image_url, '') in ('', '/images/icorps.png', '/images/zippy.png', '/images/qmeFirstLogo.jpg');

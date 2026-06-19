@@ -5,19 +5,21 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
-import { listQueuesForEvent, getNowServing, restoreTicketForQueue } from '../../lib/queueService';
+import { listQueuesForEvent, getNowServing, restoreTicketForQueue, getQueueTicket } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
+import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
-import type { Ece, QEvent, Queue } from '../../types';
+import type { Ece, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 import '../../styles/eventDetail.css';
 
 interface QueueWithMeta extends Queue {
   _myTicket?: string;
+  _myStage?: Ticket['stage'];
   _nowServing?: number;
 }
 
@@ -231,6 +233,7 @@ export default function GuestEventDetail() {
     if (!eventSlug) return;
     try {
       const ev = await getEventBySlug(eventSlug);
+      const checkInConfig = getEventCheckInConfig(ev);
       setEvent(ev);
       const qs = await listQueuesForEvent(ev.id);
 
@@ -252,18 +255,21 @@ export default function GuestEventDetail() {
 
       const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
       let checkInTicketType: 'general' | 'flowers' | null = null;
-      setHasEventCheckIn(Boolean(storedCheckIn));
+      setHasEventCheckIn(false);
       setEventCheckInTicketType(null);
       if (storedCheckIn) {
         try {
           const saved = JSON.parse(storedCheckIn) as { id?: string };
           if (saved.id) {
             const row = await getEventCheckIn(saved.id);
-            checkInTicketType = row.ticket_type;
-            setEventCheckInTicketType(checkInTicketType);
+            if (!checkInConfig.requireCompletedForParticipation || row.status === 'completed') {
+              checkInTicketType = row.ticket_type;
+              setEventCheckInTicketType(checkInTicketType);
+              setHasEventCheckIn(true);
+            }
           }
         } catch {
-          /* keep the local checked-in state even if the row cannot be read */
+          setHasEventCheckIn(false);
         }
       }
       const enriched: QueueWithMeta[] = await Promise.all(
@@ -272,19 +278,22 @@ export default function GuestEventDetail() {
           .map(async (q) => {
             const storedTicketId = getStoredQueueTicket(q.id);
             let ticket = getStoredQueueTicketNumber(q.id);
+            let ticketStage: Ticket['stage'];
             if (storedTicketId) {
               try {
                 const restored = await restoreTicketForQueue(Number(storedTicketId), q.id);
                 ticket = String(restored.ticketNumber);
                 localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
                 localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
+                const ticketRow = await getQueueTicket(restored.id);
+                ticketStage = ticketRow.stage;
               } catch {
                 /* keep local display value when restore is unavailable */
               }
             }
             let ns = q.now_serving;
             try { ns = await getNowServing(q.id); } catch { /* */ }
-            return { ...q, _myTicket: ticket || undefined, _nowServing: ns };
+            return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns };
           })
       );
       setQueues(enriched.filter((q) => q.slug !== 'wrapped-bouquets' || checkInTicketType === 'flowers'));
@@ -327,7 +336,11 @@ export default function GuestEventDetail() {
   }
 
   const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
-  const sessionCount = queues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + eces.length;
+  const checkInConfig = getEventCheckInConfig(event);
+  const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
+  const linkedEceQueueIds = new Set(eces.map((ece) => ece.queue_id).filter(Boolean));
+  const visibleQueues = queues.filter((q) => !linkedEceQueueIds.has(q.id));
+  const sessionCount = visibleQueues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + eces.length;
 
   return (
     <>
@@ -338,7 +351,7 @@ export default function GuestEventDetail() {
           <div className="ed-header-top">
             <div className="ed-header-left">
               <img
-                src={event.image_url || '/images/icorps.png'}
+                src={event.slug === 'sotc-test-check-in' ? '/images/sotc-logo.png' : event.image_url || '/images/icorps.png'}
                 alt={event.name}
                 className="ed-logo"
               />
@@ -383,48 +396,42 @@ export default function GuestEventDetail() {
         <div className="ed-activity-list">
 
           {/* Arrival check-in */}
+          {checkInConfig.enabled && !hasEventCheckIn && (
           <div className="ed-activity-card ed-card-clickable">
-            <div className="ed-activity-icon-wrap" style={{ background: '#E8F5E9' }}>
+            <div className="ed-check-icon" aria-hidden="true">
               <span style={{ fontSize: '1.1rem' }}>✓</span>
             </div>
             <div className="ed-activity-body">
               <div className="ed-activity-name-row">
                 <span className="ed-activity-name">{isPeonyEvent ? 'Check In at Mobile Bar' : 'Event Check-In'}</span>
-                <span className="ed-badge ed-badge-active">{hasEventCheckIn ? 'DONE' : 'START HERE'}</span>
+                <span className="ed-badge ed-badge-active">START HERE</span>
               </div>
               <div className="ed-activity-desc">
-                {!isPeonyEvent && hasEventCheckIn
-                  ? 'You are checked in for this event.'
-                  : !isPeonyEvent
+                {!isPeonyEvent
                   ? 'Enter your name when you arrive so the event team can confirm your check-in.'
                   : eventCheckInTicketType === 'flowers'
                   ? 'You are checked in with flowers access. Use the Bouquet Bar option below when ready.'
-                  : hasEventCheckIn
-                  ? 'You are checked in. Please stay near the mobile bar if the team needs you.'
                   : 'Enter your name when you arrive so the team can prepare your admission and bouquet access.'}
               </div>
             </div>
             <div className="ed-activity-right">
-              {hasEventCheckIn ? (
-                <Link to={`/events/${eventSlug}`} className="ed-action-btn ed-action-btn-secondary">
-                  Checked In
-                </Link>
-              ) : (
-                <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
-                  Check In &gt;
-                </Link>
-              )}
+              <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
+                Check In
+              </Link>
             </div>
           </div>
+          )}
 
           {/* Live joinable queues */}
-          {queues.map((q) => {
+          {visibleQueues.map((q) => {
             const hasTicket = Boolean(q._myTicket);
+            const isCompleted = q._myStage === 'completed';
+            const participationLocked = requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket;
             return (
               <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
                   <img
-                    src={q.image_url || '/images/zippy.png'}
+                    src={q.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : q.image_url || '/images/zippy.png'}
                     alt={q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}
                     className="ed-activity-icon-img"
                     style={{ borderRadius: '8px' }}
@@ -433,20 +440,26 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-body">
                   <div className="ed-activity-name-row">
                     <span className="ed-activity-name">{q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}</span>
-                    <span className="ed-badge ed-badge-active">ACTIVE</span>
+                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : 'ACTIVE'}</span>
                   </div>
-                  <div className="ed-activity-desc">
-                    {q.slug === 'wrapped-bouquets'
-                      ? 'Special flowers ticket access for wrapped bouquets.'
-                      : q.description}
-                  </div>
+                  {!isCompleted && (
+                    <div className="ed-activity-desc">
+                      {participationLocked
+                        ? 'Complete Event Check-In above before joining this experience.'
+                        : q.slug === 'wrapped-bouquets'
+                        ? 'Special flowers ticket access for wrapped bouquets.'
+                        : q.description}
+                    </div>
+                  )}
                   {event.start_time && (
                     <div className="ed-activity-meta">
                       <span>Starts {formatTime(event.start_time)}</span>
                     </div>
                   )}
                   {hasTicket && (
-                    <div className="ed-ticket-note">🎫 You're in line — #{q._myTicket}</div>
+                    <div className="ed-ticket-note">
+                      {isCompleted ? 'Completed' : `You're in line - #${q._myTicket}`}
+                    </div>
                   )}
                 </div>
                 <div className="ed-activity-right">
@@ -456,11 +469,11 @@ export default function GuestEventDetail() {
                   </div>
                   {hasTicket ? (
                     <Link to={`/events/${eventSlug}/q/${q.slug}/ticket`} className="ed-action-btn ed-action-btn-secondary">
-                      View ›
+                      {isCompleted ? 'Done' : 'View'}
                     </Link>
-                  ) : (
+                  ) : participationLocked ? null : (
                     <Link to={`/events/${eventSlug}/q/${q.slug}`} className="ed-action-btn">
-                      Join ›
+                      Join
                     </Link>
                   )}
                 </div>
@@ -471,28 +484,91 @@ export default function GuestEventDetail() {
           {/* Dynamic event eCes from DB */}
           {eces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
+            const hasTicket = Boolean(linkedQueue?._myTicket);
+            const isCompleted = linkedQueue?._myStage === 'completed';
+            const participationLocked = Boolean(linkedQueue && requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket);
             const actionHref = exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
-              ? `/events/${eventSlug}/q/${linkedQueue.slug}`
+              ? participationLocked
+                ? ''
+                : `/events/${eventSlug}/q/${linkedQueue.slug}`
               : '';
+            const viewHref = linkedQueue
+              ? `/events/${eventSlug}/q/${linkedQueue.slug}/ticket`
+              : '';
+            const canAct = Boolean(actionHref || viewHref);
+            const cardClass = `ed-activity-card ed-activity-card-info ${canAct ? 'ed-card-clickable' : ''} ${hasTicket ? 'ed-card-joined' : ''}`;
+            const handleEceOpen = () => {
+              if (hasTicket && viewHref) {
+                navigate(viewHref);
+              } else if (actionHref) {
+                navigate(actionHref);
+              }
+            };
+            const actionText = hasTicket
+              ? isCompleted ? 'Done' : 'View'
+              : participationLocked
+              ? ''
+              : linkedQueue
+              ? 'Join'
+              : exp.type === 'check_in'
+              ? 'Check In'
+              : '';
+
             return (
-            <div key={exp.id} className="ed-activity-card ed-activity-card-info">
+            <div
+              key={exp.id}
+              className={cardClass}
+              onClick={canAct ? handleEceOpen : undefined}
+              role={canAct ? 'button' : undefined}
+              tabIndex={canAct ? 0 : undefined}
+              onKeyDown={canAct ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleEceOpen(); } : undefined}
+            >
               <div className="ed-activity-icon-wrap" style={{ background: '#E8F5E9' }}>
-                {exp.image_url
-                  ? <img src={exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
-                  : <span style={{ fontSize: '1.1rem' }}>✨</span>}
+                {exp.image_url || exp.slug === 'scan-code-adventure'
+                  ? <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
+                  : <span style={{ fontSize: '1.1rem' }}>âœ¨</span>}
               </div>
               <div className="ed-activity-body">
                 <div className="ed-activity-name-row">
                   <span className="ed-activity-name">{exp.name}</span>
+                  {linkedQueue && (
+                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : 'ACTIVE'}</span>
+                  )}
                 </div>
-                {exp.description && (
+                {isCompleted ? null : participationLocked ? (
+                  <div className="ed-activity-desc">Complete Event Check-In above before joining this experience.</div>
+                ) : exp.description && (
                   <div className="ed-activity-desc">{exp.description}</div>
                 )}
+                {linkedQueue && event.start_time && (
+                  <div className="ed-activity-meta">
+                    <span>Starts {formatTime(event.start_time)}</span>
+                  </div>
+                )}
+                {hasTicket && linkedQueue?._myTicket && (
+                  <div className="ed-ticket-note">
+                    {isCompleted ? 'Completed' : `You're in line - #${linkedQueue._myTicket}`}
+                  </div>
+                )}
               </div>
-              <div className="ed-activity-right ed-activity-chevron">
-                <span style={{ color: '#e0e0e0' }}>›</span>
+              <div className="ed-activity-right">
+                {linkedQueue && (
+                  <div className="ed-serving-badge">
+                    <div className="ed-serving-label">Now Serving</div>
+                    <div className="ed-serving-num">{linkedQueue._nowServing ?? linkedQueue.now_serving}</div>
+                  </div>
+                )}
+                {actionText && (
+                  <Link
+                    to={hasTicket && viewHref ? viewHref : actionHref}
+                    className={`ed-action-btn ${hasTicket ? 'ed-action-btn-secondary' : ''}`}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {actionText}
+                  </Link>
+                )}
               </div>
             </div>
             );
@@ -537,12 +613,11 @@ export default function GuestEventDetail() {
                   )}
                 </div>
                 <div className="ed-activity-right ed-activity-chevron">
-                  {isClickable ? '>' : <span style={{ color: '#e0e0e0' }}>&gt;</span>}
+                  <span />
                 </div>
               </div>
             );
           })}
-
         </div>
       </div>
 

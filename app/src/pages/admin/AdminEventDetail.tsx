@@ -81,10 +81,16 @@ export default function AdminEventDetail() {
     paused: '#ff9800',
     closed: '#f44336',
   };
+  const linkedQueueIds = new Set(eces.map((ece) => ece.queue_id).filter(Boolean));
+  const standaloneQueues = queues.filter((queue) => !linkedQueueIds.has(queue.id));
 
   return (
     <div className="card card-scrollable admin-event-detail-card" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-      <Header logoSrc="/images/qmeFirstLogo.jpg" titleLine1="ADMIN" titleLine2="EVENT" />
+      <Header
+        logoSrc={event.slug === 'sotc-test-check-in' ? '/images/sotc-logo.png' : event.image_url || '/images/qmeFirstLogo.jpg'}
+        titleLine1="ADMIN"
+        titleLine2="EVENT"
+      />
 
       {/* Event summary */}
       <div style={{ padding: '0 1.25rem 1rem', borderBottom: '2px solid #e0e0e0' }}>
@@ -222,13 +228,13 @@ export default function AdminEventDetail() {
           </button>
         </div>
 
-        {queues.length === 0 && (
+        {standaloneQueues.length === 0 && (
           <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
             No standalone queue engines yet. Queue-type eCes create or link these automatically when saved.
           </p>
         )}
 
-        {queues.map((q) => (
+        {standaloneQueues.map((q) => (
           <div
             key={q.id}
             style={{

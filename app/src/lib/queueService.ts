@@ -2,7 +2,7 @@
  * queueService.ts — CRUD for queues + queue-scoped ticket operations.
  */
 import { supabase } from './supabase';
-import type { Queue, CreateQueueInput, UpdateQueueInput, QueueSnapshot } from '../types';
+import type { EventGuestMark, Queue, CreateQueueInput, Ticket, UpdateQueueInput, QueueSnapshot } from '../types';
 
 // ===================== QUEUE CRUD =====================
 
@@ -175,6 +175,123 @@ export async function resetQueueTickets(queueId: string): Promise<void> {
     p_queue_id: queueId,
   });
   if (error) throw error;
+}
+
+// ===================== SOTC QUEUE PILOT STAGES =====================
+
+export async function updateTicketGuestName(
+  ticketId: number,
+  input: { firstName: string; lastName: string }
+): Promise<Ticket> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .update({
+      first_name: input.firstName.trim(),
+      last_name: input.lastName.trim(),
+    })
+    .eq('id', ticketId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Ticket;
+}
+
+export async function listQueuePilotTickets(queueId: string): Promise<Ticket[]> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select('*')
+    .eq('queue_id', queueId)
+    .order('ticket_number', { ascending: true, nullsFirst: false })
+    .order('id', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Ticket[];
+}
+
+export async function getQueueTicket(ticketId: number): Promise<Ticket> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .select('*')
+    .eq('id', ticketId)
+    .single();
+  if (error) throw error;
+  return data as Ticket;
+}
+
+export async function updateTicketStage(
+  ticketId: number,
+  stage: NonNullable<Ticket['stage']>
+): Promise<Ticket> {
+  const updates: Partial<Ticket> = { stage };
+  const now = new Date().toISOString();
+  if (stage === 'released') {
+    updates.released_at = now;
+  }
+  if (stage === 'completed') {
+    updates.status = 'served';
+    updates.completed_at = now;
+  } else if (stage === 'left' || stage === 'cancelled') {
+    updates.status = 'left';
+  }
+
+  const { data, error } = await supabase
+    .from('tickets')
+    .update(updates)
+    .eq('id', ticketId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as Ticket;
+}
+
+export async function releaseQueueTicket(ticketId: number): Promise<Ticket> {
+  return updateTicketStage(ticketId, 'released');
+}
+
+export async function completeQueueTicketAction(input: {
+  eventId: string;
+  ticketId: number;
+  markKey: string;
+  markValue?: string;
+  source?: string;
+  metadata?: Record<string, unknown>;
+}): Promise<EventGuestMark> {
+  await updateTicketStage(input.ticketId, 'completed');
+
+  const payload = {
+    event_id: input.eventId,
+    ticket_id: input.ticketId,
+    mark_key: input.markKey,
+    mark_value: input.markValue ?? 'completed',
+    source: input.source ?? 'guest',
+    metadata: input.metadata ?? {},
+  };
+
+  const { data: existing, error: lookupError } = await supabase
+    .from('event_guest_marks')
+    .select('id')
+    .eq('ticket_id', input.ticketId)
+    .eq('mark_key', input.markKey)
+    .maybeSingle();
+  if (lookupError) throw lookupError;
+
+  if (existing?.id) {
+    const { data, error } = await supabase
+      .from('event_guest_marks')
+      .update(payload)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as EventGuestMark;
+  }
+
+  const { data, error } = await supabase
+    .from('event_guest_marks')
+    .insert(payload)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as EventGuestMark;
 }
 
 // ===================== REALTIME =====================

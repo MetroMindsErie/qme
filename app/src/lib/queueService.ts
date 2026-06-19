@@ -258,6 +258,38 @@ export async function releaseQueueTicket(ticketId: number): Promise<Ticket> {
   return updateTicketStage(ticketId, 'released');
 }
 
+function ticketIsActive(ticket: Ticket) {
+  return !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting');
+}
+
+function ticketIsNearbyConfirmed(ticket: Ticket) {
+  return !Object.prototype.hasOwnProperty.call(ticket, 'nearby_confirmed_at') || Boolean(ticket.nearby_confirmed_at);
+}
+
+export async function applyQueuePilotFlow(queueId: string): Promise<void> {
+  const [queue, tickets] = await Promise.all([
+    getQueue(queueId),
+    listQueuePilotTickets(queueId),
+  ]);
+  const activeReleased = tickets.filter((ticket) => ticket.stage === 'released').length;
+  const maxActive = queue.max_active_released ?? 1;
+  const standbyTarget = queue.standby_threshold ?? 3;
+
+  const activeTickets = tickets.filter(ticketIsActive);
+  const waiting = activeTickets.filter((ticket) => (ticket.stage ?? 'waiting') === 'waiting');
+  const standby = activeTickets.filter((ticket) => ticket.stage === 'standby');
+  const confirmedStandby = standby.filter(ticketIsNearbyConfirmed);
+
+  for (const ticket of waiting.slice(0, Math.max(0, standbyTarget - standby.length))) {
+    await updateTicketStage(ticket.id, 'standby');
+  }
+
+  const slots = Math.max(0, maxActive - activeReleased);
+  for (const ticket of confirmedStandby.slice(0, slots)) {
+    await releaseQueueTicket(ticket.id);
+  }
+}
+
 export async function completeQueueTicketAction(input: {
   eventId: string;
   ticketId: number;
@@ -266,7 +298,7 @@ export async function completeQueueTicketAction(input: {
   source?: string;
   metadata?: Record<string, unknown>;
 }): Promise<EventGuestMark> {
-  await updateTicketStage(input.ticketId, 'completed');
+  const ticket = await updateTicketStage(input.ticketId, 'completed');
 
   const payload = {
     event_id: input.eventId,
@@ -293,6 +325,7 @@ export async function completeQueueTicketAction(input: {
       .select()
       .single();
     if (error) throw error;
+    if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
     return data as EventGuestMark;
   }
 
@@ -302,6 +335,7 @@ export async function completeQueueTicketAction(input: {
     .select()
     .single();
   if (error) throw error;
+  if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
   return data as EventGuestMark;
 }
 

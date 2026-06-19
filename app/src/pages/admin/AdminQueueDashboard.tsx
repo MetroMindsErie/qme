@@ -10,6 +10,7 @@ import Header from '../../components/Header';
 import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
 import {
+  applyQueuePilotFlow,
   completeQueueTicketAction,
   getQueue,
   listQueuePilotTickets,
@@ -240,27 +241,8 @@ export default function AdminQueueDashboard() {
     if (!queue) return;
     if (autoFlowInFlightRef.current) return;
     autoFlowInFlightRef.current = true;
-    const activeReleased = pilotTickets.filter((t) => t.stage === 'released').length;
-    const maxActive = queue.max_active_released ?? 1;
-    const standbyTarget = queue.standby_threshold ?? 3;
-
-    const activeTickets = pilotTickets.filter((t) =>
-      !['completed', 'cancelled', 'left'].includes(t.stage ?? 'waiting')
-    );
-    const waiting = activeTickets.filter((t) => (t.stage ?? 'waiting') === 'waiting');
-    const standby = activeTickets.filter((t) => t.stage === 'standby');
-    const confirmedStandby = standby.filter(isNearbyConfirmed);
-
     try {
-      for (const ticket of waiting.slice(0, Math.max(0, standbyTarget - standby.length))) {
-        await updateTicketStage(ticket.id, 'standby');
-      }
-
-      const slots = Math.max(0, maxActive - activeReleased);
-      const releaseCandidates = confirmedStandby.slice(0, slots);
-      for (const ticket of releaseCandidates) {
-        await releaseQueueTicket(ticket.id);
-      }
+      await applyQueuePilotFlow(queue.id);
       await refreshPilotTickets();
     } catch (e) {
       console.error('Auto pass failed', e);

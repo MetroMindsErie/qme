@@ -62,6 +62,12 @@ function getPilotMarkKey(ece: Ece | null, queueSlug = 'queue') {
   return asString(asRecord(ece?.metadata).mark_key) ?? `${queueSlug.replaceAll('-', '_')}_complete`;
 }
 
+function getQueueImageSrc(queue: QueueType | null | undefined) {
+  if (queue?.slug === 'scan-code-adventure') return '/images/dog-through-hoop.png';
+  if (queue?.slug === 'headshot-photo-station') return '/images/headshot-photo-station.png';
+  return queue?.image_url || '/images/zippy.png';
+}
+
 export default function AdminQueueDashboard() {
   const navigate = useNavigate();
   const { eventId, queueId } = useParams<{ eventId: string; queueId: string }>();
@@ -327,7 +333,7 @@ export default function AdminQueueDashboard() {
 
     return (
       <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-        <Header logoSrc={queue.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : queue.image_url || '/images/zippy.png'} titleLine1="ADMIN" titleLine2="QUEUE" />
+        <Header logoSrc={getQueueImageSrc(queue)} titleLine1="ADMIN" titleLine2="QUEUE" />
 
         <div style={{ padding: '0 1.25rem 0.85rem', borderBottom: '2px solid #e0e0e0' }}>
           <h1 className="headline" style={{ fontSize: '1.4rem', margin: '0 0 0.35rem' }}>{queue.name}</h1>
@@ -511,7 +517,7 @@ export default function AdminQueueDashboard() {
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
-        logoSrc={queue?.image_url || '/images/zippy.png'}
+        logoSrc={getQueueImageSrc(queue)}
         titleLine1=""
         titleLine2=""
       />

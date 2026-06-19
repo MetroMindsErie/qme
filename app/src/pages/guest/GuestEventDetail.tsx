@@ -439,7 +439,11 @@ export default function GuestEventDetail() {
               <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
                   <img
-                    src={q.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : q.image_url || '/images/zippy.png'}
+                    src={q.slug === 'scan-code-adventure'
+                      ? '/images/dog-through-hoop.png'
+                      : q.slug === 'headshot-photo-station'
+                      ? '/images/headshot-photo-station.png'
+                      : q.image_url || '/images/zippy.png'}
                     alt={q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}
                     className="ed-activity-icon-img"
                     style={{ borderRadius: '8px' }}

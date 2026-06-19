@@ -204,6 +204,8 @@ export default function GuestQueueTicketPage() {
   const pilotCompletionCode = getPilotCompletionCode(linkedEce);
   const queueImageSrc = queue?.slug === 'scan-code-adventure'
     ? '/images/dog-through-hoop.png'
+    : queue?.slug === 'headshot-photo-station'
+    ? '/images/headshot-photo-station.png'
     : queue?.image_url || '';
 
   function queueGuestStorageKey(qId: string) {

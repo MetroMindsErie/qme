@@ -1,6 +1,6 @@
 # SOTC Rock Hall Event Plan
 
-Updated: 2026-06-11
+Updated: 2026-06-19
 
 ## Event Anchor
 
@@ -225,6 +225,45 @@ Likely thin MVP candidates:
 - Mixer resources/digital brochure cards.
 - Basic registration/check-in path.
 - Registration admin console for name entry/check-in and photo access tagging.
+
+## 2026-06-19 Production Pilot Status
+
+The first live SOTC queue/adventure pilot is working in production at:
+
+- Guest event link: `https://qme-nine.vercel.app/events/sotc-test-check-in`
+- Admin entry point: `https://qme-nine.vercel.app/admin/events`
+- Pilot queue/eCe: `Scan-Code Adventure`
+- Station code: `4729`
+
+Validated behavior:
+
+- Guest event check-in gates access to the scan-code adventure.
+- Guest check-in name is reused for the queue ticket; guests do not re-enter first/last name when joining the adventure.
+- Guests can join the adventure queue and see stage-specific statuses: waiting, standby, your turn, and completed.
+- Auto Assist advances the flow while the admin queue screen is open.
+- Current pilot threshold settings are one active released guest and three standby guests.
+- When a guest enters the correct station code, the ticket becomes completed and the next guest can advance.
+- The completed adventure state appears on the event page without repeating active task instructions.
+- Stage colors were verified in production: green for Your Turn, yellow for Standby, purple for Waiting, and green completed treatment on the event card.
+
+Pilot caveats:
+
+- Admin routes currently use database IDs, not public slugs. Admin users should enter through `/admin/events` and click into the event/queue rather than pasting slug-based admin URLs.
+- Auto Assist is client-driven and only runs while the admin queue screen is open.
+- Manual station code entry works; phone camera scanning/QR completion is not yet implemented.
+- Pilot RLS policies are intentionally permissive for testing and must be hardened before broader production use.
+- Test reset/cleanup is still manual.
+
+## Active Follow-Up Stories
+
+- Add slug-friendly admin routing or admin route resolvers so links like `/admin/events/sotc-test-check-in/queues/scan-code-adventure` work.
+- Decide whether Auto Assist can remain admin-screen-driven for July or needs server-side/background queue automation.
+- Polish queue threshold controls with clearer helper copy and save confirmation, e.g. "3 standby + 1 active = 4 guests in motion."
+- Add QR/scanning support for station completion while preserving manual code entry as a fallback.
+- Document canonical live links and deployment expectations; use `qme-nine.vercel.app` for the current production pilot.
+- Add a reset/cleanup tool for pilot check-ins, tickets, and marks between tests.
+- Replace permissive pilot RLS policies with event/role-aware access policies.
+- Move pilot-specific image/asset references toward managed event/experience/queue assets.
 
 ## Explicit Non-Goals For First Pass
 

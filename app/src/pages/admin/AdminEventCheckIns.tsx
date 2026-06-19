@@ -37,10 +37,8 @@ export default function AdminEventCheckIns({
   const refresh = useCallback(async () => {
     if (!eventId) return;
     try {
-      const [ev, rows] = await Promise.all([
-        getEvent(eventId),
-        listEventCheckIns(eventId, checkInCode),
-      ]);
+      const ev = await getEvent(eventId);
+      const rows = await listEventCheckIns(ev.id, checkInCode);
       setEvent(ev);
       setCheckIns(rows);
       setError('');
@@ -57,9 +55,9 @@ export default function AdminEventCheckIns({
   }, [refresh]);
 
   useEffect(() => {
-    if (!eventId) return;
-    return onEventCheckInsChange(eventId, refresh);
-  }, [eventId, refresh]);
+    if (!event?.id) return;
+    return onEventCheckInsChange(event.id, refresh);
+  }, [event?.id, refresh]);
 
   useEffect(() => {
     const interval = setInterval(refresh, 3000);

@@ -15,6 +15,7 @@ import {
   listQueuePilotTickets,
   releaseQueueTicket,
   resetQueueTickets,
+  getQueueBySlug,
   updateQueue,
   updateTicketStage,
 } from '../../lib/queueService';
@@ -24,13 +25,16 @@ import type { Queue as QueueType, QEvent, EventCheckIn, Ticket } from '../../typ
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default function AdminQueueDashboard() {
   const navigate = useNavigate();
   const { eventId, queueId } = useParams<{ eventId: string; queueId: string }>();
-  const { nowServing, setNowServing } = useQueueMetric(queueId);
 
   const [queue, setQueue] = useState<QueueType | null>(null);
   const [event, setEvent] = useState<QEvent | null>(null);
+  const metricQueueId = queue?.id ?? (queueId && UUID_RE.test(queueId) ? queueId : undefined);
+  const { nowServing, setNowServing } = useQueueMetric(metricQueueId);
   const [flowersCheckIns, setFlowersCheckIns] = useState<EventCheckIn[]>([]);
   const [pilotTickets, setPilotTickets] = useState<Ticket[]>([]);
   const [savingControls, setSavingControls] = useState(false);
@@ -59,10 +63,13 @@ export default function AdminQueueDashboard() {
     if (!queueId || !eventId) return;
     (async () => {
       try {
-        const [q, ev] = await Promise.all([
-          getQueue(queueId),
-          getEvent(eventId),
-        ]);
+        const ev = await getEvent(eventId);
+        let q: QueueType;
+        try {
+          q = await getQueue(queueId);
+        } catch {
+          q = await getQueueBySlug(ev.id, queueId);
+        }
         setQueue(q);
         setEvent(ev);
       } catch (e) {
@@ -75,12 +82,12 @@ export default function AdminQueueDashboard() {
   }, [queueId, eventId, navigate]);
 
   const refreshFlowersCheckIns = useCallback(async () => {
-    if (!eventId || !isBouquetQueue) {
+    if (!event?.id || !isBouquetQueue) {
       setFlowersCheckIns([]);
       return;
     }
     try {
-      const rows = await listEventCheckIns(eventId, null);
+      const rows = await listEventCheckIns(event.id, null);
       setFlowersCheckIns(
         rows
           .filter((row) => row.status === 'completed' && row.ticket_type === 'flowers')
@@ -89,31 +96,31 @@ export default function AdminQueueDashboard() {
     } catch (e) {
       console.error('flowers check-ins fetch failed', e);
     }
-  }, [eventId, isBouquetQueue]);
+  }, [event?.id, isBouquetQueue]);
 
   useEffect(() => {
     refreshFlowersCheckIns();
-    if (!eventId || !isBouquetQueue) return;
-    const unsubscribe = onEventCheckInsChange(eventId, refreshFlowersCheckIns);
+    if (!event?.id || !isBouquetQueue) return;
+    const unsubscribe = onEventCheckInsChange(event.id, refreshFlowersCheckIns);
     const interval = setInterval(refreshFlowersCheckIns, 3000);
     return () => {
       unsubscribe();
       clearInterval(interval);
     };
-  }, [eventId, isBouquetQueue, refreshFlowersCheckIns]);
+  }, [event?.id, isBouquetQueue, refreshFlowersCheckIns]);
 
   const refreshPilotTickets = useCallback(async () => {
-    if (!queueId || !isPilotQueue) {
+    if (!queue?.id || !isPilotQueue) {
       setPilotTickets([]);
       return;
     }
     try {
-      const rows = await listQueuePilotTickets(queueId);
+      const rows = await listQueuePilotTickets(queue.id);
       setPilotTickets(rows);
     } catch (e) {
       console.error('pilot tickets fetch failed', e);
     }
-  }, [queueId, isPilotQueue]);
+  }, [queue?.id, isPilotQueue]);
 
   useEffect(() => {
     refreshPilotTickets();
@@ -142,9 +149,9 @@ export default function AdminQueueDashboard() {
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   async function handleReset() {
-    if (!queueId) return;
+    if (!queue?.id) return;
     try {
-      await resetQueueTickets(queueId);
+      await resetQueueTickets(queue.id);
       setNowServing(1);
       console.log('Queue reset, now_serving set to 1');
     } catch (e) {

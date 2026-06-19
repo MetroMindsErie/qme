@@ -23,10 +23,10 @@ export default function AdminEventDetail() {
   const refresh = useCallback(async () => {
     if (!eventId) return;
     try {
-      const [ev, qs, exps] = await Promise.all([
-        getEvent(eventId),
-        listQueuesForEvent(eventId),
-        listEcesForEvent(eventId),
+      const ev = await getEvent(eventId);
+      const [qs, exps] = await Promise.all([
+        listQueuesForEvent(ev.id),
+        listEcesForEvent(ev.id),
       ]);
       setEvent(ev);
       setQueues(qs);
@@ -105,14 +105,14 @@ export default function AdminEventDetail() {
           <button
             className="actionBtn actionBtn-primary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
-            onClick={() => navigate(`/admin/events/${eventId}/edit`)}
+            onClick={() => navigate(`/admin/events/${event.id}/edit`)}
           >
             ✏️ Edit Event
           </button>
           <button
             className="actionBtn actionBtn-secondary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
-            onClick={() => navigate(`/admin/events/${eventId}/check-ins`)}
+            onClick={() => navigate(`/admin/events/${event.id}/check-ins`)}
           >
             {event.slug === 'peony-festival' ? 'Mobile Bar Check-Ins' : 'Event Check-Ins'}
           </button>
@@ -134,7 +134,7 @@ export default function AdminEventDetail() {
             <button
               className="actionBtn actionBtn-primary"
               style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-              onClick={() => navigate(`/admin/events/${eventId}/eces/new`)}
+              onClick={() => navigate(`/admin/events/${event.id}/eces/new`)}
             >
               <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add eCe
             </button>
@@ -185,7 +185,7 @@ export default function AdminEventDetail() {
                   <button
                     className="actionBtn actionBtn-primary"
                     style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                    onClick={() => navigate(`/admin/events/${eventId}/queues/${linkedQueue.id}`)}
+                    onClick={() => navigate(`/admin/events/${event.id}/queues/${linkedQueue.id}`)}
                   >
                     Manage Queue
                   </button>
@@ -193,7 +193,7 @@ export default function AdminEventDetail() {
                 <button
                   className="actionBtn actionBtn-secondary"
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  onClick={() => navigate(`/admin/events/${eventId}/eces/${exp.id}/edit`)}
+                  onClick={() => navigate(`/admin/events/${event.id}/eces/${exp.id}/edit`)}
                 >
                   Edit
                 </button>
@@ -222,7 +222,7 @@ export default function AdminEventDetail() {
           <button
             className="actionBtn actionBtn-primary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            onClick={() => navigate(`/admin/events/${eventId}/queues/new`)}
+            onClick={() => navigate(`/admin/events/${event.id}/queues/new`)}
           >
             <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Queue
           </button>
@@ -255,12 +255,12 @@ export default function AdminEventDetail() {
             onClick={(e) => {
               // Prevent navigation if a button inside is clicked
               if ((e.target as HTMLElement).closest('button')) return;
-              navigate(`/admin/events/${eventId}/queues/${q.id}`);
+              navigate(`/admin/events/${event.id}/queues/${q.id}`);
             }}
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
-                navigate(`/admin/events/${eventId}/queues/${q.id}`);
+                navigate(`/admin/events/${event.id}/queues/${q.id}`);
               }
             }}
             role="button"
@@ -279,14 +279,14 @@ export default function AdminEventDetail() {
               <button
                 className="actionBtn actionBtn-primary"
                 style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                onClick={(e) => { e.stopPropagation(); navigate(`/admin/events/${eventId}/queues/${q.id}`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/admin/events/${event.id}/queues/${q.id}`); }}
               >
                 📊 Manage
               </button>
               <button
                 className="actionBtn actionBtn-secondary"
                 style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                onClick={(e) => { e.stopPropagation(); navigate(`/admin/events/${eventId}/queues/${q.id}/edit`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/admin/events/${event.id}/queues/${q.id}/edit`); }}
               >
                 ✏️ Edit
               </button>

@@ -4,6 +4,8 @@
 import { supabase } from './supabase';
 import type { QEvent, CreateEventInput, UpdateEventInput } from '../types';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 // ---------- CREATE ----------
 
 export async function createEvent(input: CreateEventInput): Promise<QEvent> {
@@ -40,13 +42,23 @@ export async function listEvents(
 }
 
 export async function getEvent(id: string): Promise<QEvent> {
-  const { data, error } = await supabase
+  if (UUID_RE.test(id)) {
+    const byId = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+    if (byId.error) throw byId.error;
+    if (byId.data) return byId.data as QEvent;
+  }
+
+  const bySlug = await supabase
     .from('events')
     .select('*')
-    .eq('id', id)
+    .eq('slug', id)
     .single();
-  if (error) throw error;
-  return data as QEvent;
+  if (bySlug.error) throw bySlug.error;
+  return bySlug.data as QEvent;
 }
 
 export async function getEventBySlug(slug: string): Promise<QEvent> {

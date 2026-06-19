@@ -95,6 +95,11 @@ as $$
 begin
   if new.stage is distinct from old.stage then
     new.stage_updated_at = now();
+    if new.stage = 'released'
+      and old.stage is distinct from 'released'
+      and new.nearby_confirmed_at is null then
+      raise exception 'Ticket must be marked nearby before release.';
+    end if;
     if new.stage in ('waiting', 'standby') then
       new.nearby_confirmed_at = null;
     end if;

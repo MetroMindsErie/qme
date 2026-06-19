@@ -603,7 +603,9 @@ export default function GuestQueueTicketPage() {
 
   if (isPilotQueue) {
     const locationText = linkedEce?.location || event.location || queue.name;
-    const instructionText = linkedEce?.description || queue.description || 'Staff will tell you when it is time for the next step.';
+    const instructionText = pilotStage === 'standby'
+      ? `Stay nearby and keep this page open. You will be sent to ${locationText} soon.`
+      : linkedEce?.description || queue.description || 'Keep this page open for the next step.';
     const statusCopy: Record<string, { title: string; detail: string }> = {
       waiting: {
         title: 'Waiting',

@@ -25,6 +25,8 @@ interface QueueWithMeta extends Queue {
   _waitingCount?: number;
 }
 
+type CreditStatus = 'none' | 'available' | 'used';
+
 
 // ── Static informational activities ─────────────────────────────────────────
 
@@ -229,7 +231,7 @@ export default function GuestEventDetail() {
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
   const [hasEventCheckIn, setHasEventCheckIn] = useState(false);
   const [eventCheckInTicketType, setEventCheckInTicketType] = useState<'general' | 'flowers' | null>(null);
-  const [hasHeadshotCredit, setHasHeadshotCredit] = useState(false);
+  const [headshotCreditStatus, setHeadshotCreditStatus] = useState<CreditStatus>('none');
   const isPeonyEvent = eventSlug === PEONY_EVENT_SLUG;
 
   const refresh = useCallback(async () => {
@@ -260,7 +262,7 @@ export default function GuestEventDetail() {
       let checkInTicketType: 'general' | 'flowers' | null = null;
       setHasEventCheckIn(false);
       setEventCheckInTicketType(null);
-      setHasHeadshotCredit(false);
+      setHeadshotCreditStatus('none');
       if (storedCheckIn) {
         try {
           const saved = JSON.parse(storedCheckIn) as { id?: string };
@@ -271,12 +273,14 @@ export default function GuestEventDetail() {
               setEventCheckInTicketType(checkInTicketType);
               setHasEventCheckIn(true);
               const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
-              setHasHeadshotCredit(Boolean(credit && credit.quantity > credit.used_quantity));
+              setHeadshotCreditStatus(credit
+                ? credit.quantity > credit.used_quantity ? 'available' : 'used'
+                : 'none');
             }
           }
         } catch {
           setHasEventCheckIn(false);
-          setHasHeadshotCredit(false);
+          setHeadshotCreditStatus('none');
         }
       }
       const enriched: QueueWithMeta[] = await Promise.all(
@@ -445,7 +449,8 @@ export default function GuestEventDetail() {
             const hasTicket = Boolean(q._myTicket);
             const isCompleted = q._myStage === 'completed';
             const participationLocked = requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket;
-            const creditLocked = isHeadshotQueue(q.slug) && !hasHeadshotCredit && !hasTicket;
+            const creditLocked = isHeadshotQueue(q.slug) && headshotCreditStatus === 'none' && !hasTicket;
+            const creditUsed = isHeadshotQueue(q.slug) && headshotCreditStatus === 'used' && !hasTicket;
             return (
               <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
@@ -463,9 +468,9 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-body">
                   <div className="ed-activity-name-row">
                     <span className="ed-activity-name">{q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}</span>
-                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
+                    <span className="ed-badge ed-badge-active">{isCompleted || creditUsed ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
                   </div>
-                  {!isCompleted && (
+                  {!isCompleted && !creditUsed && (
                     <div className="ed-activity-desc">
                       {participationLocked
                         ? 'Complete Event Check-In above before joining this experience.'
@@ -474,6 +479,11 @@ export default function GuestEventDetail() {
                         : q.slug === 'wrapped-bouquets'
                         ? 'Special flowers ticket access for wrapped bouquets.'
                         : q.description}
+                    </div>
+                  )}
+                  {creditUsed && (
+                    <div className="ed-ticket-note">
+                      Headshot completed
                     </div>
                   )}
                   {event.start_time && (
@@ -488,7 +498,7 @@ export default function GuestEventDetail() {
                   )}
                 </div>
                 <div className="ed-activity-right">
-                  {!isCompleted && (
+                  {!isCompleted && !creditUsed && (
                     <div className="ed-serving-badge">
                       <div className="ed-serving-label">Waiting</div>
                       <div className="ed-serving-num">{q._waitingCount ?? 0}</div>
@@ -498,7 +508,7 @@ export default function GuestEventDetail() {
                     <Link to={`/events/${eventSlug}/q/${q.slug}/ticket`} className="ed-action-btn ed-action-btn-secondary">
                       {isCompleted ? 'Done' : 'View'}
                     </Link>
-                  ) : participationLocked || creditLocked ? null : (
+                  ) : participationLocked || creditLocked || creditUsed ? null : (
                     <Link to={`/events/${eventSlug}/q/${q.slug}`} className="ed-action-btn">
                       Join
                     </Link>
@@ -514,11 +524,12 @@ export default function GuestEventDetail() {
             const hasTicket = Boolean(linkedQueue?._myTicket);
             const isCompleted = linkedQueue?._myStage === 'completed';
             const participationLocked = Boolean(linkedQueue && requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket);
-            const creditLocked = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && !hasHeadshotCredit && !hasTicket);
+            const creditLocked = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'none' && !hasTicket);
+            const creditUsed = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'used' && !hasTicket);
             const actionHref = exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
-              ? participationLocked || creditLocked
+              ? participationLocked || creditLocked || creditUsed
                 ? ''
                 : `/events/${eventSlug}/q/${linkedQueue.slug}`
               : '';
@@ -537,6 +548,8 @@ export default function GuestEventDetail() {
             const actionText = hasTicket
               ? isCompleted ? 'Done' : 'View'
               : participationLocked
+              ? ''
+              : creditLocked || creditUsed
               ? ''
               : linkedQueue
               ? 'Join'
@@ -562,13 +575,15 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-name-row">
                   <span className="ed-activity-name">{exp.name}</span>
                   {linkedQueue && (
-                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
+                    <span className="ed-badge ed-badge-active">{isCompleted || creditUsed ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
                   )}
                 </div>
                 {isCompleted ? null : participationLocked ? (
                   <div className="ed-activity-desc">Complete Event Check-In above before joining this experience.</div>
                 ) : creditLocked ? (
                   <div className="ed-activity-desc">A headshot photo credit is required to join this station.</div>
+                ) : creditUsed ? (
+                  <div className="ed-ticket-note">Headshot completed</div>
                 ) : exp.description && (
                   <div className="ed-activity-desc">{exp.description}</div>
                 )}
@@ -584,7 +599,7 @@ export default function GuestEventDetail() {
                 )}
               </div>
               <div className="ed-activity-right">
-                {linkedQueue && !isCompleted && (
+                {linkedQueue && !isCompleted && !creditUsed && (
                   <div className="ed-serving-badge">
                     <div className="ed-serving-label">Waiting</div>
                     <div className="ed-serving-num">{linkedQueue._waitingCount ?? 0}</div>

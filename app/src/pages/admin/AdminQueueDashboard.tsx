@@ -251,6 +251,10 @@ export default function AdminQueueDashboard() {
 
   async function setPilotStage(ticketId: number, stage: NonNullable<Ticket['stage']>) {
     try {
+      const selectedTicket = pilotTickets.find((ticket) => ticket.id === ticketId);
+      const guestName = selectedTicket
+        ? `${selectedTicket.first_name || ''} ${selectedTicket.last_name || ''}`.trim()
+        : '';
       if (stage === 'released') {
         await releaseQueueTicket(ticketId);
       } else if (stage === 'completed' && event) {
@@ -258,10 +262,13 @@ export default function AdminQueueDashboard() {
           eventId: event.id,
           ticketId,
           markKey: getPilotMarkKey(linkedEce, queue?.slug),
+          consumeCreditKey: queue?.slug === 'headshot-photo-station' ? 'professional_headshot' : undefined,
+          creditGuestName: guestName,
           source: 'admin',
           metadata: {
             queue_slug: queue?.slug,
             completion_mode: pilotCompletionMode,
+            guest_name: guestName || undefined,
           },
         });
       } else {

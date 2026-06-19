@@ -196,7 +196,9 @@ export default function AdminEventCheckIns({
             </h2>
             {completed.map((row) => {
               const hasFlowersAccess = row.ticket_type === 'flowers';
-              const hasPhotoCredit = photoCredits.some((credit) => credit.check_in_id === row.id && credit.quantity > credit.used_quantity);
+              const photoCredit = photoCredits.find((credit) => credit.check_in_id === row.id);
+              const hasPhotoCredit = Boolean(photoCredit && photoCredit.quantity > photoCredit.used_quantity);
+              const hasUsedPhotoCredit = Boolean(photoCredit && photoCredit.quantity <= photoCredit.used_quantity);
               const accessLabel = hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
 
               return (
@@ -221,11 +223,12 @@ export default function AdminEventCheckIns({
                   )}
                   {event?.slug === 'sotc-test-check-in' && (
                     <button
-                      className={hasPhotoCredit ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
+                      className={hasPhotoCredit || hasUsedPhotoCredit ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
                       style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
+                      disabled={hasPhotoCredit || hasUsedPhotoCredit}
                       onClick={() => grantPhotoCredit(row)}
                     >
-                      {hasPhotoCredit ? 'Photo Credit' : 'Grant Photo'}
+                      {hasUsedPhotoCredit ? 'Photo Used' : hasPhotoCredit ? 'Photo Credit' : 'Grant Photo'}
                     </button>
                   )}
                 </div>

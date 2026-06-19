@@ -41,6 +41,7 @@ const PILOT_COMPLETION_CODE = '4729';
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
+type CreditStatus = 'none' | 'available' | 'used';
 type PilotCompletionMode = 'guest_code' | 'staff_served';
 type PilotStageCopy = {
   title?: string;
@@ -127,7 +128,8 @@ export default function GuestQueueTicketPage() {
   const [linkedEce, setLinkedEce] = useState<Ece | null>(null);
   const [loading, setLoading] = useState(true);
   const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
-  const [hasHeadshotCredit, setHasHeadshotCredit] = useState(false);
+  const [headshotCreditStatus, setHeadshotCreditStatus] = useState<CreditStatus>('none');
+  const [eventCheckInId, setEventCheckInId] = useState<string | null>(null);
   const [guestFirstName, setGuestFirstName] = useState('');
   const [guestLastName, setGuestLastName] = useState('');
   const [guestNameSaved, setGuestNameSaved] = useState(false);
@@ -145,12 +147,16 @@ export default function GuestQueueTicketPage() {
         setEvent(ev);
         const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
         let checkInGuestName: { firstName: string; lastName: string } | null = null;
+        setEventCheckInId(null);
+        setBouquetAccess('none');
+        setHeadshotCreditStatus('none');
         if (storedCheckIn) {
           try {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
             if (saved.id) {
               const row = await getEventCheckIn(saved.id);
               if (row.status === 'completed') {
+                setEventCheckInId(row.id);
                 checkInGuestName = {
                   firstName: row.first_name || '',
                   lastName: row.last_name || '',
@@ -160,15 +166,19 @@ export default function GuestQueueTicketPage() {
                 setGuestNameSaved(Boolean(checkInGuestName.firstName || checkInGuestName.lastName));
                 setBouquetAccess(row.ticket_type ?? 'checked-in');
                 const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
-                setHasHeadshotCredit(Boolean(credit && credit.quantity > credit.used_quantity));
+                setHeadshotCreditStatus(credit
+                  ? credit.quantity > credit.used_quantity ? 'available' : 'used'
+                  : 'none');
               } else {
+                setEventCheckInId(null);
                 setBouquetAccess('none');
-                setHasHeadshotCredit(false);
+                setHeadshotCreditStatus('none');
               }
             }
           } catch {
+            setEventCheckInId(null);
             setBouquetAccess('none');
-            setHasHeadshotCredit(false);
+            setHeadshotCreditStatus('none');
           }
         }
         const q  = await getQueueBySlug(ev.id, queueSlug);
@@ -248,12 +258,12 @@ export default function GuestQueueTicketPage() {
   useEffect(() => {
     if (!queue) return;
     if (queue.slug === 'wrapped-bouquets' && bouquetAccess !== 'flowers') return;
-    if (queue.slug === 'headshot-photo-station' && !hasHeadshotCredit) return;
+    if (queue.slug === 'headshot-photo-station' && headshotCreditStatus !== 'available') return;
     if (!hasRequiredEventCheckIn) return;
     if (isPilotQueue && !guestNameSaved) return;
     claimTicket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, bouquetAccess, hasHeadshotCredit, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved]);
+  }, [queue, bouquetAccess, headshotCreditStatus, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved]);
 
   useEffect(() => {
     if (!isPilotQueue || !ticketId || didSyncGuestNameRef.current) return;
@@ -425,9 +435,12 @@ export default function GuestQueueTicketPage() {
         eventId: event.id,
         ticketId,
         markKey: getPilotMarkKey(linkedEce, queue?.slug),
+        checkInId: eventCheckInId,
+        consumeCreditKey: queue?.slug === 'headshot-photo-station' ? 'professional_headshot' : undefined,
         metadata: {
           queue_slug: queue?.slug,
           code: normalized,
+          guest_name: `${guestFirstName} ${guestLastName}`.trim() || undefined,
         },
       });
       setPilotTicket((prev) => prev ? { ...prev, stage: 'completed', completed_at: mark.created_at } : prev);
@@ -478,7 +491,7 @@ export default function GuestQueueTicketPage() {
   const isHeadshotQueue = queue.slug === 'headshot-photo-station';
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
-  const needsHeadshotCredit = isHeadshotQueue && !hasHeadshotCredit;
+  const needsHeadshotCredit = isHeadshotQueue && headshotCreditStatus !== 'available';
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const pilotJoinStatus = queue.join_status ?? 'open';
 
@@ -603,13 +616,17 @@ export default function GuestQueueTicketPage() {
         <div style={{ padding: '1.25rem', textAlign: 'center' }}>
           <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '1.25rem', color: '#24364a', border: '1px solid #d1d5db' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
-              Photo Credit Required
+              {headshotCreditStatus === 'used' ? 'Photo Credit Used' : 'Photo Credit Required'}
             </div>
             <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
-              Headshot access is not on your check-in
+              {headshotCreditStatus === 'used'
+                ? 'Your headshot is already complete'
+                : 'Headshot access is not on your check-in'}
             </h1>
             <p style={{ margin: 0, lineHeight: 1.5 }}>
-              This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.
+              {headshotCreditStatus === 'used'
+                ? 'Your photo credit has already been used for this event.'
+                : 'This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.'}
             </p>
           </div>
           <button

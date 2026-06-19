@@ -295,6 +295,9 @@ export async function completeQueueTicketAction(input: {
   ticketId: number;
   markKey: string;
   markValue?: string;
+  checkInId?: string | null;
+  consumeCreditKey?: string;
+  creditGuestName?: string;
   source?: string;
   metadata?: Record<string, unknown>;
 }): Promise<EventGuestMark> {
@@ -303,6 +306,7 @@ export async function completeQueueTicketAction(input: {
   const payload = {
     event_id: input.eventId,
     ticket_id: input.ticketId,
+    check_in_id: input.checkInId ?? null,
     mark_key: input.markKey,
     mark_value: input.markValue ?? 'completed',
     source: input.source ?? 'guest',
@@ -317,6 +321,43 @@ export async function completeQueueTicketAction(input: {
     .maybeSingle();
   if (lookupError) throw lookupError;
 
+  async function consumeCreditIfNeeded() {
+    if (!input.consumeCreditKey) return;
+
+    let query = supabase
+      .from('event_guest_credits')
+      .select('*')
+      .eq('event_id', input.eventId)
+      .eq('credit_key', input.consumeCreditKey);
+
+    if (input.checkInId) {
+      query = query.eq('check_in_id', input.checkInId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const normalizedGuestName = input.creditGuestName?.trim().toLowerCase();
+    const credit = (data ?? []).find((row) => {
+      if (row.used_quantity >= row.quantity) return false;
+      if (input.checkInId) return true;
+      if (!normalizedGuestName) return false;
+      const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata as Record<string, unknown> : {};
+      return typeof metadata.guest_name === 'string' && metadata.guest_name.trim().toLowerCase() === normalizedGuestName;
+    });
+
+    if (!credit) return;
+
+    const { error: updateError } = await supabase
+      .from('event_guest_credits')
+      .update({
+        used_quantity: credit.used_quantity + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', credit.id);
+    if (updateError) throw updateError;
+  }
+
   if (existing?.id) {
     const { data, error } = await supabase
       .from('event_guest_marks')
@@ -325,6 +366,7 @@ export async function completeQueueTicketAction(input: {
       .select()
       .single();
     if (error) throw error;
+    await consumeCreditIfNeeded();
     if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
     return data as EventGuestMark;
   }
@@ -335,6 +377,7 @@ export async function completeQueueTicketAction(input: {
     .select()
     .single();
   if (error) throw error;
+  await consumeCreditIfNeeded();
   if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
   return data as EventGuestMark;
 }

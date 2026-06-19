@@ -19,6 +19,7 @@ import '../../styles/shared.css';
 import '../../styles/guest.css';
 
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
+type CreditStatus = 'none' | 'available' | 'used';
 
 export default function GuestQueueLanding() {
   const navigate = useNavigate();
@@ -29,7 +30,7 @@ export default function GuestQueueLanding() {
   const [queue, setQueue] = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
   const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
-  const [hasHeadshotCredit, setHasHeadshotCredit] = useState(false);
+  const [headshotCreditStatus, setHeadshotCreditStatus] = useState<CreditStatus>('none');
 
   const { nowServing } = useQueueMetric(queue?.id);
 
@@ -45,6 +46,8 @@ export default function GuestQueueLanding() {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
         const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
+        setBouquetAccess('none');
+        setHeadshotCreditStatus('none');
         if (storedCheckIn) {
           try {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
@@ -53,12 +56,14 @@ export default function GuestQueueLanding() {
               setBouquetAccess(row.status === 'completed' ? row.ticket_type ?? 'checked-in' : 'none');
               if (row.status === 'completed') {
                 const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
-                setHasHeadshotCredit(Boolean(credit && credit.quantity > credit.used_quantity));
+                setHeadshotCreditStatus(credit
+                  ? credit.quantity > credit.used_quantity ? 'available' : 'used'
+                  : 'none');
               }
             }
           } catch {
             setBouquetAccess('none');
-            setHasHeadshotCredit(false);
+            setHeadshotCreditStatus('none');
           }
         }
         const q = await getQueueBySlug(ev.id, queueSlug);
@@ -150,7 +155,7 @@ export default function GuestQueueLanding() {
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
-  const needsHeadshotCredit = isHeadshotQueue && !hasHeadshotCredit;
+  const needsHeadshotCredit = isHeadshotQueue && headshotCreditStatus !== 'available';
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const eventLogoSrc = event.slug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
@@ -258,13 +263,17 @@ export default function GuestQueueLanding() {
         <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
           <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '1.25rem', color: '#24364a', border: '1px solid #d1d5db' }}>
             <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
-              Photo Credit Required
+              {headshotCreditStatus === 'used' ? 'Photo Credit Used' : 'Photo Credit Required'}
             </div>
             <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
-              Headshot access is not on your check-in
+              {headshotCreditStatus === 'used'
+                ? 'Your headshot is already complete'
+                : 'Headshot access is not on your check-in'}
             </h1>
             <p style={{ margin: 0, lineHeight: 1.5 }}>
-              This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.
+              {headshotCreditStatus === 'used'
+                ? 'Your photo credit has already been used for this event.'
+                : 'This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.'}
             </p>
           </div>
           <button

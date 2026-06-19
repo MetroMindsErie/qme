@@ -9,6 +9,7 @@ import { listQueuePilotTickets, listQueuesForEvent, getNowServing, restoreTicket
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
+import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
@@ -228,6 +229,7 @@ export default function GuestEventDetail() {
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
   const [hasEventCheckIn, setHasEventCheckIn] = useState(false);
   const [eventCheckInTicketType, setEventCheckInTicketType] = useState<'general' | 'flowers' | null>(null);
+  const [hasHeadshotCredit, setHasHeadshotCredit] = useState(false);
   const isPeonyEvent = eventSlug === PEONY_EVENT_SLUG;
 
   const refresh = useCallback(async () => {
@@ -258,6 +260,7 @@ export default function GuestEventDetail() {
       let checkInTicketType: 'general' | 'flowers' | null = null;
       setHasEventCheckIn(false);
       setEventCheckInTicketType(null);
+      setHasHeadshotCredit(false);
       if (storedCheckIn) {
         try {
           const saved = JSON.parse(storedCheckIn) as { id?: string };
@@ -267,10 +270,13 @@ export default function GuestEventDetail() {
               checkInTicketType = row.ticket_type;
               setEventCheckInTicketType(checkInTicketType);
               setHasEventCheckIn(true);
+              const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
+              setHasHeadshotCredit(Boolean(credit && credit.quantity > credit.used_quantity));
             }
           }
         } catch {
           setHasEventCheckIn(false);
+          setHasHeadshotCredit(false);
         }
       }
       const enriched: QueueWithMeta[] = await Promise.all(
@@ -304,7 +310,10 @@ export default function GuestEventDetail() {
             return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns, _waitingCount: waitingCount };
           })
       );
-      setQueues(enriched.filter((q) => q.slug !== 'wrapped-bouquets' || checkInTicketType === 'flowers'));
+      setQueues(enriched.filter((q) => {
+        if (q.slug === 'wrapped-bouquets') return checkInTicketType === 'flowers';
+        return true;
+      }));
 
       const eventEces = eventSlug === PEONY_EVENT_SLUG ? [] : await listActiveEcesForEvent(ev.id);
       setEces(eventEces);
@@ -349,6 +358,7 @@ export default function GuestEventDetail() {
   const linkedEceQueueIds = new Set(eces.map((ece) => ece.queue_id).filter(Boolean));
   const visibleQueues = queues.filter((q) => !linkedEceQueueIds.has(q.id));
   const sessionCount = visibleQueues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + eces.length;
+  const isHeadshotQueue = (slug?: string | null) => slug === 'headshot-photo-station';
 
   return (
     <>
@@ -435,6 +445,7 @@ export default function GuestEventDetail() {
             const hasTicket = Boolean(q._myTicket);
             const isCompleted = q._myStage === 'completed';
             const participationLocked = requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket;
+            const creditLocked = isHeadshotQueue(q.slug) && !hasHeadshotCredit && !hasTicket;
             return (
               <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
@@ -452,12 +463,14 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-body">
                   <div className="ed-activity-name-row">
                     <span className="ed-activity-name">{q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}</span>
-                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : 'ACTIVE'}</span>
+                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
                   </div>
                   {!isCompleted && (
                     <div className="ed-activity-desc">
                       {participationLocked
                         ? 'Complete Event Check-In above before joining this experience.'
+                        : creditLocked
+                        ? 'A headshot photo credit is required to join this station.'
                         : q.slug === 'wrapped-bouquets'
                         ? 'Special flowers ticket access for wrapped bouquets.'
                         : q.description}
@@ -485,7 +498,7 @@ export default function GuestEventDetail() {
                     <Link to={`/events/${eventSlug}/q/${q.slug}/ticket`} className="ed-action-btn ed-action-btn-secondary">
                       {isCompleted ? 'Done' : 'View'}
                     </Link>
-                  ) : participationLocked ? null : (
+                  ) : participationLocked || creditLocked ? null : (
                     <Link to={`/events/${eventSlug}/q/${q.slug}`} className="ed-action-btn">
                       Join
                     </Link>
@@ -501,10 +514,11 @@ export default function GuestEventDetail() {
             const hasTicket = Boolean(linkedQueue?._myTicket);
             const isCompleted = linkedQueue?._myStage === 'completed';
             const participationLocked = Boolean(linkedQueue && requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket);
+            const creditLocked = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && !hasHeadshotCredit && !hasTicket);
             const actionHref = exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
-              ? participationLocked
+              ? participationLocked || creditLocked
                 ? ''
                 : `/events/${eventSlug}/q/${linkedQueue.slug}`
               : '';
@@ -540,19 +554,21 @@ export default function GuestEventDetail() {
               onKeyDown={canAct ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleEceOpen(); } : undefined}
             >
               <div className="ed-activity-icon-wrap" style={{ background: '#E8F5E9' }}>
-                {exp.image_url || exp.slug === 'scan-code-adventure'
-                  ? <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
+                {exp.image_url || exp.slug === 'scan-code-adventure' || exp.slug === 'headshot-photo-station'
+                  ? <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.slug === 'headshot-photo-station' ? '/images/headshot-photo-station.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
                   : <span style={{ fontSize: '1.1rem' }}>âœ¨</span>}
               </div>
               <div className="ed-activity-body">
                 <div className="ed-activity-name-row">
                   <span className="ed-activity-name">{exp.name}</span>
                   {linkedQueue && (
-                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : 'ACTIVE'}</span>
+                    <span className="ed-badge ed-badge-active">{isCompleted ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
                   )}
                 </div>
                 {isCompleted ? null : participationLocked ? (
                   <div className="ed-activity-desc">Complete Event Check-In above before joining this experience.</div>
+                ) : creditLocked ? (
+                  <div className="ed-activity-desc">A headshot photo credit is required to join this station.</div>
                 ) : exp.description && (
                   <div className="ed-activity-desc">{exp.description}</div>
                 )}

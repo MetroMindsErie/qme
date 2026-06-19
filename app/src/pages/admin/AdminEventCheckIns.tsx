@@ -12,7 +12,8 @@ import {
   updateEventCheckInStatus,
   updateEventCheckInTicketType,
 } from '../../lib/checkInService';
-import type { EventCheckIn, QEvent } from '../../types';
+import { listGuestCreditsForEvent, upsertGuestCreditForCheckIn } from '../../lib/guestCreditService';
+import type { EventCheckIn, EventGuestCredit, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
@@ -31,6 +32,7 @@ export default function AdminEventCheckIns({
   const { eventId } = useParams<{ eventId: string }>();
   const [event, setEvent] = useState<QEvent | null>(null);
   const [checkIns, setCheckIns] = useState<EventCheckIn[]>([]);
+  const [photoCredits, setPhotoCredits] = useState<EventGuestCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -38,9 +40,13 @@ export default function AdminEventCheckIns({
     if (!eventId) return;
     try {
       const ev = await getEvent(eventId);
-      const rows = await listEventCheckIns(ev.id, checkInCode);
+      const [rows, credits] = await Promise.all([
+        listEventCheckIns(ev.id, checkInCode),
+        listGuestCreditsForEvent(ev.id, 'professional_headshot'),
+      ]);
       setEvent(ev);
       setCheckIns(rows);
+      setPhotoCredits(credits);
       setError('');
     } catch (e) {
       console.error('Failed to load check-ins', e);
@@ -91,6 +97,24 @@ export default function AdminEventCheckIns({
     } catch (e) {
       console.error('Failed to update guest access', e);
       alert('Could not update guest access.');
+    }
+  }
+
+  async function grantPhotoCredit(row: EventCheckIn) {
+    if (!event) return;
+    try {
+      await upsertGuestCreditForCheckIn({
+        eventId: event.id,
+        checkInId: row.id,
+        creditKey: 'professional_headshot',
+        metadata: {
+          guest_name: `${row.first_name} ${row.last_name}`.trim(),
+        },
+      });
+      await refresh();
+    } catch (e) {
+      console.error('Failed to grant photo credit', e);
+      alert('Could not grant photo credit.');
     }
   }
 
@@ -172,6 +196,7 @@ export default function AdminEventCheckIns({
             </h2>
             {completed.map((row) => {
               const hasFlowersAccess = row.ticket_type === 'flowers';
+              const hasPhotoCredit = photoCredits.some((credit) => credit.check_in_id === row.id && credit.quantity > credit.used_quantity);
               const accessLabel = hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
 
               return (
@@ -184,15 +209,26 @@ export default function AdminEventCheckIns({
                     {checkInCode || event?.slug !== 'peony-festival' ? 'CHECKED IN' : accessLabel}
                   </div>
                 </div>
-                {!checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (
-                  <button
-                    className="actionBtn actionBtn-primary"
-                    style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
-                    onClick={() => updateGuestAccess(row.id, 'flowers')}
-                  >
-                    Upgrade Flowers
-                  </button>
-                )}
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  {!checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (
+                    <button
+                      className="actionBtn actionBtn-primary"
+                      style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
+                      onClick={() => updateGuestAccess(row.id, 'flowers')}
+                    >
+                      Upgrade Flowers
+                    </button>
+                  )}
+                  {event?.slug === 'sotc-test-check-in' && (
+                    <button
+                      className={hasPhotoCredit ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
+                      style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
+                      onClick={() => grantPhotoCredit(row)}
+                    >
+                      {hasPhotoCredit ? 'Photo Credit' : 'Grant Photo'}
+                    </button>
+                  )}
+                </div>
               </div>
               );
             })}

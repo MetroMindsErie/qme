@@ -187,6 +187,20 @@ export interface EventGuestMark {
   created_at: string;
 }
 
+export interface EventGuestCredit {
+  id: string;
+  event_id: string;
+  ticket_id: number | null;
+  check_in_id: string | null;
+  credit_key: string;
+  quantity: number;
+  used_quantity: number;
+  source: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
 // ===================== Snapshot =====================
 
 export interface QueueSnapshot {

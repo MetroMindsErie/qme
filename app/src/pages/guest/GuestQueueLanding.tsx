@@ -11,6 +11,7 @@ import { getStoredQueueTicket, clearQueueTicket } from '../../hooks/useQueueTick
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
+import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { getQueueBySlug, leaveQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { QEvent, Queue } from '../../types';
@@ -28,6 +29,7 @@ export default function GuestQueueLanding() {
   const [queue, setQueue] = useState<Queue | null>(null);
   const [loading, setLoading] = useState(true);
   const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
+  const [hasHeadshotCredit, setHasHeadshotCredit] = useState(false);
 
   const { nowServing } = useQueueMetric(queue?.id);
 
@@ -49,9 +51,14 @@ export default function GuestQueueLanding() {
             if (saved.id) {
               const row = await getEventCheckIn(saved.id);
               setBouquetAccess(row.status === 'completed' ? row.ticket_type ?? 'checked-in' : 'none');
+              if (row.status === 'completed') {
+                const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
+                setHasHeadshotCredit(Boolean(credit && credit.quantity > credit.used_quantity));
+              }
             }
           } catch {
             setBouquetAccess('none');
+            setHasHeadshotCredit(false);
           }
         }
         const q = await getQueueBySlug(ev.id, queueSlug);
@@ -138,16 +145,20 @@ export default function GuestQueueLanding() {
   }
 
   const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const isHeadshotQueue = queue.slug === 'headshot-photo-station';
   const checkInConfig = getEventCheckInConfig(event);
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
+  const needsHeadshotCredit = isHeadshotQueue && !hasHeadshotCredit;
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const eventLogoSrc = event.slug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
   const queueImageSrc = queue.slug === 'scan-code-adventure'
     ? '/images/dog-through-hoop.png'
+    : queue.slug === 'headshot-photo-station'
+    ? '/images/headshot-photo-station.png'
     : queue.image_url || '';
   const queueHeaderLogoSrc = queueImageSrc || eventLogoSrc;
 
@@ -224,6 +235,38 @@ export default function GuestQueueLanding() {
               Check In at Mobile Bar
             </button>
           )}
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsHeadshotCredit) {
+    return (
+      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+        <Header
+          logoSrc={queueHeaderLogoSrc}
+          titleLine1=""
+          titleLine2=""
+        />
+        <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '1.25rem', color: '#24364a', border: '1px solid #d1d5db' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Photo Credit Required
+            </div>
+            <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
+              Headshot access is not on your check-in
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.
+            </p>
+          </div>
           <button
             className="actionBtn actionBtn-secondary"
             style={{ marginTop: '0.75rem' }}

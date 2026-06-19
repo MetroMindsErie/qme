@@ -16,6 +16,7 @@ import { getEventBySlug } from '../../lib/eventService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
+import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import {
   confirmTicketNearby,
   completeQueueTicketAction,
@@ -126,6 +127,7 @@ export default function GuestQueueTicketPage() {
   const [linkedEce, setLinkedEce] = useState<Ece | null>(null);
   const [loading, setLoading] = useState(true);
   const [bouquetAccess, setBouquetAccess] = useState<BouquetAccess>('none');
+  const [hasHeadshotCredit, setHasHeadshotCredit] = useState(false);
   const [guestFirstName, setGuestFirstName] = useState('');
   const [guestLastName, setGuestLastName] = useState('');
   const [guestNameSaved, setGuestNameSaved] = useState(false);
@@ -157,12 +159,16 @@ export default function GuestQueueTicketPage() {
                 setGuestLastName(checkInGuestName.lastName);
                 setGuestNameSaved(Boolean(checkInGuestName.firstName || checkInGuestName.lastName));
                 setBouquetAccess(row.ticket_type ?? 'checked-in');
+                const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
+                setHasHeadshotCredit(Boolean(credit && credit.quantity > credit.used_quantity));
               } else {
                 setBouquetAccess('none');
+                setHasHeadshotCredit(false);
               }
             }
           } catch {
             setBouquetAccess('none');
+            setHasHeadshotCredit(false);
           }
         }
         const q  = await getQueueBySlug(ev.id, queueSlug);
@@ -242,11 +248,12 @@ export default function GuestQueueTicketPage() {
   useEffect(() => {
     if (!queue) return;
     if (queue.slug === 'wrapped-bouquets' && bouquetAccess !== 'flowers') return;
+    if (queue.slug === 'headshot-photo-station' && !hasHeadshotCredit) return;
     if (!hasRequiredEventCheckIn) return;
     if (isPilotQueue && !guestNameSaved) return;
     claimTicket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, bouquetAccess, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved]);
+  }, [queue, bouquetAccess, hasHeadshotCredit, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved]);
 
   useEffect(() => {
     if (!isPilotQueue || !ticketId || didSyncGuestNameRef.current) return;
@@ -468,8 +475,10 @@ export default function GuestQueueTicketPage() {
   }
 
   const isBouquetQueue = queue.slug === 'wrapped-bouquets';
+  const isHeadshotQueue = queue.slug === 'headshot-photo-station';
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
+  const needsHeadshotCredit = isHeadshotQueue && !hasHeadshotCredit;
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const pilotJoinStatus = queue.join_status ?? 'open';
 
@@ -562,6 +571,47 @@ export default function GuestQueueTicketPage() {
               Check In at Mobile Bar
             </button>
           )}
+          <button
+            className="tkt-leave-btn"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (needsHeadshotCredit) {
+    return (
+      <div className="card card-scrollable tkt-card">
+        <div className="tkt-header">
+          <div className="tkt-header-left">
+            <img
+              src={queueImageSrc || '/images/headshot-photo-station.png'}
+              alt={queue.name}
+              className="tkt-logo"
+            />
+            <div className="tkt-header-info">
+              <div className="tkt-queue-name">{queue.name}</div>
+              <div className="tkt-event-name">{event.name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '1.25rem', color: '#24364a', border: '1px solid #d1d5db' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Photo Credit Required
+            </div>
+            <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
+              Headshot access is not on your check-in
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.
+            </p>
+          </div>
           <button
             className="tkt-leave-btn"
             style={{ marginTop: '0.75rem' }}

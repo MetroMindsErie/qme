@@ -199,10 +199,11 @@ export default function GuestQueueTicketPage() {
   useEffect(() => {
     if (!queue || !ticketId || !isPilotQueue) return;
 
+    const activeTicketId = ticketId;
     let stopped = false;
     async function refreshTicket() {
       try {
-        const row = await getQueueTicket(ticketId);
+        const row = await getQueueTicket(activeTicketId);
         if (!stopped) setPilotTicket(row);
       } catch (e) {
         console.warn('pilot ticket refresh failed', e);

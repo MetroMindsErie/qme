@@ -304,7 +304,7 @@ export default function AdminQueueDashboard() {
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.85rem', alignItems: 'center' }}>
-              <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} onClick={applyAutoPilotPass}>
+              <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} onClick={() => applyAutoPilotPass()}>
                 Apply Flow
               </button>
               {controlSaveStatus && (

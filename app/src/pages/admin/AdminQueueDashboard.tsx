@@ -159,6 +159,32 @@ export default function AdminQueueDashboard() {
     }
   }
 
+  async function handlePilotPracticeReset() {
+    if (!queue) return;
+    const activeCount = pilotTickets.length;
+    const message = activeCount > 0
+      ? `Reset practice run for "${queue.name}"? This resets queue tickets and now serving so the next test can start clean.`
+      : `Reset practice run for "${queue.name}"?`;
+    if (!confirm(message)) return;
+
+    setSavingControls(true);
+    setControlSaveStatus('Resetting...');
+    if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
+    try {
+      await resetQueueTickets(queue.id);
+      setNowServing(1);
+      await refreshPilotTickets();
+      setControlSaveStatus('Practice run reset');
+      saveStatusTimerRef.current = setTimeout(() => setControlSaveStatus(''), 2200);
+    } catch (e) {
+      console.error('Pilot practice reset failed', e);
+      setControlSaveStatus('Reset failed');
+      alert('Could not reset the practice run.');
+    } finally {
+      setSavingControls(false);
+    }
+  }
+
   async function saveQueueControls(patch: Partial<QueueType>) {
     if (!queue) return;
     setSavingControls(true);
@@ -260,6 +286,7 @@ export default function AdminQueueDashboard() {
     }, {});
     const activeReleased = counts.released ?? 0;
     const maxActive = queue.max_active_released ?? 1;
+    const standbyTarget = queue.standby_threshold ?? 3;
     const canReleaseMore = activeReleased < maxActive;
     const stageColor: Record<string, string> = {
       waiting: '#6b7280',
@@ -300,13 +327,15 @@ export default function AdminQueueDashboard() {
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
-                Standby
+                Standby nearby
                 <input type="number" min={0} value={queue.standby_threshold ?? 3} disabled={savingControls} onChange={(e) => saveQueueControls({ standby_threshold: Math.max(0, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>Guests told they are almost ready.</span>
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
-                Released
+                Active released
                 <input type="number" min={0} value={queue.max_active_released ?? 1} disabled={savingControls} onChange={(e) => saveQueueControls({ max_active_released: Math.max(0, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>Guests actively sent to the station.</span>
               </label>
             </div>
 
@@ -314,8 +343,11 @@ export default function AdminQueueDashboard() {
               <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} onClick={() => applyAutoPilotPass()}>
                 Apply Flow
               </button>
+              <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} disabled={savingControls} onClick={handlePilotPracticeReset}>
+                Reset Practice Run
+              </button>
               {controlSaveStatus && (
-                <span style={{ color: controlSaveStatus === 'Save failed' ? '#b91c1c' : '#15803d', fontWeight: 900, fontSize: '0.86rem' }}>
+                <span style={{ color: controlSaveStatus.includes('failed') ? '#b91c1c' : '#15803d', fontWeight: 900, fontSize: '0.86rem' }}>
                   {controlSaveStatus}
                 </span>
               )}
@@ -324,7 +356,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist uses the same thresholds for testing.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist uses the same thresholds: {standbyTarget} standby nearby + {maxActive} active released = {standbyTarget + maxActive} guests in motion.
             </div>
           </div>
 

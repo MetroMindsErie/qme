@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-06-10",
+    updated: "2026-06-19",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -43,7 +43,9 @@ const QME_ROADMAP = {
         "story-seed-sotc-org",
         "story-admin-org-role",
         "story-event-org-owner",
-        "story-event-create-edit"
+        "story-event-create-edit",
+        "story-sotc-production-pilot",
+        "story-sotc-pilot-ops-controls"
       ]
     },
     {
@@ -984,6 +986,40 @@ const QME_ROADMAP = {
                 "Console language matches the experience type.",
                 "Host can see operational context such as queue length, intake rate, now serving, guests lost, and open slots where relevant."
               ]
+            },
+            {
+              id: "story-sotc-production-pilot",
+              title: "Validate SOTC scan-code queue pilot in production",
+              status: "done",
+              sprint: "now",
+              summary:
+                "Run the first SOTC queue/adventure pilot live on qme-nine.vercel.app with guest check-in, queue stages, Auto Assist, station code completion, and completed event-card state.",
+              acceptanceCriteria: [
+                "Production guest link works for the SOTC test event.",
+                "Guests can check in, join the Scan-Code Adventure queue, move through waiting, standby, your turn, and completed states.",
+                "Admin can control manual/auto flow with one active released guest and three standby guests.",
+                "Completed guests return to the event view with completed treatment.",
+                "Canonical guest and admin links are documented."
+              ],
+              notes:
+                "Validated in production on 2026-06-19. Student group testing is delayed because Eric's team is busy, so development continues from the proven pilot slice."
+            },
+            {
+              id: "story-sotc-pilot-ops-controls",
+              title: "Polish SOTC pilot operations controls",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Make the admin queue controls clear enough to rehearse without a live student group: slug admin links, readable standby/released thresholds, practice reset, and explicit remaining cleanup gaps.",
+              acceptanceCriteria: [
+                "Admin slug links work for the SOTC test event and Scan-Code Adventure queue.",
+                "Threshold controls use operator language: standby nearby and active released.",
+                "Admin sees the combined guests-in-motion count.",
+                "Admin can reset the queue ticket practice run with confirmation.",
+                "Full event check-in and guest-mark cleanup remains tracked separately if not implemented."
+              ],
+              notes:
+                "This keeps momentum while external testing is paused."
             },
             {
               id: "story-admin-console-needs",

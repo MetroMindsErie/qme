@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
-import { listQueuesForEvent, getNowServing, restoreTicketForQueue, getQueueTicket } from '../../lib/queueService';
+import { listQueuePilotTickets, listQueuesForEvent, getNowServing, restoreTicketForQueue, getQueueTicket } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
@@ -21,6 +21,7 @@ interface QueueWithMeta extends Queue {
   _myTicket?: string;
   _myStage?: Ticket['stage'];
   _nowServing?: number;
+  _waitingCount?: number;
 }
 
 
@@ -293,7 +294,14 @@ export default function GuestEventDetail() {
             }
             let ns = q.now_serving;
             try { ns = await getNowServing(q.id); } catch { /* */ }
-            return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns };
+            let waitingCount = 0;
+            try {
+              const tickets = await listQueuePilotTickets(q.id);
+              waitingCount = tickets.filter((row) => !['completed', 'cancelled', 'left'].includes(row.stage ?? 'waiting')).length;
+            } catch {
+              waitingCount = Math.max(0, Number(ticket || 0) - ns + 1);
+            }
+            return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns, _waitingCount: waitingCount };
           })
       );
       setQueues(enriched.filter((q) => q.slug !== 'wrapped-bouquets' || checkInTicketType === 'flowers'));
@@ -463,10 +471,12 @@ export default function GuestEventDetail() {
                   )}
                 </div>
                 <div className="ed-activity-right">
-                  <div className="ed-serving-badge">
-                    <div className="ed-serving-label">Now Serving</div>
-                    <div className="ed-serving-num">{q._nowServing ?? q.now_serving}</div>
-                  </div>
+                  {!isCompleted && (
+                    <div className="ed-serving-badge">
+                      <div className="ed-serving-label">Waiting</div>
+                      <div className="ed-serving-num">{q._waitingCount ?? 0}</div>
+                    </div>
+                  )}
                   {hasTicket ? (
                     <Link to={`/events/${eventSlug}/q/${q.slug}/ticket`} className="ed-action-btn ed-action-btn-secondary">
                       {isCompleted ? 'Done' : 'View'}
@@ -554,10 +564,10 @@ export default function GuestEventDetail() {
                 )}
               </div>
               <div className="ed-activity-right">
-                {linkedQueue && (
+                {linkedQueue && !isCompleted && (
                   <div className="ed-serving-badge">
-                    <div className="ed-serving-label">Now Serving</div>
-                    <div className="ed-serving-num">{linkedQueue._nowServing ?? linkedQueue.now_serving}</div>
+                    <div className="ed-serving-label">Waiting</div>
+                    <div className="ed-serving-num">{linkedQueue._waitingCount ?? 0}</div>
                   </div>
                 )}
                 {actionText && (

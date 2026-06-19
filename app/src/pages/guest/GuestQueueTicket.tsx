@@ -39,7 +39,53 @@ const PILOT_COMPLETION_CODE = '4729';
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
+type PilotStageCopy = {
+  title?: string;
+  detail?: string;
+  instruction?: string;
+};
 const STEPS = ['In Queue', 'Called', 'Checked In', 'Enjoy!'];
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function hydrateTemplate(
+  value: string,
+  vars: { location: string; queue: string; event: string }
+) {
+  return value
+    .replaceAll('{{location}}', vars.location)
+    .replaceAll('{{queue}}', vars.queue)
+    .replaceAll('{{event}}', vars.event);
+}
+
+function getPilotStageCopy(
+  ece: Ece | null,
+  stage: string,
+  vars: { location: string; queue: string; event: string }
+): PilotStageCopy {
+  const stageCopy = asRecord(asRecord(ece?.metadata).stage_copy);
+  const stageConfig = asRecord(stageCopy[stage]);
+
+  return {
+    title: asString(stageConfig.title)
+      ? hydrateTemplate(asString(stageConfig.title)!, vars)
+      : undefined,
+    detail: asString(stageConfig.detail)
+      ? hydrateTemplate(asString(stageConfig.detail)!, vars)
+      : undefined,
+    instruction: asString(stageConfig.instruction)
+      ? hydrateTemplate(asString(stageConfig.instruction)!, vars)
+      : undefined,
+  };
+}
 
 function getStepStates(
   hasCheckedIn: boolean,
@@ -603,9 +649,12 @@ export default function GuestQueueTicketPage() {
 
   if (isPilotQueue) {
     const locationText = linkedEce?.location || event.location || queue.name;
-    const instructionText = pilotStage === 'standby'
+    const copyVars = { location: locationText, queue: queue.name, event: event.name };
+    const metadataCopy = getPilotStageCopy(linkedEce, pilotStage, copyVars);
+    const defaultInstruction = pilotStage === 'standby'
       ? `Stay nearby and keep this page open. You will be sent to ${locationText} soon.`
       : linkedEce?.description || queue.description || 'Keep this page open for the next step.';
+    const instructionText = metadataCopy.instruction ?? defaultInstruction;
     const statusCopy: Record<string, { title: string; detail: string }> = {
       waiting: {
         title: 'Waiting',
@@ -632,7 +681,11 @@ export default function GuestQueueTicketPage() {
         detail: 'You are no longer active in this queue.',
       },
     };
-    const status = statusCopy[pilotStage] ?? statusCopy.waiting;
+    const defaultStatus = statusCopy[pilotStage] ?? statusCopy.waiting;
+    const status = {
+      title: metadataCopy.title ?? defaultStatus.title,
+      detail: metadataCopy.detail ?? defaultStatus.detail,
+    };
     const statusTheme: Record<string, { border: string; background: string; title: string; label: string }> = {
       waiting: { border: '#7c3aed', background: '#f5f3ff', title: '#4c1d95', label: '#6d28d9' },
       standby: { border: '#eab308', background: '#fefce8', title: '#854d0e', label: '#a16207' },

@@ -438,6 +438,13 @@ export default function AdminQueueDashboard() {
               const nearbyConfirmed = isNearbyConfirmed(ticket);
               const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
               const canClickToServe = pilotCompletionMode === 'staff_served' && stage === 'released' && !isDone;
+              const statusHint = stage === 'waiting'
+                ? 'Waiting for flow'
+                : stage === 'standby' && !nearbyConfirmed
+                ? 'Waiting for nearby'
+                : stage === 'standby' && nearbyConfirmed && !canReleaseMore
+                ? 'Release slot full'
+                : '';
               const rowStyle = canClickToServe
                 ? {
                     border: '2px solid #22c55e',
@@ -490,22 +497,18 @@ export default function AdminQueueDashboard() {
                         Click name when guest steps up
                       </div>
                     )}
+                    {!canClickToServe && statusHint && (
+                      <div style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 800, marginTop: 5 }}>
+                        {statusHint}
+                      </div>
+                    )}
                   </div>
                   <div
                     style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}
                     onClick={(event) => event.stopPropagation()}
                   >
-                    {!isDone && stage !== 'standby' && (
-                      <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'standby')}>Standby</button>
-                    )}
-                    {!isDone && stage !== 'released' && (
-                      <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} disabled={!canReleaseTicket} onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
-                    )}
-                    {!isDone && pilotCompletionMode !== 'staff_served' && (
-                      <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'completed')}>Complete</button>
-                    )}
-                    {!isDone && (
-                      <button className="actionBtn actionBtn-danger" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'cancelled')}>Cancel</button>
+                    {!isDone && canReleaseTicket && (
+                      <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
                     )}
                   </div>
                 </div>

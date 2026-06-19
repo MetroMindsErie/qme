@@ -27,6 +27,24 @@ interface QueueWithMeta extends Queue {
 
 type CreditStatus = 'none' | 'available' | 'used';
 
+function queueStatusLabel(stage?: Ticket['stage']): string {
+  switch (stage) {
+    case 'standby':
+      return 'Almost ready';
+    case 'released':
+      return 'Your turn';
+    case 'completed':
+      return 'Completed';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'left':
+      return 'Left queue';
+    case 'waiting':
+    default:
+      return 'Waiting in line';
+  }
+}
+
 
 // ── Static informational activities ─────────────────────────────────────────
 
@@ -493,12 +511,12 @@ export default function GuestEventDetail() {
                   )}
                   {hasTicket && (
                     <div className="ed-ticket-note">
-                      {isCompleted ? 'Completed' : `You're in line - #${q._myTicket}`}
+                      {queueStatusLabel(q._myStage)}
                     </div>
                   )}
                 </div>
                 <div className="ed-activity-right">
-                  {!isCompleted && !creditUsed && (
+                  {!hasTicket && !isCompleted && !creditUsed && (
                     <div className="ed-serving-badge">
                       <div className="ed-serving-label">Waiting</div>
                       <div className="ed-serving-num">{q._waitingCount ?? 0}</div>
@@ -592,14 +610,14 @@ export default function GuestEventDetail() {
                     <span>Starts {formatTime(event.start_time)}</span>
                   </div>
                 )}
-                {hasTicket && linkedQueue?._myTicket && (
+                {hasTicket && (
                   <div className="ed-ticket-note">
-                    {isCompleted ? 'Completed' : `You're in line - #${linkedQueue._myTicket}`}
+                    {queueStatusLabel(linkedQueue?._myStage)}
                   </div>
                 )}
               </div>
               <div className="ed-activity-right">
-                {linkedQueue && !isCompleted && !creditUsed && (
+                {linkedQueue && !hasTicket && !isCompleted && !creditUsed && (
                   <div className="ed-serving-badge">
                     <div className="ed-serving-label">Waiting</div>
                     <div className="ed-serving-num">{linkedQueue._waitingCount ?? 0}</div>

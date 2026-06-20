@@ -232,12 +232,25 @@
 }
 
 .ed-activity-card.ed-card-joined {
+  border-color: #c4b5fd;
+  background: #faf9ff;
+}
+
+.ed-activity-card.ed-card-completed {
   border-color: var(--qme-green);
   background: #f0fdf4;
 }
 
 .ed-activity-card.ed-activity-card-info {
   background: #fafafa;
+}
+
+.ed-activity-card.ed-activity-card-info.ed-card-joined {
+  background: #faf9ff;
+}
+
+.ed-activity-card.ed-activity-card-info.ed-card-completed {
+  background: #f0fdf4;
 }
 
 .ed-activity-card.ed-card-clickable {

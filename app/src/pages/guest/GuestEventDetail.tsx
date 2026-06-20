@@ -27,6 +27,40 @@ interface QueueWithMeta extends Queue {
 
 type CreditStatus = 'none' | 'available' | 'used';
 
+function queueStageStatus(stage?: Ticket['stage']): string {
+  switch (stage) {
+    case 'standby':
+      return 'Almost ready';
+    case 'released':
+      return 'Your turn';
+    case 'completed':
+      return 'Completed';
+    case 'cancelled':
+      return 'Cancelled';
+    case 'left':
+      return 'Left queue';
+    case 'waiting':
+    default:
+      return 'Waiting';
+  }
+}
+
+function queueCardStatusLine(options: {
+  hasTicket: boolean;
+  stage?: Ticket['stage'];
+  creditUsed: boolean;
+  participationLocked: boolean;
+  creditLocked: boolean;
+  joinPaused: boolean;
+}): string {
+  if (options.creditUsed || options.stage === 'completed') return 'Completed';
+  if (options.hasTicket) return `inQ · ${queueStageStatus(options.stage)}`;
+  if (options.participationLocked) return 'Check-in required';
+  if (options.creditLocked) return 'Photo credit required';
+  if (options.joinPaused) return 'Paused';
+  return 'Active';
+}
+
 // ── Static informational activities ─────────────────────────────────────────
 
 interface StaticActivity {
@@ -453,19 +487,21 @@ export default function GuestEventDetail() {
             const creditUsed = isHeadshotQueue(q.slug) && headshotCreditStatus === 'used' && !hasTicket;
             const joinPaused = (q.join_status ?? 'open') !== 'open' && !hasTicket;
             const canJoin = !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused;
-            const statusBadge = isCompleted || creditUsed
-              ? 'COMPLETED'
+            const statusLine = queueCardStatusLine({
+              hasTicket,
+              stage: q._myStage,
+              creditUsed,
+              participationLocked,
+              creditLocked,
+              joinPaused,
+            });
+            const cardStateClass = isCompleted || creditUsed
+              ? 'ed-card-completed'
               : hasTicket
-              ? 'inQ'
-              : participationLocked
-              ? 'CHECK-IN REQUIRED'
-              : creditLocked
-              ? 'PHOTO CREDIT REQUIRED'
-              : joinPaused
-              ? 'PAUSED'
-              : 'ACTIVE';
+              ? 'ed-card-joined'
+              : '';
             return (
-              <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
+              <div key={q.id} className={`ed-activity-card ${cardStateClass}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
                   <img
                     src={q.slug === 'scan-code-adventure'
@@ -481,7 +517,6 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-body">
                   <div className="ed-activity-name-row">
                     <span className="ed-activity-name">{q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}</span>
-                    <span className="ed-badge ed-badge-active">{statusBadge}</span>
                   </div>
                   {!isCompleted && !creditUsed && (
                     <div className="ed-activity-desc">
@@ -496,16 +531,14 @@ export default function GuestEventDetail() {
                         : q.description}
                     </div>
                   )}
-                  {creditUsed && (
-                    <div className="ed-ticket-note">
-                      Headshot completed
-                    </div>
-                  )}
                   {event.start_time && (
                     <div className="ed-activity-meta">
                       <span>Starts {formatTime(event.start_time)}</span>
                     </div>
                   )}
+                  <div className="ed-ticket-note">
+                    {statusLine}
+                  </div>
                 </div>
                 <div className="ed-activity-right">
                   {canJoin && (
@@ -538,17 +571,14 @@ export default function GuestEventDetail() {
             const creditUsed = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'used' && !hasTicket);
             const joinPaused = Boolean(linkedQueue && (linkedQueue.join_status ?? 'open') !== 'open' && !hasTicket);
             const canJoin = Boolean(linkedQueue && !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused);
-            const statusBadge = isCompleted || creditUsed
-              ? 'COMPLETED'
-              : hasTicket
-              ? 'inQ'
-              : participationLocked
-              ? 'CHECK-IN REQUIRED'
-              : creditLocked
-              ? 'PHOTO CREDIT REQUIRED'
-              : joinPaused
-              ? 'PAUSED'
-              : 'ACTIVE';
+            const statusLine = linkedQueue ? queueCardStatusLine({
+              hasTicket,
+              stage: linkedQueue._myStage,
+              creditUsed,
+              participationLocked,
+              creditLocked,
+              joinPaused,
+            }) : '';
             const actionHref = exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
@@ -558,7 +588,12 @@ export default function GuestEventDetail() {
               ? `/events/${eventSlug}/q/${linkedQueue.slug}/ticket`
               : '';
             const canAct = Boolean(actionHref || viewHref);
-            const cardClass = `ed-activity-card ed-activity-card-info ${canAct ? 'ed-card-clickable' : ''} ${hasTicket ? 'ed-card-joined' : ''}`;
+            const cardStateClass = isCompleted || creditUsed
+              ? 'ed-card-completed'
+              : hasTicket
+              ? 'ed-card-joined'
+              : '';
+            const cardClass = `ed-activity-card ed-activity-card-info ${canAct ? 'ed-card-clickable' : ''} ${cardStateClass}`;
             const handleEceOpen = () => {
               if (hasTicket && viewHref) {
                 navigate(viewHref);
@@ -595,17 +630,12 @@ export default function GuestEventDetail() {
               <div className="ed-activity-body">
                 <div className="ed-activity-name-row">
                   <span className="ed-activity-name">{exp.name}</span>
-                  {linkedQueue && (
-                    <span className="ed-badge ed-badge-active">{statusBadge}</span>
-                  )}
                 </div>
                 {isCompleted ? null : participationLocked ? (
                   <div className="ed-activity-desc">Complete Event Check-In above before joining this experience.</div>
                 ) : creditLocked ? (
                   <div className="ed-activity-desc">A headshot photo credit is required to join this station.</div>
-                ) : creditUsed ? (
-                  <div className="ed-ticket-note">Headshot completed</div>
-                ) : joinPaused ? (
+                ) : creditUsed ? null : joinPaused ? (
                   <div className="ed-activity-desc">Joining is paused while the event team prepares this station.</div>
                 ) : exp.description && (
                   <div className="ed-activity-desc">{exp.description}</div>
@@ -613,6 +643,11 @@ export default function GuestEventDetail() {
                 {linkedQueue && event.start_time && (
                   <div className="ed-activity-meta">
                     <span>Starts {formatTime(event.start_time)}</span>
+                  </div>
+                )}
+                {linkedQueue && (
+                  <div className="ed-ticket-note">
+                    {statusLine}
                   </div>
                 )}
               </div>

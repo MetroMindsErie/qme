@@ -266,6 +266,23 @@ export async function releaseQueueTicket(ticketId: number): Promise<Ticket> {
   return updateTicketStage(ticketId, 'released');
 }
 
+export async function markReleasedTicketNotHere(ticketId: number): Promise<Ticket> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .update({
+      stage: 'standby',
+      nearby_confirmed_at: null,
+      released_at: null,
+    })
+    .eq('id', ticketId)
+    .select()
+    .single();
+  if (error) throw error;
+  const ticket = data as Ticket;
+  if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
+  return ticket;
+}
+
 function ticketIsActive(ticket: Ticket) {
   return !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting');
 }

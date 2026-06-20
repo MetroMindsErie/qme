@@ -15,6 +15,7 @@ import {
   completeQueueTicketAction,
   getQueue,
   listQueuePilotTickets,
+  markReleasedTicketNotHere,
   releaseQueueTicket,
   resetQueueTickets,
   getQueueBySlug,
@@ -295,6 +296,16 @@ export default function AdminQueueDashboard() {
     }
   }
 
+  async function markPilotTicketNotHere(ticketId: number) {
+    try {
+      await markReleasedTicketNotHere(ticketId);
+      await refreshPilotTickets();
+    } catch (e) {
+      console.error('Failed to mark guest not here', e);
+      alert('Could not mark this guest as not here.');
+    }
+  }
+
   async function applyAutoPilotPass(quiet = false) {
     if (!queue) return;
     if (autoFlowInFlightRef.current) return;
@@ -338,7 +349,9 @@ export default function AdminQueueDashboard() {
     const standbyTarget = queue.standby_threshold ?? 3;
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
-    const displayTickets = [...pilotTickets].sort((a, b) => {
+    const displayTickets = [...pilotTickets]
+      .filter((ticket) => !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting'))
+      .sort((a, b) => {
       const byStage = ticketStageSortRank(a) - ticketStageSortRank(b);
       if (byStage !== 0) return byStage;
       return ticketQueuePosition(a) - ticketQueuePosition(b);
@@ -442,8 +455,10 @@ export default function AdminQueueDashboard() {
             ))}
           </div>
 
-          {pilotTickets.length === 0 ? (
-            <p style={{ color: '#999', textAlign: 'center', padding: '2rem 0' }}>No guests have joined this queue yet.</p>
+          {displayTickets.length === 0 ? (
+            <p style={{ color: '#999', textAlign: 'center', padding: '2rem 0' }}>
+              {pilotTickets.length === 0 ? 'No guests have joined this queue yet.' : 'No active guests in this queue.'}
+            </p>
           ) : (
             displayTickets.map((ticket) => {
               const stage = ticket.stage ?? 'waiting';
@@ -523,6 +538,9 @@ export default function AdminQueueDashboard() {
                   >
                     {!isDone && canReleaseTicket && (
                       <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
+                    )}
+                    {stage === 'released' && !isDone && (
+                      <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => markPilotTicketNotHere(ticket.id)}>Not here</button>
                     )}
                   </div>
                 </div>

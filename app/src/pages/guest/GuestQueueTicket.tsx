@@ -882,7 +882,7 @@ export default function GuestQueueTicketPage() {
     const statusTheme: Record<string, { border: string; background: string; title: string; label: string }> = {
       waiting: { border: '#7c3aed', background: '#f5f3ff', title: '#4c1d95', label: '#6d28d9' },
       standby: { border: '#eab308', background: '#fefce8', title: '#854d0e', label: '#a16207' },
-      released: { border: '#22c55e', background: '#f0fdf4', title: '#166534', label: '#16a34a' },
+      released: { border: '#f97316', background: '#fff7ed', title: '#9a3412', label: '#c2410c' },
       completed: { border: '#15803d', background: '#ecfdf5', title: '#14532d', label: '#15803d' },
       cancelled: { border: '#991b1b', background: '#fef2f2', title: '#7f1d1d', label: '#991b1b' },
       left: { border: '#6b7280', background: '#f8fafc', title: '#374151', label: '#6b7280' },

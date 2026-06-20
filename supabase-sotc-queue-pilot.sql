@@ -356,7 +356,7 @@ insert into public.expies (
 )
 select
   organizations.id,
-  'Headshot Photo Station',
+  'Headshot Photographer',
   'headshot-photo-station',
   'A photo-credit queue for professional headshots.',
   '/images/headshot-photo-station.png',
@@ -414,7 +414,7 @@ insert into public.queues (
 )
 select
   events.id,
-  'Headshot Photo Station',
+  'Headshot Photographer',
   'headshot-photo-station',
   'Use your photo credit to join the headshot line. We will call you when the station is ready.',
   '/images/headshot-photo-station.png',
@@ -434,7 +434,7 @@ where events.slug = 'sotc-test-check-in'
 
 update public.queues
 set
-  name = 'Headshot Photo Station',
+  name = 'Headshot Photographer',
   description = 'Use your photo credit to join the headshot line. We will call you when the station is ready.',
   image_url = '/images/headshot-photo-station.png',
   join_status = 'open',
@@ -465,14 +465,14 @@ select
   events.id,
   expies.id,
   organizations.id,
-  'Headshot Photo Station',
+  'Headshot Photographer',
   'headshot-photo-station',
   'Use your photo credit to join the headshot line. We will call you when the station is ready.',
   '/images/headshot-photo-station.png',
   'queue',
   queues.id,
   'standby_gather',
-  'Headshot photo station',
+  'Headshot photographer',
   jsonb_build_object(
     'pilot', true,
     'completion_mode', 'staff_served',
@@ -515,13 +515,13 @@ where events.slug = 'sotc-test-check-in'
 update public.eces
 set
   expie_id = expies.id,
-  name = 'Headshot Photo Station',
+  name = 'Headshot Photographer',
   description = 'Use your photo credit to join the headshot line. We will call you when the station is ready.',
   image_url = '/images/headshot-photo-station.png',
   type = 'queue',
   queue_id = queues.id,
   queue_behavior = 'standby_gather',
-  location = 'Headshot photo station',
+  location = 'Headshot photographer',
   metadata = jsonb_build_object(
     'pilot', true,
     'completion_mode', 'staff_served',

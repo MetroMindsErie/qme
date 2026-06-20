@@ -48,8 +48,21 @@ function isNearbyConfirmed(ticket: Ticket) {
   return !hasNearbyConfirmationField(ticket) || Boolean(ticket.nearby_confirmed_at);
 }
 
-function ticketDisplayTime(ticket: Ticket) {
-  return Date.parse(ticket.completed_at ?? ticket.released_at ?? ticket.stage_updated_at ?? ticket.created_at);
+function ticketQueuePosition(ticket: Ticket) {
+  return ticket.ticket_number ?? ticket.id;
+}
+
+function ticketStageSortRank(ticket: Ticket) {
+  const stage = ticket.stage ?? 'waiting';
+  const rank: Record<string, number> = {
+    released: 0,
+    standby: 1,
+    waiting: 2,
+    completed: 3,
+    cancelled: 4,
+    left: 5,
+  };
+  return rank[stage] ?? 6;
 }
 
 function getPilotCompletionMode(ece: Ece | null, queueSlug?: string): PilotCompletionMode {
@@ -325,9 +338,9 @@ export default function AdminQueueDashboard() {
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
     const displayTickets = [...pilotTickets].sort((a, b) => {
-      const byTime = ticketDisplayTime(b) - ticketDisplayTime(a);
-      if (byTime !== 0) return byTime;
-      return (b.ticket_number ?? b.id) - (a.ticket_number ?? a.id);
+      const byStage = ticketStageSortRank(a) - ticketStageSortRank(b);
+      if (byStage !== 0) return byStage;
+      return ticketQueuePosition(a) - ticketQueuePosition(b);
     });
     const stageColor: Record<string, string> = {
       waiting: '#6b7280',

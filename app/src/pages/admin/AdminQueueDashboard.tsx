@@ -356,6 +356,9 @@ export default function AdminQueueDashboard() {
       if (byStage !== 0) return byStage;
       return ticketQueuePosition(a) - ticketQueuePosition(b);
     });
+    const completedTickets = [...pilotTickets]
+      .filter((ticket) => ticket.stage === 'completed')
+      .sort((a, b) => ticketQueuePosition(a) - ticketQueuePosition(b));
     const stageColor: Record<string, string> = {
       waiting: '#6b7280',
       standby: '#8a5a00',
@@ -546,6 +549,37 @@ export default function AdminQueueDashboard() {
                 </div>
               );
             })
+          )}
+
+          {completedTickets.length > 0 && (
+            <details style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.75rem 0.85rem', marginTop: '1rem', background: '#f8fafc' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 900, color: '#24364a' }}>
+                Completed guests ({completedTickets.length})
+              </summary>
+              <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                {completedTickets.map((ticket) => {
+                  const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
+                  return (
+                    <div
+                      key={ticket.id}
+                      style={{
+                        border: '1px solid #e5e7eb',
+                        borderRadius: 8,
+                        padding: '0.65rem',
+                        background: '#fff',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        alignItems: 'baseline',
+                      }}
+                    >
+                      <span style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</span>
+                      <span style={{ color: stageColor.completed, fontSize: '0.76rem', fontWeight: 900, textTransform: 'uppercase' }}>Completed</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </details>
           )}
         </div>
 

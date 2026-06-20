@@ -6,6 +6,14 @@ import type { EventGuestMark, Queue, CreateQueueInput, Ticket, UpdateQueueInput,
 
 // ===================== QUEUE CRUD =====================
 
+function normalizeQueueDisplay(queue: Queue): Queue {
+  if (queue.slug !== 'headshot-photo-station') return queue;
+  return {
+    ...queue,
+    name: 'Headshot Photographer',
+  };
+}
+
 export async function createQueue(input: CreateQueueInput): Promise<Queue> {
   const { data, error } = await supabase
     .from('queues')
@@ -13,7 +21,7 @@ export async function createQueue(input: CreateQueueInput): Promise<Queue> {
     .select()
     .single();
   if (error) throw error;
-  return data as Queue;
+  return normalizeQueueDisplay(data as Queue);
 }
 
 export async function listQueuesForEvent(eventId: string): Promise<Queue[]> {
@@ -23,7 +31,7 @@ export async function listQueuesForEvent(eventId: string): Promise<Queue[]> {
     .eq('event_id', eventId)
     .order('name', { ascending: true });
   if (error) throw error;
-  return (data ?? []) as Queue[];
+  return ((data ?? []) as Queue[]).map(normalizeQueueDisplay);
 }
 
 export async function getQueue(id: string): Promise<Queue> {
@@ -33,7 +41,7 @@ export async function getQueue(id: string): Promise<Queue> {
     .eq('id', id)
     .single();
   if (error) throw error;
-  return data as Queue;
+  return normalizeQueueDisplay(data as Queue);
 }
 
 export async function getQueueBySlug(
@@ -47,7 +55,7 @@ export async function getQueueBySlug(
     .eq('slug', slug)
     .single();
   if (error) throw error;
-  return data as Queue;
+  return normalizeQueueDisplay(data as Queue);
 }
 
 export async function updateQueue(
@@ -61,7 +69,7 @@ export async function updateQueue(
     .select()
     .single();
   if (error) throw error;
-  return data as Queue;
+  return normalizeQueueDisplay(data as Queue);
 }
 
 export async function deleteQueue(id: string): Promise<void> {

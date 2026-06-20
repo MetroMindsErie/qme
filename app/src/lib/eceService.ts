@@ -1,6 +1,15 @@
 import { supabase } from './supabase';
 import type { CreateEceInput, Ece, UpdateEceInput } from '../types';
 
+function normalizeEceDisplay(ece: Ece): Ece {
+  if (ece.slug !== 'headshot-photo-station') return ece;
+  return {
+    ...ece,
+    name: 'Headshot Photographer',
+    location: ece.location === 'Headshot photo station' ? 'Headshot photographer' : ece.location,
+  };
+}
+
 export async function listEcesForEvent(eventId: string): Promise<Ece[]> {
   const { data, error } = await supabase
     .from('eces')
@@ -9,7 +18,7 @@ export async function listEcesForEvent(eventId: string): Promise<Ece[]> {
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return (data ?? []) as Ece[];
+  return ((data ?? []) as Ece[]).map(normalizeEceDisplay);
 }
 
 export async function listActiveEcesForEvent(eventId: string): Promise<Ece[]> {
@@ -21,7 +30,7 @@ export async function listActiveEcesForEvent(eventId: string): Promise<Ece[]> {
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
   if (error) throw error;
-  return (data ?? []) as Ece[];
+  return ((data ?? []) as Ece[]).map(normalizeEceDisplay);
 }
 
 export async function getEce(id: string): Promise<Ece> {
@@ -31,7 +40,7 @@ export async function getEce(id: string): Promise<Ece> {
     .eq('id', id)
     .single();
   if (error) throw error;
-  return data as Ece;
+  return normalizeEceDisplay(data as Ece);
 }
 
 export async function createEce(input: CreateEceInput): Promise<Ece> {
@@ -41,7 +50,7 @@ export async function createEce(input: CreateEceInput): Promise<Ece> {
     .select()
     .single();
   if (error) throw error;
-  return data as Ece;
+  return normalizeEceDisplay(data as Ece);
 }
 
 export async function updateEce(id: string, input: UpdateEceInput): Promise<Ece> {
@@ -52,7 +61,7 @@ export async function updateEce(id: string, input: UpdateEceInput): Promise<Ece>
     .select()
     .single();
   if (error) throw error;
-  return data as Ece;
+  return normalizeEceDisplay(data as Ece);
 }
 
 export async function deleteEce(id: string): Promise<void> {

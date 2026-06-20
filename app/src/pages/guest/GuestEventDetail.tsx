@@ -323,26 +323,51 @@ export default function GuestEventDetail() {
             const storedTicketId = getStoredQueueTicket(q.id);
             let ticket = getStoredQueueTicketNumber(q.id);
             let ticketStage: Ticket['stage'];
+            let tickets: Ticket[] = [];
+            let didLoadTickets = false;
+            try {
+              tickets = await listQueuePilotTickets(q.id);
+              didLoadTickets = true;
+            } catch {
+              tickets = [];
+            }
             if (storedTicketId) {
-              try {
-                const restored = await restoreTicketForQueue(Number(storedTicketId), q.id);
-                ticket = String(restored.ticketNumber);
-                localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
-                localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
-                const ticketRow = await getQueueTicket(restored.id);
-                ticketStage = ticketRow.stage;
-              } catch {
-                clearQueueTicket(q.id);
-                ticket = '';
+              if (didLoadTickets) {
+                const listedTicket = tickets.find((row) => row.id === Number(storedTicketId));
+                if (!listedTicket || ['cancelled', 'left'].includes(listedTicket.stage ?? 'waiting')) {
+                  clearQueueTicket(q.id);
+                  ticket = '';
+                } else {
+                  ticket = String(listedTicket.ticket_number ?? listedTicket.id);
+                  ticketStage = listedTicket.stage;
+                  localStorage.setItem(`qme:ticket:${q.id}`, String(listedTicket.id));
+                  localStorage.setItem(`qme:ticketNum:${q.id}`, String(listedTicket.ticket_number ?? listedTicket.id));
+                }
+              } else {
+                try {
+                  const restored = await restoreTicketForQueue(Number(storedTicketId), q.id);
+                  const ticketRow = await getQueueTicket(restored.id);
+                  ticket = String(restored.ticketNumber);
+                  localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
+                  localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
+                  if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting')) {
+                    clearQueueTicket(q.id);
+                    ticket = '';
+                  } else {
+                    ticketStage = ticketRow.stage;
+                  }
+                } catch {
+                  clearQueueTicket(q.id);
+                  ticket = '';
+                }
               }
             }
             let ns = q.now_serving;
             try { ns = await getNowServing(q.id); } catch { /* */ }
             let waitingCount = 0;
-            try {
-              const tickets = await listQueuePilotTickets(q.id);
+            if (didLoadTickets) {
               waitingCount = tickets.filter((row) => !['completed', 'cancelled', 'left'].includes(row.stage ?? 'waiting')).length;
-            } catch {
+            } else {
               waitingCount = Math.max(0, Number(ticket || 0) - ns + 1);
             }
             return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns, _waitingCount: waitingCount };

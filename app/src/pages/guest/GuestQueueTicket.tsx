@@ -306,6 +306,12 @@ export default function GuestQueueTicketPage() {
     async function refreshTicket() {
       try {
         const row = await getQueueTicket(activeTicketId);
+        if (['cancelled', 'left'].includes(row.stage ?? 'waiting')) {
+          clearQueueTicket(queueId);
+          setPilotTicket(null);
+          navigate(`/events/${targetEventSlug}`, { replace: true });
+          return;
+        }
         if (!stopped) setPilotTicket(row);
       } catch (e) {
         if (!stopped && isMissingTicketError(e)) {

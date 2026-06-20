@@ -1471,6 +1471,15 @@ const QME_ROADMAP = {
   ],
   inbox: [
     {
+      id: "inbox-guest-status-color-system",
+      title: "Guest card status color system",
+      disposition: "idea",
+      summary:
+        "Define a consistent visual system for guest card states so color explains meaning instead of just decoration. Clarify why completed is green, how inQ/waiting should differ from completed, and how paused, locked, photo-credit-required, and active states should read on event cards.",
+      linkedStoryIds: ["story-sotc-pilot-ops-controls"],
+      createdAt: "2026-06-20T00:00:00.000Z"
+    },
+    {
       id: "inbox-queue-length-readiness-states",
       title: "Queue length and guest readiness states",
       disposition: "idea",

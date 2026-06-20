@@ -27,25 +27,6 @@ interface QueueWithMeta extends Queue {
 
 type CreditStatus = 'none' | 'available' | 'used';
 
-function queueStatusLabel(stage?: Ticket['stage']): string {
-  switch (stage) {
-    case 'standby':
-      return 'Almost ready';
-    case 'released':
-      return 'Your turn';
-    case 'completed':
-      return 'Completed';
-    case 'cancelled':
-      return 'Cancelled';
-    case 'left':
-      return 'Left queue';
-    case 'waiting':
-    default:
-      return 'inQ';
-  }
-}
-
-
 // ── Static informational activities ─────────────────────────────────────────
 
 interface StaticActivity {
@@ -525,11 +506,6 @@ export default function GuestEventDetail() {
                       <span>Starts {formatTime(event.start_time)}</span>
                     </div>
                   )}
-                  {hasTicket && (
-                    <div className="ed-ticket-note">
-                      {queueStatusLabel(q._myStage)}
-                    </div>
-                  )}
                 </div>
                 <div className="ed-activity-right">
                   {canJoin && (
@@ -637,11 +613,6 @@ export default function GuestEventDetail() {
                 {linkedQueue && event.start_time && (
                   <div className="ed-activity-meta">
                     <span>Starts {formatTime(event.start_time)}</span>
-                  </div>
-                )}
-                {hasTicket && (
-                  <div className="ed-ticket-note">
-                    {queueStatusLabel(linkedQueue?._myStage)}
                   </div>
                 )}
               </div>

@@ -133,7 +133,7 @@ export default function GuestQueueLanding() {
     if (t) {
       navigate(`/events/${eventSlug}/q/${queueSlug}/ticket?resume=1`);
     } else {
-      navigate(`/events/${eventSlug}/q/${queueSlug}/ticket`);
+      navigate(`/events/${eventSlug}/q/${queueSlug}/ticket?join=1`);
     }
   }
 

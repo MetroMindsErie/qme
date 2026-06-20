@@ -43,7 +43,7 @@ function QueueSkip() {
   if (!eventSlug || !queueSlug) {
     return <Navigate to="/demo" replace />;
   }
-  return <Navigate to={`/events/${eventSlug}/q/${queueSlug}/ticket`} replace />;
+  return <Navigate to={`/events/${eventSlug}/q/${queueSlug}/ticket?join=1`} replace />;
 }
 
 // Guard: allow any queue under the demo event

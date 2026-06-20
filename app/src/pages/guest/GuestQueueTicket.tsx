@@ -264,14 +264,22 @@ export default function GuestQueueTicketPage() {
   // Claim ticket on mount
   useEffect(() => {
     if (!queue) return;
+    const hasStoredTicket = Boolean(localStorage.getItem(`qme:ticket:${queue.id}`));
+    const hasJoinIntent = searchParams.get('join') === '1';
+    if (!hasStoredTicket && !hasJoinIntent) return;
     if (queue.slug === 'wrapped-bouquets' && bouquetAccess !== 'flowers') return;
     if (queue.slug === 'headshot-photo-station' && headshotCreditStatus !== 'available') return;
     if (!hasRequiredEventCheckIn) return;
     if ((queue.join_status ?? 'open') !== 'open') return;
     if (isPilotQueue && !guestNameSaved) return;
-    claimTicket();
+    void claimTicket().then((claimedTicketId) => {
+      if (!claimedTicketId || searchParams.get('join') !== '1') return;
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('join');
+      setSearchParams(nextParams, { replace: true });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, bouquetAccess, headshotCreditStatus, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved]);
+  }, [queue, bouquetAccess, headshotCreditStatus, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!isPilotQueue || !ticketId || didSyncGuestNameRef.current) return;

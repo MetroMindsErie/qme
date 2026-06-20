@@ -471,6 +471,7 @@ export default function GuestEventDetail() {
             const creditLocked = isHeadshotQueue(q.slug) && headshotCreditStatus === 'none' && !hasTicket;
             const creditUsed = isHeadshotQueue(q.slug) && headshotCreditStatus === 'used' && !hasTicket;
             const joinPaused = (q.join_status ?? 'open') !== 'open' && !hasTicket;
+            const canJoin = !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused;
             return (
               <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
@@ -520,7 +521,7 @@ export default function GuestEventDetail() {
                   )}
                 </div>
                 <div className="ed-activity-right">
-                  {!hasTicket && !isCompleted && !creditUsed && (
+                  {canJoin && (
                     <div className="ed-serving-badge">
                       <div className="ed-serving-label">Waiting</div>
                       <div className="ed-serving-num">{q._waitingCount ?? 0}</div>
@@ -530,11 +531,11 @@ export default function GuestEventDetail() {
                     <Link to={`/events/${eventSlug}/q/${q.slug}/ticket`} className="ed-action-btn ed-action-btn-secondary">
                       {isCompleted ? 'Done' : 'View'}
                     </Link>
-                  ) : participationLocked || creditLocked || creditUsed || joinPaused ? null : (
+                  ) : canJoin ? (
                     <Link to={`/events/${eventSlug}/q/${q.slug}`} className="ed-action-btn">
                       Join
                     </Link>
-                  )}
+                  ) : null}
                 </div>
               </div>
             );
@@ -549,12 +550,11 @@ export default function GuestEventDetail() {
             const creditLocked = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'none' && !hasTicket);
             const creditUsed = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'used' && !hasTicket);
             const joinPaused = Boolean(linkedQueue && (linkedQueue.join_status ?? 'open') !== 'open' && !hasTicket);
+            const canJoin = Boolean(linkedQueue && !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused);
             const actionHref = exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
-              ? participationLocked || creditLocked || creditUsed || joinPaused
-                ? ''
-                : `/events/${eventSlug}/q/${linkedQueue.slug}`
+              ? canJoin ? `/events/${eventSlug}/q/${linkedQueue.slug}` : ''
               : '';
             const viewHref = linkedQueue
               ? `/events/${eventSlug}/q/${linkedQueue.slug}/ticket`
@@ -624,10 +624,10 @@ export default function GuestEventDetail() {
                 )}
               </div>
               <div className="ed-activity-right">
-                {linkedQueue && !hasTicket && !isCompleted && !creditUsed && (
+                {canJoin && (
                   <div className="ed-serving-badge">
                     <div className="ed-serving-label">Waiting</div>
-                    <div className="ed-serving-num">{linkedQueue._waitingCount ?? 0}</div>
+                    <div className="ed-serving-num">{linkedQueue?._waitingCount ?? 0}</div>
                   </div>
                 )}
                 {actionText && (

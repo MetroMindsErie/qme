@@ -469,6 +469,7 @@ export default function GuestEventDetail() {
             const participationLocked = requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket;
             const creditLocked = isHeadshotQueue(q.slug) && headshotCreditStatus === 'none' && !hasTicket;
             const creditUsed = isHeadshotQueue(q.slug) && headshotCreditStatus === 'used' && !hasTicket;
+            const joinPaused = (q.join_status ?? 'open') !== 'open' && !hasTicket;
             return (
               <div key={q.id} className={`ed-activity-card ${hasTicket ? 'ed-card-joined' : ''}`}>
                 <div className="ed-activity-icon-wrap" style={{ background: '#EDE9FF' }}>
@@ -486,7 +487,7 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-body">
                   <div className="ed-activity-name-row">
                     <span className="ed-activity-name">{q.slug === 'wrapped-bouquets' ? 'Bouquet Bar' : q.name}</span>
-                    <span className="ed-badge ed-badge-active">{isCompleted || creditUsed ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
+                    <span className="ed-badge ed-badge-active">{isCompleted || creditUsed ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : joinPaused ? 'PAUSED' : 'ACTIVE'}</span>
                   </div>
                   {!isCompleted && !creditUsed && (
                     <div className="ed-activity-desc">
@@ -494,6 +495,8 @@ export default function GuestEventDetail() {
                         ? 'Complete Event Check-In above before joining this experience.'
                         : creditLocked
                         ? 'A headshot photo credit is required to join this station.'
+                        : joinPaused
+                        ? 'Joining is paused while the event team prepares this station.'
                         : q.slug === 'wrapped-bouquets'
                         ? 'Special flowers ticket access for wrapped bouquets.'
                         : q.description}
@@ -526,7 +529,7 @@ export default function GuestEventDetail() {
                     <Link to={`/events/${eventSlug}/q/${q.slug}/ticket`} className="ed-action-btn ed-action-btn-secondary">
                       {isCompleted ? 'Done' : 'View'}
                     </Link>
-                  ) : participationLocked || creditLocked || creditUsed ? null : (
+                  ) : participationLocked || creditLocked || creditUsed || joinPaused ? null : (
                     <Link to={`/events/${eventSlug}/q/${q.slug}`} className="ed-action-btn">
                       Join
                     </Link>
@@ -544,10 +547,11 @@ export default function GuestEventDetail() {
             const participationLocked = Boolean(linkedQueue && requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket);
             const creditLocked = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'none' && !hasTicket);
             const creditUsed = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'used' && !hasTicket);
+            const joinPaused = Boolean(linkedQueue && (linkedQueue.join_status ?? 'open') !== 'open' && !hasTicket);
             const actionHref = exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
-              ? participationLocked || creditLocked || creditUsed
+              ? participationLocked || creditLocked || creditUsed || joinPaused
                 ? ''
                 : `/events/${eventSlug}/q/${linkedQueue.slug}`
               : '';
@@ -567,7 +571,7 @@ export default function GuestEventDetail() {
               ? isCompleted ? 'Done' : 'View'
               : participationLocked
               ? ''
-              : creditLocked || creditUsed
+              : creditLocked || creditUsed || joinPaused
               ? ''
               : linkedQueue
               ? 'Join'
@@ -593,7 +597,7 @@ export default function GuestEventDetail() {
                 <div className="ed-activity-name-row">
                   <span className="ed-activity-name">{exp.name}</span>
                   {linkedQueue && (
-                    <span className="ed-badge ed-badge-active">{isCompleted || creditUsed ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : 'ACTIVE'}</span>
+                    <span className="ed-badge ed-badge-active">{isCompleted || creditUsed ? 'COMPLETED' : participationLocked ? 'CHECK-IN REQUIRED' : creditLocked ? 'PHOTO CREDIT REQUIRED' : joinPaused ? 'PAUSED' : 'ACTIVE'}</span>
                   )}
                 </div>
                 {isCompleted ? null : participationLocked ? (
@@ -602,6 +606,8 @@ export default function GuestEventDetail() {
                   <div className="ed-activity-desc">A headshot photo credit is required to join this station.</div>
                 ) : creditUsed ? (
                   <div className="ed-ticket-note">Headshot completed</div>
+                ) : joinPaused ? (
+                  <div className="ed-activity-desc">Joining is paused while the event team prepares this station.</div>
                 ) : exp.description && (
                   <div className="ed-activity-desc">{exp.description}</div>
                 )}

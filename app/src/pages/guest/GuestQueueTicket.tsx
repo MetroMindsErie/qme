@@ -260,6 +260,7 @@ export default function GuestQueueTicketPage() {
     if (queue.slug === 'wrapped-bouquets' && bouquetAccess !== 'flowers') return;
     if (queue.slug === 'headshot-photo-station' && headshotCreditStatus !== 'available') return;
     if (!hasRequiredEventCheckIn) return;
+    if ((queue.join_status ?? 'open') !== 'open') return;
     if (isPilotQueue && !guestNameSaved) return;
     claimTicket();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -494,6 +495,7 @@ export default function GuestQueueTicketPage() {
   const needsHeadshotCredit = isHeadshotQueue && !ticketId && headshotCreditStatus !== 'available';
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const pilotJoinStatus = queue.join_status ?? 'open';
+  const joinPaused = !ticketId && pilotJoinStatus !== 'open';
 
   if (isPilotQueue && !hasRequiredEventCheckIn) {
     return (
@@ -627,6 +629,47 @@ export default function GuestQueueTicketPage() {
               {headshotCreditStatus === 'used'
                 ? 'Your photo credit has already been used for this event.'
                 : 'This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.'}
+            </p>
+          </div>
+          <button
+            className="tkt-leave-btn"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (joinPaused) {
+    return (
+      <div className="card card-scrollable tkt-card">
+        <div className="tkt-header">
+          <div className="tkt-header-left">
+            <img
+              src={queueImageSrc || '/images/zippy.png'}
+              alt={queue.name}
+              className="tkt-logo"
+            />
+            <div className="tkt-header-info">
+              <div className="tkt-queue-name">{queue.name}</div>
+              <div className="tkt-event-name">{event.name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '1.25rem', color: '#24364a', border: '1px solid #d1d5db' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Queue Paused
+            </div>
+            <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
+              Joining is paused right now
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              The event team is resetting or preparing this station. Please check back shortly.
             </p>
           </div>
           <button

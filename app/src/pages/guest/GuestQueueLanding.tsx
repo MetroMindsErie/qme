@@ -157,6 +157,7 @@ export default function GuestQueueLanding() {
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
   const hasStoredTicket = Boolean(getStoredQueueTicket(queue.id));
   const needsHeadshotCredit = isHeadshotQueue && !hasStoredTicket && headshotCreditStatus !== 'available';
+  const joinPaused = !hasStoredTicket && (queue.join_status ?? 'open') !== 'open';
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
   const eventLogoSrc = event.slug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
@@ -275,6 +276,38 @@ export default function GuestQueueLanding() {
               {headshotCreditStatus === 'used'
                 ? 'Your photo credit has already been used for this event.'
                 : 'This station is reserved for guests with a headshot photo credit. Please check with the event team if you expected one.'}
+            </p>
+          </div>
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '0.75rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (joinPaused) {
+    return (
+      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+        <Header
+          logoSrc={queueHeaderLogoSrc}
+          titleLine1=""
+          titleLine2=""
+        />
+        <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
+          <div style={{ background: '#F8FAFC', borderRadius: 14, padding: '1.25rem', color: '#24364a', border: '1px solid #d1d5db' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>
+              Queue Paused
+            </div>
+            <h1 style={{ fontSize: '1.35rem', margin: '0.45rem 0 0.65rem' }}>
+              Joining is paused right now
+            </h1>
+            <p style={{ margin: 0, lineHeight: 1.5 }}>
+              The event team is resetting or preparing this station. Please check back shortly.
             </p>
           </div>
           <button

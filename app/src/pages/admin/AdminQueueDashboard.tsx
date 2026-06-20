@@ -216,10 +216,12 @@ export default function AdminQueueDashboard() {
     setControlSaveStatus('Resetting...');
     if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
     try {
+      const pausedQueue = await updateQueue(queue.id, { join_status: 'paused' });
+      setQueue(pausedQueue);
       await resetQueueTickets(queue.id);
       setNowServing(1);
       await refreshPilotTickets();
-      setControlSaveStatus('Practice run reset');
+      setControlSaveStatus('Practice run reset; joining paused');
       saveStatusTimerRef.current = setTimeout(() => setControlSaveStatus(''), 2200);
     } catch (e) {
       console.error('Pilot practice reset failed', e);
@@ -385,7 +387,7 @@ export default function AdminQueueDashboard() {
                 Apply Flow
               </button>
               <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} disabled={savingControls} onClick={handlePilotPracticeReset}>
-                Reset Practice Run
+                Reset + Pause
               </button>
               {controlSaveStatus && (
                 <span style={{ color: controlSaveStatus.includes('failed') ? '#b91c1c' : '#15803d', fontWeight: 900, fontSize: '0.86rem' }}>
@@ -397,7 +399,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby. Reset pauses joining so open guest tabs cannot rejoin until you set Join back to Open.
             </div>
           </div>
 

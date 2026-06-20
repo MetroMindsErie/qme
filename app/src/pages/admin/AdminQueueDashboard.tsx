@@ -53,6 +53,11 @@ function ticketQueuePosition(ticket: Ticket) {
   return ticket.ticket_number ?? ticket.id;
 }
 
+function ticketCompletedTime(ticket: Ticket) {
+  const parsed = Date.parse(ticket.completed_at ?? ticket.stage_updated_at ?? ticket.created_at);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function ticketStageSortRank(ticket: Ticket) {
   const stage = ticket.stage ?? 'waiting';
   if (stage === 'standby' && isNearbyConfirmed(ticket)) return 1;
@@ -358,7 +363,11 @@ export default function AdminQueueDashboard() {
     });
     const completedTickets = [...pilotTickets]
       .filter((ticket) => ticket.stage === 'completed')
-      .sort((a, b) => ticketQueuePosition(a) - ticketQueuePosition(b));
+      .sort((a, b) => {
+        const byCompletedTime = ticketCompletedTime(a) - ticketCompletedTime(b);
+        if (byCompletedTime !== 0) return byCompletedTime;
+        return ticketQueuePosition(a) - ticketQueuePosition(b);
+      });
     const stageColor: Record<string, string> = {
       waiting: '#6b7280',
       standby: '#8a5a00',

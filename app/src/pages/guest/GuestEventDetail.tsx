@@ -475,7 +475,7 @@ export default function GuestEventDetail() {
             const statusBadge = isCompleted || creditUsed
               ? 'COMPLETED'
               : hasTicket
-              ? 'IN LINE'
+              ? 'inQ'
               : participationLocked
               ? 'CHECK-IN REQUIRED'
               : creditLocked
@@ -565,7 +565,7 @@ export default function GuestEventDetail() {
             const statusBadge = isCompleted || creditUsed
               ? 'COMPLETED'
               : hasTicket
-              ? 'IN LINE'
+              ? 'inQ'
               : participationLocked
               ? 'CHECK-IN REQUIRED'
               : creditLocked

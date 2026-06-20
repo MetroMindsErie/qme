@@ -27,7 +27,12 @@ vi.mock('react-router-dom', async () => {
 
 import App from '../App';
 
-function renderAt(path: string) {
+function renderAt(path: string, options?: { adminUnlocked?: boolean }) {
+  sessionStorage.clear();
+  const shouldUnlockAdmin = options?.adminUnlocked ?? path.startsWith('/admin');
+  if (shouldUnlockAdmin) {
+    sessionStorage.setItem('qme:adminAccess', '1');
+  }
   return render(
     <MemoryRouter initialEntries={[path]}>
       <App />
@@ -38,6 +43,7 @@ function renderAt(path: string) {
 describe('App routing', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    sessionStorage.clear();
   });
 
   it('/ and /demo land on the demo event', () => {
@@ -78,6 +84,12 @@ describe('App routing', () => {
   it('/admin/events renders AdminEventList', () => {
     renderAt('/admin/events');
     expect(screen.getByTestId('admin-event-list')).toBeInTheDocument();
+  });
+
+  it('/admin/events is hidden behind the admin gate when locked', () => {
+    renderAt('/admin/events', { adminUnlocked: false });
+    expect(screen.getByText('Enter passphrase')).toBeInTheDocument();
+    expect(screen.queryByTestId('admin-event-list')).not.toBeInTheDocument();
   });
 
   it('/admin/events/new renders AdminEventForm', () => {

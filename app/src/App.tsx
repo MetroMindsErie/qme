@@ -11,6 +11,7 @@ import AdminOrganizationList from './pages/admin/AdminOrganizationList';
 import AdminOrganizationDetail from './pages/admin/AdminOrganizationDetail';
 import AdminExpieForm from './pages/admin/AdminExpieForm';
 import AdminEceForm from './pages/admin/AdminEceForm';
+import AdminGate from './components/AdminGate';
 
 // ----- Demo pages -----
 import GuestEventDetail from './pages/guest/GuestEventDetail';
@@ -54,6 +55,10 @@ function QueueTicketPage() {
   return <GuestQueueTicket />;
 }
 
+function AdminPage({ children }: { children: React.ReactNode }) {
+  return <AdminGate>{children}</AdminGate>;
+}
+
 function App() {
   return (
     <BrowserRouter>
@@ -76,22 +81,22 @@ function App() {
         <Route path="/events/:eventSlug/q/:queueSlug/ticket" element={<QueueTicketPage />} />
 
         {/* ===== Admin: kept for operator use ===== */}
-        <Route path="/admin/organizations" element={<AdminOrganizationList />} />
-        <Route path="/admin/organizations/:organizationId" element={<AdminOrganizationDetail />} />
-        <Route path="/admin/organizations/:organizationId/expies/new" element={<AdminExpieForm />} />
-        <Route path="/admin/organizations/:organizationId/expies/:expieId/edit" element={<AdminExpieForm />} />
-        <Route path="/admin/events" element={<AdminEventList />} />
-        <Route path="/admin/events/new" element={<AdminEventForm />} />
-        <Route path="/admin/events/:eventId" element={<AdminEventDetail />} />
-        <Route path="/admin/events/:eventId/check-ins" element={<AdminEventCheckIns />} />
-        <Route path="/admin/events/:eventId/edit" element={<AdminEventForm />} />
-        <Route path="/admin/events/:eventId/eces/new" element={<AdminEceForm />} />
-        <Route path="/admin/events/:eventId/eces/:eceId/edit" element={<AdminEceForm />} />
-        <Route path="/admin/events/:eventId/experiences/new" element={<AdminEceForm />} />
-        <Route path="/admin/events/:eventId/experiences/:eceId/edit" element={<AdminEceForm />} />
-        <Route path="/admin/events/:eventId/queues/new" element={<AdminQueueForm />} />
-        <Route path="/admin/events/:eventId/queues/:queueId" element={<AdminQueueDashboard />} />
-        <Route path="/admin/events/:eventId/queues/:queueId/edit" element={<AdminQueueForm />} />
+        <Route path="/admin/organizations" element={<AdminPage><AdminOrganizationList /></AdminPage>} />
+        <Route path="/admin/organizations/:organizationId" element={<AdminPage><AdminOrganizationDetail /></AdminPage>} />
+        <Route path="/admin/organizations/:organizationId/expies/new" element={<AdminPage><AdminExpieForm /></AdminPage>} />
+        <Route path="/admin/organizations/:organizationId/expies/:expieId/edit" element={<AdminPage><AdminExpieForm /></AdminPage>} />
+        <Route path="/admin/events" element={<AdminPage><AdminEventList /></AdminPage>} />
+        <Route path="/admin/events/new" element={<AdminPage><AdminEventForm /></AdminPage>} />
+        <Route path="/admin/events/:eventId" element={<AdminPage><AdminEventDetail /></AdminPage>} />
+        <Route path="/admin/events/:eventId/check-ins" element={<AdminPage><AdminEventCheckIns /></AdminPage>} />
+        <Route path="/admin/events/:eventId/edit" element={<AdminPage><AdminEventForm /></AdminPage>} />
+        <Route path="/admin/events/:eventId/eces/new" element={<AdminPage><AdminEceForm /></AdminPage>} />
+        <Route path="/admin/events/:eventId/eces/:eceId/edit" element={<AdminPage><AdminEceForm /></AdminPage>} />
+        <Route path="/admin/events/:eventId/experiences/new" element={<AdminPage><AdminEceForm /></AdminPage>} />
+        <Route path="/admin/events/:eventId/experiences/:eceId/edit" element={<AdminPage><AdminEceForm /></AdminPage>} />
+        <Route path="/admin/events/:eventId/queues/new" element={<AdminPage><AdminQueueForm /></AdminPage>} />
+        <Route path="/admin/events/:eventId/queues/:queueId" element={<AdminPage><AdminQueueDashboard /></AdminPage>} />
+        <Route path="/admin/events/:eventId/queues/:queueId/edit" element={<AdminPage><AdminQueueForm /></AdminPage>} />
 
         {/* Everything else → /demo */}
         <Route path="*" element={<Navigate to="/demo" replace />} />

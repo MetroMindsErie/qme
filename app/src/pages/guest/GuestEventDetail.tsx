@@ -41,7 +41,7 @@ function queueStatusLabel(stage?: Ticket['stage']): string {
       return 'Left queue';
     case 'waiting':
     default:
-      return 'Waiting in line';
+      return 'inQ';
   }
 }
 

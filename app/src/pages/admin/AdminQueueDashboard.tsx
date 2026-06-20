@@ -54,15 +54,16 @@ function ticketQueuePosition(ticket: Ticket) {
 
 function ticketStageSortRank(ticket: Ticket) {
   const stage = ticket.stage ?? 'waiting';
+  if (stage === 'standby' && isNearbyConfirmed(ticket)) return 1;
+  if (stage === 'standby') return 2;
   const rank: Record<string, number> = {
     released: 0,
-    standby: 1,
-    waiting: 2,
-    completed: 3,
-    cancelled: 4,
-    left: 5,
+    waiting: 3,
+    completed: 4,
+    cancelled: 5,
+    left: 6,
   };
-  return rank[stage] ?? 6;
+  return rank[stage] ?? 7;
 }
 
 function getPilotCompletionMode(ece: Ece | null, queueSlug?: string): PilotCompletionMode {

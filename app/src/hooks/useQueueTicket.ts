@@ -111,7 +111,13 @@ export function useQueueTicket(queueId: string | undefined) {
           const result = await restoreTicketForQueue(id, queueId);
           setTicketNumber(result.ticketNumber);
           storeTicket(queueId, result.id, result.ticketNumber);
-        } catch { /* */ }
+        } catch {
+          clearQueueTicket(queueId);
+          setTicketId(null);
+          setTicketNumber(null);
+          setHasCheckedIn(false);
+          return null;
+        }
         return id;
       }
 

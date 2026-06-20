@@ -317,7 +317,8 @@ export default function GuestEventDetail() {
                 const ticketRow = await getQueueTicket(restored.id);
                 ticketStage = ticketRow.stage;
               } catch {
-                /* keep local display value when restore is unavailable */
+                clearQueueTicket(q.id);
+                ticket = '';
               }
             }
             let ns = q.now_serving;

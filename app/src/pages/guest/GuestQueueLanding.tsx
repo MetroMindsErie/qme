@@ -12,7 +12,7 @@ import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
-import { getQueueBySlug, leaveQueue } from '../../lib/queueService';
+import { getQueueBySlug, leaveQueue, restoreTicketForQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
@@ -102,6 +102,22 @@ export default function GuestQueueLanding() {
   useEffect(() => {
     updateUI();
   }, [updateUI]);
+
+  useEffect(() => {
+    if (!queue) return;
+    const storedTicketId = getStoredQueueTicket(queue.id);
+    if (!storedTicketId) return;
+    let cancelled = false;
+    restoreTicketForQueue(Number(storedTicketId), queue.id)
+      .catch(() => {
+        if (cancelled) return;
+        clearQueueTicket(queue.id);
+        updateUI();
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [queue, updateUI]);
 
   // Cross-tab sync
   useEffect(() => {

@@ -216,12 +216,10 @@ export default function AdminQueueDashboard() {
     setControlSaveStatus('Resetting...');
     if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
     try {
-      const pausedQueue = await updateQueue(queue.id, { join_status: 'paused' });
-      setQueue(pausedQueue);
       await resetQueueTickets(queue.id);
       setNowServing(1);
       await refreshPilotTickets();
-      setControlSaveStatus('Practice run reset; joining paused');
+      setControlSaveStatus('Practice run reset');
       saveStatusTimerRef.current = setTimeout(() => setControlSaveStatus(''), 2200);
     } catch (e) {
       console.error('Pilot practice reset failed', e);
@@ -353,7 +351,7 @@ export default function AdminQueueDashboard() {
           <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f8fafc' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
-                Join
+                Join Status
                 <select value={queue.join_status ?? 'open'} disabled={savingControls} onChange={(e) => saveQueueControls({ join_status: e.target.value as QueueType['join_status'] })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }}>
                   <option value="open">Open</option>
                   <option value="paused">Paused</option>
@@ -387,7 +385,7 @@ export default function AdminQueueDashboard() {
                 Apply Flow
               </button>
               <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} disabled={savingControls} onClick={handlePilotPracticeReset}>
-                Reset + Pause
+                Reset Practice Run
               </button>
               {controlSaveStatus && (
                 <span style={{ color: controlSaveStatus.includes('failed') ? '#b91c1c' : '#15803d', fontWeight: 900, fontSize: '0.86rem' }}>
@@ -399,7 +397,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby. Reset pauses joining so open guest tabs cannot rejoin until you set Join back to Open.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby. Use Join Status to pause or reopen guest joining; reset clears the current run.
             </div>
           </div>
 

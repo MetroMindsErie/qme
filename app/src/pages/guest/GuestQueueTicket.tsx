@@ -56,6 +56,13 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function isMissingTicketError(error: unknown): boolean {
+  const record = asRecord(error);
+  const code = typeof record.code === 'string' ? record.code : '';
+  const message = typeof record.message === 'string' ? record.message.toLowerCase() : '';
+  return code === 'PGRST116' || message.includes('0 rows') || message.includes('json object requested');
+}
+
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
@@ -285,12 +292,20 @@ export default function GuestQueueTicketPage() {
     if (!queue || !ticketId || !isPilotQueue) return;
 
     const activeTicketId = ticketId;
+    const queueId = queue.id;
+    const targetEventSlug = eventSlug;
     let stopped = false;
     async function refreshTicket() {
       try {
         const row = await getQueueTicket(activeTicketId);
         if (!stopped) setPilotTicket(row);
       } catch (e) {
+        if (!stopped && isMissingTicketError(e)) {
+          clearQueueTicket(queueId);
+          setPilotTicket(null);
+          navigate(`/events/${targetEventSlug}`, { replace: true });
+          return;
+        }
         console.warn('pilot ticket refresh failed', e);
       }
     }
@@ -301,7 +316,7 @@ export default function GuestQueueTicketPage() {
       stopped = true;
       clearInterval(interval);
     };
-  }, [queue, ticketId, isPilotQueue]);
+  }, [queue, ticketId, isPilotQueue, navigate, eventSlug]);
 
   useEffect(() => {
     const code = searchParams.get('code');

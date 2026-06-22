@@ -1507,10 +1507,10 @@ const QME_ROADMAP = {
     },
     {
       id: "inbox-pay-at-desk",
-      title: "Professional pays at desk for photo access",
+      title: "Headshot queue visibility and photo-credit gate",
       disposition: "consider",
       summary:
-        "Pay at desk, check-in can mark professional-with-photo, and photo booth queue requires student or professional-with-photo.",
+        "Keep the Headshot Photographer queue visible to checked-in guests even when they do not have a photo credit, because the queue itself communicates a paid/special-access station. Guests without credit should see a quiet locked state such as photo credit required, not a join action. Guests with available credit can join; guests who completed/used the credit see completed/history. Future purchase or pay-at-desk flow can attach to this locked state.",
       linkedStoryIds: ["story-headshot-queue", "story-guest-condition-engine"]
     },
     {

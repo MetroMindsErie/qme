@@ -1484,7 +1484,7 @@ const QME_ROADMAP = {
       title: "Queue length and guest readiness states",
       disposition: "idea",
       summary:
-        "Explore queue messaging beyond now-serving numbers. Guests may need to know approximate queue length or progress, plus states such as getting closer, almost ready, gather nearby, ready to order/check in, and served. Useful for SOTC/headshots/resume reviews but not necessarily a current priority.",
+        "Explore queue messaging beyond exact queue length: waiting, almost ready, nearby/ready, released/your turn, served, and what happens when a released guest is marked Not here. Current pilot can stay as-is, but future fairness rules should evaluate practical Not here options: a soft penalty that sorts recently missed guests after other ready guests, a simple penalty that clears nearby and puts them behind already-ready standby guests, or a hard penalty that sends them back to waiting. Goal is to avoid false precision while making readiness and fairness obvious to staff and guests.",
       linkedStoryIds: [],
       createdAt: "2026-06-14T00:00:00.000Z"
     },

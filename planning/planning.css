@@ -656,7 +656,8 @@ summary::-webkit-details-marker {
 
 .inbox-card,
 .review-panel,
-.decision-card {
+.decision-card,
+.product-review-card {
   padding: 1rem;
 }
 
@@ -711,6 +712,49 @@ summary::-webkit-details-marker {
 
 .decision-card + .decision-card {
   margin-top: 0.7rem;
+}
+
+.product-review-panel {
+  grid-column: span 2;
+}
+
+.product-review-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.product-review-card p,
+.product-review-section li {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.42;
+}
+
+.review-date {
+  display: inline-block;
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.product-review-section {
+  margin-top: 0.9rem;
+}
+
+.product-review-section h4 {
+  margin-bottom: 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.product-review-section ul {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding-left: 1.1rem;
 }
 
 .drawer {
@@ -970,6 +1014,10 @@ summary::-webkit-details-marker {
   .roadmap-grid,
   .review-layout {
     grid-template-columns: 1fr;
+  }
+
+  .product-review-panel {
+    grid-column: auto;
   }
 
   .table-row {

@@ -1547,6 +1547,45 @@ const QME_ROADMAP = {
       ]
     }
   ],
+  productReviews: [
+    {
+      id: "review-sotc-alpha-2026-06-24",
+      date: "2026-06-24",
+      trigger: "SOTC student alpha test and external roadmap review",
+      summary:
+        "The SOTC alpha test validated the core event check-in, queue state, photo-credit/headshot, and admin control flows with real students. Feedback centered on polish and readiness rather than product rejection.",
+      observations: [
+        "qME is converging toward an event experience platform, not simply a queue app.",
+        "Guests move through events; they do not wait in lines.",
+        "Jalani Ball emerged as a student partner who can help move the pilot toward ready.",
+        "Near-term work should focus on production readiness before additional platform expansion."
+      ],
+      decisions: [
+        "Prioritize refresh behavior, mobile polish, queue messaging, Jalani readiness review, and database hardening before broader feature expansion.",
+        "Keep operational dashboard and post-event analytics as future stories, not July blockers.",
+        "Treat Product Reviews as learning artifacts distinct from sprint execution."
+      ],
+      risks: [
+        "Platform expansion may outrun customer validation.",
+        "Small UX issues can become live-event operational friction.",
+        "Database/RLS hardening is required before broader deployment."
+      ],
+      roadmapChanges: [
+        "Added SOTC alpha follow-up stories.",
+        "Added SOTC admin/staff RLS hardening story.",
+        "Recommended Event Rehearsal Mode and Failure Recovery as next planning candidates."
+      ],
+      nextFocus: [
+        "Calm refresh/blinking",
+        "Mobile layout/button polish",
+        "Headshot/standby messaging",
+        "Jalani readiness review",
+        "Staff/admin role model and RLS hardening",
+        "Failure recovery checklist",
+        "Event rehearsal/practice mode"
+      ]
+    }
+  ],
   inbox: [
     {
       id: "inbox-guest-status-color-system",

@@ -330,6 +330,60 @@ function renderAttachments(attachments = []) {
   `;
 }
 
+function productReviewSection(label, items = []) {
+  if (!items.length) return "";
+  return `
+    <div class="product-review-section">
+      <h4>${escapeHtml(label)}</h4>
+      <ul>
+        ${items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
+function renderProductReviews() {
+  const target = document.getElementById("productReviewList");
+  if (!target) return;
+
+  const reviews = (data.productReviews || [])
+    .filter((review) =>
+      matchesQuery(
+        review.trigger,
+        review.summary,
+        review.observations,
+        review.decisions,
+        review.risks,
+        review.roadmapChanges,
+        review.nextFocus
+      )
+    )
+    .sort((a, b) => String(b.date || "").localeCompare(String(a.date || "")));
+
+  target.innerHTML = reviews.length
+    ? reviews
+        .map(
+          (review) => `
+            <article class="product-review-card">
+              <div class="story-card-head">
+                <div>
+                  <h4>${escapeHtml(review.trigger)}</h4>
+                  <span class="review-date">${escapeHtml(review.date)}</span>
+                </div>
+              </div>
+              <p>${escapeHtml(review.summary || "")}</p>
+              ${productReviewSection("Observations", review.observations)}
+              ${productReviewSection("Decisions", review.decisions)}
+              ${productReviewSection("Risks", review.risks)}
+              ${productReviewSection("Roadmap Changes", review.roadmapChanges)}
+              ${productReviewSection("Next Focus", review.nextFocus)}
+            </article>
+          `
+        )
+        .join("")
+    : `<p class="empty">No product reviews match the current filter.</p>`;
+}
+
 function renderReview() {
   const currentSprint = data.sprints.find((sprint) => sprint.id === "now");
   const currentStories = ((currentSprint && currentSprint.storyIds) || [])
@@ -356,6 +410,8 @@ function renderReview() {
       `
     )
     .join("");
+
+  renderProductReviews();
 }
 
 function readFileAsDataUrl(file) {

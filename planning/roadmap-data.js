@@ -539,6 +539,26 @@ const QME_ROADMAP = {
                 "Imported from Trello admin/staff role cards and provisional admin console notes."
             },
             {
+              id: "story-sotc-admin-staff-rls-hardening",
+              title: "Define SOTC admin/staff roles and Supabase RLS boundaries",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Review and harden the SOTC pilot database permission model before moving beyond guided alpha testing.",
+              acceptanceCriteria: [
+                "Role matrix exists for qME admin, event admin, check-in staff, service staff/photographer, and guest/anon.",
+                "Each protected SOTC pilot table has intended read/write rules documented.",
+                "Current permissive policies, including broad using true and with check true policies, are listed with replacement policy recommendations.",
+                "Guest-owned actions are separated from staff-owned actions such as granting photo credits, resetting queues, releasing guests, and marking headshots complete.",
+                "Queue transition and ticket ownership checks needed at the database/function layer are identified.",
+                "Audit needs are documented for check-in, credit granted, nearby, released, completed, not here, and reset actions.",
+                "Near-term pilot auth approach is chosen: Supabase Auth, magic link, staff PIN, invite code, or a documented temporary bridge.",
+                "Remaining database/security risks are documented before real event use."
+              ],
+              notes:
+                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations."
+            },
+            {
               id: "story-superadmin-role",
               title: "Define qME superadmin role",
               status: "future",

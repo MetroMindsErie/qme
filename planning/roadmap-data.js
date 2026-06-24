@@ -883,10 +883,12 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Headshot experience has a queue.",
                 "Students can join for free.",
-                "Professionals can join only when marked as professional-with-photo or equivalent access."
+                "Professionals can join only when marked as professional-with-photo or equivalent access.",
+                "Headshot queue copy follows the same clear state model as the pilot queue: Waiting, Almost Ready, I'm Nearby, Your Turn, Completed.",
+                "Copy is tested with at least one student/contact for comprehension."
               ],
               notes:
-                "This extends the Bouquet Bar access pattern into guest tags/conditions."
+                "This extends the Bouquet Bar access pattern into guest tags/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity."
             },
             {
               id: "story-headshot-tags",
@@ -999,10 +1001,11 @@ const QME_ROADMAP = {
                 "Guests can check in, join the Scan-Code Adventure queue, move through waiting, standby, your turn, and completed states.",
                 "Admin can control manual/auto flow with one active released guest and three standby guests.",
                 "Completed guests return to the event view with completed treatment.",
-                "Canonical guest and admin links are documented."
+                "Canonical guest and admin links are documented.",
+                "Alpha-test findings from the student group are captured and triaged."
               ],
               notes:
-                "Validated in production on 2026-06-19. Student group testing is delayed because Eric's team is busy, so development continues from the proven pilot slice."
+                "Validated in production on 2026-06-19. Alpha-tested on 2026-06-24 with 8 SOTC students, including Jalani Ball. Core event check-in, queue states, headshot/photo-credit flow, and admin controls worked well enough for guided testing. Jalani helped lead the test, gathered students, and is willing to help move the pilot toward ready. Follow-up findings are mostly polish: refresh blinking, button alignment, and clearer photo queue/standby messaging."
             },
             {
               id: "story-sotc-pilot-ops-controls",
@@ -1020,6 +1023,61 @@ const QME_ROADMAP = {
               ],
               notes:
                 "This keeps momentum while external testing is paused."
+            },
+            {
+              id: "story-sotc-calm-refresh",
+              title: "Calm realtime refresh behavior on SOTC pilot screens",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Make guest and admin SOTC pilot screens update without visible blinking, blanking, or layout jumps during polling/realtime refresh.",
+              acceptanceCriteria: [
+                "Guest event page does not blink or temporarily blank during routine refresh.",
+                "Guest queue ticket page keeps the current state visible while polling.",
+                "Admin queue dashboard keeps guest rows and controls stable during refresh.",
+                "If fetched data is unchanged, there is no visible UI reset.",
+                "If fetched data changed, the relevant state updates without moving unrelated content.",
+                "Loading indicators are subtle and do not displace primary content.",
+                "Verified on mobile viewport for SOTC guest flow and admin queue flow."
+              ],
+              notes:
+                "Alpha-test inbox finding: App refresh with screen blinking is distracting."
+            },
+            {
+              id: "story-sotc-mobile-layout-polish",
+              title: "Polish SOTC pilot mobile layout and button alignment",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Use alpha-test screenshots and mobile testing to clean up visible layout issues on SOTC pilot guest/admin screens.",
+              acceptanceCriteria: [
+                "Primary and secondary buttons align consistently on guest event, queue ticket, and admin queue screens.",
+                "Button labels do not wrap awkwardly or overflow on common mobile widths.",
+                "Action rows keep stable height and spacing when state changes.",
+                "Back, Join, I'm Nearby, Enter Code, Apply Flow, Reset Practice Run, and admin guest-row actions are checked.",
+                "Screenshots from the alpha-test issue are reviewed against the fix.",
+                "Verified at mobile widths around 360px, 390px, and desktop/tablet."
+              ],
+              notes:
+                "Alpha-test inbox finding: Misaligned buttons."
+            },
+            {
+              id: "story-sotc-jalani-readiness-review",
+              title: "Prepare SOTC pilot for Jalani-led readiness review",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Use alpha-test feedback from Jalani Ball and the student group to get the SOTC pilot into a ready-for-review state.",
+              acceptanceCriteria: [
+                "Alpha-test findings are triaged into stories or story notes.",
+                "Jalani can run through the guest flow with minimal prompting.",
+                "Guest event check-in, Headshot queue, Scan-Code Adventure, and admin controls are tested end-to-end after polish fixes.",
+                "A short test script exists for the next student review.",
+                "Known remaining issues are either fixed or explicitly deferred.",
+                "Jalani confirms the flow is understandable enough for the next SOTC stakeholder demo."
+              ],
+              notes:
+                "Alpha-test inbox finding: Alpha test went well. Jalani Ball helped lead the test and can help move the pilot toward ready."
             },
             {
               id: "story-admin-console-needs",

@@ -11,7 +11,7 @@ function normalizeQueueDisplay(queue: Queue): Queue {
   return {
     ...queue,
     name: 'Headshot Photographer',
-    description: 'Join the headshot queue. We will call you closer when the photographer is ready.',
+    description: 'Join the headshot queue. We will call you when the photo area is ready.',
   };
 }
 

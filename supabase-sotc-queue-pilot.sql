@@ -373,12 +373,12 @@ select
       ),
       'standby', jsonb_build_object(
         'title', 'Almost Ready',
-        'detail', 'Your headshot is coming up soon. Please head closer to {{location}}.',
-        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
+        'detail', 'Your headshot is coming up soon. Please head to the {{location}}.',
+        'instruction', 'When you arrive at the {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
-        'detail', 'Step up at {{location}}. Staff will mark this complete after your photo.'
+        'detail', 'Step in for your headshot. Staff will mark this complete after your photo.'
       ),
       'completed', jsonb_build_object(
         'title', 'Completed',
@@ -416,7 +416,7 @@ select
   events.id,
   'Headshot Photographer',
   'headshot-photo-station',
-  'Join the headshot queue. We will call you closer when the photographer is ready.',
+  'Join the headshot queue. We will call you when the photo area is ready.',
   '/images/headshot-photo-station.png',
   'active',
   'open',
@@ -435,7 +435,7 @@ where events.slug = 'sotc-test-check-in'
 update public.queues
 set
   name = 'Headshot Photographer',
-  description = 'Join the headshot queue. We will call you closer when the photographer is ready.',
+  description = 'Join the headshot queue. We will call you when the photo area is ready.',
   image_url = '/images/headshot-photo-station.png',
   join_status = 'open',
   run_mode = 'manual',
@@ -467,12 +467,12 @@ select
   organizations.id,
   'Headshot Photographer',
   'headshot-photo-station',
-  'Join the headshot queue. We will call you closer when the photographer is ready.',
+  'Join the headshot queue. We will call you when the photo area is ready.',
   '/images/headshot-photo-station.png',
   'queue',
   queues.id,
   'standby_gather',
-  'Headshot photographer',
+  'Headshot station',
   jsonb_build_object(
     'pilot', true,
     'completion_mode', 'staff_served',
@@ -484,12 +484,12 @@ select
       ),
       'standby', jsonb_build_object(
         'title', 'Almost Ready',
-        'detail', 'Your headshot is coming up soon. Please head closer to {{location}}.',
-        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
+        'detail', 'Your headshot is coming up soon. Please head to the {{location}}.',
+        'instruction', 'When you arrive at the {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
-        'detail', 'Step up at {{location}}. Staff will mark this complete after your photo.'
+        'detail', 'Step in for your headshot. Staff will mark this complete after your photo.'
       ),
       'completed', jsonb_build_object(
         'title', 'Completed',
@@ -516,12 +516,12 @@ update public.eces
 set
   expie_id = expies.id,
   name = 'Headshot Photographer',
-  description = 'Join the headshot queue. We will call you closer when the photographer is ready.',
+  description = 'Join the headshot queue. We will call you when the photo area is ready.',
   image_url = '/images/headshot-photo-station.png',
   type = 'queue',
   queue_id = queues.id,
   queue_behavior = 'standby_gather',
-  location = 'Headshot photographer',
+  location = 'Headshot station',
   metadata = jsonb_build_object(
     'pilot', true,
     'completion_mode', 'staff_served',
@@ -533,12 +533,12 @@ set
       ),
       'standby', jsonb_build_object(
         'title', 'Almost Ready',
-        'detail', 'Your headshot is coming up soon. Please head closer to {{location}}.',
-        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
+        'detail', 'Your headshot is coming up soon. Please head to the {{location}}.',
+        'instruction', 'When you arrive at the {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
-        'detail', 'Step up at {{location}}. Staff will mark this complete after your photo.'
+        'detail', 'Step in for your headshot. Staff will mark this complete after your photo.'
       ),
       'completed', jsonb_build_object(
         'title', 'Completed',

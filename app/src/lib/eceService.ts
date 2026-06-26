@@ -8,12 +8,12 @@ const HEADSHOT_STAGE_COPY = {
   },
   standby: {
     title: 'Almost Ready',
-    detail: 'Your headshot is coming up soon. Please head closer to {{location}}.',
-    instruction: "When you are close to {{location}}, tap I'm Nearby. Keep this page open.",
+    detail: 'Your headshot is coming up soon. Please head to the {{location}}.',
+    instruction: "When you arrive at the {{location}}, tap I'm Nearby. Keep this page open.",
   },
   released: {
     title: 'Your Turn',
-    detail: 'Step up at {{location}}. Staff will mark this complete after your photo.',
+    detail: 'Step in for your headshot. Staff will mark this complete after your photo.',
   },
   completed: {
     title: 'Completed',
@@ -33,8 +33,8 @@ function normalizeEceDisplay(ece: Ece): Ece {
   return {
     ...ece,
     name: 'Headshot Photographer',
-    description: 'Join the headshot queue. We will call you closer when the photographer is ready.',
-    location: ece.location === 'Headshot photo station' ? 'Headshot photographer' : ece.location,
+    description: 'Join the headshot queue. We will call you when the photo area is ready.',
+    location: 'Headshot station',
     metadata: {
       ...metadata,
       stage_copy: HEADSHOT_STAGE_COPY,

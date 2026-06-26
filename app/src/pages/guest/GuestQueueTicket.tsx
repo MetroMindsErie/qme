@@ -396,7 +396,10 @@ export default function GuestQueueTicketPage() {
 
   useEffect(() => {
     if (!isPilotQueue || queue?.run_mode !== 'auto' || !pilotTicket?.queue_id) return;
-    if (pilotTicket.stage !== 'standby' || !pilotTicket.nearby_confirmed_at) return;
+    const shouldRunAutoFlow =
+      pilotTicket.stage === 'waiting' ||
+      (pilotTicket.stage === 'standby' && Boolean(pilotTicket.nearby_confirmed_at));
+    if (!shouldRunAutoFlow) return;
     if (autoNearbyFlowInFlightRef.current) return;
 
     const pilotQueueId = pilotTicket.queue_id;
@@ -408,7 +411,7 @@ export default function GuestQueueTicketPage() {
         const refreshed = await getQueueTicket(activeTicketId);
         setPilotTicket((current) => hasSameShape(current, refreshed) ? current : refreshed);
       } catch (err) {
-        console.warn('Auto flow after nearby confirmation failed', err);
+        console.warn('Auto flow from guest ticket state failed', err);
       } finally {
         autoNearbyFlowInFlightRef.current = false;
       }

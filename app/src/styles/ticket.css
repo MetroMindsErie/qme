@@ -503,3 +503,230 @@
   color: #aaa;
   margin: 0;
 }
+
+/* ---- SOTC pilot ticket layout ---- */
+.card.tkt-pilot-card {
+  gap: 0;
+}
+
+.tkt-pilot-header {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.tkt-pilot-title-wrap {
+  min-width: 0;
+}
+
+.tkt-pilot-event {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.tkt-pilot-title {
+  margin: 4px 0 0;
+  font-size: clamp(1.65rem, 8vw, 2.35rem);
+  line-height: 1.02;
+  color: #24364a;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.tkt-pilot-number {
+  color: #6b7280;
+  font-size: 1.2rem;
+  line-height: 1.1;
+  font-weight: 900;
+  white-space: nowrap;
+  padding-top: 22px;
+}
+
+.tkt-pilot-scroll-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 18px;
+}
+
+.tkt-pilot-status,
+.tkt-pilot-panel {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  padding: 12px 14px;
+  flex-shrink: 0;
+}
+
+.tkt-pilot-status {
+  border-width: 2px;
+}
+
+.tkt-pilot-label {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 1.3px;
+  text-transform: uppercase;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.tkt-pilot-status-title {
+  margin-top: 5px;
+  font-size: clamp(2rem, 10vw, 3.15rem);
+  line-height: 0.98;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.tkt-pilot-status-detail {
+  margin: 10px 0 0;
+  font-size: clamp(1rem, 4.6vw, 1.25rem);
+  line-height: 1.28;
+  color: #374151;
+  font-weight: 700;
+}
+
+.tkt-pilot-location {
+  margin-top: 5px;
+  font-size: clamp(1.2rem, 6vw, 1.85rem);
+  line-height: 1.05;
+  font-weight: 900;
+  color: #24364a;
+  overflow-wrap: anywhere;
+}
+
+.tkt-pilot-instruction {
+  color: #4b5563;
+  font-size: 1rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.tkt-pilot-code-panel h2 {
+  margin: 0 0 6px;
+  font-size: 1.18rem;
+  line-height: 1.15;
+  color: #24364a;
+  letter-spacing: 0;
+}
+
+.tkt-pilot-code-panel p {
+  margin: 0 0 10px;
+  color: #4b5563;
+  line-height: 1.35;
+  font-weight: 700;
+}
+
+.tkt-pilot-code-input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  margin-bottom: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.tkt-pilot-error,
+.tkt-pilot-not-here-banner {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.tkt-pilot-error {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.tkt-pilot-not-here-banner {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+}
+
+.tkt-pilot-actions {
+  border-top: 1px solid #eef2f7;
+}
+
+.tkt-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(15, 23, 42, 0.32);
+}
+
+.tkt-modal {
+  width: 100%;
+  max-width: 320px;
+  box-sizing: border-box;
+  border-radius: 12px;
+  border: 2px solid #24364a;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 14px 35px rgba(15, 23, 42, 0.25);
+}
+
+.tkt-modal h2 {
+  margin: 0 0 8px;
+  color: #24364a;
+  font-size: 1.3rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.tkt-modal p {
+  margin: 0 0 14px;
+  color: #4b5563;
+  font-size: 0.95rem;
+  line-height: 1.42;
+  font-weight: 650;
+}
+
+@media (max-width: 390px) {
+  .tkt-pilot-header {
+    padding: 14px 14px 10px;
+  }
+
+  .tkt-pilot-scroll-body {
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .tkt-pilot-status,
+  .tkt-pilot-panel {
+    padding: 10px 12px;
+  }
+
+  .tkt-pilot-status-title {
+    font-size: clamp(1.75rem, 9vw, 2.75rem);
+  }
+
+  .tkt-pilot-status-detail {
+    margin-top: 8px;
+    font-size: 0.98rem;
+  }
+
+  .tkt-pilot-instruction {
+    font-size: 0.94rem;
+  }
+}

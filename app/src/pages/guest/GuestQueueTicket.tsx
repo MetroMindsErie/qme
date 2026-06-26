@@ -38,6 +38,8 @@ const TIME_2_CHECKIN = 3;  // start prompting check-in when this many ahead
 // Delay (ms) the "Enjoy!" screen stays visible before navigating away
 const SERVED_LINGER_MS = 4000;
 const PILOT_COMPLETION_CODE = '4729';
+const NOT_HERE_NOTICE =
+  "Staff called you after you marked yourself nearby, but you were not at the station. You are still in standby. When you are nearby and ready to be called again, tap I'm Nearby.";
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
@@ -149,6 +151,8 @@ export default function GuestQueueTicketPage() {
   const [completionError, setCompletionError] = useState('');
   const [completionSaving, setCompletionSaving] = useState(false);
   const [nearbySaving, setNearbySaving] = useState(false);
+  const [notHereNoticeActive, setNotHereNoticeActive] = useState(false);
+  const [showNotHereModal, setShowNotHereModal] = useState(false);
 
   useEffect(() => {
     if (!eventSlug || !queueSlug) return;
@@ -222,6 +226,7 @@ export default function GuestQueueTicketPage() {
   const didNowServingRef  = useRef(false);
   const didAutoLeaveRef   = useRef(false);
   const didSyncGuestNameRef = useRef(false);
+  const lastPilotTicketRef = useRef<Ticket | null>(null);
 
   const checkInConfig = getEventCheckInConfig(event);
   const isPilotQueue = event?.slug === 'sotc-test-check-in';
@@ -238,6 +243,16 @@ export default function GuestQueueTicketPage() {
   function queueGuestStorageKey(qId: string) {
     return `qme:queueGuest:${qId}`;
   }
+
+  function notHereStorageKey(tId: number) {
+    return `qme:notHereNotice:${tId}`;
+  }
+
+  const clearNotHereNotice = useCallback((tId = ticketId) => {
+    setNotHereNoticeActive(false);
+    setShowNotHereModal(false);
+    if (tId) localStorage.removeItem(notHereStorageKey(tId));
+  }, [ticketId]);
 
   useEffect(() => {
     if (!queue) return;
@@ -311,14 +326,33 @@ export default function GuestQueueTicketPage() {
       try {
         const row = await getQueueTicket(activeTicketId);
         if (['cancelled', 'left'].includes(row.stage ?? 'waiting')) {
+          clearNotHereNotice(row.id);
           clearQueueTicket(queueId);
           setPilotTicket(null);
           navigate(`/events/${targetEventSlug}`, { replace: true });
           return;
         }
+        const previous = lastPilotTicketRef.current;
+        const isNotHereReset =
+          previous?.id === row.id &&
+          previous.stage === 'released' &&
+          row.stage === 'standby' &&
+          !row.nearby_confirmed_at;
+        if (isNotHereReset) {
+          localStorage.setItem(notHereStorageKey(row.id), '1');
+          setNotHereNoticeActive(true);
+          setShowNotHereModal(true);
+        }
+        if (row.stage !== 'standby' || row.nearby_confirmed_at) {
+          clearNotHereNotice(row.id);
+        } else if (localStorage.getItem(notHereStorageKey(row.id)) === '1') {
+          setNotHereNoticeActive(true);
+        }
+        lastPilotTicketRef.current = row;
         if (!stopped) setPilotTicket((current) => hasSameShape(current, row) ? current : row);
       } catch (e) {
         if (!stopped && isMissingTicketError(e)) {
+          if (activeTicketId) clearNotHereNotice(activeTicketId);
           clearQueueTicket(queueId);
           setPilotTicket(null);
           navigate(`/events/${targetEventSlug}`, { replace: true });
@@ -334,7 +368,19 @@ export default function GuestQueueTicketPage() {
       stopped = true;
       clearInterval(interval);
     };
-  }, [queue, ticketId, isPilotQueue, navigate, eventSlug]);
+  }, [queue, ticketId, isPilotQueue, navigate, eventSlug, clearNotHereNotice]);
+
+  useEffect(() => {
+    lastPilotTicketRef.current = null;
+    if (!ticketId || !isPilotQueue) {
+      setNotHereNoticeActive(false);
+      setShowNotHereModal(false);
+      return;
+    }
+    const hasStoredNotice = localStorage.getItem(notHereStorageKey(ticketId)) === '1';
+    setNotHereNoticeActive(hasStoredNotice);
+    setShowNotHereModal(false);
+  }, [ticketId, isPilotQueue]);
 
   useEffect(() => {
     const code = searchParams.get('code');
@@ -477,6 +523,7 @@ export default function GuestQueueTicketPage() {
           guest_name: `${guestFirstName} ${guestLastName}`.trim() || undefined,
         },
       });
+      clearNotHereNotice();
       setPilotTicket((prev) => prev ? { ...prev, stage: 'completed', completed_at: mark.created_at } : prev);
       setServedView(true);
       setTimeout(() => navigate(`/events/${eventSlug}`), SERVED_LINGER_MS);
@@ -494,6 +541,7 @@ export default function GuestQueueTicketPage() {
     setCompletionError('');
     try {
       const row = await confirmTicketNearby(ticketId);
+      clearNotHereNotice(row.id);
       setPilotTicket(row);
     } catch (err) {
       console.error('Failed to confirm nearby status', err);
@@ -896,58 +944,69 @@ export default function GuestQueueTicketPage() {
     const showInstruction = pilotStage === 'standby';
 
     return (
-      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-        <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem', minHeight: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: '0.78rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: '#6b7280' }}>
+      <div className="card card-scrollable tkt-card tkt-pilot-card">
+        {showNotHereModal && (
+          <div className="tkt-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="not-here-title">
+            <div className="tkt-modal">
+              <h2 id="not-here-title">You were marked not here</h2>
+              <p>{NOT_HERE_NOTICE}</p>
+              <button className="tkt-btn-checkin" onClick={() => setShowNotHereModal(false)}>
+                OK
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="tkt-pilot-header">
+          <div className="tkt-pilot-title-wrap">
+            <div className="tkt-pilot-event">
                 {event.name}
               </div>
-              <h1 style={{ margin: '0.2rem 0 0', fontSize: 'clamp(1.45rem, 5vw, 2.4rem)', lineHeight: 1.05, color: '#24364a' }}>
+              <h1 className="tkt-pilot-title">
                 {queue.name}
               </h1>
             </div>
-            <div style={{ textAlign: 'right', color: '#6b7280', fontWeight: 800 }}>
+            <div className="tkt-pilot-number">
               #{ticketNumber ?? '--'}
             </div>
           </div>
 
-          <div style={{
-            border: `2px solid ${theme.border}`,
-            borderRadius: 12,
-            padding: '1.25rem',
-            background: theme.background,
-          }}>
-            <div style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: theme.label, marginBottom: '0.35rem' }}>
+        <div className="tkt-pilot-scroll-body">
+          <div
+            className="tkt-pilot-status"
+            style={{ borderColor: theme.border, background: theme.background }}
+          >
+            <div className="tkt-pilot-label" style={{ color: theme.label }}>
               Status
             </div>
-            <div style={{ fontSize: 'clamp(2rem, 8vw, 4rem)', lineHeight: 1, fontWeight: 900, color: theme.title }}>
+            <div className="tkt-pilot-status-title" style={{ color: theme.title }}>
               {status.title}
             </div>
-            <p style={{ margin: '0.85rem 0 0', fontSize: 'clamp(1rem, 3vw, 1.35rem)', lineHeight: 1.35, color: '#374151' }}>
+            <p className="tkt-pilot-status-detail">
               {status.detail}
             </p>
           </div>
 
           {showLocation && (
-            <div style={{
-              border: '1px solid #d1d5db',
-              borderRadius: 12,
-              padding: '1rem',
-              background: '#fff',
-            }}>
-              <div style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase', color: '#6b7280' }}>
+            <div className="tkt-pilot-panel">
+              <div className="tkt-pilot-label">
                 Location
               </div>
-              <div style={{ fontSize: 'clamp(1.3rem, 4vw, 2rem)', fontWeight: 900, color: '#24364a', marginTop: '0.25rem' }}>
+              <div className="tkt-pilot-location">
                 {locationText}
               </div>
             </div>
           )}
 
           {showInstruction && (
-            <div style={{ color: '#4b5563', fontSize: '1rem', lineHeight: 1.45 }}>
+            <div className="tkt-pilot-instruction">
               {instructionText}
+            </div>
+          )}
+
+          {notHereNoticeActive && needsNearbyConfirmation && (
+            <div className="tkt-pilot-not-here-banner">
+              <strong>You were marked not here.</strong> Tap I'm Nearby again when you are at the station and ready to be called.
             </div>
           )}
 
@@ -962,26 +1021,21 @@ export default function GuestQueueTicketPage() {
           )}
 
           {completionError && pilotStage === 'standby' && (
-            <div style={{ background: '#FFEBEE', borderRadius: 8, padding: '0.65rem', color: '#B71C1C', fontWeight: 800 }}>
+            <div className="tkt-pilot-error">
               {completionError}
             </div>
           )}
 
           {pilotStage === 'released' && pilotCompletionMode === 'guest_code' && (
-            <div style={{
-              border: '1px solid #d1d5db',
-              borderRadius: 12,
-              padding: '1rem',
-              background: '#fff',
-            }}>
-              <h2 style={{ margin: '0 0 0.45rem', fontSize: '1.25rem', color: '#24364a' }}>
+            <div className="tkt-pilot-panel tkt-pilot-code-panel">
+              <h2>
                 Enter the station code
               </h2>
-              <p style={{ margin: '0 0 0.75rem', color: '#4b5563', lineHeight: 1.4 }}>
+              <p>
                 Find the posted four digit code at the station.
               </p>
               {completionError && (
-                <div style={{ background: '#FFEBEE', borderRadius: 8, padding: '0.65rem', marginBottom: '0.75rem', color: '#B71C1C', fontWeight: 800 }}>
+                <div className="tkt-pilot-error">
                   {completionError}
                 </div>
               )}
@@ -989,7 +1043,7 @@ export default function GuestQueueTicketPage() {
                 value={completionCode}
                 onChange={(e) => setCompletionCode(e.target.value)}
                 placeholder="Station code"
-                style={{ width: '100%', boxSizing: 'border-box', padding: '0.85rem', borderRadius: 8, border: '1px solid #d1d5db', marginBottom: '0.75rem', fontSize: '1rem' }}
+                className="tkt-pilot-code-input"
               />
               <button
                 className="tkt-btn-checkin"
@@ -1000,17 +1054,18 @@ export default function GuestQueueTicketPage() {
               </button>
             </div>
           )}
+        </div>
 
+        <div className="tkt-actions tkt-pilot-actions">
           {pilotStage === 'completed' ? (
             <button
               className="tkt-btn-checkin"
-              style={{ marginTop: 'auto' }}
               onClick={() => navigate(`/events/${eventSlug}`)}
             >
               Back to Event
             </button>
           ) : (
-            <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
+            <>
               <button
                 className="tkt-btn-checkin"
                 onClick={() => navigate(`/events/${eventSlug}`)}
@@ -1024,7 +1079,7 @@ export default function GuestQueueTicketPage() {
               >
                 Leave Queue
               </button>
-            </div>
+            </>
           )}
         </div>
       </div>

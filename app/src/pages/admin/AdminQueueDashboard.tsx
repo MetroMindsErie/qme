@@ -306,6 +306,14 @@ export default function AdminQueueDashboard() {
   }
 
   async function markPilotTicketNotHere(ticketId: number) {
+    const selectedTicket = pilotTickets.find((ticket) => ticket.id === ticketId);
+    const guestName = selectedTicket
+      ? `${selectedTicket.first_name || 'Guest'} ${selectedTicket.last_name || ''}`.trim()
+      : 'this guest';
+    const confirmed = confirm(
+      `Mark ${guestName} as not here? They will return to standby and must tap I'm Nearby again before being called.`
+    );
+    if (!confirmed) return;
     try {
       await markReleasedTicketNotHere(ticketId);
       await refreshPilotTickets();

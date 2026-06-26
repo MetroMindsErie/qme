@@ -45,7 +45,9 @@ const QME_ROADMAP = {
         "story-event-org-owner",
         "story-event-create-edit",
         "story-sotc-production-pilot",
-        "story-sotc-pilot-ops-controls"
+        "story-sotc-pilot-ops-controls",
+        "story-sotc-mobile-layout-polish",
+        "story-sotc-not-here-recovery"
       ]
     },
     {
@@ -1079,7 +1081,25 @@ const QME_ROADMAP = {
                 "Verified at mobile widths around 360px, 390px, and desktop/tablet."
               ],
               notes:
-                "Alpha-test inbox finding: Misaligned buttons. Implementation started on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, and SOTC admin pilot controls/guest row actions use shared responsive classes instead of ad hoc inline sizing. TypeScript, ESLint, and Vite build path pass; browser screenshot verification remains."
+                "Alpha-test inbox finding: Misaligned buttons and screenshot evidence that pilot ticket actions could appear outside the card boundary. Implementation started on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, and SOTC admin pilot controls/guest row actions use shared responsive classes instead of ad hoc inline sizing. Follow-up mobile containment fix makes the pilot ticket use the contained ticket-card structure with compact status/location/code panels."
+            },
+            {
+              id: "story-sotc-not-here-recovery",
+              title: "Explain Not Here recovery to guests",
+              status: "current",
+              sprint: "now",
+              summary:
+                "When staff marks a released SOTC pilot guest as Not here, keep the same ticket in standby, explain what happened, and ask the guest to tap I'm Nearby again when ready.",
+              acceptanceCriteria: [
+                "Admin confirms before marking a released guest Not here.",
+                "A Not here guest returns to standby on the same ticket.",
+                "Guest sees a modal explaining they were removed because they did not come when called after saying they were nearby.",
+                "Guest sees an inline standby banner until they tap I'm Nearby again.",
+                "Tapping I'm Nearby clears the recovery banner and makes the guest eligible to be called again.",
+                "Normal first-time standby does not show the Not here modal."
+              ],
+              notes:
+                "First pass intentionally uses client-side transition detection rather than adding a durable database marker. If the guest page is closed during the staff action, a future database field such as not_here_at may be needed."
             },
             {
               id: "story-sotc-jalani-readiness-review",
@@ -1611,7 +1631,7 @@ const QME_ROADMAP = {
       disposition: "idea",
       summary:
         "Explore queue messaging beyond exact queue length: waiting, almost ready, nearby/ready, released/your turn, served, and what happens when a released guest is marked Not here. Current pilot can stay as-is, but future fairness rules should evaluate practical Not here options: a soft penalty that sorts recently missed guests after other ready guests, a simple penalty that clears nearby and puts them behind already-ready standby guests, or a hard penalty that sends them back to waiting. Goal is to avoid false precision while making readiness and fairness obvious to staff and guests.",
-      linkedStoryIds: [],
+      linkedStoryIds: ["story-sotc-not-here-recovery"],
       createdAt: "2026-06-14T00:00:00.000Z"
     },
     {

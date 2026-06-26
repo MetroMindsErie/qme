@@ -1,7 +1,8 @@
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentAdminPrincipal, signInAdmin } from '../lib/adminPrincipalService';
+import { getCurrentAdminPrincipal, signInAdmin, signOutAdmin, type CurrentAdminPrincipal } from '../lib/adminPrincipalService';
 import '../styles/shared.css';
+import '../styles/admin.css';
 
 const ADMIN_ACCESS_KEY = 'qme:adminAccess';
 const DEFAULT_ADMIN_PASSCODE = 'qme-admin';
@@ -14,7 +15,8 @@ export default function AdminGate({ children }: AdminGateProps) {
   const navigate = useNavigate();
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(ADMIN_ACCESS_KEY) === '1');
   const [checkingAuth, setCheckingAuth] = useState(true);
-  const [adminName, setAdminName] = useState('');
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
+  const [usingPassphraseFallback, setUsingPassphraseFallback] = useState(() => sessionStorage.getItem(ADMIN_ACCESS_KEY) === '1');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passcode, setPasscode] = useState('');
@@ -29,7 +31,8 @@ export default function AdminGate({ children }: AdminGateProps) {
       .then((admin) => {
         if (!active) return;
         if (admin) {
-          setAdminName(admin.principal.display_name);
+          setCurrentAdmin(admin);
+          setUsingPassphraseFallback(false);
           sessionStorage.setItem(ADMIN_ACCESS_KEY, '1');
           setUnlocked(true);
         }
@@ -54,7 +57,8 @@ export default function AdminGate({ children }: AdminGateProps) {
         setError('Signed in, but this user is not linked to an active qME admin principal.');
         return;
       }
-      setAdminName(admin.principal.display_name);
+      setCurrentAdmin(admin);
+      setUsingPassphraseFallback(false);
       sessionStorage.setItem(ADMIN_ACCESS_KEY, '1');
       setUnlocked(true);
       setPassword('');
@@ -70,6 +74,8 @@ export default function AdminGate({ children }: AdminGateProps) {
       return;
     }
     sessionStorage.setItem(ADMIN_ACCESS_KEY, '1');
+    setCurrentAdmin(null);
+    setUsingPassphraseFallback(true);
     setUnlocked(true);
     setPasscode('');
     setError('');
@@ -83,7 +89,47 @@ export default function AdminGate({ children }: AdminGateProps) {
     );
   }
 
-  if (unlocked) return <>{children}</>;
+  async function handleSignOut() {
+    try {
+      await signOutAdmin();
+    } catch (signOutError) {
+      console.error('Admin sign-out failed', signOutError);
+    }
+    sessionStorage.removeItem(ADMIN_ACCESS_KEY);
+    setCurrentAdmin(null);
+    setUsingPassphraseFallback(false);
+    setUnlocked(false);
+    setEmail('');
+    setPassword('');
+    setPasscode('');
+    setError('');
+  }
+
+  if (unlocked) {
+    const roleLabel = currentAdmin?.isSuperadmin
+      ? 'qME superadmin'
+      : currentAdmin?.platformRoles.map((role) => role.role).join(', ') || 'admin';
+    return (
+      <>
+        <div className="admin-identity-bar">
+          <div>
+            <div className="admin-identity-label">
+              {usingPassphraseFallback ? 'Temporary admin access' : roleLabel}
+            </div>
+            <div className="admin-identity-name">
+              {usingPassphraseFallback
+                ? 'Passphrase fallback - replace with named admin access'
+                : `${currentAdmin?.principal.display_name} · ${currentAdmin?.principal.email ?? 'no email'}`}
+            </div>
+          </div>
+          <button type="button" className="admin-identity-signout" onClick={handleSignOut}>
+            {usingPassphraseFallback ? 'Lock' : 'Sign Out'}
+          </button>
+        </div>
+        {children}
+      </>
+    );
+  }
 
   return (
     <div className="card" style={{ minHeight: '600px', padding: '2rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -193,11 +239,6 @@ export default function AdminGate({ children }: AdminGateProps) {
         >
           Back to Event
         </button>
-        {adminName && (
-          <div style={{ marginTop: '0.75rem', color: '#64748b', fontSize: '0.78rem' }}>
-            Signed in as {adminName}
-          </div>
-        )}
       </form>
     </div>
   );

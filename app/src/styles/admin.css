@@ -11,13 +11,69 @@
   width: min(92vw, 360px);
 }
 
+.admin-identity-bar {
+  width: min(92vw, 360px);
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 auto 0.75rem;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #1f2937;
+}
+
+.admin-identity-label {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #4f46e5;
+}
+
+.admin-identity-name {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #334155;
+  overflow-wrap: anywhere;
+}
+
+.admin-identity-signout {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #334155;
+  font-size: 0.78rem;
+  font-weight: 900;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-identity-signout:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
 @media (min-width: 481px) {
   .card-scrollable {
+    width: min(88vw, 680px);
+  }
+
+  .admin-identity-bar {
     width: min(88vw, 680px);
   }
 }
 @media (min-width: 1025px) {
   .card-scrollable {
+    width: min(80vw, 800px);
+  }
+
+  .admin-identity-bar {
     width: min(80vw, 800px);
   }
 }

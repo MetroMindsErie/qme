@@ -556,7 +556,7 @@ const QME_ROADMAP = {
                 "The authentication decision feeds the SOTC RLS hardening story."
               ],
               notes:
-                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Near-term decision is documented in docs/admin-auth-transition-v1.md. AdminGate now recognizes Supabase Auth users linked to admin_principals and keeps the passphrase as a temporary fallback; role-scoped routing and RLS enforcement remain pending."
+                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Near-term decision is documented in docs/admin-auth-transition-v1.md. AdminGate now recognizes Supabase Auth users linked to admin_principals, shows a visible admin identity/role bar, and keeps the passphrase as a temporary fallback; role-scoped routing and RLS enforcement remain pending."
             },
             {
               id: "story-role-permissions-audit",

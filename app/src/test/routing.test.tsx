@@ -83,6 +83,7 @@ describe('App routing', () => {
 
   it('/admin/events renders AdminEventList', () => {
     renderAt('/admin/events');
+    expect(screen.getByText('Temporary admin access')).toBeInTheDocument();
     expect(screen.getByTestId('admin-event-list')).toBeInTheDocument();
   });
 

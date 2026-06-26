@@ -24,10 +24,22 @@ alter table public.organizations
   add column if not exists updated_at timestamptz not null default now();
 
 -- Earlier prototypes may have created organizations.owner_id as required.
--- Real admin/user ownership is coming in a later auth pass, so keep the column
--- if it exists but allow seeded foundation organizations to have no owner yet.
-alter table public.organizations
-  alter column owner_id drop not null;
+-- Real admin/user ownership is coming in the Sprint 2 auth/roles pass, so keep
+-- the column if it exists but allow seeded foundation organizations to have no
+-- owner yet. Use dynamic SQL so new databases without owner_id remain safe.
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'organizations'
+      and column_name = 'owner_id'
+  ) then
+    alter table public.organizations alter column owner_id drop not null;
+  end if;
+end;
+$$;
 
 create unique index if not exists organizations_slug_key
   on public.organizations(slug);
@@ -162,7 +174,8 @@ set
   name = excluded.name,
   description = excluded.description,
   logo_url = excluded.logo_url,
-  status = excluded.status;
+  status = excluded.status,
+  updated_at = now();
 
 update public.events
 set organization_id = (
@@ -175,6 +188,13 @@ where slug = 'peony-festival'
       select id from public.organizations where slug = 'qme-demo'
     )
   );
+
+update public.events
+set organization_id = (
+  select id from public.organizations where slug = 'summer-on-the-cuyahoga'
+)
+where slug in ('sotc-test-check-in', 'sotc-rock-hall')
+  and organization_id is null;
 
 update public.events
 set metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(

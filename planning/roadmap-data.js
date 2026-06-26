@@ -193,7 +193,7 @@ const QME_ROADMAP = {
             {
               id: "story-preserve-peony-demo",
               title: "Migrate Peony Festival into a demo organization without breaking it",
-              status: "ready",
+              status: "done",
               sprint: "now",
               summary:
                 "Create a demo/test organization for Peony Festival and use it as the safety check while organizations and event ownership are introduced.",
@@ -206,7 +206,7 @@ const QME_ROADMAP = {
                 "The migration explicitly preserves the 'please do not break the demo' requirement."
               ],
               notes:
-                "Sprint review decision: Peony Festival flow is good enough for now and should remain available for demonstration while qME moves toward multi-organization support."
+                "Completed at the foundation level in supabase-org-event-foundation.sql: Walnut Ridge Farm is seeded as the Peony owner, Peony keeps its existing slug/guest URLs, and demo-specific assumptions remain documented in docs/hard-coded-demo-assumptions-audit.md."
             },
             {
               id: "story-admin-update-guest-access",
@@ -437,7 +437,7 @@ const QME_ROADMAP = {
             {
               id: "story-org-table",
               title: "Create organizations table",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Add the core organization model so qME is no longer only a single demo/event app.",
@@ -445,12 +445,14 @@ const QME_ROADMAP = {
                 "Supabase has an organizations table.",
                 "Organizations have name, slug, status, and timestamps.",
                 "Existing Peony Festival data can belong to a default organization."
-              ]
+              ],
+              notes:
+                "Completed in supabase-org-event-foundation.sql: creates organizations, adds events.organization_id, seeds Walnut Ridge Farm, qME Demo, and Summer on the Cuyahoga, and keeps policies temporary until Sprint 2 roles/RLS hardening."
             },
             {
               id: "story-governance-principles-foundation",
               title: "Define governance principles for multi-org foundation",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Use the authority/object governance model to settle the minimum role, authority, ownership, and audit principles before building superadmin, organization, and admin structures.",
@@ -464,7 +466,7 @@ const QME_ROADMAP = {
                 "Decisions are translated into initial table/schema requirements before implementation."
               ],
               notes:
-                "Based on qMe Authority & Object Governance Model v1. This should happen before creating the organization/admin schema, but should not expand into a full permissions engine yet."
+                "Completed in docs/admin-governance-v1.md. This sets the Sprint 2 boundaries for super admin, org admin, event admin, staff, station/service provider, guest access, audit candidates, and deferred custom permissions."
             },
             {
               id: "story-image-ownership-model",
@@ -486,7 +488,7 @@ const QME_ROADMAP = {
             {
               id: "story-seed-sotc-org",
               title: "Seed Summer on the Cuyahoga organization",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Create Summer on the Cuyahoga as a first real organization for the Rock Hall event demo.",
@@ -494,7 +496,9 @@ const QME_ROADMAP = {
                 "Organization slug is stable.",
                 "The organization can own the July 22 Rock Hall event.",
                 "Future staff/admin records can be attached."
-              ]
+              ],
+              notes:
+                "Completed in supabase-org-event-foundation.sql with slug summer-on-the-cuyahoga and SOTC event ownership backfill for sotc-test-check-in and future sotc-rock-hall."
             },
             {
               id: "story-org-staff",
@@ -622,7 +626,7 @@ const QME_ROADMAP = {
             {
               id: "story-event-org-owner",
               title: "Attach events to organizations",
-              status: "ready",
+              status: "done",
               sprint: "now",
               summary:
                 "Make event ownership explicit so each customer can manage their own events.",
@@ -630,7 +634,9 @@ const QME_ROADMAP = {
                 "events.organization_id references organizations.id.",
                 "Existing guest URLs keep working.",
                 "Admin event lists can filter by organization."
-              ]
+              ],
+              notes:
+                "Completed in supabase-org-event-foundation.sql and app services: events.organization_id references organizations, known Peony and SOTC events are assigned, public URLs remain slug-based, and listEvents can filter by organizationId."
             },
             {
               id: "story-event-create-edit",

@@ -556,7 +556,7 @@ const QME_ROADMAP = {
                 "Remaining database/security risks are documented before real event use."
               ],
               notes:
-                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations."
+                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. Reminder: re-engage the computer engineering student after the platform is stabilized with basic organization, admin, and staff user structure so his review can focus on concrete policies and risks."
             },
             {
               id: "story-superadmin-role",
@@ -1587,6 +1587,15 @@ const QME_ROADMAP = {
     }
   ],
   inbox: [
+    {
+      id: "inbox-remind-db-hardening-student-after-role-structure",
+      title: "Reminder: re-engage computer engineering student for database hardening review",
+      disposition: "reminder",
+      summary:
+        "After the platform stabilization pass adds basic user structure for organization, admin, and staff roles, send the database hardening message to the computer engineering student who offered to help. Wait until there is enough concrete role/auth structure for his review to be bounded and useful.",
+      linkedStoryIds: ["story-sotc-admin-staff-rls-hardening"],
+      createdAt: "2026-06-26T00:00:00.000Z"
+    },
     {
       id: "inbox-guest-status-color-system",
       title: "Guest card status color system",

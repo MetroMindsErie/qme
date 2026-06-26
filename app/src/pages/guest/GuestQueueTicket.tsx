@@ -228,6 +228,7 @@ export default function GuestQueueTicketPage() {
   const didAutoLeaveRef   = useRef(false);
   const didSyncGuestNameRef = useRef(false);
   const lastPilotTicketRef = useRef<Ticket | null>(null);
+  const autoNearbyFlowInFlightRef = useRef(false);
 
   const checkInConfig = getEventCheckInConfig(event);
   const isPilotQueue = event?.slug === 'sotc-test-check-in';
@@ -392,6 +393,27 @@ export default function GuestQueueTicketPage() {
     void completePilotAction(code);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isPilotQueue, event, ticketId, pilotStage, pilotCompletionMode, pilotCompletionCode]);
+
+  useEffect(() => {
+    if (!isPilotQueue || queue?.run_mode !== 'auto' || !pilotTicket?.queue_id) return;
+    if (pilotTicket.stage !== 'standby' || !pilotTicket.nearby_confirmed_at) return;
+    if (autoNearbyFlowInFlightRef.current) return;
+
+    const pilotQueueId = pilotTicket.queue_id;
+    const activeTicketId = pilotTicket.id;
+    autoNearbyFlowInFlightRef.current = true;
+    (async () => {
+      try {
+        await applyQueuePilotFlow(pilotQueueId);
+        const refreshed = await getQueueTicket(activeTicketId);
+        setPilotTicket((current) => hasSameShape(current, refreshed) ? current : refreshed);
+      } catch (err) {
+        console.warn('Auto flow after nearby confirmation failed', err);
+      } finally {
+        autoNearbyFlowInFlightRef.current = false;
+      }
+    })();
+  }, [isPilotQueue, queue?.run_mode, pilotTicket?.id, pilotTicket?.queue_id, pilotTicket?.stage, pilotTicket?.nearby_confirmed_at]);
 
   // Countdown timer shown on the served screen
   useEffect(() => {

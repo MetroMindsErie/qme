@@ -514,7 +514,7 @@ const QME_ROADMAP = {
                 "A user with multiple organizations can choose which organization/account context to use after login."
               ],
               notes:
-                "Trello import adds invite flow by email/phone and multi-organization account selection."
+                "Schema foundation added in supabase-admin-role-foundation.sql with admin_principals, organization_memberships, and event_staff_assignments. Invite UI, Supabase Auth linking, and role-aware RLS enforcement remain in Sprint 2."
             }
           ]
         },
@@ -538,7 +538,7 @@ const QME_ROADMAP = {
                 "Admin operational actions such as start, pause, end, and reset have extra friction such as confirmation or PIN."
               ],
               notes:
-                "Trello import adds admin request/approval flow, support role assumption, and operational controls that should not be too easy to trigger."
+                "Schema foundation added in supabase-admin-role-foundation.sql with platform_roles for superadmin/support, organization memberships for org_admin/universal_staff, event staff assignments, and helper functions for the RLS pass. Enforcement is still temporary until auth cleanup and SOTC RLS hardening."
             },
             {
               id: "story-authentication-cleanup",
@@ -556,7 +556,7 @@ const QME_ROADMAP = {
                 "The authentication decision feeds the SOTC RLS hardening story."
               ],
               notes:
-                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure."
+                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Current AdminGate passphrase remains a documented temporary bridge until Supabase Auth principal linking is wired."
             },
             {
               id: "story-role-permissions-audit",
@@ -572,7 +572,7 @@ const QME_ROADMAP = {
                 "The model can start with default roles and allow later customization."
               ],
               notes:
-                "Imported from Trello admin/staff role cards and provisional admin console notes."
+                "Imported from Trello admin/staff role cards and provisional admin console notes. Initial audit table added in supabase-admin-role-foundation.sql; audit-writing behavior and polished audit UI remain future work."
             },
             {
               id: "story-sotc-admin-staff-rls-hardening",

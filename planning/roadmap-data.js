@@ -1066,7 +1066,7 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-mobile-layout-polish",
               title: "Polish SOTC pilot mobile layout and button alignment",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
                 "Use alpha-test screenshots and mobile testing to clean up visible layout issues on SOTC pilot guest/admin screens.",
@@ -1079,7 +1079,7 @@ const QME_ROADMAP = {
                 "Verified at mobile widths around 360px, 390px, and desktop/tablet."
               ],
               notes:
-                "Alpha-test inbox finding: Misaligned buttons."
+                "Alpha-test inbox finding: Misaligned buttons. Implementation started on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, and SOTC admin pilot controls/guest row actions use shared responsive classes instead of ad hoc inline sizing. TypeScript, ESLint, and Vite build path pass; browser screenshot verification remains."
             },
             {
               id: "story-sotc-jalani-readiness-review",

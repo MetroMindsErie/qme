@@ -421,17 +421,20 @@
   background: var(--qme-purple);
   color: white;
   border: none;
-  border-radius: 6px;
-  padding: 5px 10px;
+  border-radius: 8px;
+  padding: 0.45rem 0.7rem;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  justify-content: center;
   white-space: nowrap;
-  min-height: 30px;
-  display: flex;
+  min-width: 4.25rem;
+  min-height: 2.25rem;
   align-items: center;
+  text-align: center;
+  line-height: 1.1;
 }
 
 .ed-action-btn-secondary {
@@ -461,4 +464,8 @@
   .ed-activity-name { font-size: 0.8rem; }
   .ed-serving-num { font-size: 1.15rem; }
   .ed-serving-badge { min-width: 46px; padding: 3px 6px; }
+  .ed-action-btn {
+    min-width: 3.75rem;
+    padding-inline: 0.55rem;
+  }
 }

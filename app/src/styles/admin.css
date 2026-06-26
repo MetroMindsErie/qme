@@ -67,6 +67,36 @@
   box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
 }
 
+.admin-pilot-action-row,
+.admin-pilot-guest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-pilot-action-row {
+  margin-top: 0.85rem;
+}
+
+.admin-pilot-action-btn,
+.admin-pilot-guest-btn {
+  width: auto;
+  margin: 0;
+  min-height: 2.5rem;
+  white-space: nowrap;
+}
+
+.admin-pilot-action-btn {
+  flex: 1 1 11rem;
+  padding: 0.55rem 0.95rem;
+}
+
+.admin-pilot-guest-btn {
+  flex: 1 1 6.5rem;
+  padding: 0.45rem 0.75rem;
+}
+
 /* Admin metric box (uses .metric class from original admin) */
 .metric {
   border: 3px solid var(--ink);
@@ -154,6 +184,17 @@
   }
   .admin-list-item .admin-actions .actionBtn {
     flex: 1;
+    min-width: 0;
+  }
+
+  .admin-pilot-action-row,
+  .admin-pilot-guest-actions {
+    width: 100%;
+  }
+
+  .admin-pilot-action-btn,
+  .admin-pilot-guest-btn {
+    flex-basis: 100%;
     min-width: 0;
   }
 }

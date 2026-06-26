@@ -423,11 +423,11 @@ export default function AdminQueueDashboard() {
               </label>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.85rem', alignItems: 'center' }}>
-              <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} onClick={() => applyAutoPilotPass()}>
+            <div className="admin-pilot-action-row">
+              <button className="actionBtn actionBtn-primary admin-pilot-action-btn" onClick={() => applyAutoPilotPass()}>
                 Apply Flow
               </button>
-              <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.5rem 0.95rem' }} disabled={savingControls} onClick={handlePilotPracticeReset}>
+              <button className="actionBtn actionBtn-secondary admin-pilot-action-btn" disabled={savingControls} onClick={handlePilotPracticeReset}>
                 Reset Practice Run
               </button>
               {controlSaveStatus && (
@@ -549,14 +549,14 @@ export default function AdminQueueDashboard() {
                     )}
                   </div>
                   <div
-                    style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}
+                    className="admin-pilot-guest-actions"
                     onClick={(event) => event.stopPropagation()}
                   >
                     {!isDone && canReleaseTicket && (
-                      <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
+                      <button className="actionBtn actionBtn-primary admin-pilot-guest-btn" onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
                     )}
                     {stage === 'released' && !isDone && (
-                      <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem' }} onClick={() => markPilotTicketNotHere(ticket.id)}>Not here</button>
+                      <button className="actionBtn actionBtn-secondary admin-pilot-guest-btn" onClick={() => markPilotTicketNotHere(ticket.id)}>Not here</button>
                     )}
                   </div>
                 </div>

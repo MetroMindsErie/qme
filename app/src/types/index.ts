@@ -135,6 +135,28 @@ export type CreateOrganizationInput = Pick<
 
 export type UpdateOrganizationInput = Partial<CreateOrganizationInput>;
 
+export interface AdminPrincipal {
+  id: string;
+  auth_user_id: string | null;
+  principal_type: 'person' | 'station' | 'service_provider' | 'support';
+  display_name: string;
+  email: string | null;
+  phone: string | null;
+  status: 'invited' | 'active' | 'suspended' | 'archived';
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PlatformRole {
+  id: string;
+  principal_id: string;
+  role: 'superadmin' | 'support';
+  status: 'active' | 'suspended' | 'archived';
+  created_at: string;
+  updated_at: string;
+}
+
 export type CreateEceInput = Pick<
   Ece,
   'event_id' | 'name' | 'slug' | 'description' | 'image_url' | 'type' | 'status'

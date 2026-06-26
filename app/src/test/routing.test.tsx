@@ -86,9 +86,9 @@ describe('App routing', () => {
     expect(screen.getByTestId('admin-event-list')).toBeInTheDocument();
   });
 
-  it('/admin/events is hidden behind the admin gate when locked', () => {
+  it('/admin/events is hidden behind the admin gate when locked', async () => {
     renderAt('/admin/events', { adminUnlocked: false });
-    expect(screen.getByText('Enter passphrase')).toBeInTheDocument();
+    expect(await screen.findByText('Sign in')).toBeInTheDocument();
     expect(screen.queryByTestId('admin-event-list')).not.toBeInTheDocument();
   });
 

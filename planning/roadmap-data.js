@@ -38,6 +38,7 @@ const QME_ROADMAP = {
         "story-org-staff",
         "story-authentication-cleanup",
         "story-event-org-owner",
+        "story-event-operational-mode-config",
         "story-sotc-admin-staff-rls-hardening"
       ]
     },
@@ -651,6 +652,23 @@ const QME_ROADMAP = {
                 "Validation protects unique slugs within an organization.",
                 "Event can store short description, long description, location, and multi-day start/end windows."
               ]
+            },
+            {
+              id: "story-event-operational-mode-config",
+              title: "Make event automation and operating mode configurable",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Replace hidden SOTC test/demo automation assumptions with explicit event-level operating settings so each organization knows how an event will behave.",
+              acceptanceCriteria: [
+                "Event setup can represent whether check-in, guest participation, and queue flow are manual, self-service, pilot/demo, or automated where relevant.",
+                "SOTC Test Check-in keeps its current automated/pilot behavior through explicit configuration rather than hard-coded event assumptions.",
+                "Production events default to conservative/manual behavior unless automation is intentionally enabled.",
+                "Admin-facing language explains the selected mode well enough for qME operator, organization admin, and event staff use.",
+                "Any temporary pilot flags are documented with replacement intent before RLS hardening."
+              ],
+              notes:
+                "Added during Sprint 2 product discussion after confirming that SOTC's automated test behavior should be configurable by event. This supports the Sprint 2 trust goal: an organization can independently operate an event with appropriate permissions and predictable behavior."
             },
             {
               id: "story-event-schedules-recurrence",

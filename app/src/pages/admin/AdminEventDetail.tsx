@@ -131,19 +131,19 @@ export default function AdminEventDetail() {
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event Experiences</h2>
+            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event Features</h2>
             <button
               className="actionBtn actionBtn-primary"
               style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               onClick={() => navigate(`/admin/events/${event.id}/eces/new`)}
             >
-              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Experience
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Feature
             </button>
           </div>
 
           {visibleEces.length === 0 && (
             <p style={{ color: '#999', padding: '1.5rem 0', textAlign: 'center' }}>
-              No experiences yet. Add one to place an activity into this event.
+              No features yet. Add one to place an activity into this event.
             </p>
           )}
 
@@ -219,7 +219,7 @@ export default function AdminEventDetail() {
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem 0 0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
             <p style={{ color: '#777', margin: 0, fontSize: '0.85rem', lineHeight: 1.4 }}>
-              Queue engines power queue experiences. Most queue work should happen from the experience row above.
+              Queue engines power queue features. Most queue work should happen from the feature row above.
             </p>
             <button
               className="actionBtn actionBtn-primary"

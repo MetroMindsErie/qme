@@ -896,8 +896,8 @@ const QME_ROADMAP = {
             {
               id: "story-headshot-queue",
               title: "Create headshot digital queue",
-              status: "ready",
-              sprint: "soon",
+              status: "current",
+              sprint: "now",
               summary:
                 "Model the free student headshot line and paid/approved professional access.",
               acceptanceCriteria: [
@@ -908,7 +908,7 @@ const QME_ROADMAP = {
                 "Copy is tested with at least one student/contact for comprehension."
               ],
               notes:
-                "This extends the Bouquet Bar access pattern into guest tags/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity."
+                "This extends the Bouquet Bar access pattern into guest tags/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity. Messaging pass started on 2026-06-26: Headshot Photographer runtime copy now uses Waiting, Almost Ready, I'm Nearby, Your Turn, and Completed language, with photo-specific wording only around the actual photographer step. SQL seed copy was updated to match."
             },
             {
               id: "story-headshot-tags",

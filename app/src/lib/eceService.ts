@@ -1,12 +1,44 @@
 import { supabase } from './supabase';
 import type { CreateEceInput, Ece, UpdateEceInput } from '../types';
 
+const HEADSHOT_STAGE_COPY = {
+  waiting: {
+    title: 'Waiting',
+    detail: 'You are in the headshot queue. No action is needed yet.',
+  },
+  standby: {
+    title: 'Almost Ready',
+    detail: 'Your headshot is coming up soon. Please head closer to {{location}}.',
+    instruction: "When you are close to {{location}}, tap I'm Nearby. Keep this page open.",
+  },
+  released: {
+    title: 'Your Turn',
+    detail: 'Step up at {{location}}. Staff will mark this complete after your photo.',
+  },
+  completed: {
+    title: 'Completed',
+    detail: 'Your headshot is complete. You can return to the event.',
+  },
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 function normalizeEceDisplay(ece: Ece): Ece {
   if (ece.slug !== 'headshot-photo-station') return ece;
+  const metadata = asRecord(ece.metadata);
   return {
     ...ece,
     name: 'Headshot Photographer',
+    description: 'Join the headshot queue. We will call you closer when the photographer is ready.',
     location: ece.location === 'Headshot photo station' ? 'Headshot photographer' : ece.location,
+    metadata: {
+      ...metadata,
+      stage_copy: HEADSHOT_STAGE_COPY,
+    },
   };
 }
 

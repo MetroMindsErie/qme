@@ -369,20 +369,20 @@ select
     'stage_copy', jsonb_build_object(
       'waiting', jsonb_build_object(
         'title', 'Waiting',
-        'detail', 'You are in the headshot line. We will let you know when to come closer.'
+        'detail', 'You are in the headshot queue. No action is needed yet.'
       ),
       'standby', jsonb_build_object(
         'title', 'Almost Ready',
-        'detail', 'Your headshot is coming up soon. Please make your way closer to {{location}}.',
-        'instruction', 'When you are near {{location}}, tap I''m Nearby. Keep this page open.'
+        'detail', 'Your headshot is coming up soon. Please head closer to {{location}}.',
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
-        'detail', 'Step up at {{location}} for your headshot. Staff will mark this complete when your photo is taken.'
+        'detail', 'Step up at {{location}}. Staff will mark this complete after your photo.'
       ),
       'completed', jsonb_build_object(
         'title', 'Completed',
-        'detail', 'Your headshot step is complete. You can return to the event.'
+        'detail', 'Your headshot is complete. You can return to the event.'
       )
     )
   ),
@@ -416,7 +416,7 @@ select
   events.id,
   'Headshot Photographer',
   'headshot-photo-station',
-  'Use your photo credit to join the headshot line. We will call you when the station is ready.',
+  'Join the headshot queue. We will call you closer when the photographer is ready.',
   '/images/headshot-photo-station.png',
   'active',
   'open',
@@ -435,7 +435,7 @@ where events.slug = 'sotc-test-check-in'
 update public.queues
 set
   name = 'Headshot Photographer',
-  description = 'Use your photo credit to join the headshot line. We will call you when the station is ready.',
+  description = 'Join the headshot queue. We will call you closer when the photographer is ready.',
   image_url = '/images/headshot-photo-station.png',
   join_status = 'open',
   run_mode = 'manual',
@@ -467,7 +467,7 @@ select
   organizations.id,
   'Headshot Photographer',
   'headshot-photo-station',
-  'Use your photo credit to join the headshot line. We will call you when the station is ready.',
+  'Join the headshot queue. We will call you closer when the photographer is ready.',
   '/images/headshot-photo-station.png',
   'queue',
   queues.id,
@@ -480,20 +480,20 @@ select
     'stage_copy', jsonb_build_object(
       'waiting', jsonb_build_object(
         'title', 'Waiting',
-        'detail', 'You are in the headshot line. We will let you know when to come closer.'
+        'detail', 'You are in the headshot queue. No action is needed yet.'
       ),
       'standby', jsonb_build_object(
         'title', 'Almost Ready',
-        'detail', 'Your headshot is coming up soon. Please make your way closer to {{location}}.',
-        'instruction', 'When you are near {{location}}, tap I''m Nearby. Keep this page open.'
+        'detail', 'Your headshot is coming up soon. Please head closer to {{location}}.',
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
-        'detail', 'Step up at {{location}} for your headshot. Staff will mark this complete when your photo is taken.'
+        'detail', 'Step up at {{location}}. Staff will mark this complete after your photo.'
       ),
       'completed', jsonb_build_object(
         'title', 'Completed',
-        'detail', 'Your headshot step is complete. You can return to the event.'
+        'detail', 'Your headshot is complete. You can return to the event.'
       )
     )
   ),
@@ -516,7 +516,7 @@ update public.eces
 set
   expie_id = expies.id,
   name = 'Headshot Photographer',
-  description = 'Use your photo credit to join the headshot line. We will call you when the station is ready.',
+  description = 'Join the headshot queue. We will call you closer when the photographer is ready.',
   image_url = '/images/headshot-photo-station.png',
   type = 'queue',
   queue_id = queues.id,
@@ -529,20 +529,20 @@ set
     'stage_copy', jsonb_build_object(
       'waiting', jsonb_build_object(
         'title', 'Waiting',
-        'detail', 'You are in the headshot line. We will let you know when to come closer.'
+        'detail', 'You are in the headshot queue. No action is needed yet.'
       ),
       'standby', jsonb_build_object(
         'title', 'Almost Ready',
-        'detail', 'Your headshot is coming up soon. Please make your way closer to {{location}}.',
-        'instruction', 'When you are near {{location}}, tap I''m Nearby. Keep this page open.'
+        'detail', 'Your headshot is coming up soon. Please head closer to {{location}}.',
+        'instruction', 'When you are close to {{location}}, tap I''m Nearby. Keep this page open.'
       ),
       'released', jsonb_build_object(
         'title', 'Your Turn',
-        'detail', 'Step up at {{location}} for your headshot. Staff will mark this complete when your photo is taken.'
+        'detail', 'Step up at {{location}}. Staff will mark this complete after your photo.'
       ),
       'completed', jsonb_build_object(
         'title', 'Completed',
-        'detail', 'Your headshot step is complete. You can return to the event.'
+        'detail', 'Your headshot is complete. You can return to the event.'
       )
     )
   )

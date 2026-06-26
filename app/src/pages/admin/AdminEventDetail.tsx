@@ -83,6 +83,7 @@ export default function AdminEventDetail() {
   };
   const linkedQueueIds = new Set(eces.map((ece) => ece.queue_id).filter(Boolean));
   const standaloneQueues = queues.filter((queue) => !linkedQueueIds.has(queue.id));
+  const visibleEces = eces.filter((ece) => ece.type !== 'check_in');
 
   return (
     <div className="card card-scrollable admin-event-detail-card" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -130,23 +131,23 @@ export default function AdminEventDetail() {
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event eCes</h2>
+            <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event Experiences</h2>
             <button
               className="actionBtn actionBtn-primary"
               style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               onClick={() => navigate(`/admin/events/${event.id}/eces/new`)}
             >
-              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add eCe
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Experience
             </button>
           </div>
 
-          {eces.length === 0 && (
+          {visibleEces.length === 0 && (
             <p style={{ color: '#999', padding: '1.5rem 0', textAlign: 'center' }}>
-              No eCes yet. Add one to place a reusable expie or event-specific activity into this event.
+              No experiences yet. Add one to place an activity into this event.
             </p>
           )}
 
-          {eces.map((exp) => {
+          {visibleEces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
 
             return (
@@ -210,29 +211,24 @@ export default function AdminEventDetail() {
           })}
         </div>
 
-        <details style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: '1rem', color: '#2f3e4f' }}>
-            Technical / Advanced Queue Engines
-          </summary>
+        {standaloneQueues.length > 0 && (
+          <details style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+            <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: '1rem', color: '#2f3e4f' }}>
+              Advanced Queue Engines
+            </summary>
 
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem 0 0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <p style={{ color: '#777', margin: 0, fontSize: '0.85rem', lineHeight: 1.4 }}>
-            Queue engines power queue eCes. Most queue work should happen from the eCe row above.
-          </p>
-          <button
-            className="actionBtn actionBtn-primary"
-            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            onClick={() => navigate(`/admin/events/${event.id}/queues/new`)}
-          >
-            <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Queue
-          </button>
-        </div>
-
-        {standaloneQueues.length === 0 && (
-          <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
-            No standalone queue engines yet. Queue-type eCes create or link these automatically when saved.
-          </p>
-        )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '1rem 0 0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <p style={{ color: '#777', margin: 0, fontSize: '0.85rem', lineHeight: 1.4 }}>
+              Queue engines power queue experiences. Most queue work should happen from the experience row above.
+            </p>
+            <button
+              className="actionBtn actionBtn-primary"
+              style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={() => navigate(`/admin/events/${event.id}/queues/new`)}
+            >
+              <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Queue
+            </button>
+          </div>
 
         {standaloneQueues.map((q) => (
           <div
@@ -300,7 +296,8 @@ export default function AdminEventDetail() {
             </div>
           </div>
         ))}
-        </details>
+          </details>
+        )}
       </div>
     </div>
   );

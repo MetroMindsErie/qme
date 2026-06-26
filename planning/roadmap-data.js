@@ -26,28 +26,19 @@ const QME_ROADMAP = {
   sprints: [
     {
       id: "now",
-      title: "Now: SOTC and Multi-Org Foundation",
+      title: "Sprint 2: Organization, Roles, Auth, and RLS",
       goal:
-        "Frame the SOTC Rock Hall event and build the minimum organization/admin/event foundation without breaking the Peony Festival demo.",
+        "Build the minimum organization, admin, staff, authentication, and RLS foundation needed before the SOTC pilot can move from guided alpha into real event readiness.",
       storyIds: [
-        "story-sotc-anchor-event",
-        "story-sotc-experience-inventory",
-        "story-sotc-hardware-needs",
-        "story-peony-main-event-weird-queue-number",
         "story-governance-principles-foundation",
-        "story-image-ownership-model",
-        "story-hardcoded-demo-assumptions-audit",
-        "story-event-guest-data-cleanup",
         "story-org-table",
         "story-preserve-peony-demo",
         "story-seed-sotc-org",
         "story-admin-org-role",
+        "story-org-staff",
+        "story-authentication-cleanup",
         "story-event-org-owner",
-        "story-event-create-edit",
-        "story-sotc-production-pilot",
-        "story-sotc-pilot-ops-controls",
-        "story-sotc-mobile-layout-polish",
-        "story-sotc-not-here-recovery"
+        "story-sotc-admin-staff-rls-hardening"
       ]
     },
     {
@@ -93,6 +84,27 @@ const QME_ROADMAP = {
     }
   ],
   completedSprints: [
+    {
+      id: "completed-sotc-alpha-ui-stabilization",
+      title: "Completed: SOTC Alpha UI Stabilization",
+      completedDate: "2026-06-26",
+      goal:
+        "Resolve the obvious SOTC alpha-test UI, refresh, messaging, and recovery issues before starting role/auth/database hardening.",
+      summary:
+        "Sprint 1 alpha follow-up is complete: calm refresh behavior, mobile button/layout polish, headshot/standby messaging, Not Here guest recovery, auto-flow recovery when admin is closed, and hidden internal ticket numbers on guest pilot screens are resolved.",
+      storyIds: [
+        "story-sotc-calm-refresh",
+        "story-sotc-mobile-layout-polish",
+        "story-headshot-queue",
+        "story-sotc-not-here-recovery"
+      ],
+      notes: [
+        "The alpha test with Jalani Ball and the SOTC student group produced polish findings, not a rejection of the core flow.",
+        "Guests should see stages and clear instructions, not internal ticket mechanics.",
+        "Admin/staff can retain operational identifiers and controls.",
+        "Next sprint should focus on organization foundation, admin/staff roles, authentication cleanup, and Supabase RLS hardening."
+      ]
+    },
     {
       id: "completed-planning-cleanup",
       title: "Completed: Planning Workspace and Demo Stabilization",
@@ -425,7 +437,7 @@ const QME_ROADMAP = {
             {
               id: "story-org-table",
               title: "Create organizations table",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
                 "Add the core organization model so qME is no longer only a single demo/event app.",
@@ -438,7 +450,7 @@ const QME_ROADMAP = {
             {
               id: "story-governance-principles-foundation",
               title: "Define governance principles for multi-org foundation",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
                 "Use the authority/object governance model to settle the minimum role, authority, ownership, and audit principles before building superadmin, organization, and admin structures.",
@@ -474,7 +486,7 @@ const QME_ROADMAP = {
             {
               id: "story-seed-sotc-org",
               title: "Seed Summer on the Cuyahoga organization",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
                 "Create Summer on the Cuyahoga as a first real organization for the Rock Hall event demo.",
@@ -487,8 +499,8 @@ const QME_ROADMAP = {
             {
               id: "story-org-staff",
               title: "Model organization staff",
-              status: "future",
-              sprint: "future",
+              status: "current",
+              sprint: "now",
               summary:
                 "Allow organizations to invite staff or assign event-specific roles.",
               acceptanceCriteria: [
@@ -510,7 +522,7 @@ const QME_ROADMAP = {
             {
               id: "story-admin-org-role",
               title: "Add admin and organization roles",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
                 "Separate qME superadmin access from organization admin access.",
@@ -523,6 +535,24 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Trello import adds admin request/approval flow, support role assumption, and operational controls that should not be too easy to trigger."
+            },
+            {
+              id: "story-authentication-cleanup",
+              title: "Clean up authentication path for admin and staff",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Choose and implement the near-term authentication structure for qME admin, organization admin, event staff, and temporary pilot operations.",
+              acceptanceCriteria: [
+                "Current demo/admin access assumptions are listed.",
+                "Near-term admin/staff login approach is chosen.",
+                "qME admin, organization admin, and event/station staff access paths are separated enough to support RLS work.",
+                "Temporary access shortcuts are documented with expiration or replacement intent.",
+                "Guest/anon access remains available for event check-in and queue participation without exposing staff actions.",
+                "The authentication decision feeds the SOTC RLS hardening story."
+              ],
+              notes:
+                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure."
             },
             {
               id: "story-role-permissions-audit",
@@ -543,7 +573,7 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-admin-staff-rls-hardening",
               title: "Define SOTC admin/staff roles and Supabase RLS boundaries",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
                 "Review and harden the SOTC pilot database permission model before moving beyond guided alpha testing.",

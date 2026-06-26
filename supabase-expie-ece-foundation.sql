@@ -63,6 +63,12 @@ create index if not exists eces_org_id_idx
 create index if not exists eces_expie_id_idx
   on public.eces(expie_id);
 
+-- Reruns may happen after an earlier pass already made expie_id required.
+-- Temporarily relax it so legacy event-context rows can be preserved, then
+-- backfilled to reusable expies, before the not-null constraint is restored.
+alter table public.eces
+  alter column expie_id drop not null;
+
 create or replace function public.set_expies_updated_at()
 returns trigger
 language plpgsql
@@ -116,25 +122,27 @@ insert into public.eces (
   updated_at
 )
 select
-  id,
-  event_id,
-  org_id,
-  name,
-  slug,
-  coalesce(description, ''),
-  coalesce(image_url, ''),
-  coalesce(type, 'info'),
-  queue_id,
-  coalesce(sort_order, 100),
-  coalesce(location, ''),
-  starts_at,
-  ends_at,
-  coalesce(metadata, '{}'::jsonb),
-  coalesce(status, 'active'),
-  created_at,
-  updated_at
+  experiences.id,
+  experiences.event_id,
+  coalesce(experiences.org_id, events.organization_id, demo_org.id),
+  experiences.name,
+  experiences.slug,
+  coalesce(experiences.description, ''),
+  coalesce(experiences.image_url, ''),
+  coalesce(experiences.type, 'info'),
+  experiences.queue_id,
+  coalesce(experiences.sort_order, 100),
+  coalesce(experiences.location, ''),
+  experiences.starts_at,
+  experiences.ends_at,
+  coalesce(experiences.metadata, '{}'::jsonb),
+  coalesce(experiences.status, 'active'),
+  experiences.created_at,
+  experiences.updated_at
 from public.experiences
-where event_id is not null
+join public.events on events.id = experiences.event_id
+join public.organizations demo_org on demo_org.slug = 'qme-demo'
+where experiences.event_id is not null
 on conflict (id) do update
 set
   event_id = excluded.event_id,
@@ -169,8 +177,8 @@ insert into public.expies (
   created_at,
   updated_at
 )
-select distinct on (coalesce(eces.org_id, events.organization_id), eces.slug)
-  coalesce(eces.org_id, events.organization_id) as organization_id,
+select distinct on (coalesce(eces.org_id, events.organization_id, demo_org.id), eces.slug)
+  coalesce(eces.org_id, events.organization_id, demo_org.id) as organization_id,
   eces.name,
   eces.slug,
   eces.description,
@@ -183,8 +191,9 @@ select distinct on (coalesce(eces.org_id, events.organization_id), eces.slug)
   eces.updated_at
 from public.eces
 join public.events on events.id = eces.event_id
+join public.organizations demo_org on demo_org.slug = 'qme-demo'
 where eces.expie_id is null
-order by coalesce(eces.org_id, events.organization_id), eces.slug, eces.created_at
+order by coalesce(eces.org_id, events.organization_id, demo_org.id), eces.slug, eces.created_at
 on conflict (organization_id, slug) do update
 set
   name = excluded.name,
@@ -199,12 +208,13 @@ set
 update public.eces
 set
   expie_id = expies.id,
-  org_id = coalesce(eces.org_id, events.organization_id)
+  org_id = coalesce(eces.org_id, events.organization_id, demo_org.id)
 from public.events
+join public.organizations demo_org on demo_org.slug = 'qme-demo'
 cross join public.expies
 where eces.event_id = events.id
   and eces.expie_id is null
-  and expies.organization_id is not distinct from coalesce(eces.org_id, events.organization_id)
+  and expies.organization_id is not distinct from coalesce(eces.org_id, events.organization_id, demo_org.id)
   and expies.slug = eces.slug;
 
 alter table public.eces

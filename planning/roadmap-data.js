@@ -1077,11 +1077,12 @@ const QME_ROADMAP = {
                 "Button labels do not wrap awkwardly or overflow on common mobile widths.",
                 "Action rows keep stable height and spacing when state changes.",
                 "Back, Join, I'm Nearby, Enter Code, Apply Flow, Reset Practice Run, and admin guest-row actions are checked.",
+                "Internal ticket numbers are hidden from SOTC pilot guest screens while remaining available to admin/staff.",
                 "Screenshots from the alpha-test issue are reviewed against the fix.",
                 "Verified at mobile widths around 360px, 390px, and desktop/tablet."
               ],
               notes:
-                "Alpha-test inbox finding: Misaligned buttons and screenshot evidence that pilot ticket actions could appear outside the card boundary. Completed on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, SOTC admin pilot controls/guest row actions use shared responsive classes, and the pilot ticket uses the contained ticket-card structure with compact status/location/code panels. User confirmed the fix works."
+                "Alpha-test inbox findings: misaligned buttons, screenshot evidence that pilot ticket actions could appear outside the card boundary, and guest confusion over visible internal ticket numbers. Completed on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, SOTC admin pilot controls/guest row actions use shared responsive classes, the pilot ticket uses the contained ticket-card structure with compact status/location/code panels, and SOTC pilot guest screens no longer show the internal ticket number. User confirmed the layout fix works."
             },
             {
               id: "story-sotc-not-here-recovery",

@@ -995,9 +995,6 @@ export default function GuestQueueTicketPage() {
                 {queue.name}
               </h1>
             </div>
-            <div className="tkt-pilot-number">
-              #{ticketNumber ?? '--'}
-            </div>
           </div>
 
         <div className="tkt-pilot-scroll-body">

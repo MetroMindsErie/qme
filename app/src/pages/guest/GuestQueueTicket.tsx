@@ -18,6 +18,7 @@ import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import {
+  applyQueuePilotFlow,
   confirmTicketNearby,
   completeQueueTicketAction,
   getQueueBySlug,
@@ -542,7 +543,13 @@ export default function GuestQueueTicketPage() {
     try {
       const row = await confirmTicketNearby(ticketId);
       clearNotHereNotice(row.id);
-      setPilotTicket(row);
+      if (queue?.run_mode === 'auto' && row.queue_id) {
+        await applyQueuePilotFlow(row.queue_id);
+        const refreshed = await getQueueTicket(row.id);
+        setPilotTicket(refreshed);
+      } else {
+        setPilotTicket(row);
+      }
     } catch (err) {
       console.error('Failed to confirm nearby status', err);
       setCompletionError('Could not mark you nearby. Please try again or show staff this screen.');

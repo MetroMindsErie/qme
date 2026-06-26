@@ -7,7 +7,7 @@ const HEADSHOT_STAGE_COPY = {
     detail: 'You are in the headshot queue. No action is needed yet.',
   },
   standby: {
-    title: 'Almost Ready',
+    title: 'Standby',
     detail: 'Your headshot is coming up soon. Please head to the {{location}}.',
     instruction: "When you arrive at the {{location}}, tap I'm Nearby. Keep this page open.",
   },

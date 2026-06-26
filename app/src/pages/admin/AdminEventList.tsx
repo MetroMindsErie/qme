@@ -4,6 +4,14 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
+import {
+  canManageEvent,
+  getAssignedEventIds,
+  getCurrentAdminPrincipal,
+  getManagedOrganizationIds,
+  getStaffOrganizationIds,
+  type CurrentAdminPrincipal,
+} from '../../lib/adminPrincipalService';
 import { listEvents, deleteEvent } from '../../lib/eventService';
 import { formatDate } from '../../lib/utils';
 import type { QEvent } from '../../types';
@@ -13,12 +21,30 @@ import '../../styles/admin.css';
 export default function AdminEventList() {
   const navigate = useNavigate();
   const [events, setEvents] = useState<QEvent[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const data = await listEvents();
-      setEvents(data);
+      const admin = await getCurrentAdminPrincipal();
+      setCurrentAdmin(admin);
+      if (!admin || admin.isSuperadmin) {
+        setEvents(await listEvents());
+        return;
+      }
+
+      const organizationIds = Array.from(new Set([
+        ...getManagedOrganizationIds(admin),
+        ...getStaffOrganizationIds(admin),
+      ]));
+      const assignedEventIds = getAssignedEventIds(admin);
+      const [organizationEvents, assignedEvents] = await Promise.all([
+        listEvents({ organizationIds }),
+        listEvents({ eventIds: assignedEventIds }),
+      ]);
+      setEvents(Array.from(
+        new Map([...organizationEvents, ...assignedEvents].map((event) => [event.id, event])).values()
+      ));
     } catch (e) {
       console.error('Failed to load events', e);
     } finally {
@@ -47,6 +73,8 @@ export default function AdminEventList() {
     completed: '#2196f3',
     cancelled: '#f44336',
   };
+  const managedOrganizationIds = getManagedOrganizationIds(currentAdmin);
+  const canCreateEvent = !currentAdmin || currentAdmin.isSuperadmin || managedOrganizationIds.length > 0;
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -62,13 +90,18 @@ export default function AdminEventList() {
           >
             Organizations
           </button>
-          <button
-            className="actionBtn actionBtn-primary"
-            style={{ margin: 0, width: 'auto', padding: '0.6rem 1.4rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-            onClick={() => navigate('/admin/events/new')}
-          >
-            <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>+</span> New Event
-          </button>
+          {canCreateEvent && (
+            <button
+              className="actionBtn actionBtn-primary"
+              style={{ margin: 0, width: 'auto', padding: '0.6rem 1.4rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+              onClick={() => {
+                const targetOrganizationId = managedOrganizationIds.length === 1 ? managedOrganizationIds[0] : null;
+                navigate(targetOrganizationId ? `/admin/events/new?organizationId=${targetOrganizationId}` : '/admin/events/new');
+              }}
+            >
+              <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>+</span> New Event
+            </button>
+          )}
         </div>
       </div>
 
@@ -79,6 +112,11 @@ export default function AdminEventList() {
           <p style={{ fontSize: '1.1rem', color: '#999', marginBottom: '1rem' }}>
             No events yet. Create your first one!
           </p>
+          {currentAdmin && !currentAdmin.isSuperadmin && (
+            <p style={{ fontSize: '0.9rem', color: '#777', margin: 0 }}>
+              No organization or event staff assignments are active for this account yet.
+            </p>
+          )}
         </div>
       )}
 
@@ -126,6 +164,7 @@ export default function AdminEventList() {
                 {ev.status}
               </span>
             </div>
+            {canManageEvent(currentAdmin, ev) && (
             <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
               <button
                 className="actionBtn actionBtn-secondary"
@@ -142,6 +181,7 @@ export default function AdminEventList() {
                 🗑️ Delete
               </button>
             </div>
+            )}
           </div>
         ))}
       </div>

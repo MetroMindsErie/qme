@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
+import {
+  canManageOrganization,
+  getCurrentAdminPrincipal,
+  type CurrentAdminPrincipal,
+} from '../../lib/adminPrincipalService';
 import { listEvents } from '../../lib/eventService';
 import { listExpiesForOrganization } from '../../lib/expieService';
 import { getOrganization } from '../../lib/organizationService';
@@ -15,11 +20,19 @@ export default function AdminOrganizationDetail() {
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [events, setEvents] = useState<QEvent[]>([]);
   const [expies, setExpies] = useState<Expie[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!organizationId) return;
     try {
+      const admin = await getCurrentAdminPrincipal();
+      setCurrentAdmin(admin);
+      if (admin && !canManageOrganization(admin, organizationId)) {
+        setAccessDenied(true);
+        return;
+      }
       const [org, orgEvents, orgExpies] = await Promise.all([
         getOrganization(organizationId),
         listEvents({ organizationId }),
@@ -49,7 +62,24 @@ export default function AdminOrganizationDetail() {
     );
   }
 
+  if (accessDenied) {
+    return (
+      <div className="card" style={{ minHeight: '600px', padding: '2rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: 420 }}>
+          <h1 className="headline" style={{ fontSize: '1.4rem', margin: '0 0 0.75rem' }}>Organization access unavailable</h1>
+          <p style={{ color: '#64748b', fontWeight: 700, lineHeight: 1.5 }}>
+            This admin account does not have organization admin access here.
+          </p>
+          <button className="actionBtn actionBtn-secondary" type="button" onClick={() => navigate('/admin/events')}>
+            Back to Events
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!organization) return null;
+  const canManageThisOrganization = canManageOrganization(currentAdmin, organization.id);
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -63,6 +93,7 @@ export default function AdminOrganizationDetail() {
           {organization.description || `Organization slug: ${organization.slug}`}
         </p>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.85rem' }}>
+          {canManageThisOrganization && (
           <button
             className="actionBtn actionBtn-primary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
@@ -70,6 +101,8 @@ export default function AdminOrganizationDetail() {
           >
             + New Event
           </button>
+          )}
+          {canManageThisOrganization && (
           <button
             className="actionBtn actionBtn-primary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
@@ -77,6 +110,7 @@ export default function AdminOrganizationDetail() {
           >
             + New Expie
           </button>
+          )}
           <button
             className="actionBtn actionBtn-secondary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.1rem', fontSize: '0.85rem' }}
@@ -170,6 +204,7 @@ export default function AdminOrganizationDetail() {
                   </div>
                 )}
               </div>
+              {canManageThisOrganization && (
               <button
                 className="actionBtn actionBtn-secondary"
                 style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
@@ -177,6 +212,7 @@ export default function AdminOrganizationDetail() {
               >
                 Edit
               </button>
+              )}
             </div>
           ))}
         </div>

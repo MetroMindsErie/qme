@@ -557,7 +557,7 @@ const QME_ROADMAP = {
                 "Admin operational actions such as start, pause, end, and reset have extra friction such as confirmation or PIN."
               ],
               notes:
-                "Schema foundation added in supabase-admin-role-foundation.sql with platform_roles for superadmin/support, organization memberships for org_admin/universal_staff, event staff assignments, and helper functions for the RLS pass. Enforcement is still temporary until auth cleanup and SOTC RLS hardening."
+                "Schema foundation added in supabase-admin-role-foundation.sql with platform_roles for superadmin/support, organization memberships for org_admin/universal_staff, event staff assignments, and helper functions for the RLS pass. App enforcement pass added: AdminGate displays organization/event roles, superadmin can see all orgs/events, org admins are scoped to their organizations, event/station staff are scoped to assigned events, and setup controls are hidden from non-managers. Database RLS enforcement is still temporary until SOTC RLS hardening."
             },
             {
               id: "story-authentication-cleanup",

@@ -108,7 +108,11 @@ export default function AdminGate({ children }: AdminGateProps) {
   if (unlocked) {
     const roleLabel = currentAdmin?.isSuperadmin
       ? 'qME superadmin'
-      : currentAdmin?.platformRoles.map((role) => role.role).join(', ') || 'admin';
+      : [
+          ...(currentAdmin?.organizationMemberships.map((membership) => membership.role.replace('_', ' ')) ?? []),
+          ...(currentAdmin?.eventStaffAssignments.map((assignment) => assignment.role.replace('_', ' ')) ?? []),
+          ...(currentAdmin?.platformRoles.map((role) => role.role) ?? []),
+        ].filter(Boolean).join(', ') || 'admin';
     return (
       <>
         <div className="admin-identity-bar">

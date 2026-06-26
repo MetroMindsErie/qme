@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
+import { getCurrentAdminPrincipal, getManagedOrganizationIds, type CurrentAdminPrincipal } from '../../lib/adminPrincipalService';
 import { listOrganizations } from '../../lib/organizationService';
 import type { Organization } from '../../types';
 import '../../styles/shared.css';
@@ -9,11 +10,17 @@ import '../../styles/admin.css';
 export default function AdminOrganizationList() {
   const navigate = useNavigate();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      setOrganizations(await listOrganizations());
+      const admin = await getCurrentAdminPrincipal();
+      setCurrentAdmin(admin);
+      const managedOrganizationIds = getManagedOrganizationIds(admin);
+      setOrganizations(admin && !admin.isSuperadmin
+        ? await listOrganizations({ ids: managedOrganizationIds })
+        : await listOrganizations());
     } catch (error) {
       console.error('Failed to load organizations', error);
     } finally {
@@ -33,6 +40,11 @@ export default function AdminOrganizationList() {
         <h1 className="headline" style={{ fontSize: '1.5rem', margin: 0, fontWeight: 700 }}>
           Organizations
         </h1>
+        {currentAdmin && !currentAdmin.isSuperadmin && (
+          <p style={{ color: '#64748b', margin: '0.45rem 0 0', fontSize: '0.85rem', fontWeight: 700 }}>
+            Showing organizations where you have organization admin access.
+          </p>
+        )}
       </div>
 
       {loading && <p style={{ textAlign: 'center', padding: '3rem', color: '#666' }}>Loading...</p>}
@@ -42,6 +54,11 @@ export default function AdminOrganizationList() {
           <p style={{ fontSize: '1rem', color: '#777', marginBottom: '1rem' }}>
             No organizations yet. Run the organization foundation SQL first.
           </p>
+          {currentAdmin && !currentAdmin.isSuperadmin && (
+            <p style={{ fontSize: '0.9rem', color: '#777', margin: 0 }}>
+              No organization admin memberships are assigned to this account yet.
+            </p>
+          )}
         </div>
       )}
 

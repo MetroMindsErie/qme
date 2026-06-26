@@ -4,6 +4,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from '../../components/Header';
+import {
+  canManageEvent,
+  canManageOrganization,
+  getCurrentAdminPrincipal,
+  getManagedOrganizationIds,
+  type CurrentAdminPrincipal,
+} from '../../lib/adminPrincipalService';
 import { createEvent, getEvent, updateEvent } from '../../lib/eventService';
 import { listOrganizations } from '../../lib/organizationService';
 import { slugify } from '../../lib/utils';
@@ -33,17 +40,28 @@ export default function AdminEventForm() {
   });
   const [autoSlug, setAutoSlug] = useState(true);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(isEdit);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
-        const orgs = await listOrganizations();
+        const admin = await getCurrentAdminPrincipal();
+        setCurrentAdmin(admin);
+        const managedOrganizationIds = getManagedOrganizationIds(admin);
+        const orgs = admin && !admin.isSuperadmin
+          ? await listOrganizations({ ids: managedOrganizationIds })
+          : await listOrganizations();
         setOrganizations(orgs);
 
         if (eventId) {
           const ev = await getEvent(eventId);
+          if (admin && !canManageEvent(admin, ev)) {
+            setAccessDenied(true);
+            return;
+          }
           setForm({
             organization_id: ev.organization_id,
             name: ev.name,
@@ -58,6 +76,8 @@ export default function AdminEventForm() {
             status: ev.status,
           });
           setAutoSlug(false);
+        } else if (admin && !admin.isSuperadmin && managedOrganizationIds.length === 0) {
+          setAccessDenied(true);
         } else if (requestedOrganizationId && orgs.some((org) => org.id === requestedOrganizationId)) {
           setForm((prev) => ({ ...prev, organization_id: requestedOrganizationId }));
         } else if (orgs.length === 1) {
@@ -91,6 +111,10 @@ export default function AdminEventForm() {
       alert('Name and slug are required.');
       return;
     }
+    if (currentAdmin && !canManageOrganization(currentAdmin, form.organization_id ?? null)) {
+      alert('This account cannot manage events for the selected organization.');
+      return;
+    }
     setSaving(true);
     try {
       if (isEdit && eventId) {
@@ -111,6 +135,22 @@ export default function AdminEventForm() {
     return (
       <div className="card">
         <p style={{ textAlign: 'center', padding: '3rem' }}>Loading…</p>
+      </div>
+    );
+  }
+
+  if (accessDenied) {
+    return (
+      <div className="card" style={{ minHeight: '600px', padding: '2rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: 420 }}>
+          <h1 className="headline" style={{ fontSize: '1.4rem', margin: '0 0 0.75rem' }}>Event setup unavailable</h1>
+          <p style={{ color: '#64748b', fontWeight: 700, lineHeight: 1.5 }}>
+            This admin account does not have organization admin access for this event.
+          </p>
+          <button className="actionBtn actionBtn-secondary" type="button" onClick={() => navigate('/admin/events')}>
+            Back to Events
+          </button>
+        </div>
       </div>
     );
   }

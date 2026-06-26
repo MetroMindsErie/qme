@@ -17,11 +17,18 @@ export async function createOrganization(
   return data as Organization;
 }
 
-export async function listOrganizations(): Promise<Organization[]> {
-  const { data, error } = await supabase
+export async function listOrganizations(opts: { ids?: string[] } = {}): Promise<Organization[]> {
+  let query = supabase
     .from('organizations')
     .select('*')
     .order('name', { ascending: true });
+
+  if (opts.ids) {
+    if (opts.ids.length === 0) return [];
+    query = query.in('id', opts.ids);
+  }
+
+  const { data, error } = await query;
   if (error) throw error;
   return (data ?? []) as Organization[];
 }

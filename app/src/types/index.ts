@@ -157,6 +157,31 @@ export interface PlatformRole {
   updated_at: string;
 }
 
+export interface OrganizationMembership {
+  id: string;
+  organization_id: string;
+  principal_id: string;
+  role: 'org_admin' | 'universal_staff';
+  status: 'invited' | 'active' | 'suspended' | 'archived';
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventStaffAssignment {
+  id: string;
+  event_id: string;
+  organization_id: string;
+  principal_id: string;
+  role: 'event_admin' | 'check_in_staff' | 'service_staff' | 'station_account' | 'service_provider';
+  queue_id: string | null;
+  ece_id: string | null;
+  status: 'invited' | 'active' | 'suspended' | 'archived';
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
 export type CreateEceInput = Pick<
   Ece,
   'event_id' | 'name' | 'slug' | 'description' | 'image_url' | 'type' | 'status'

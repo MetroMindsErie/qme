@@ -4,6 +4,12 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
+import {
+  canAccessEvent,
+  canManageEvent,
+  getCurrentAdminPrincipal,
+  type CurrentAdminPrincipal,
+} from '../../lib/adminPrincipalService';
 import { getEvent } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
 import { listQueuesForEvent, deleteQueue } from '../../lib/queueService';
@@ -18,12 +24,23 @@ export default function AdminEventDetail() {
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<Queue[]>([]);
   const [eces, setEces] = useState<Ece[]>([]);
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
     try {
       const ev = await getEvent(eventId);
+      const admin = await getCurrentAdminPrincipal();
+      setCurrentAdmin(admin);
+      if (admin && !canAccessEvent(admin, ev)) {
+        setAccessDenied(true);
+        setEvent(null);
+        setQueues([]);
+        setEces([]);
+        return;
+      }
       const [qs, exps] = await Promise.all([
         listQueuesForEvent(ev.id),
         listEcesForEvent(ev.id),
@@ -74,6 +91,22 @@ export default function AdminEventDetail() {
     );
   }
 
+  if (accessDenied) {
+    return (
+      <div className="card" style={{ minHeight: '600px', padding: '2rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', maxWidth: 420 }}>
+          <h1 className="headline" style={{ fontSize: '1.4rem', margin: '0 0 0.75rem' }}>Event access unavailable</h1>
+          <p style={{ color: '#64748b', fontWeight: 700, lineHeight: 1.5 }}>
+            This admin account is not assigned to this event or its organization.
+          </p>
+          <button className="actionBtn actionBtn-secondary" type="button" onClick={() => navigate('/admin/events')}>
+            Back to Events
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (!event) return null;
 
   const statusColor: Record<string, string> = {
@@ -84,6 +117,7 @@ export default function AdminEventDetail() {
   const linkedQueueIds = new Set(eces.map((ece) => ece.queue_id).filter(Boolean));
   const standaloneQueues = queues.filter((queue) => !linkedQueueIds.has(queue.id));
   const visibleEces = eces.filter((ece) => ece.type !== 'check_in');
+  const canManageThisEvent = canManageEvent(currentAdmin, event);
 
   return (
     <div className="card card-scrollable admin-event-detail-card" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -103,6 +137,7 @@ export default function AdminEventDetail() {
           🕐 {formatTime(event.start_time)} – {formatTime(event.end_time)} {event.timezone}
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' as const }}>
+          {canManageThisEvent && (
           <button
             className="actionBtn actionBtn-primary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
@@ -110,6 +145,7 @@ export default function AdminEventDetail() {
           >
             ✏️ Edit Event
           </button>
+          )}
           <button
             className="actionBtn actionBtn-secondary"
             style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
@@ -132,6 +168,7 @@ export default function AdminEventDetail() {
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event Features</h2>
+            {canManageThisEvent && (
             <button
               className="actionBtn actionBtn-primary"
               style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -139,6 +176,7 @@ export default function AdminEventDetail() {
             >
               <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Feature
             </button>
+            )}
           </div>
 
           {visibleEces.length === 0 && (
@@ -191,6 +229,7 @@ export default function AdminEventDetail() {
                     Manage Queue
                   </button>
                 )}
+                {canManageThisEvent && (
                 <button
                   className="actionBtn actionBtn-secondary"
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
@@ -198,6 +237,8 @@ export default function AdminEventDetail() {
                 >
                   Edit
                 </button>
+                )}
+                {canManageThisEvent && (
                 <button
                   className="actionBtn actionBtn-danger"
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
@@ -205,6 +246,7 @@ export default function AdminEventDetail() {
                 >
                   Delete
                 </button>
+                )}
               </div>
               </div>
             );
@@ -221,6 +263,7 @@ export default function AdminEventDetail() {
             <p style={{ color: '#777', margin: 0, fontSize: '0.85rem', lineHeight: 1.4 }}>
               Queue engines power queue features. Most queue work should happen from the feature row above.
             </p>
+            {canManageThisEvent && (
             <button
               className="actionBtn actionBtn-primary"
               style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
@@ -228,6 +271,7 @@ export default function AdminEventDetail() {
             >
               <span style={{ fontSize: '1.1rem', lineHeight: 1 }}>+</span> Add Queue
             </button>
+            )}
           </div>
 
         {standaloneQueues.map((q) => (

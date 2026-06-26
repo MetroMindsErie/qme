@@ -21,7 +21,12 @@ export async function createEvent(input: CreateEventInput): Promise<QEvent> {
 // ---------- READ ----------
 
 export async function listEvents(
-  opts: { status?: QEvent['status']; organizationId?: string } = {}
+  opts: {
+    status?: QEvent['status'];
+    organizationId?: string;
+    organizationIds?: string[];
+    eventIds?: string[];
+  } = {}
 ): Promise<QEvent[]> {
   let q = supabase
     .from('events')
@@ -34,6 +39,16 @@ export async function listEvents(
 
   if (opts.organizationId) {
     q = q.eq('organization_id', opts.organizationId);
+  }
+
+  if (opts.organizationIds) {
+    if (opts.organizationIds.length === 0) return [];
+    q = q.in('organization_id', opts.organizationIds);
+  }
+
+  if (opts.eventIds) {
+    if (opts.eventIds.length === 0) return [];
+    q = q.in('id', opts.eventIds);
   }
 
   const { data, error } = await q;

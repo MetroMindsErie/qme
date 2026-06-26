@@ -263,7 +263,7 @@ security definer
 set search_path = public
 as $$
 declare
-  principal_id uuid;
+  resolved_principal_id uuid;
 begin
   if target_auth_user_id is null then
     raise exception 'target_auth_user_id is required';
@@ -296,7 +296,7 @@ begin
     status = 'active',
     metadata = admin_principals.metadata || excluded.metadata,
     updated_at = now()
-  returning id into principal_id;
+  returning id into resolved_principal_id;
 
   insert into public.platform_roles (
     principal_id,
@@ -305,7 +305,7 @@ begin
     metadata
   )
   values (
-    principal_id,
+    resolved_principal_id,
     'superadmin',
     'active',
     jsonb_build_object('bootstrap', true, 'source', 'grant_qme_superadmin')
@@ -316,7 +316,7 @@ begin
     metadata = platform_roles.metadata || excluded.metadata,
     updated_at = now();
 
-  return principal_id;
+  return resolved_principal_id;
 end;
 $$;
 

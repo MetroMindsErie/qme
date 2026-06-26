@@ -27,6 +27,10 @@ interface QueueWithMeta extends Queue {
 
 type CreditStatus = 'none' | 'available' | 'used';
 
+function hasSameShape(left: unknown, right: unknown) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function queueStageStatus(stage?: Ticket['stage']): string {
   switch (stage) {
     case 'standby':
@@ -272,7 +276,7 @@ export default function GuestEventDetail() {
     try {
       const ev = await getEventBySlug(eventSlug);
       const checkInConfig = getEventCheckInConfig(ev);
-      setEvent(ev);
+      setEvent((current) => hasSameShape(current, ev) ? current : ev);
       const qs = await listQueuesForEvent(ev.id);
 
       if (freshReset) {
@@ -293,9 +297,8 @@ export default function GuestEventDetail() {
 
       const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
       let checkInTicketType: 'general' | 'flowers' | null = null;
-      setHasEventCheckIn(false);
-      setEventCheckInTicketType(null);
-      setHeadshotCreditStatus('none');
+      let nextHasEventCheckIn = false;
+      let nextHeadshotCreditStatus: CreditStatus = 'none';
       if (storedCheckIn) {
         try {
           const saved = JSON.parse(storedCheckIn) as { id?: string };
@@ -303,19 +306,23 @@ export default function GuestEventDetail() {
             const row = await getEventCheckIn(saved.id);
             if (!checkInConfig.requireCompletedForParticipation || row.status === 'completed') {
               checkInTicketType = row.ticket_type;
-              setEventCheckInTicketType(checkInTicketType);
-              setHasEventCheckIn(true);
+              nextHasEventCheckIn = true;
               const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
-              setHeadshotCreditStatus(credit
+              nextHeadshotCreditStatus = credit
                 ? credit.quantity > credit.used_quantity ? 'available' : 'used'
-                : 'none');
+                : 'none';
             }
           }
         } catch {
-          setHasEventCheckIn(false);
-          setHeadshotCreditStatus('none');
+          nextHasEventCheckIn = false;
+          nextHeadshotCreditStatus = 'none';
         }
       }
+      setEventCheckInTicketType((current) => current === checkInTicketType ? current : checkInTicketType);
+      setHasEventCheckIn((current) => current === nextHasEventCheckIn ? current : nextHasEventCheckIn);
+      setHeadshotCreditStatus((current) =>
+        current === nextHeadshotCreditStatus ? current : nextHeadshotCreditStatus
+      );
       const enriched: QueueWithMeta[] = await Promise.all(
         qs
           .filter((q) => q.status === 'active')
@@ -373,13 +380,14 @@ export default function GuestEventDetail() {
             return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns, _waitingCount: waitingCount };
           })
       );
-      setQueues(enriched.filter((q) => {
+      const nextQueues = enriched.filter((q) => {
         if (q.slug === 'wrapped-bouquets') return checkInTicketType === 'flowers';
         return true;
-      }));
+      });
+      setQueues((current) => hasSameShape(current, nextQueues) ? current : nextQueues);
 
       const eventEces = eventSlug === PEONY_EVENT_SLUG ? [] : await listActiveEcesForEvent(ev.id);
-      setEces(eventEces);
+      setEces((current) => hasSameShape(current, eventEces) ? current : eventEces);
 
       setLastUpdated('just now');
     } catch (e) {

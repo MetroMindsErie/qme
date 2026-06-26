@@ -1047,7 +1047,7 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-calm-refresh",
               title: "Calm realtime refresh behavior on SOTC pilot screens",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
                 "Make guest and admin SOTC pilot screens update without visible blinking, blanking, or layout jumps during polling/realtime refresh.",
@@ -1061,7 +1061,7 @@ const QME_ROADMAP = {
                 "Verified on mobile viewport for SOTC guest flow and admin queue flow."
               ],
               notes:
-                "Alpha-test inbox finding: App refresh with screen blinking is distracting."
+                "Alpha-test inbox finding: App refresh with screen blinking is distracting. Implementation started on 2026-06-26: guest event polling now preserves eligibility state until fresh data is ready, guest ticket polling avoids replacing identical ticket state, and admin pilot ticket polling/auto-flow avoids identical row replacement and interval resets. TypeScript, ESLint, and Vite build path pass; mobile visual verification remains."
             },
             {
               id: "story-sotc-mobile-layout-polish",

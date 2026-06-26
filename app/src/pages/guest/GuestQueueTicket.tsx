@@ -50,6 +50,10 @@ type PilotStageCopy = {
 };
 const STEPS = ['In Queue', 'Called', 'Checked In', 'Enjoy!'];
 
+function hasSameShape(left: unknown, right: unknown) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -312,7 +316,7 @@ export default function GuestQueueTicketPage() {
           navigate(`/events/${targetEventSlug}`, { replace: true });
           return;
         }
-        if (!stopped) setPilotTicket(row);
+        if (!stopped) setPilotTicket((current) => hasSameShape(current, row) ? current : row);
       } catch (e) {
         if (!stopped && isMissingTicketError(e)) {
           clearQueueTicket(queueId);

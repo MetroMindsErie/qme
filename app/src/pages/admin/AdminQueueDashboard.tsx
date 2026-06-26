@@ -31,6 +31,10 @@ import '../../styles/admin.css';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type PilotCompletionMode = 'guest_code' | 'staff_served';
 
+function hasSameShape(left: unknown, right: unknown) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -181,7 +185,7 @@ export default function AdminQueueDashboard() {
     }
     try {
       const rows = await listQueuePilotTickets(queue.id);
-      setPilotTickets(rows);
+      setPilotTickets((current) => hasSameShape(current, rows) ? current : rows);
     } catch (e) {
       console.error('pilot tickets fetch failed', e);
     }
@@ -311,7 +315,7 @@ export default function AdminQueueDashboard() {
     }
   }
 
-  async function applyAutoPilotPass(quiet = false) {
+  const applyAutoPilotPass = useCallback(async (quiet = false) => {
     if (!queue) return;
     if (autoFlowInFlightRef.current) return;
     autoFlowInFlightRef.current = true;
@@ -324,7 +328,7 @@ export default function AdminQueueDashboard() {
     } finally {
       autoFlowInFlightRef.current = false;
     }
-  }
+  }, [queue, refreshPilotTickets]);
 
   useEffect(() => {
     if (!isPilotQueue || queue?.run_mode !== 'auto') return;
@@ -333,7 +337,7 @@ export default function AdminQueueDashboard() {
       void applyAutoPilotPass(true);
     }, 2000);
     return () => clearInterval(interval);
-  }, [isPilotQueue, queue?.run_mode, queue?.standby_threshold, queue?.max_active_released, pilotTickets]);
+  }, [isPilotQueue, queue?.run_mode, queue?.standby_threshold, queue?.max_active_released, applyAutoPilotPass]);
 
   if (loading) {
     return (

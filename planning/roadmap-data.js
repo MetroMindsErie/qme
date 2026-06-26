@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-06-19",
+    updated: "2026-06-26",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -898,7 +898,7 @@ const QME_ROADMAP = {
             {
               id: "story-headshot-queue",
               title: "Create headshot digital queue",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Model the free student headshot line and paid/approved professional access.",
@@ -910,7 +910,7 @@ const QME_ROADMAP = {
                 "Copy is tested with at least one student/contact for comprehension."
               ],
               notes:
-                "This extends the Bouquet Bar access pattern into guest tags/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity. Messaging pass started on 2026-06-26: Headshot Photographer runtime copy now uses Waiting, Almost Ready, I'm Nearby, Your Turn, and Completed language, with photo-specific wording only around the actual photographer step. SQL seed copy was updated to match."
+                "This extends the Bouquet Bar access pattern into guest tags/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity. Messaging pass completed on 2026-06-26: Headshot Photographer runtime copy now uses Waiting, Almost Ready, I'm Nearby, Your Turn, and Completed language, with photo-specific wording only around the actual photographer step. SQL seed copy was updated to match."
             },
             {
               id: "story-headshot-tags",
@@ -1049,7 +1049,7 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-calm-refresh",
               title: "Calm realtime refresh behavior on SOTC pilot screens",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Make guest and admin SOTC pilot screens update without visible blinking, blanking, or layout jumps during polling/realtime refresh.",
@@ -1063,12 +1063,12 @@ const QME_ROADMAP = {
                 "Verified on mobile viewport for SOTC guest flow and admin queue flow."
               ],
               notes:
-                "Alpha-test inbox finding: App refresh with screen blinking is distracting. Implementation started on 2026-06-26: guest event polling now preserves eligibility state until fresh data is ready, guest ticket polling avoids replacing identical ticket state, and admin pilot ticket polling/auto-flow avoids identical row replacement and interval resets. TypeScript, ESLint, and Vite build path pass; mobile visual verification remains."
+                "Alpha-test inbox finding: App refresh with screen blinking is distracting. Completed on 2026-06-26: guest event polling now preserves eligibility state until fresh data is ready, guest ticket polling avoids replacing identical ticket state, and admin pilot ticket polling/auto-flow avoids identical row replacement and interval resets. User confirmed calm refresh is working."
             },
             {
               id: "story-sotc-mobile-layout-polish",
               title: "Polish SOTC pilot mobile layout and button alignment",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Use alpha-test screenshots and mobile testing to clean up visible layout issues on SOTC pilot guest/admin screens.",
@@ -1081,12 +1081,12 @@ const QME_ROADMAP = {
                 "Verified at mobile widths around 360px, 390px, and desktop/tablet."
               ],
               notes:
-                "Alpha-test inbox finding: Misaligned buttons and screenshot evidence that pilot ticket actions could appear outside the card boundary. Implementation started on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, and SOTC admin pilot controls/guest row actions use shared responsive classes instead of ad hoc inline sizing. Follow-up mobile containment fix makes the pilot ticket use the contained ticket-card structure with compact status/location/code panels."
+                "Alpha-test inbox finding: Misaligned buttons and screenshot evidence that pilot ticket actions could appear outside the card boundary. Completed on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, SOTC admin pilot controls/guest row actions use shared responsive classes, and the pilot ticket uses the contained ticket-card structure with compact status/location/code panels. User confirmed the fix works."
             },
             {
               id: "story-sotc-not-here-recovery",
               title: "Explain Not Here recovery to guests",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "When staff marks a released SOTC pilot guest as Not here, keep the same ticket in standby, explain what happened, and ask the guest to tap I'm Nearby again when ready.",
@@ -1099,7 +1099,7 @@ const QME_ROADMAP = {
                 "Normal first-time standby does not show the Not here modal."
               ],
               notes:
-                "First pass intentionally uses client-side transition detection rather than adding a durable database marker. If the guest page is closed during the staff action, a future database field such as not_here_at may be needed."
+                "Completed on 2026-06-26. First pass intentionally uses client-side transition detection rather than adding a durable database marker. If the guest page is closed during the staff action, a future database field such as not_here_at may be needed. User confirmed the recovery flow works."
             },
             {
               id: "story-sotc-jalani-readiness-review",

@@ -37,6 +37,7 @@ const QME_ROADMAP = {
         "story-admin-org-role",
         "story-org-staff",
         "story-authentication-cleanup",
+        "story-planning-admin-access-controls",
         "story-event-org-owner",
         "story-event-operational-mode-config",
         "story-sotc-admin-staff-rls-hardening"
@@ -398,6 +399,23 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Imported from sotc planning doc.pdf on 2026-06-10. Most items overlapped existing epics; missing details were added as role, event scheduling, eCe lifecycle, SOTC registration, and admin operations cards."
+            },
+            {
+              id: "story-planning-admin-access-controls",
+              title: "Replace planning access code with admin controls",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Move the deployed planning workspace from a shared access code to qME admin-aware controls so roadmap viewing, editing, and syncing are governed like the rest of the platform.",
+              acceptanceCriteria: [
+                "Planning access no longer depends on the hard-coded/shared planning code as the primary control.",
+                "qME superadmin can view and edit the planning workspace.",
+                "Future organization/admin visibility rules are documented before exposing planning data outside qME operators.",
+                "Planning document writes/syncs are restricted to approved admin roles.",
+                "Temporary fallback access, if retained during transition, is labeled with risk and removal intent."
+              ],
+              notes:
+                "Added during Sprint 2 after confirming that /planning is now part of the operating system and should be protected by the same admin/auth foundation being built for qME. Current access code is documented as a temporary assumption in docs/hard-coded-demo-assumptions-audit.md."
             }
           ]
         },

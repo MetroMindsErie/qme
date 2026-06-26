@@ -242,6 +242,84 @@ as $$
     )
 $$;
 
+-- Bootstrap helper for the first real qME operator account.
+-- Usage after creating a Supabase Auth user:
+--
+--   select public.grant_qme_superadmin(
+--     '00000000-0000-0000-0000-000000000000'::uuid,
+--     'Your Name',
+--     'you@example.com'
+--   );
+--
+-- This is a setup bridge, not the long-term admin invitation flow.
+create or replace function public.grant_qme_superadmin(
+  target_auth_user_id uuid,
+  target_display_name text,
+  target_email text default null
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  principal_id uuid;
+begin
+  if target_auth_user_id is null then
+    raise exception 'target_auth_user_id is required';
+  end if;
+
+  if nullif(trim(target_display_name), '') is null then
+    raise exception 'target_display_name is required';
+  end if;
+
+  insert into public.admin_principals (
+    auth_user_id,
+    principal_type,
+    display_name,
+    email,
+    status,
+    metadata
+  )
+  values (
+    target_auth_user_id,
+    'person',
+    trim(target_display_name),
+    nullif(trim(target_email), ''),
+    'active',
+    jsonb_build_object('bootstrap', true, 'source', 'grant_qme_superadmin')
+  )
+  on conflict (auth_user_id) do update
+  set
+    display_name = excluded.display_name,
+    email = coalesce(excluded.email, admin_principals.email),
+    status = 'active',
+    metadata = admin_principals.metadata || excluded.metadata,
+    updated_at = now()
+  returning id into principal_id;
+
+  insert into public.platform_roles (
+    principal_id,
+    role,
+    status,
+    metadata
+  )
+  values (
+    principal_id,
+    'superadmin',
+    'active',
+    jsonb_build_object('bootstrap', true, 'source', 'grant_qme_superadmin')
+  )
+  on conflict (principal_id, role) where status <> 'archived' do update
+  set
+    status = 'active',
+    metadata = platform_roles.metadata || excluded.metadata,
+    updated_at = now();
+
+  return principal_id;
+end;
+$$;
+
 -- Temporary alpha policies while Supabase Auth and role-aware RLS are wired.
 -- These are intentionally broad so the current pilot/admin screens continue
 -- to work. Replace in the SOTC RLS hardening pass.

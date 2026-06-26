@@ -556,7 +556,7 @@ const QME_ROADMAP = {
                 "The authentication decision feeds the SOTC RLS hardening story."
               ],
               notes:
-                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Current AdminGate passphrase remains a documented temporary bridge until Supabase Auth principal linking is wired."
+                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Near-term decision is documented in docs/admin-auth-transition-v1.md: keep AdminGate as a temporary convenience gate, link Supabase Auth users to admin_principals.auth_user_id, and use grant_qme_superadmin() to bootstrap the first qME operator before RLS hardening."
             },
             {
               id: "story-role-permissions-audit",

@@ -148,6 +148,16 @@ export interface AdminPrincipal {
   updated_at: string;
 }
 
+export type CreateAdminPrincipalInput = Pick<
+  AdminPrincipal,
+  'principal_type' | 'display_name' | 'email' | 'phone' | 'status'
+> & {
+  auth_user_id?: string | null;
+  metadata?: Record<string, unknown>;
+};
+
+export type UpdateAdminPrincipalInput = Partial<CreateAdminPrincipalInput>;
+
 export interface PlatformRole {
   id: string;
   principal_id: string;

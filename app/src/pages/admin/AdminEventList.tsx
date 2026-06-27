@@ -90,6 +90,15 @@ export default function AdminEventList() {
           >
             Organizations
           </button>
+          {currentAdmin?.isSuperadmin && (
+            <button
+              className="actionBtn actionBtn-secondary"
+              style={{ margin: 0, width: 'auto', padding: '0.6rem 1rem', fontSize: '0.9rem' }}
+              onClick={() => navigate('/admin/principals')}
+            >
+              Admin Users
+            </button>
+          )}
           {canCreateEvent && (
             <button
               className="actionBtn actionBtn-primary"

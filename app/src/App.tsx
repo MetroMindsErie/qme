@@ -9,6 +9,7 @@ import AdminQueueForm from './pages/admin/AdminQueueForm';
 import AdminQueueDashboard from './pages/admin/AdminQueueDashboard';
 import AdminOrganizationList from './pages/admin/AdminOrganizationList';
 import AdminOrganizationDetail from './pages/admin/AdminOrganizationDetail';
+import AdminPrincipalList from './pages/admin/AdminPrincipalList';
 import AdminExpieForm from './pages/admin/AdminExpieForm';
 import AdminEceForm from './pages/admin/AdminEceForm';
 import AdminGate from './components/AdminGate';
@@ -85,6 +86,7 @@ function App() {
         <Route path="/admin/organizations/:organizationId" element={<AdminPage><AdminOrganizationDetail /></AdminPage>} />
         <Route path="/admin/organizations/:organizationId/expies/new" element={<AdminPage><AdminExpieForm /></AdminPage>} />
         <Route path="/admin/organizations/:organizationId/expies/:expieId/edit" element={<AdminPage><AdminExpieForm /></AdminPage>} />
+        <Route path="/admin/principals" element={<AdminPage><AdminPrincipalList /></AdminPage>} />
         <Route path="/admin/events" element={<AdminPage><AdminEventList /></AdminPage>} />
         <Route path="/admin/events/new" element={<AdminPage><AdminEventForm /></AdminPage>} />
         <Route path="/admin/events/:eventId" element={<AdminPage><AdminEventDetail /></AdminPage>} />

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import {
   createAdminPrincipal,
+  createAdminUserWithAuth,
   listAdminPrincipals,
   updateAdminPrincipal,
 } from '../../lib/adminPrincipalAdminService';
@@ -43,6 +44,7 @@ export default function AdminPrincipalList() {
   const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
   const [principals, setPrincipals] = useState<AdminPrincipal[]>([]);
   const [form, setForm] = useState<CreateAdminPrincipalInput>(emptyForm);
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -81,12 +83,23 @@ export default function AdminPrincipalList() {
     }
     setSaving(true);
     try {
-      await createAdminPrincipal(form);
+      if (password.trim()) {
+        await createAdminUserWithAuth({
+          displayName: form.display_name,
+          email: form.email || '',
+          password,
+          phone: form.phone,
+          principalType: form.principal_type,
+        });
+      } else {
+        await createAdminPrincipal(form);
+      }
       setForm(emptyForm);
+      setPassword('');
       setPrincipals(await listAdminPrincipals());
     } catch (error) {
       console.error('Failed to save admin principal', error);
-      alert('Could not save admin principal. If this email already exists, update the existing row instead.');
+      alert('Could not save admin user. Check whether the email already exists or the service-role key is configured.');
     } finally {
       setSaving(false);
     }
@@ -154,7 +167,7 @@ export default function AdminPrincipalList() {
           Admin Principals
         </h1>
         <p style={{ color: '#64748b', margin: 0, lineHeight: 1.45, fontWeight: 700 }}>
-          Link named qME admin/staff principals to existing Supabase Auth users. Create the Auth user first, then paste its UUID here.
+          Create named qME admin/staff users. Enter a password to create the Supabase login now, or leave it blank to create a principal-only record for later linking.
         </p>
       </div>
 
@@ -201,6 +214,17 @@ export default function AdminPrincipalList() {
               placeholder="Paste Supabase Auth user id"
             />
           </label>
+          <label style={{ ...fieldStyle, flex: '1 1 210px' }}>
+            New Login Password
+            <input
+              style={inputStyle}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              placeholder="Optional: create login"
+              autoComplete="new-password"
+            />
+          </label>
           <label style={fieldStyle}>
             Type
             <select
@@ -217,10 +241,10 @@ export default function AdminPrincipalList() {
           <button
             className="actionBtn actionBtn-primary"
             type="submit"
-            disabled={saving || !form.display_name.trim()}
+            disabled={saving || !form.display_name.trim() || Boolean(password.trim() && !form.email?.trim())}
             style={{ margin: 0, width: 'auto', padding: '0.65rem 1rem', fontSize: '0.85rem' }}
           >
-            {saving ? 'Saving...' : 'Add Principal'}
+            {saving ? 'Saving...' : password.trim() ? 'Create User' : 'Add Principal'}
           </button>
         </form>
 

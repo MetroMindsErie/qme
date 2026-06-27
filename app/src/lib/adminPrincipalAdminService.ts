@@ -61,3 +61,31 @@ export async function findAdminPrincipalByEmail(email: string): Promise<AdminPri
   if (error) throw error;
   return (data as AdminPrincipal | null) ?? null;
 }
+
+export async function createAdminUserWithAuth(input: {
+  displayName: string;
+  email: string;
+  password: string;
+  phone?: string | null;
+  principalType: AdminPrincipal['principal_type'];
+}): Promise<{ authUserId: string; principal: AdminPrincipal }> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error('No active admin session.');
+
+  const response = await fetch('/api/admin-create-user', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.error || 'Could not create admin user.');
+  }
+  return body as { authUserId: string; principal: AdminPrincipal };
+}

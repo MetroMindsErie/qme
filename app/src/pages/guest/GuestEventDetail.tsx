@@ -27,6 +27,10 @@ interface QueueWithMeta extends Queue {
 
 type CreditStatus = 'none' | 'available' | 'used';
 
+function isGroupOrderEce(ece: Ece): boolean {
+  return ece.metadata?.interaction_mode === 'group_order';
+}
+
 function hasSameShape(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
 }
@@ -612,7 +616,10 @@ export default function GuestEventDetail() {
               creditLocked,
               joinPaused,
             }) : '';
-            const actionHref = exp.type === 'check_in'
+            const isGroupOrder = isGroupOrderEce(exp);
+            const actionHref = isGroupOrder
+              ? `/events/${eventSlug}/group-order`
+              : exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
               ? canJoin ? `/events/${eventSlug}/q/${linkedQueue.slug}` : ''
@@ -640,6 +647,8 @@ export default function GuestEventDetail() {
               ? ''
               : creditLocked || creditUsed || joinPaused
               ? ''
+              : isGroupOrder
+              ? hasEventCheckIn ? 'View' : 'Start'
               : linkedQueue
               ? 'Join'
               : exp.type === 'check_in'

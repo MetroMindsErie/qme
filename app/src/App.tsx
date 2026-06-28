@@ -5,6 +5,7 @@ import AdminEventList from './pages/admin/AdminEventList';
 import AdminEventForm from './pages/admin/AdminEventForm';
 import AdminEventDetail from './pages/admin/AdminEventDetail';
 import AdminEventCheckIns from './pages/admin/AdminEventCheckIns';
+import AdminGroupOrderDashboard from './pages/admin/AdminGroupOrderDashboard';
 import AdminQueueForm from './pages/admin/AdminQueueForm';
 import AdminQueueDashboard from './pages/admin/AdminQueueDashboard';
 import AdminOrganizationList from './pages/admin/AdminOrganizationList';
@@ -17,6 +18,7 @@ import AdminGate from './components/AdminGate';
 // ----- Demo pages -----
 import GuestEventDetail from './pages/guest/GuestEventDetail';
 import GuestEventCheckIn from './pages/guest/GuestEventCheckIn';
+import GuestGroupOrder from './pages/guest/GuestGroupOrder';
 import GuestQueueTicket from './pages/guest/GuestQueueTicket';
 import KioskDisplay from './pages/demo/KioskDisplay';
 
@@ -36,6 +38,12 @@ function EventCheckInPage() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
   if (!eventSlug) return <Navigate to="/demo" replace />;
   return <GuestEventCheckIn />;
+}
+
+function EventGroupOrderPage() {
+  const { eventSlug } = useParams<{ eventSlug: string }>();
+  if (!eventSlug) return <Navigate to="/demo" replace />;
+  return <GuestGroupOrder />;
 }
 
 // Skip the queue landing page — go directly to ticket claim
@@ -76,6 +84,7 @@ function App() {
         {/* Event detail — guarded to ipitch-2026 only */}
         <Route path="/events/:eventSlug" element={<EventPage />} />
         <Route path="/events/:eventSlug/check-in" element={<EventCheckInPage />} />
+        <Route path="/events/:eventSlug/group-order" element={<EventGroupOrderPage />} />
         {/* Queue landing skipped — jumps straight to ticket */}
         <Route path="/events/:eventSlug/q/:queueSlug" element={<QueueSkip />} />
         {/* Ticket page — guarded to demo queue only */}
@@ -91,6 +100,7 @@ function App() {
         <Route path="/admin/events/new" element={<AdminPage><AdminEventForm /></AdminPage>} />
         <Route path="/admin/events/:eventId" element={<AdminPage><AdminEventDetail /></AdminPage>} />
         <Route path="/admin/events/:eventId/check-ins" element={<AdminPage><AdminEventCheckIns /></AdminPage>} />
+        <Route path="/admin/events/:eventId/group-order" element={<AdminPage><AdminGroupOrderDashboard /></AdminPage>} />
         <Route path="/admin/events/:eventId/edit" element={<AdminPage><AdminEventForm /></AdminPage>} />
         <Route path="/admin/events/:eventId/eces/new" element={<AdminPage><AdminEceForm /></AdminPage>} />
         <Route path="/admin/events/:eventId/eces/:eceId/edit" element={<AdminPage><AdminEceForm /></AdminPage>} />

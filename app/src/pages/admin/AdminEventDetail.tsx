@@ -18,6 +18,10 @@ import type { Ece, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
+function isGroupOrderEce(ece: Ece): boolean {
+  return ece.metadata?.interaction_mode === 'group_order';
+}
+
 export default function AdminEventDetail() {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
@@ -227,6 +231,15 @@ export default function AdminEventDetail() {
                     onClick={() => navigate(`/admin/events/${event.id}/queues/${linkedQueue.id}`)}
                   >
                     Manage Queue
+                  </button>
+                )}
+                {isGroupOrderEce(exp) && (
+                  <button
+                    className="actionBtn actionBtn-primary"
+                    style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
+                    onClick={() => navigate(`/admin/events/${event.id}/group-order`)}
+                  >
+                    Group Order
                   </button>
                 )}
                 {canManageThisEvent && (

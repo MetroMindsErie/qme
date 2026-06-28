@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-06-26",
+    updated: "2026-06-28",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -1680,6 +1680,15 @@ const QME_ROADMAP = {
     }
   ],
   inbox: [
+    {
+      id: "inbox-test-lab-group-dinner-order",
+      title: "qME Test Lab group dinner order pilot",
+      disposition: "pilot",
+      summary:
+        "Quick dinner test: guests check in with first and last name, join a Dinner Order feature, add tapas/drink items with quantities, see what they submitted, and add more. Admin sees submissions by guest plus kitchen totals and can set an item quantity to zero. This is a clean qME Test Lab scenario, separate from SOTC, and is early evidence for a broader guest request/list pattern similar to QR-based call-for-help flows.",
+      linkedStoryIds: ["story-guest-intentions", "story-queue-length-readiness-states", "story-testing-workspace-issue-capture"],
+      createdAt: "2026-06-28T00:00:00.000Z"
+    },
     {
       id: "inbox-remind-db-hardening-student-after-role-structure",
       title: "Reminder: re-engage computer engineering student for database hardening review",

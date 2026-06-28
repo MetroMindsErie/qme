@@ -225,11 +225,31 @@ export interface EventCheckIn {
   updated_at: string;
 }
 
+export interface EventGroupOrderItem {
+  id: string;
+  event_id: string;
+  check_in_id: string;
+  item_name: string;
+  quantity: number;
+  notes: string;
+  source: 'guest' | 'staff' | 'admin';
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
 export type CreateEventCheckInInput = Pick<
   EventCheckIn,
   'event_id' | 'first_name' | 'last_name'
 > & {
   code?: string | null;
+};
+
+export type CreateEventGroupOrderItemInput = Pick<
+  EventGroupOrderItem,
+  'event_id' | 'check_in_id' | 'item_name' | 'quantity'
+> & {
+  notes?: string;
 };
 
 export interface EventGuestMark {

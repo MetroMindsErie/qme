@@ -404,7 +404,7 @@ const QME_ROADMAP = {
             {
               id: "story-planning-admin-access-controls",
               title: "Replace planning access code with admin controls",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Move the deployed planning workspace from a shared access code to qME admin-aware controls so roadmap viewing, editing, and syncing are governed like the rest of the platform.",
@@ -416,7 +416,7 @@ const QME_ROADMAP = {
                 "Temporary fallback access, if retained during transition, is labeled with risk and removal intent."
               ],
               notes:
-                "Added during Sprint 2 after confirming that /planning is now part of the operating system and should be protected by the same admin/auth foundation being built for qME. Current access code is documented as a temporary assumption in docs/hard-coded-demo-assumptions-audit.md."
+                "Completed on 2026-06-29: /planning now unlocks from the same Supabase Auth session used by /admin, and /api/planning-data verifies that the caller is an active qME superadmin before allowing roadmap reads or writes. The old shared planning access code and cookie gate were removed from the planning route. Future expansion can add org-scoped planning visibility once the product planning model needs collaborators beyond qME operators."
             }
           ]
         },

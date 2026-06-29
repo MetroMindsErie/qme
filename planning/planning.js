@@ -653,24 +653,64 @@ function renderAll() {
 }
 
 async function fetchRoadmap(options = {}) {
+  const token = readStoredAdminAccessToken();
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+
   const response = await fetch("/api/planning-data", {
-    headers: { "Content-Type": "application/json" },
-    credentials: "same-origin",
-    ...options
+    ...options,
+    headers,
+    credentials: "same-origin"
   });
 
   if (!response.ok) {
-    throw new Error("Roadmap access denied");
+    const error = new Error("Roadmap access denied");
+    error.status = response.status;
+    throw error;
   }
 
   return response.json();
 }
 
+function findAccessToken(value) {
+  if (!value) return "";
+  if (typeof value === "string") {
+    try {
+      return findAccessToken(JSON.parse(value));
+    } catch {
+      return "";
+    }
+  }
+  if (typeof value !== "object") return "";
+  return (
+    value.access_token ||
+    value.currentSession?.access_token ||
+    value.session?.access_token ||
+    value.data?.session?.access_token ||
+    ""
+  );
+}
+
+function readStoredAdminAccessToken() {
+  try {
+    for (const key of Object.keys(window.localStorage || {})) {
+      if (!key.startsWith("sb-") || !key.endsWith("-auth-token")) continue;
+      const token = findAccessToken(window.localStorage.getItem(key));
+      if (token) return token;
+    }
+  } catch {
+    return "";
+  }
+  return "";
+}
+
 async function initAccessGate() {
   const gate = document.getElementById("accessGate");
-  const form = document.getElementById("accessForm");
-  const input = document.getElementById("accessCode");
   const error = document.getElementById("gateError");
+  const retry = document.getElementById("retryAccess");
 
   function unlock() {
     document.body.classList.remove("planning-locked");
@@ -678,32 +718,33 @@ async function initAccessGate() {
     gate.setAttribute("aria-hidden", "true");
   }
 
-  try {
-    const roadmap = await fetchRoadmap();
-    setRoadmapData(roadmap);
-    unlock();
-    return;
-  } catch {
-    gate.classList.remove("unlocked");
-  }
-
-  input.focus();
-  form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    error.textContent = "";
+  async function tryUnlock() {
+    error.textContent = "Checking admin access...";
     try {
-      const roadmap = await fetchRoadmap({
-        method: "POST",
-        body: JSON.stringify({ code: input.value.trim() })
-      });
+      const roadmap = await fetchRoadmap();
       setRoadmapData(roadmap);
       unlock();
       return;
-    } catch {
-      error.textContent = "That code did not work.";
-      input.select();
+    } catch (accessError) {
+      gate.classList.remove("unlocked");
+      if (accessError.status === 403) {
+        error.textContent = "This admin account does not have qME superadmin access.";
+      } else if (accessError.status === 500) {
+        error.textContent = "Planning admin access is not configured on the server.";
+      } else {
+        error.textContent = "Sign in at /admin with a qME superadmin account, then return here.";
+      }
     }
-  });
+  }
+
+  tryUnlock();
+  if (retry) {
+    retry.addEventListener("click", () => {
+      tryUnlock();
+    });
+  } else {
+    gate.classList.remove("unlocked");
+  }
 }
 
 document.addEventListener("click", (event) => {

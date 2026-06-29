@@ -62,35 +62,34 @@ body.planning-locked .drawer {
   font-size: 1.35rem;
 }
 
-.gate-panel label,
-.gate-panel label span {
-  display: block;
-}
-
-.gate-panel label span {
-  margin-bottom: 0.35rem;
+.gate-copy {
   color: var(--muted);
-  font-size: 0.8rem;
-  font-weight: 800;
+  line-height: 1.45;
 }
 
-.gate-panel input {
-  width: 100%;
-  min-height: 2.7rem;
-  padding: 0 0.75rem;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+.gate-actions {
+  display: grid;
+  gap: 0.65rem;
 }
 
-.gate-panel button {
+.gate-panel button,
+.gate-button {
   width: 100%;
   min-height: 2.7rem;
-  margin-top: 0.8rem;
   border: 0;
   border-radius: 8px;
   background: var(--accent);
   color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+}
+
+.gate-panel button {
+  background: #64748b;
 }
 
 .gate-error {

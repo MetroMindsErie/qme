@@ -8,16 +8,18 @@
   </head>
   <body class="planning-locked">
     <section class="gate" id="accessGate">
-      <form class="gate-panel" id="accessForm">
+      <div class="gate-panel">
         <p class="eyebrow">qME Planning</p>
-        <h1>Enter Access Code</h1>
-        <label>
-          <span>Code</span>
-          <input id="accessCode" type="password" inputmode="numeric" autocomplete="off" />
-        </label>
+        <h1>Admin Sign-In Required</h1>
+        <p class="gate-copy">
+          Planning is limited to qME superadmin access. Sign in through the admin console, then return here.
+        </p>
         <p class="gate-error" id="gateError" role="alert"></p>
-        <button type="submit">Open Roadmap</button>
-      </form>
+        <div class="gate-actions">
+          <a class="gate-button" href="/admin">Open Admin Sign-In</a>
+          <button id="retryAccess" type="button">Try Again</button>
+        </div>
+      </div>
     </section>
 
     <header class="topbar">

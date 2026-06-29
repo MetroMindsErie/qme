@@ -1,37 +1,94 @@
-const crypto = require("crypto");
 const fallbackRoadmap = require("../planning/roadmap-data.js");
 
-const ACCESS_HASH = "710a141a6043f2f350c0a14076ceae0681224c460931add70fc620e330d42046";
-const COOKIE_NAME = "qme_planning_access";
-const ONE_DAY = 60 * 60 * 24;
 const PLANNING_DOCUMENT_ID = "qme-roadmap";
-
-function hash(value = "") {
-  return crypto.createHash("sha256").update(String(value)).digest("hex");
-}
-
-function hasAccessCookie(req) {
-  const cookie = req.headers.cookie || "";
-  return cookie
-    .split(";")
-    .map((part) => part.trim())
-    .some((part) => part === `${COOKIE_NAME}=${ACCESS_HASH}`);
-}
 
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    process.env.VITE_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 
-  if (!url || !key) return null;
-  return { url: url.replace(/\/$/, ""), key };
+  if (!url || !serviceKey) return null;
+  return { url: url.replace(/\/$/, ""), serviceKey };
 }
 
-async function fetchRoadmapFromSupabase() {
+function bearerToken(req) {
+  const header = req.headers.authorization || "";
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match ? match[1] : "";
+}
+
+async function getAuthUser(config, accessToken) {
+  const response = await fetch(`${config.url}/auth/v1/user`, {
+    headers: {
+      apikey: config.serviceKey,
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json"
+    }
+  });
+  if (!response.ok) return null;
+  return response.json();
+}
+
+async function getAdminPrincipal(config, authUserId) {
+  const response = await fetch(
+    `${config.url}/rest/v1/admin_principals?auth_user_id=eq.${encodeURIComponent(authUserId)}&status=eq.active&select=*`,
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        Accept: "application/json"
+      }
+    }
+  );
+  if (!response.ok) throw new Error(`Principal lookup failed: ${response.status}`);
+  const rows = await response.json();
+  return rows[0] || null;
+}
+
+async function isSuperadmin(config, principalId) {
+  const response = await fetch(
+    `${config.url}/rest/v1/platform_roles?principal_id=eq.${encodeURIComponent(principalId)}&role=eq.superadmin&status=eq.active&select=id`,
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        Accept: "application/json"
+      }
+    }
+  );
+  if (!response.ok) throw new Error(`Role lookup failed: ${response.status}`);
+  const rows = await response.json();
+  return rows.length > 0;
+}
+
+async function requirePlanningAdmin(req, res) {
   const config = getSupabaseConfig();
+  if (!config) {
+    res.status(500).json({ error: "SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required." });
+    return null;
+  }
+
+  const accessToken = bearerToken(req);
+  if (!accessToken) {
+    res.status(401).json({ error: "Admin sign-in required" });
+    return null;
+  }
+
+  const authUser = await getAuthUser(config, accessToken);
+  if (!authUser?.id) {
+    res.status(401).json({ error: "Invalid admin session" });
+    return null;
+  }
+
+  const principal = await getAdminPrincipal(config, authUser.id);
+  if (!principal || !(await isSuperadmin(config, principal.id))) {
+    res.status(403).json({ error: "Only qME superadmin can access planning data." });
+    return null;
+  }
+
+  return { config, principal };
+}
+
+async function fetchRoadmapFromSupabase(config) {
   if (!config || typeof fetch !== "function") return null;
 
   const response = await fetch(
@@ -40,8 +97,8 @@ async function fetchRoadmapFromSupabase() {
     )}&select=data`,
     {
       headers: {
-        apikey: config.key,
-        Authorization: `Bearer ${config.key}`,
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
         Accept: "application/json"
       }
     }
@@ -55,8 +112,7 @@ async function fetchRoadmapFromSupabase() {
   return rows && rows[0] && rows[0].data ? rows[0].data : null;
 }
 
-async function saveRoadmapToSupabase(roadmap) {
-  const config = getSupabaseConfig();
+async function saveRoadmapToSupabase(config, roadmap, principal) {
   if (!config || typeof fetch !== "function") {
     throw new Error("Supabase is not configured for planning writes");
   }
@@ -66,14 +122,14 @@ async function saveRoadmapToSupabase(roadmap) {
     {
       method: "PATCH",
       headers: {
-        apikey: config.key,
-        Authorization: `Bearer ${config.key}`,
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
         "Content-Type": "application/json",
         Prefer: "return=minimal"
       },
       body: JSON.stringify({
         data: roadmap,
-        updated_by: "planning-editor"
+        updated_by: principal?.email || principal?.display_name || "planning-admin"
       })
     }
   );
@@ -84,17 +140,17 @@ async function saveRoadmapToSupabase(roadmap) {
   }
 }
 
-async function getRoadmap() {
+async function getRoadmap(config) {
   try {
-    return (await fetchRoadmapFromSupabase()) || fallbackRoadmap;
+    return (await fetchRoadmapFromSupabase(config)) || fallbackRoadmap;
   } catch (error) {
     console.error(error);
     return fallbackRoadmap;
   }
 }
 
-async function sendRoadmap(res) {
-  const roadmap = await getRoadmap();
+async function sendRoadmap(config, res) {
+  const roadmap = await getRoadmap(config);
   res.setHeader("Cache-Control", "private, no-store");
   res.status(200).json(roadmap);
 }
@@ -283,37 +339,28 @@ function addInboxItem(roadmap, item) {
 }
 
 module.exports = async function handler(req, res) {
-  if (req.method === "GET") {
-    if (hasAccessCookie(req)) {
-      await sendRoadmap(res);
-      return;
-    }
-    res.status(401).json({ error: "Access code required" });
+  if (!["GET", "PATCH"].includes(req.method)) {
+    res.setHeader("Allow", "GET, PATCH");
+    res.status(405).json({ error: "Method not allowed" });
     return;
   }
 
-  if (req.method === "POST") {
-    const body = parseBody(req);
-    const code = body.code || "";
-    if (hash(code.trim()) !== ACCESS_HASH) {
-      res.status(401).json({ error: "Invalid access code" });
-      return;
-    }
+  let admin = null;
+  try {
+    admin = await requirePlanningAdmin(req, res);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Unable to verify planning admin access." });
+    return;
+  }
+  if (!admin) return;
 
-    res.setHeader(
-      "Set-Cookie",
-      `${COOKIE_NAME}=${ACCESS_HASH}; Max-Age=${ONE_DAY}; Path=/; HttpOnly; Secure; SameSite=Strict`
-    );
-    await sendRoadmap(res);
+  if (req.method === "GET") {
+    await sendRoadmap(admin.config, res);
     return;
   }
 
   if (req.method === "PATCH") {
-    if (!hasAccessCookie(req)) {
-      res.status(401).json({ error: "Access code required" });
-      return;
-    }
-
     const body = parseBody(req);
     if (body.inboxItem) {
       const item = sanitizeInboxItem(body.inboxItem);
@@ -323,9 +370,9 @@ module.exports = async function handler(req, res) {
       }
 
       try {
-        const roadmap = await getRoadmap();
+        const roadmap = await getRoadmap(admin.config);
         addInboxItem(roadmap, item);
-        await saveRoadmapToSupabase(roadmap);
+        await saveRoadmapToSupabase(admin.config, roadmap, admin.principal);
         res.setHeader("Cache-Control", "private, no-store");
         res.status(200).json({ roadmap, inboxItem: item });
         return;
@@ -346,13 +393,13 @@ module.exports = async function handler(req, res) {
       }
 
       try {
-        const roadmap = await getRoadmap();
+        const roadmap = await getRoadmap(admin.config);
         const addedStory = addStoryToTheme(roadmap, themeId, story, inboxId);
         if (!addedStory) {
           res.status(404).json({ error: "Theme not found" });
           return;
         }
-        await saveRoadmapToSupabase(roadmap);
+        await saveRoadmapToSupabase(admin.config, roadmap, admin.principal);
         res.setHeader("Cache-Control", "private, no-store");
         res.status(200).json({ roadmap, story: addedStory });
         return;
@@ -371,13 +418,13 @@ module.exports = async function handler(req, res) {
     }
 
     try {
-      const roadmap = await getRoadmap();
+      const roadmap = await getRoadmap(admin.config);
       const updatedStory = applyStoryUpdate(roadmap, storyId, updates);
       if (!updatedStory) {
         res.status(404).json({ error: "Story not found" });
         return;
       }
-      await saveRoadmapToSupabase(roadmap);
+      await saveRoadmapToSupabase(admin.config, roadmap, admin.principal);
       res.setHeader("Cache-Control", "private, no-store");
       res.status(200).json({ roadmap, story: updatedStory });
       return;
@@ -388,6 +435,5 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  res.setHeader("Allow", "GET, POST, PATCH");
   res.status(405).json({ error: "Method not allowed" });
 };

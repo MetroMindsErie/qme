@@ -533,7 +533,7 @@ const QME_ROADMAP = {
                 "A user with multiple organizations can choose which organization/account context to use after login."
               ],
               notes:
-                "Schema foundation added in supabase-admin-role-foundation.sql with admin_principals, organization_memberships, and event_staff_assignments. App pass added an Organization Staff panel: org admins/superadmins can list active organization memberships, add an existing active admin principal by email as org_admin or universal_staff, and archive/remove memberships. Invite emails, new-user creation, event-specific staff assignment UI, and role-aware RLS enforcement remain in Sprint 2."
+                "Schema foundation added in supabase-admin-role-foundation.sql with admin_principals, organization_memberships, and event_staff_assignments. App passes added: Organization Staff panel for org_admin/universal_staff memberships; Event Staff panel on admin event detail for event_admin, check_in_staff, and feature-scoped service_staff/service_provider/station_account assignments by existing admin principal email. Invite emails, smoother new-user flow, and role-aware database RLS enforcement remain in Sprint 2."
             }
           ]
         },

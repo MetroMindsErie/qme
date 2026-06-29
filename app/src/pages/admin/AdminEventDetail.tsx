@@ -1,7 +1,7 @@
 /**
  * Admin: View event details + manage its queues (list, create, delete).
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import {
@@ -12,6 +12,14 @@ import {
 } from '../../lib/adminPrincipalService';
 import { getEvent } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
+import {
+  addEventStaffAssignment,
+  archiveEventStaffAssignment,
+  listEventStaff,
+  type EventStaffMember,
+  type EventStaffRole,
+} from '../../lib/eventStaffService';
+import { findAdminPrincipalByEmail } from '../../lib/organizationStaffService';
 import { listQueuesForEvent, deleteQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { Ece, QEvent, Queue } from '../../types';
@@ -28,9 +36,14 @@ export default function AdminEventDetail() {
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<Queue[]>([]);
   const [eces, setEces] = useState<Ece[]>([]);
+  const [eventStaff, setEventStaff] = useState<EventStaffMember[]>([]);
   const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffRole, setStaffRole] = useState<EventStaffRole>('check_in_staff');
+  const [staffEceId, setStaffEceId] = useState('');
+  const [staffSaving, setStaffSaving] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
@@ -45,13 +58,15 @@ export default function AdminEventDetail() {
         setEces([]);
         return;
       }
-      const [qs, exps] = await Promise.all([
+      const [qs, exps, staff] = await Promise.all([
         listQueuesForEvent(ev.id),
         listEcesForEvent(ev.id),
+        listEventStaff(ev.id),
       ]);
       setEvent(ev);
       setQueues(qs);
       setEces(exps);
+      setEventStaff(staff);
     } catch (e) {
       console.error('Failed to load event', e);
       alert('Event not found');
@@ -84,6 +99,69 @@ export default function AdminEventDetail() {
     } catch (e) {
       console.error('Delete eCe failed', e);
       alert('Failed to delete eCe.');
+    }
+  }
+
+  async function handleAddEventStaff(eventForm: FormEvent) {
+    eventForm.preventDefault();
+    if (!event || !currentAdmin || !staffEmail.trim()) return;
+    if (!event.organization_id) {
+      alert('Assign this event to an organization before adding event staff.');
+      return;
+    }
+    const roleRequiresFeature = !['event_admin', 'check_in_staff'].includes(staffRole);
+    const scopedEce = staffEceId ? eces.find((ece) => ece.id === staffEceId) : null;
+    if (roleRequiresFeature && !scopedEce) {
+      alert('Station/service roles must be assigned to a specific event feature.');
+      return;
+    }
+    setStaffSaving(true);
+    try {
+      const principal = await findAdminPrincipalByEmail(staffEmail);
+      if (!principal) {
+        alert('No active admin principal was found for that email. Create/link the admin principal first, then add the event role.');
+        return;
+      }
+      const alreadyAssigned = eventStaff.some((member) =>
+        member.assignment.principal_id === principal.id
+        && member.assignment.role === staffRole
+        && (member.assignment.ece_id ?? '') === (scopedEce?.id ?? '')
+      );
+      if (alreadyAssigned) {
+        alert('That admin already has this event role.');
+        return;
+      }
+      await addEventStaffAssignment({
+        eventId: event.id,
+        organizationId: event.organization_id,
+        principalId: principal.id,
+        role: staffRole,
+        eceId: scopedEce?.id ?? null,
+        queueId: scopedEce?.queue_id ?? null,
+        grantedByPrincipalId: currentAdmin.principal.id,
+      });
+      setStaffEmail('');
+      setStaffRole('check_in_staff');
+      setStaffEceId('');
+      setEventStaff(await listEventStaff(event.id));
+    } catch (error) {
+      console.error('Failed to add event staff', error);
+      alert('Could not add event staff. Check whether this person already has an active/duplicate assignment.');
+    } finally {
+      setStaffSaving(false);
+    }
+  }
+
+  async function handleArchiveEventStaff(member: EventStaffMember) {
+    if (!event) return;
+    const name = member.principal?.display_name || member.principal?.email || 'this staff member';
+    if (!confirm(`Remove ${name} from this event role?`)) return;
+    try {
+      await archiveEventStaffAssignment(member.assignment.id);
+      setEventStaff(await listEventStaff(event.id));
+    } catch (error) {
+      console.error('Failed to remove event staff', error);
+      alert('Could not remove event staff.');
     }
   }
 
@@ -122,6 +200,9 @@ export default function AdminEventDetail() {
   const standaloneQueues = queues.filter((queue) => !linkedQueueIds.has(queue.id));
   const visibleEces = eces.filter((ece) => ece.type !== 'check_in');
   const canManageThisEvent = canManageEvent(currentAdmin, event);
+  const staffRolesThatRequireFeature: EventStaffRole[] = ['service_staff', 'station_account', 'service_provider'];
+  const selectedRoleRequiresFeature = staffRolesThatRequireFeature.includes(staffRole);
+  const eceById = new Map(eces.map((ece) => [ece.id, ece]));
 
   return (
     <div className="card card-scrollable admin-event-detail-card" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -169,6 +250,102 @@ export default function AdminEventDetail() {
 
       {/* Queues section */}
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.2rem', margin: '0 0 0.75rem', fontWeight: 700 }}>Event Staff</h2>
+          <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.45, margin: '0 0 0.85rem', fontWeight: 700 }}>
+            Assign existing admin users to this event. Create the user/principal first, then add their event role here.
+          </p>
+
+          {canManageThisEvent && (
+            <form onSubmit={handleAddEventStaff} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2f3e4f', fontSize: '0.82rem', fontWeight: 800, flex: '1 1 210px' }}>
+                Admin Email
+                <input
+                  value={staffEmail}
+                  onChange={(formEvent) => setStaffEmail(formEvent.target.value)}
+                  type="email"
+                  placeholder="staff@example.com"
+                  style={{ padding: '0.65rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: 8, fontSize: '0.95rem' }}
+                />
+              </label>
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2f3e4f', fontSize: '0.82rem', fontWeight: 800, flex: '1 1 180px' }}>
+                Event Role
+                <select
+                  value={staffRole}
+                  onChange={(formEvent) => {
+                    const nextRole = formEvent.target.value as EventStaffRole;
+                    setStaffRole(nextRole);
+                    if (['event_admin', 'check_in_staff'].includes(nextRole)) setStaffEceId('');
+                  }}
+                  style={{ padding: '0.65rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: 8, fontSize: '0.95rem', background: '#fff' }}
+                >
+                  <option value="check_in_staff">Check-in staff</option>
+                  <option value="event_admin">Event admin</option>
+                  <option value="service_staff">Service/station staff</option>
+                  <option value="service_provider">Service provider</option>
+                  <option value="station_account">Station account</option>
+                </select>
+              </label>
+              {selectedRoleRequiresFeature && (
+                <label style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2f3e4f', fontSize: '0.82rem', fontWeight: 800, flex: '1 1 190px' }}>
+                  Feature
+                  <select
+                    value={staffEceId}
+                    onChange={(formEvent) => setStaffEceId(formEvent.target.value)}
+                    style={{ padding: '0.65rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: 8, fontSize: '0.95rem', background: '#fff' }}
+                  >
+                    <option value="">Select feature</option>
+                    {visibleEces.map((ece) => (
+                      <option key={ece.id} value={ece.id}>{ece.name}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <button
+                className="actionBtn actionBtn-primary"
+                type="submit"
+                disabled={staffSaving || !staffEmail.trim() || (selectedRoleRequiresFeature && !staffEceId)}
+                style={{ margin: 0, width: 'auto', padding: '0.65rem 1rem', fontSize: '0.85rem' }}
+              >
+                {staffSaving ? 'Adding...' : 'Add Event Staff'}
+              </button>
+            </form>
+          )}
+
+          {eventStaff.length === 0 && (
+            <p style={{ color: '#999', padding: '1.25rem 0', textAlign: 'center' }}>
+              No event staff have been assigned yet.
+            </p>
+          )}
+
+          {eventStaff.map((member) => {
+            const scopedEce = member.assignment.ece_id ? eceById.get(member.assignment.ece_id) : null;
+            return (
+              <div key={member.assignment.id} style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '1rem', marginBottom: '0.75rem', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontWeight: 800, color: '#2f3e4f', fontSize: '1.02rem' }}>
+                    {member.principal?.display_name || member.principal?.email || 'Unknown admin principal'}
+                  </div>
+                  <div style={{ color: '#666', fontSize: '0.85rem', marginTop: 4 }}>
+                    {(member.principal?.email || 'No email')} · {member.assignment.role.replaceAll('_', ' ')}
+                    {scopedEce ? ` · ${scopedEce.name}` : ''}
+                  </div>
+                </div>
+                {canManageThisEvent && (
+                  <button
+                    className="actionBtn actionBtn-danger"
+                    type="button"
+                    style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+                    onClick={() => handleArchiveEventStaff(member)}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event Features</h2>

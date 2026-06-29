@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
-import { createEventCheckIn, getEventCheckIn } from '../../lib/checkInService';
+import { getEventCheckIn } from '../../lib/checkInService';
+import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import {
   createGroupOrderItem,
@@ -30,8 +31,6 @@ export default function GuestGroupOrder() {
   const [event, setEvent] = useState<QEvent | null>(null);
   const [checkIn, setCheckIn] = useState<EventCheckIn | null>(null);
   const [items, setItems] = useState<EventGroupOrderItem[]>([]);
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [itemName, setItemName] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [saving, setSaving] = useState(false);
@@ -40,6 +39,8 @@ export default function GuestGroupOrder() {
 
   const activeItems = useMemo(() => items.filter((item) => item.quantity > 0), [items]);
   const removedItems = useMemo(() => items.filter((item) => item.quantity === 0), [items]);
+  const checkInConfig = getEventCheckInConfig(event);
+  const canOrder = Boolean(checkIn && (!checkInConfig.requireCompletedForParticipation || checkIn.status === 'completed'));
 
   useEffect(() => {
     if (!eventSlug) return;
@@ -52,8 +53,6 @@ export default function GuestGroupOrder() {
         setEvent(ev);
         const stored = readStoredCheckIn(ev.id);
         if (stored) {
-          setFirstName(stored.firstName || '');
-          setLastName(stored.lastName || '');
           if (stored.id) {
             try {
               const row = await getEventCheckIn(stored.id);
@@ -103,41 +102,21 @@ export default function GuestGroupOrder() {
     return () => clearInterval(interval);
   }, [checkIn?.id]);
 
-  async function ensureCheckIn(): Promise<EventCheckIn | null> {
-    if (checkIn) return checkIn;
-    if (!event) return null;
-    const row = await createEventCheckIn({
-      event_id: event.id,
-      first_name: firstName,
-      last_name: lastName,
-    });
-    localStorage.setItem(storageKey(event.id), JSON.stringify({
-      id: row.id,
-      firstName,
-      lastName,
-      ts: Date.now(),
-    }));
-    setCheckIn(row);
-    return row;
-  }
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!event || !itemName.trim() || quantity < 1) return;
+    if (!event || !checkIn || !canOrder || !itemName.trim() || quantity < 1) return;
     setSaving(true);
     setError('');
     try {
-      const row = await ensureCheckIn();
-      if (!row) return;
       await createGroupOrderItem({
         event_id: event.id,
-        check_in_id: row.id,
+        check_in_id: checkIn.id,
         item_name: itemName,
         quantity,
       });
       setItemName('');
       setQuantity(1);
-      setItems(await listGroupOrderItemsForCheckIn(row.id));
+      setItems(await listGroupOrderItemsForCheckIn(checkIn.id));
     } catch (err) {
       console.error('Failed to save order item', err);
       setError('Could not save that item. Confirm the group order SQL has been run.');
@@ -205,22 +184,24 @@ export default function GuestGroupOrder() {
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
-          {!checkIn && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
-              <input
-                className="textInput"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                placeholder="First name"
-                required
-              />
-              <input
-                className="textInput"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                placeholder="Last name"
-                required
-              />
+          {!canOrder && (
+            <div style={{ border: '1px solid #fde68a', borderRadius: 10, padding: '0.85rem', background: '#fffbeb', color: '#92400e', fontWeight: 800, lineHeight: 1.45 }}>
+              {!checkIn ? (
+                <>
+                  Please check in to the event before adding dinner items.
+                  <Link
+                    to={`/events/${eventSlug}/check-in`}
+                    className="actionBtn actionBtn-primary"
+                    style={{ textDecoration: 'none', margin: '0.75rem 0 0' }}
+                  >
+                    Check In First
+                  </Link>
+                </>
+              ) : (
+                <>
+                  You are checked in, but staff still needs to approve your check-in before you can add dinner items.
+                </>
+              )}
             </div>
           )}
           {checkIn && (
@@ -243,8 +224,9 @@ export default function GuestGroupOrder() {
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
               aria-label="Quantity"
+              disabled={!canOrder}
             />
-            <button className="actionBtn actionBtn-primary" style={{ margin: 0 }} disabled={saving}>
+            <button className="actionBtn actionBtn-primary" style={{ margin: 0 }} disabled={saving || !canOrder}>
               {saving ? 'Adding...' : 'Add Item'}
             </button>
           </div>

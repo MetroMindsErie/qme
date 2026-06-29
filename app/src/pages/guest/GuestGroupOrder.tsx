@@ -8,6 +8,7 @@ import {
   createGroupOrderItem,
   listGroupOrderItemsForCheckIn,
   onGroupOrderItemsChange,
+  updateGroupOrderItemQuantity,
 } from '../../lib/groupOrderService';
 import type { EventCheckIn, EventGroupOrderItem, QEvent } from '../../types';
 import '../../styles/shared.css';
@@ -125,6 +126,17 @@ export default function GuestGroupOrder() {
     }
   }
 
+  async function removeItem(item: EventGroupOrderItem) {
+    if (!checkIn || !confirm(`Remove "${item.item_name}" from your dinner list?`)) return;
+    try {
+      await updateGroupOrderItemQuantity(item.id, 0);
+      setItems(await listGroupOrderItemsForCheckIn(checkIn.id));
+    } catch (err) {
+      console.error('Failed to remove order item', err);
+      setError('Could not remove that item.');
+    }
+  }
+
   if (loading) {
     return <div className="card"><p style={{ textAlign: 'center', padding: '3rem' }}>Loading...</p></div>;
   }
@@ -238,14 +250,22 @@ export default function GuestGroupOrder() {
         {activeItems.length === 0 ? (
           <p style={{ color: '#94a3b8', fontWeight: 700 }}>No items yet.</p>
         ) : activeItems.map((item) => (
-          <div key={item.id} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.75rem', marginBottom: '0.55rem', display: 'flex', justifyContent: 'space-between', gap: '0.75rem' }}>
+          <div key={item.id} style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.75rem', marginBottom: '0.55rem', display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: '0.6rem' }}>
             <span style={{ fontWeight: 850, color: '#1e293b' }}>{item.item_name}</span>
             <span style={{ fontWeight: 900, color: '#5B4FCE' }}>x{item.quantity}</span>
+            <button
+              type="button"
+              className="actionBtn actionBtn-secondary"
+              style={{ margin: 0, width: 'auto', padding: '0.4rem 0.65rem', fontSize: '0.78rem' }}
+              onClick={() => removeItem(item)}
+            >
+              Remove
+            </button>
           </div>
         ))}
         {removedItems.length > 0 && (
           <div style={{ marginTop: '0.75rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.85rem' }}>
-            Removed by admin: {removedItems.map((item) => item.item_name).join(', ')}
+            Removed: {removedItems.map((item) => item.item_name).join(', ')}
           </div>
         )}
       </div>

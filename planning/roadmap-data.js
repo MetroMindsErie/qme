@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-06-28",
+    updated: "2026-06-29",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -37,6 +37,7 @@ const QME_ROADMAP = {
         "story-admin-org-role",
         "story-org-staff",
         "story-authentication-cleanup",
+        "story-temp-password-first-login",
         "story-planning-admin-access-controls",
         "story-event-org-owner",
         "story-event-operational-mode-config",
@@ -576,6 +577,24 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Near-term decision is documented in docs/admin-auth-transition-v1.md. AdminGate now recognizes Supabase Auth users linked to admin_principals, shows a visible admin identity/role bar, and keeps the passphrase as a temporary fallback. Superadmin utility added at /admin/principals to list admin principals, create named principals, link an existing Supabase Auth user UUID, and create a Supabase Auth login plus qME principal from the tool when SUPABASE_SERVICE_ROLE_KEY is configured server-side. One email/Auth user should map to one admin principal, and that principal may hold memberships in multiple organizations; UI should preserve that rather than duplicating users per organization. Role-scoped routing is active; RLS enforcement and invite-email automation remain pending."
+            },
+            {
+              id: "story-temp-password-first-login",
+              title: "Require temporary admin/staff password change on first login",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Make admin-created temporary passwords explicit by requiring a staff/admin user to set a new password before using protected admin tools.",
+              acceptanceCriteria: [
+                "Admin-created users can be marked as requiring a password change.",
+                "A user with a required password change is redirected to a password-change screen after sign-in.",
+                "Protected admin tools are blocked until the password change is completed.",
+                "Supabase Auth password update succeeds from the signed-in user's session.",
+                "The temporary-password flag is cleared only after a successful password update.",
+                "The current Jalani/SOTC pilot setup is documented as a temporary manual-password bridge until this story is implemented."
+              ],
+              notes:
+                "Added during Sprint 2 while creating Jalani as an event admin for the SOTC test. Current pilot flow can use a manually shared temporary password, but production-ready staff onboarding should not leave temporary credentials as permanent credentials."
             },
             {
               id: "story-role-permissions-audit",

@@ -142,6 +142,9 @@ export default function GuestEventCheckIn({
   }
 
   const checkInConfig = getEventCheckInConfig(event);
+  const isWaitingForHostCheckIn = submitted
+    && checkInConfig.requireCompletedForParticipation
+    && checkIn?.status !== 'completed';
   const eventLogoSrc = event.slug === 'sotc-test-check-in' || eventSlug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
@@ -191,8 +194,21 @@ export default function GuestEventCheckIn({
 
         {submitted ? (
           <>
-            <div style={{ background: '#E8F5E9', borderRadius: 10, padding: '1rem', margin: '1rem 0', color: '#1B5E20', fontWeight: 700 }}>
-              Thanks, {firstName || 'guest'}! {confirmation}
+            <div
+              style={{
+                background: isWaitingForHostCheckIn ? '#fffbeb' : '#E8F5E9',
+                border: `1px solid ${isWaitingForHostCheckIn ? '#fde68a' : '#c8e6c9'}`,
+                borderRadius: 10,
+                padding: '1rem',
+                margin: '1rem 0',
+                color: isWaitingForHostCheckIn ? '#92400e' : '#1B5E20',
+                fontWeight: 700,
+                lineHeight: 1.45,
+              }}
+            >
+              {isWaitingForHostCheckIn
+                ? `Thanks, ${firstName || 'guest'}. Your name has been submitted. Please wait for the host to officially check you in before using event features.`
+                : `Thanks, ${firstName || 'guest'}! ${confirmation}`}
             </div>
             {!checkInCode && checkIn?.ticket_type === 'flowers' && (
               <div style={{ background: '#F0EEFF', borderRadius: 12, padding: '1rem', margin: '1rem 0', color: '#2f275f', textAlign: 'center' }}>

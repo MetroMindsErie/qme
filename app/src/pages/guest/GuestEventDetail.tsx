@@ -13,7 +13,7 @@ import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
-import type { Ece, QEvent, Queue, Ticket } from '../../types';
+import type { Ece, EventCheckIn, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 import '../../styles/eventDetail.css';
@@ -271,6 +271,7 @@ export default function GuestEventDetail() {
   const [lastUpdated, setLastUpdated] = useState('just now');
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
   const [hasEventCheckIn, setHasEventCheckIn] = useState(false);
+  const [eventCheckInStatus, setEventCheckInStatus] = useState<EventCheckIn['status'] | null>(null);
   const [eventCheckInTicketType, setEventCheckInTicketType] = useState<'general' | 'flowers' | null>(null);
   const [headshotCreditStatus, setHeadshotCreditStatus] = useState<CreditStatus>('none');
   const isPeonyEvent = eventSlug === PEONY_EVENT_SLUG;
@@ -301,6 +302,7 @@ export default function GuestEventDetail() {
 
       const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
       let checkInTicketType: 'general' | 'flowers' | null = null;
+      let nextEventCheckInStatus: EventCheckIn['status'] | null = null;
       let nextHasEventCheckIn = false;
       let nextHeadshotCreditStatus: CreditStatus = 'none';
       if (storedCheckIn) {
@@ -308,6 +310,7 @@ export default function GuestEventDetail() {
           const saved = JSON.parse(storedCheckIn) as { id?: string };
           if (saved.id) {
             const row = await getEventCheckIn(saved.id);
+            nextEventCheckInStatus = row.status;
             if (!checkInConfig.requireCompletedForParticipation || row.status === 'completed') {
               checkInTicketType = row.ticket_type;
               nextHasEventCheckIn = true;
@@ -318,10 +321,12 @@ export default function GuestEventDetail() {
             }
           }
         } catch {
+          nextEventCheckInStatus = null;
           nextHasEventCheckIn = false;
           nextHeadshotCreditStatus = 'none';
         }
       }
+      setEventCheckInStatus((current) => current === nextEventCheckInStatus ? current : nextEventCheckInStatus);
       setEventCheckInTicketType((current) => current === checkInTicketType ? current : checkInTicketType);
       setHasEventCheckIn((current) => current === nextHasEventCheckIn ? current : nextHasEventCheckIn);
       setHeadshotCreditStatus((current) =>
@@ -430,6 +435,8 @@ export default function GuestEventDetail() {
   const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
   const checkInConfig = getEventCheckInConfig(event);
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
+  const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus);
+  const isWaitingForHostCheckIn = hasSubmittedEventCheckIn && !hasEventCheckIn;
   const linkedEceQueueIds = new Set(eces.map((ece) => ece.queue_id).filter(Boolean));
   const visibleQueues = queues.filter((q) => !linkedEceQueueIds.has(q.id));
   const sessionCount = visibleQueues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + eces.length;
@@ -497,10 +504,12 @@ export default function GuestEventDetail() {
             <div className="ed-activity-body">
               <div className="ed-activity-name-row">
                 <span className="ed-activity-name">{isPeonyEvent ? 'Check In at Mobile Bar' : 'Event Check-In'}</span>
-                <span className="ed-badge ed-badge-active">START HERE</span>
+                <span className="ed-badge ed-badge-active">{isWaitingForHostCheckIn ? 'WAITING' : 'START HERE'}</span>
               </div>
               <div className="ed-activity-desc">
-                {!isPeonyEvent
+                {isWaitingForHostCheckIn
+                  ? 'Your name has been submitted. Please wait for the host to officially check you in.'
+                  : !isPeonyEvent
                   ? 'Enter your name when you arrive so the event team can confirm your check-in.'
                   : eventCheckInTicketType === 'flowers'
                   ? 'You are checked in with flowers access. Use the Bouquet Bar option below when ready.'
@@ -509,7 +518,7 @@ export default function GuestEventDetail() {
             </div>
             <div className="ed-activity-right">
               <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
-                Check In
+                {isWaitingForHostCheckIn ? 'View Status' : 'Check In'}
               </Link>
             </div>
           </div>
@@ -618,7 +627,7 @@ export default function GuestEventDetail() {
             }) : '';
             const isGroupOrder = isGroupOrderEce(exp);
             const groupOrderStatusLine = isGroupOrder
-              ? hasEventCheckIn ? 'Ready to order' : 'Check in first'
+              ? hasEventCheckIn ? 'Ready to order' : isWaitingForHostCheckIn ? 'Waiting for host check-in' : 'Check in first'
               : '';
             const actionHref = isGroupOrder
               ? `/events/${eventSlug}/group-order`

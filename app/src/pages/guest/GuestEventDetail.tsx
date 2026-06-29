@@ -617,8 +617,11 @@ export default function GuestEventDetail() {
               joinPaused,
             }) : '';
             const isGroupOrder = isGroupOrderEce(exp);
+            const groupOrderStatusLine = isGroupOrder
+              ? hasEventCheckIn ? 'Ready to order' : 'Check in first'
+              : '';
             const actionHref = isGroupOrder
-              ? hasEventCheckIn ? `/events/${eventSlug}/group-order` : `/events/${eventSlug}/check-in`
+              ? `/events/${eventSlug}/group-order`
               : exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
@@ -648,7 +651,7 @@ export default function GuestEventDetail() {
               : creditLocked || creditUsed || joinPaused
               ? ''
               : isGroupOrder
-              ? hasEventCheckIn ? 'View' : 'Check In'
+              ? 'Order'
               : linkedQueue
               ? 'Join'
               : exp.type === 'check_in'
@@ -687,9 +690,9 @@ export default function GuestEventDetail() {
                     <span>Starts {formatTime(event.start_time)}</span>
                   </div>
                 )}
-                {linkedQueue && (
+                {(linkedQueue || groupOrderStatusLine) && (
                   <div className="ed-ticket-note">
-                    {statusLine}
+                    {linkedQueue ? statusLine : groupOrderStatusLine}
                   </div>
                 )}
               </div>

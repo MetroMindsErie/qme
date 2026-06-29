@@ -165,35 +165,11 @@ export default function GuestGroupOrder() {
           </div>
         )}
 
-        <div style={{ border: '2px solid #10b981', borderRadius: 12, padding: '0.9rem', marginBottom: '1rem', background: '#ecfdf5' }}>
-          <div style={{ fontSize: '0.78rem', color: '#047857', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1 }}>
-            Status
+        {canOrder && (
+          <div style={{ border: '1px solid #bbf7d0', borderRadius: 10, padding: '0.75rem', marginBottom: '1rem', background: '#f0fdf4', color: '#166534', fontWeight: 800, lineHeight: 1.4 }}>
+            Items you add here are shared with the group order list.
           </div>
-          <div style={{ color: '#064e3b', fontSize: '1.35rem', fontWeight: 900, marginTop: 4 }}>
-            On the group list
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 6, marginTop: '0.8rem', alignItems: 'center' }}>
-            {['Add Items', 'Shared List', 'Order Together'].map((step, index) => (
-              <div key={step} style={{ textAlign: 'center' }}>
-                <div style={{
-                  width: 34,
-                  height: 34,
-                  borderRadius: '50%',
-                  margin: '0 auto 0.25rem',
-                  background: index < 2 ? '#10b981' : '#fff',
-                  color: index < 2 ? '#fff' : '#64748b',
-                  border: `2px solid ${index < 2 ? '#10b981' : '#cbd5e1'}`,
-                  display: 'grid',
-                  placeItems: 'center',
-                  fontWeight: 900,
-                }}>
-                  {index + 1}
-                </div>
-                <div style={{ fontSize: '0.72rem', color: '#334155', fontWeight: 800 }}>{step}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+        )}
 
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '0.75rem', marginBottom: '1rem' }}>
           {!canOrder && (

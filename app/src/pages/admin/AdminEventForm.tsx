@@ -11,12 +11,19 @@ import {
   getManagedOrganizationIds,
   type CurrentAdminPrincipal,
 } from '../../lib/adminPrincipalService';
+import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
 import { createEvent, getEvent, updateEvent } from '../../lib/eventService';
 import { listOrganizations } from '../../lib/organizationService';
 import { slugify } from '../../lib/utils';
 import type { CreateEventInput, Organization } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
 
 export default function AdminEventForm() {
   const navigate = useNavigate();
@@ -37,6 +44,13 @@ export default function AdminEventForm() {
     end_time: null,
     timezone: 'EST',
     status: 'draft',
+    metadata: {
+      check_in: {
+        enabled: true,
+        completion_mode: 'auto',
+        require_completed_for_participation: false,
+      },
+    },
   });
   const [autoSlug, setAutoSlug] = useState(true);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -74,6 +88,7 @@ export default function AdminEventForm() {
             end_time: ev.end_time,
             timezone: ev.timezone,
             status: ev.status,
+            metadata: ev.metadata ?? {},
           });
           setAutoSlug(false);
         } else if (admin && !admin.isSuperadmin && managedOrganizationIds.length === 0) {
@@ -103,6 +118,53 @@ export default function AdminEventForm() {
       return next;
     });
     if (field === 'slug') setAutoSlug(false);
+  }
+
+  function updateCheckInSettings(
+    patch: Partial<{
+      completionMode: EventCheckInCompletionMode;
+      requireCompletedForParticipation: boolean;
+    }>
+  ) {
+    setForm((prev) => {
+      const metadata = asRecord(prev.metadata);
+      const existingCheckIn = asRecord(metadata.check_in);
+      const current = getEventCheckInConfig({
+        id: '',
+        organization_id: null,
+        name: '',
+        slug: '',
+        description: '',
+        location: '',
+        image_url: '',
+        event_date: null,
+        start_time: null,
+        end_time: null,
+        timezone: '',
+        status: 'draft',
+        created_at: '',
+        updated_at: '',
+        metadata,
+      });
+      const completionMode = patch.completionMode ?? current.completionMode;
+      const enabled = completionMode !== 'none';
+      const requireCompletedForParticipation = enabled
+        ? patch.requireCompletedForParticipation ?? current.requireCompletedForParticipation
+        : false;
+
+      return {
+        ...prev,
+        metadata: {
+          ...metadata,
+          check_in: {
+            ...existingCheckIn,
+            enabled,
+            completion_mode: completionMode,
+            require_completed_for_participation: requireCompletedForParticipation,
+          },
+        },
+      };
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -176,6 +238,23 @@ export default function AdminEventForm() {
     width: '100%',
     boxSizing: 'border-box' as const,
   };
+  const checkInConfig = getEventCheckInConfig({
+    id: '',
+    organization_id: null,
+    name: form.name,
+    slug: form.slug ?? '',
+    description: form.description,
+    location: form.location,
+    image_url: form.image_url,
+    event_date: form.event_date ?? null,
+    start_time: form.start_time ?? null,
+    end_time: form.end_time ?? null,
+    timezone: form.timezone,
+    status: form.status ?? 'draft',
+    created_at: '',
+    updated_at: '',
+    metadata: form.metadata,
+  });
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -316,6 +395,35 @@ export default function AdminEventForm() {
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </select>
+        </div>
+
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', marginTop: '0.25rem', background: '#f8fafc' }}>
+          <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Event Check-In Settings</h2>
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Check-In Mode</label>
+            <select
+              style={inputStyle}
+              value={checkInConfig.completionMode}
+              onChange={(e) => updateCheckInSettings({ completionMode: e.target.value as EventCheckInCompletionMode })}
+            >
+              <option value="auto">Auto check-in: guests are admitted after entering their name</option>
+              <option value="staff">Staff approval: admin must check guests in</option>
+              <option value="none">No event check-in</option>
+            </select>
+          </div>
+          <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', color: '#334155', fontWeight: 700, lineHeight: 1.4 }}>
+            <input
+              type="checkbox"
+              checked={checkInConfig.requireCompletedForParticipation}
+              disabled={!checkInConfig.enabled}
+              onChange={(e) => updateCheckInSettings({ requireCompletedForParticipation: e.target.checked })}
+              style={{ marginTop: 3 }}
+            />
+            Require completed check-in before guests can use event features
+          </label>
+          <p style={{ margin: '0.65rem 0 0', color: '#64748b', fontSize: '0.84rem', fontWeight: 700, lineHeight: 1.45 }}>
+            Auto is best for lightweight tests. Staff approval is best when someone needs to verify arrivals, grant access, or control who can use stations.
+          </p>
         </div>
 
         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid #e0e0e0', flexWrap: 'wrap' as const }}>

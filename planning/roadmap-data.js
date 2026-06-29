@@ -1683,11 +1683,20 @@ const QME_ROADMAP = {
     {
       id: "inbox-test-lab-group-dinner-order",
       title: "qME Test Lab group dinner order pilot",
-      disposition: "pilot",
+      disposition: "future",
       summary:
-        "Quick dinner test: guests check in with first and last name, join a Dinner Order feature, add tapas/drink items with quantities, see what they submitted, and add more. Admin sees submissions by guest plus kitchen totals and can set an item quantity to zero. This is a clean qME Test Lab scenario, separate from SOTC, and is early evidence for a broader guest request/list pattern similar to QR-based call-for-help flows.",
+        "Quick dinner test: guests check in with first and last name, join a Dinner Order feature, add tapas/drink items with quantities, see what they submitted, add more, remove their own unsubmitted items, and admin can send gathered items to an ordered bucket. Test went well but showed that a real group-order feature would need structured menu selection rather than free typing, menu URL/PDF support, per-item quantities per order, fractional/minimum quantities such as half portions, and the ability to increment an existing item. This remains a fun future qME facilitation feature, but not core SOTC readiness.",
       linkedStoryIds: ["story-guest-intentions", "story-queue-length-readiness-states", "story-testing-workspace-issue-capture"],
       createdAt: "2026-06-28T00:00:00.000Z"
+    },
+    {
+      id: "inbox-ece-visible-before-check-in-option",
+      title: "eCe visibility before completed check-in",
+      disposition: "promote",
+      summary:
+        "Add an eCe setup option controlling whether a feature is visible before completed event check-in. Some features should be hidden entirely until check-in is complete; others should remain visible with a locked/status message such as check in first, waiting for host check-in, photo credit required, or join paused. This should be configured per eCe rather than hard-coded by feature type.",
+      linkedStoryIds: ["story-ece-activation-reset", "story-guest-condition-engine"],
+      createdAt: "2026-06-29T00:00:00.000Z"
     },
     {
       id: "inbox-remind-db-hardening-student-after-role-structure",

@@ -91,6 +91,7 @@ function App() {
         <Route path="/events/:eventSlug/q/:queueSlug/ticket" element={<QueueTicketPage />} />
 
         {/* ===== Admin: kept for operator use ===== */}
+        <Route path="/admin" element={<Navigate to="/admin/events" replace />} />
         <Route path="/admin/organizations" element={<AdminPage><AdminOrganizationList /></AdminPage>} />
         <Route path="/admin/organizations/:organizationId" element={<AdminPage><AdminOrganizationDetail /></AdminPage>} />
         <Route path="/admin/organizations/:organizationId/expies/new" element={<AdminPage><AdminExpieForm /></AdminPage>} />

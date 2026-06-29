@@ -256,7 +256,7 @@ export default function AdminEventDetail() {
             Assign existing admin users to this event. Create the user/principal first, then add their event role here.
           </p>
 
-          {canManageThisEvent && (
+          {canManageThisEvent && currentAdmin && (
             <form onSubmit={handleAddEventStaff} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2f3e4f', fontSize: '0.82rem', fontWeight: 800, flex: '1 1 210px' }}>
                 Admin Email
@@ -312,7 +312,13 @@ export default function AdminEventDetail() {
             </form>
           )}
 
-          {eventStaff.length === 0 && (
+          {!currentAdmin && (
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', color: '#9a3412', fontWeight: 800, lineHeight: 1.45 }}>
+              Sign in with named admin access to view or manage event staff. The temporary passphrase fallback cannot read RLS-protected staff assignments.
+            </div>
+          )}
+
+          {currentAdmin && eventStaff.length === 0 && (
             <p style={{ color: '#999', padding: '1.25rem 0', textAlign: 'center' }}>
               No event staff have been assigned yet.
             </p>
@@ -331,7 +337,7 @@ export default function AdminEventDetail() {
                     {scopedEce ? ` · ${scopedEce.name}` : ''}
                   </div>
                 </div>
-                {canManageThisEvent && (
+                {canManageThisEvent && currentAdmin && (
                   <button
                     className="actionBtn actionBtn-danger"
                     type="button"

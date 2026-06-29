@@ -10,6 +10,39 @@ It is intentionally a first pass, not the final security model. qME still allows
 
 ## Hardened Now
 
+### Pass 2: Setup Surfaces
+
+Added in `supabase-sprint2-setup-rls.sql`.
+
+- `organizations`
+  - Active organizations remain public-readable.
+  - qME superadmin can create/delete organizations.
+  - qME superadmin and organization admin can update their organization.
+
+- `events`
+  - Active events remain public-readable for guest event pages.
+  - Event creation requires qME superadmin or organization admin for the owning organization.
+  - Event updates/deletes require qME superadmin, organization admin, or event admin.
+
+- `expies`
+  - Active reusable expies remain readable.
+  - Reusable expie writes require qME superadmin or organization admin.
+
+- `eces`
+  - Active event-context activities/features remain guest-readable.
+  - Event feature setup writes require qME superadmin, organization admin, or event admin.
+
+- `experiences`
+  - Legacy blended experience rows remain readable for active rows.
+  - Writes are restricted to organization/event setup admins while the legacy table remains in place.
+
+- `queues`
+  - Active queue rows remain guest-readable.
+  - Queue setup/edit/delete requires qME superadmin, organization admin, or event admin.
+  - Ticket movement and guest queue participation remain in the later guest-token/RPC pass.
+
+### Pass 1: Role and SOTC Guest Action Tables
+
 - `admin_principals`
   - Authenticated qME admins can read active principals.
   - Superadmin can create, update, archive, and link principals.
@@ -51,6 +84,7 @@ It is intentionally a first pass, not the final security model. qME still allows
 
 - `tickets`
   - Still needs a guest-owned identity/token before per-ticket RLS can distinguish one anonymous guest from another.
+  - Staff/admin ticket transitions should move behind scoped RPCs or policies in the next pass.
 
 - `event_check_ins`
   - Still needs a check-in token or guest session before RLS can safely expose only the current guest's check-in.
@@ -69,15 +103,17 @@ It is intentionally a first pass, not the final security model. qME still allows
 2. Jalani can sign in and see/manage only `SOTC Test Check-in`.
 3. Jalani cannot open Admin Users or broad organization controls.
 4. Event admin can add/remove event staff assignments for `SOTC Test Check-in`.
-5. Check-in staff/event admin can check in guests and grant photo credit.
-6. Guest can still:
+5. Event admin can edit the SOTC Test Check-in event and event features.
+6. Anonymous user cannot create/edit organizations, events, expies, eCes, or queues by direct client write.
+7. Check-in staff/event admin can check in guests and grant photo credit.
+8. Guest can still:
    - check in,
    - join Scan-Code Adventure,
    - join Headshot Photographer when eligible,
    - mark nearby,
    - complete scan-code adventure.
-7. Anonymous user cannot grant photo credits by direct client update.
+9. Anonymous user cannot grant photo credits by direct client update.
 
 ## Next Hardening Step
 
-Add a guest participation token/session model so `event_check_ins`, `tickets`, guest marks, and guest credit reads can be scoped to the actual guest rather than staying broadly readable for the pilot.
+Add a guest participation token/session model and scoped queue/check-in RPCs so `event_check_ins`, `tickets`, guest marks, and guest credit reads can be scoped to the actual guest rather than staying broadly readable for the pilot.

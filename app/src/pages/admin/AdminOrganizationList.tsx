@@ -37,9 +37,19 @@ export default function AdminOrganizationList() {
       <Header logoSrc="/images/qmeFirstLogo.jpg" titleLine1="ADMIN" titleLine2="ORGS" />
 
       <div style={{ padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>
-        <h1 className="headline" style={{ fontSize: '1.5rem', margin: 0, fontWeight: 700 }}>
-          Organizations
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <h1 className="headline" style={{ fontSize: '1.5rem', margin: 0, fontWeight: 700 }}>
+            Organizations
+          </h1>
+          <button
+            className="actionBtn actionBtn-secondary"
+            type="button"
+            style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+            onClick={() => navigate('/admin/events')}
+          >
+            Back to Events
+          </button>
+        </div>
         {currentAdmin && !currentAdmin.isSuperadmin && (
           <p style={{ color: '#64748b', margin: '0.45rem 0 0', fontSize: '0.85rem', fontWeight: 700 }}>
             Showing organizations where you have organization admin access.

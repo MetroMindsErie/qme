@@ -163,9 +163,19 @@ export default function AdminPrincipalList() {
       <Header logoSrc="/images/qmeFirstLogo.jpg" titleLine1="ADMIN" titleLine2="IDENTITY" />
 
       <div style={{ padding: '0 1.25rem 1rem', borderBottom: '2px solid #e0e0e0' }}>
-        <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.35rem', fontWeight: 800 }}>
-          Admin Principals
-        </h1>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.35rem', fontWeight: 800 }}>
+            Admin Principals
+          </h1>
+          <button
+            className="actionBtn actionBtn-secondary"
+            type="button"
+            style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+            onClick={() => navigate('/admin/events')}
+          >
+            Back to Events
+          </button>
+        </div>
         <p style={{ color: '#64748b', margin: 0, lineHeight: 1.45, fontWeight: 700 }}>
           Create named qME admin/staff users. Enter a password to create the Supabase login now, or leave it blank to create a principal-only record for later linking.
         </p>

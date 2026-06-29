@@ -38,7 +38,8 @@ export default function GuestGroupOrder() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const activeItems = useMemo(() => items.filter((item) => item.quantity > 0), [items]);
+  const activeItems = useMemo(() => items.filter((item) => item.status === 'gathering' && item.quantity > 0), [items]);
+  const orderedItems = useMemo(() => items.filter((item) => item.status === 'ordered' && item.quantity > 0), [items]);
   const removedItems = useMemo(() => items.filter((item) => item.quantity === 0), [items]);
   const checkInConfig = getEventCheckInConfig(event);
   const canOrder = Boolean(checkIn && (!checkInConfig.requireCompletedForParticipation || checkIn.status === 'completed'));
@@ -243,6 +244,19 @@ export default function GuestGroupOrder() {
           <div style={{ marginTop: '0.75rem', color: '#94a3b8', fontWeight: 700, fontSize: '0.85rem' }}>
             Removed: {removedItems.map((item) => item.item_name).join(', ')}
           </div>
+        )}
+        {orderedItems.length > 0 && (
+          <>
+            <h2 style={{ fontSize: '1rem', color: '#166534', margin: '1rem 0 0.5rem' }}>
+              Ordered
+            </h2>
+            {orderedItems.map((item) => (
+              <div key={item.id} style={{ border: '1px solid #d1fae5', borderRadius: 10, padding: '0.75rem', marginBottom: '0.55rem', display: 'flex', justifyContent: 'space-between', gap: '0.75rem', background: '#f0fdf4' }}>
+                <span style={{ fontWeight: 850, color: '#166534' }}>{item.item_name}</span>
+                <span style={{ fontWeight: 900, color: '#166534' }}>x{item.quantity}</span>
+              </div>
+            ))}
+          </>
         )}
       </div>
 

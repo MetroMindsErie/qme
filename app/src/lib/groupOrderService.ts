@@ -10,7 +10,9 @@ function normalizeItem(row: EventGroupOrderItem): EventGroupOrderItem {
     item_name: row.item_name ?? '',
     notes: row.notes ?? '',
     quantity: Number(row.quantity ?? 0),
+    status: row.status ?? 'gathering',
     metadata: row.metadata ?? {},
+    ordered_at: row.ordered_at ?? null,
   };
 }
 
@@ -25,12 +27,26 @@ export async function createGroupOrderItem(
       item_name: input.item_name.trim(),
       quantity: input.quantity,
       notes: input.notes?.trim() || '',
+      status: 'gathering',
       source: 'guest',
     })
     .select()
     .single();
   if (error) throw error;
   return normalizeItem(data as EventGroupOrderItem);
+}
+
+export async function markGroupOrderItemsOrdered(
+  ids: string[]
+): Promise<EventGroupOrderItem[]> {
+  if (ids.length === 0) return [];
+  const { data, error } = await supabase
+    .from('event_group_order_items')
+    .update({ status: 'ordered', ordered_at: new Date().toISOString() })
+    .in('id', ids)
+    .select();
+  if (error) throw error;
+  return ((data ?? []) as EventGroupOrderItem[]).map(normalizeItem);
 }
 
 export async function listGroupOrderItemsForCheckIn(

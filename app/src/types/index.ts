@@ -232,8 +232,10 @@ export interface EventGroupOrderItem {
   item_name: string;
   quantity: number;
   notes: string;
+  status: 'gathering' | 'ordered' | 'cancelled';
   source: 'guest' | 'staff' | 'admin';
   metadata: Record<string, unknown>;
+  ordered_at: string | null;
   created_at: string;
   updated_at: string;
 }

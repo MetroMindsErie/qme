@@ -11,11 +11,32 @@ create table if not exists public.event_group_order_items (
   item_name text not null,
   quantity integer not null default 1 check (quantity >= 0),
   notes text not null default '',
+  status text not null default 'gathering'
+    check (status in ('gathering', 'ordered', 'cancelled')),
   source text not null default 'guest' check (source in ('guest', 'staff', 'admin')),
   metadata jsonb not null default '{}'::jsonb,
+  ordered_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.event_group_order_items
+  add column if not exists status text not null default 'gathering',
+  add column if not exists ordered_at timestamptz;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'event_group_order_items_status_check'
+  ) then
+    alter table public.event_group_order_items
+      add constraint event_group_order_items_status_check
+      check (status in ('gathering', 'ordered', 'cancelled'));
+  end if;
+end;
+$$;
 
 create index if not exists event_group_order_items_event_idx
   on public.event_group_order_items(event_id, created_at);

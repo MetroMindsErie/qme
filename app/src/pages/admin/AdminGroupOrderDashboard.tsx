@@ -5,6 +5,7 @@ import { getEvent } from '../../lib/eventService';
 import { listEventCheckIns } from '../../lib/checkInService';
 import {
   listGroupOrderItemsForEvent,
+  markGroupOrderItemsOrdered,
   onGroupOrderItemsChange,
   updateGroupOrderItemQuantity,
 } from '../../lib/groupOrderService';
@@ -59,25 +60,43 @@ export default function AdminGroupOrderDashboard() {
     return new Map(checkIns.map((row) => [row.id, row]));
   }, [checkIns]);
 
+  const gatheringItems = useMemo(() => {
+    return items.filter((item) => item.status === 'gathering');
+  }, [items]);
+
+  const orderedItems = useMemo(() => {
+    return items.filter((item) => item.status === 'ordered');
+  }, [items]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, EventGroupOrderItem[]>();
-    for (const item of items) {
+    for (const item of gatheringItems) {
       const list = map.get(item.check_in_id) ?? [];
       list.push(item);
       map.set(item.check_in_id, list);
     }
     return Array.from(map.entries());
-  }, [items]);
+  }, [gatheringItems]);
 
   const totals = useMemo(() => {
     const map = new Map<string, number>();
-    for (const item of items) {
+    for (const item of gatheringItems) {
       if (item.quantity <= 0) continue;
       const key = item.item_name.trim().toLowerCase();
       map.set(key, (map.get(key) ?? 0) + item.quantity);
     }
     return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-  }, [items]);
+  }, [gatheringItems]);
+
+  const orderedTotals = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const item of orderedItems) {
+      if (item.quantity <= 0) continue;
+      const key = item.item_name.trim().toLowerCase();
+      map.set(key, (map.get(key) ?? 0) + item.quantity);
+    }
+    return Array.from(map.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+  }, [orderedItems]);
 
   async function setQuantity(item: EventGroupOrderItem, quantity: number) {
     try {
@@ -86,6 +105,21 @@ export default function AdminGroupOrderDashboard() {
     } catch (err) {
       console.error('Failed to update item quantity', err);
       alert('Could not update quantity.');
+    }
+  }
+
+  async function sendToKitchen() {
+    const ids = gatheringItems
+      .filter((item) => item.quantity > 0)
+      .map((item) => item.id);
+    if (ids.length === 0) return;
+    if (!confirm(`Send ${ids.length} active item${ids.length === 1 ? '' : 's'} to the kitchen?`)) return;
+    try {
+      await markGroupOrderItemsOrdered(ids);
+      await refresh();
+    } catch (err) {
+      console.error('Failed to send order to kitchen', err);
+      alert('Could not send order to kitchen.');
     }
   }
 
@@ -106,15 +140,25 @@ export default function AdminGroupOrderDashboard() {
           Dinner Order List
         </h1>
         <p style={{ color: '#64748b', margin: '0.35rem 0 0', fontWeight: 700 }}>
-          {event?.name || 'Event'} · {items.filter((item) => item.quantity > 0).length} active items
+          {event?.name || 'Event'} · {gatheringItems.filter((item) => item.quantity > 0).length} gathering · {orderedItems.filter((item) => item.quantity > 0).length} ordered
         </p>
-        <button
-          className="actionBtn actionBtn-secondary"
-          style={{ margin: '0.8rem 0 0', width: 'auto', padding: '0.45rem 0.9rem' }}
-          onClick={() => navigate(`/admin/events/${event?.id ?? eventId}`)}
-        >
-          Back to Event
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.8rem' }}>
+          <button
+            className="actionBtn actionBtn-primary"
+            style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem' }}
+            onClick={sendToKitchen}
+            disabled={gatheringItems.filter((item) => item.quantity > 0).length === 0}
+          >
+            Send to Kitchen
+          </button>
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem' }}
+            onClick={() => navigate(`/admin/events/${event?.id ?? eventId}`)}
+          >
+            Back to Event
+          </button>
+        </div>
       </div>
 
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
@@ -125,7 +169,7 @@ export default function AdminGroupOrderDashboard() {
         )}
 
         <section style={{ marginBottom: '1.2rem' }}>
-          <h2 style={{ margin: '0 0 0.6rem', fontSize: '1.05rem', color: '#1e293b' }}>Kitchen Totals</h2>
+          <h2 style={{ margin: '0 0 0.6rem', fontSize: '1.05rem', color: '#1e293b' }}>Gathering Now</h2>
           {totals.length === 0 ? (
             <p style={{ color: '#94a3b8', fontWeight: 700 }}>No active items yet.</p>
           ) : totals.map(([name, quantity]) => (
@@ -137,7 +181,7 @@ export default function AdminGroupOrderDashboard() {
         </section>
 
         <section>
-          <h2 style={{ margin: '0 0 0.6rem', fontSize: '1.05rem', color: '#1e293b' }}>By Guest</h2>
+          <h2 style={{ margin: '0 0 0.6rem', fontSize: '1.05rem', color: '#1e293b' }}>Gathering by Guest</h2>
           {grouped.length === 0 ? (
             <p style={{ color: '#94a3b8', fontWeight: 700 }}>No guest submissions yet.</p>
           ) : grouped.map(([checkInId, guestItems]) => {
@@ -174,6 +218,18 @@ export default function AdminGroupOrderDashboard() {
               </div>
             );
           })}
+        </section>
+
+        <section style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #e2e8f0' }}>
+          <h2 style={{ margin: '0 0 0.6rem', fontSize: '1.05rem', color: '#1e293b' }}>Ordered</h2>
+          {orderedTotals.length === 0 ? (
+            <p style={{ color: '#94a3b8', fontWeight: 700 }}>Nothing sent to kitchen yet.</p>
+          ) : orderedTotals.map(([name, quantity]) => (
+            <div key={name} style={{ border: '1px solid #d1fae5', borderRadius: 10, padding: '0.75rem', marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', gap: '0.75rem', background: '#f0fdf4' }}>
+              <span style={{ color: '#166534', fontWeight: 850, textTransform: 'capitalize' }}>{name}</span>
+              <span style={{ color: '#166534', fontWeight: 900 }}>x{quantity}</span>
+            </div>
+          ))}
         </section>
       </div>
     </div>

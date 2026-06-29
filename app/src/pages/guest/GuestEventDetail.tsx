@@ -437,9 +437,17 @@ export default function GuestEventDetail() {
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
   const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus);
   const isWaitingForHostCheckIn = hasSubmittedEventCheckIn && !hasEventCheckIn;
-  const linkedEceQueueIds = new Set(eces.map((ece) => ece.queue_id).filter(Boolean));
+  const visibleEces = checkInConfig.enabled
+    ? eces.filter((ece) => ece.type !== 'check_in')
+    : eces;
+  const linkedEceQueueIds = new Set(visibleEces.map((ece) => ece.queue_id).filter(Boolean));
   const visibleQueues = queues.filter((q) => !linkedEceQueueIds.has(q.id));
-  const sessionCount = visibleQueues.length + visibleStaticActivities.filter(a => a.id !== 'live-updates').length + eces.length;
+  const checkInCardCount = checkInConfig.enabled ? 1 : 0;
+  const sessionCount =
+    checkInCardCount +
+    visibleQueues.length +
+    visibleStaticActivities.filter(a => a.id !== 'live-updates').length +
+    visibleEces.length;
   const isHeadshotQueue = (slug?: string | null) => slug === 'headshot-photo-station';
 
   return (
@@ -608,7 +616,7 @@ export default function GuestEventDetail() {
           })}
 
           {/* Dynamic event eCes from DB */}
-          {eces.map((exp) => {
+          {visibleEces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
             const hasTicket = Boolean(linkedQueue?._myTicket);
             const isCompleted = linkedQueue?._myStage === 'completed';

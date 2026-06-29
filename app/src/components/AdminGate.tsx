@@ -4,38 +4,24 @@ import { getCurrentAdminPrincipal, signInAdmin, signOutAdmin, type CurrentAdminP
 import '../styles/shared.css';
 import '../styles/admin.css';
 
-const ADMIN_ACCESS_KEY = 'qme:adminAccess';
-const DEFAULT_ADMIN_PASSCODE = 'qme-admin';
-
 interface AdminGateProps {
   children: ReactNode;
 }
 
 export default function AdminGate({ children }: AdminGateProps) {
   const navigate = useNavigate();
-  const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(ADMIN_ACCESS_KEY) === '1');
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
-  const [usingPassphraseFallback, setUsingPassphraseFallback] = useState(() => sessionStorage.getItem(ADMIN_ACCESS_KEY) === '1');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [passcode, setPasscode] = useState('');
   const [error, setError] = useState('');
-
-  const expectedPasscode = (import.meta.env.VITE_ADMIN_PASSCODE as string | undefined)?.trim()
-    || DEFAULT_ADMIN_PASSCODE;
 
   useEffect(() => {
     let active = true;
     getCurrentAdminPrincipal()
       .then((admin) => {
         if (!active) return;
-        if (admin) {
-          setCurrentAdmin(admin);
-          setUsingPassphraseFallback(false);
-          sessionStorage.setItem(ADMIN_ACCESS_KEY, '1');
-          setUnlocked(true);
-        }
+        if (admin) setCurrentAdmin(admin);
       })
       .catch((authError) => {
         console.error('Failed to load admin principal', authError);
@@ -58,35 +44,11 @@ export default function AdminGate({ children }: AdminGateProps) {
         return;
       }
       setCurrentAdmin(admin);
-      setUsingPassphraseFallback(false);
-      sessionStorage.setItem(ADMIN_ACCESS_KEY, '1');
-      setUnlocked(true);
       setPassword('');
     } catch (authError) {
       console.error('Admin sign-in failed', authError);
       setError('Admin sign-in failed.');
     }
-  }
-
-  function handlePassphraseSubmit() {
-    if (passcode.trim() !== expectedPasscode) {
-      setError('Passphrase did not match.');
-      return;
-    }
-    sessionStorage.setItem(ADMIN_ACCESS_KEY, '1');
-    setCurrentAdmin(null);
-    setUsingPassphraseFallback(true);
-    setUnlocked(true);
-    setPasscode('');
-    setError('');
-  }
-
-  if (checkingAuth && !unlocked) {
-    return (
-      <div className="card" style={{ minHeight: '600px', padding: '2rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <p style={{ color: '#64748b', fontWeight: 800 }}>Checking admin access...</p>
-      </div>
-    );
   }
 
   async function handleSignOut() {
@@ -95,39 +57,42 @@ export default function AdminGate({ children }: AdminGateProps) {
     } catch (signOutError) {
       console.error('Admin sign-out failed', signOutError);
     }
-    sessionStorage.removeItem(ADMIN_ACCESS_KEY);
     setCurrentAdmin(null);
-    setUsingPassphraseFallback(false);
-    setUnlocked(false);
     setEmail('');
     setPassword('');
-    setPasscode('');
     setError('');
   }
 
-  if (unlocked) {
-    const roleLabel = currentAdmin?.isSuperadmin
+  if (checkingAuth && !currentAdmin) {
+    return (
+      <div className="card" style={{ minHeight: '600px', padding: '2rem 1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ color: '#64748b', fontWeight: 800 }}>Checking admin access...</p>
+      </div>
+    );
+  }
+
+  if (currentAdmin) {
+    const roleLabel = currentAdmin.isSuperadmin
       ? 'qME superadmin'
       : [
-          ...(currentAdmin?.organizationMemberships.map((membership) => membership.role.replace('_', ' ')) ?? []),
-          ...(currentAdmin?.eventStaffAssignments.map((assignment) => assignment.role.replace('_', ' ')) ?? []),
-          ...(currentAdmin?.platformRoles.map((role) => role.role) ?? []),
+          ...currentAdmin.organizationMemberships.map((membership) => membership.role.replace('_', ' ')),
+          ...currentAdmin.eventStaffAssignments.map((assignment) => assignment.role.replace('_', ' ')),
+          ...currentAdmin.platformRoles.map((role) => role.role),
         ].filter(Boolean).join(', ') || 'admin';
+
     return (
       <>
         <div className="admin-identity-bar">
           <div>
             <div className="admin-identity-label">
-              {usingPassphraseFallback ? 'Temporary admin access' : roleLabel}
+              {roleLabel}
             </div>
             <div className="admin-identity-name">
-              {usingPassphraseFallback
-                ? 'Passphrase fallback - replace with named admin access'
-                : `${currentAdmin?.principal.display_name} · ${currentAdmin?.principal.email ?? 'no email'}`}
+              {currentAdmin.principal.display_name} · {currentAdmin.principal.email ?? 'no email'}
             </div>
           </div>
           <button type="button" className="admin-identity-signout" onClick={handleSignOut}>
-            {usingPassphraseFallback ? 'Lock' : 'Sign Out'}
+            Sign Out
           </button>
         </div>
         {children}
@@ -203,37 +168,6 @@ export default function AdminGate({ children }: AdminGateProps) {
         )}
         <button className="actionBtn actionBtn-primary" style={{ margin: 0 }} type="submit">
           Sign In
-        </button>
-        <div style={{ margin: '1rem 0', borderTop: '1px solid #e5e7eb' }} />
-        <div style={{ textAlign: 'left', color: '#64748b', fontSize: '0.78rem', fontWeight: 800, marginBottom: '0.5rem' }}>
-          Temporary pilot fallback
-        </div>
-        <input
-          value={passcode}
-          onChange={(event) => {
-            setPasscode(event.target.value);
-            setError('');
-          }}
-          type="password"
-          aria-label="Temporary admin passphrase"
-          placeholder="Passphrase"
-          style={{
-            width: '100%',
-            boxSizing: 'border-box',
-            padding: '0.75rem',
-            border: '1px solid #cbd5e1',
-            borderRadius: 8,
-            fontSize: '0.95rem',
-            marginBottom: '0.75rem',
-          }}
-        />
-        <button
-          className="actionBtn actionBtn-secondary"
-          style={{ margin: 0 }}
-          type="button"
-          onClick={handlePassphraseSubmit}
-        >
-          Unlock with Passphrase
         </button>
         <button
           className="actionBtn actionBtn-secondary"

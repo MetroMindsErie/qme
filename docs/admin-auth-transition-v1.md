@@ -7,16 +7,19 @@ Date: 2026-06-26
 This note records the Sprint 2 authentication direction before RLS hardening.
 The goal is practical platform trust, not a full enterprise auth system.
 
-## Current Temporary State
+## Previous Temporary State
 
-Admin screens are protected by `AdminGate`, which uses a shared passphrase and
-stores `qme:adminAccess` in browser session storage.
+Admin screens were previously protected by `AdminGate` using a shared passphrase
+and `qme:adminAccess` browser session storage.
 
-This is acceptable only as a short pilot bridge because:
+That bridge was acceptable only as a short pilot bridge because:
 
 - it keeps current Peony and SOTC admin screens usable during migration;
 - it avoids locking the owner out before a real principal exists;
 - it is not actor-specific and cannot support meaningful RLS or audit logs.
+
+As of 2026-06-29, the passphrase bridge has been removed. Admin screens require
+Supabase Auth sign-in with a linked active `admin_principals` row.
 
 ## Near-Term Decision
 
@@ -55,24 +58,26 @@ select public.grant_qme_superadmin(
 That creates or updates an `admin_principal` and grants the `superadmin` platform
 role.
 
-## Replacement Intent
+## Transition Status
 
-`AdminGate` should be replaced by Supabase Auth-based admin access once:
+`AdminGate` now uses Supabase Auth-based admin access. The initial transition is
+complete:
 
 - the owner has a linked `superadmin` principal;
 - admin pages can read the current principal;
 - organization/event role checks are available client-side for routing hints;
-- RLS policies use database-side helper functions for enforcement.
+- event-level staff access has been tested with Jalani for `SOTC Test Check-in`;
+- RLS policies use database-side helper functions for the first hardening pass.
 
-Until then, `AdminGate` is a convenience gate only. It is not a security model.
+Remaining work is now onboarding polish and hardening, not replacing the
+passphrase gate.
 
 ## Not In This Slice
 
-- polished login UI;
 - invitation workflow;
 - password reset or magic-link decisions;
-- role management UI;
-- strict RLS enforcement;
+- required temporary-password change on first login;
+- fuller strict RLS enforcement for guest-owned records;
 - custom permissions.
 
-Those should follow after this bridge is stable.
+Those should follow after the first role/RLS pass is smoke-tested.

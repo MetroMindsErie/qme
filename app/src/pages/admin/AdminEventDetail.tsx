@@ -314,7 +314,7 @@ export default function AdminEventDetail() {
 
           {!currentAdmin && (
             <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', color: '#9a3412', fontWeight: 800, lineHeight: 1.45 }}>
-              Sign in with named admin access to view or manage event staff. The temporary passphrase fallback cannot read RLS-protected staff assignments.
+              Sign in with named admin access to view or manage event staff.
             </div>
           )}
 

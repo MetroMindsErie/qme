@@ -44,9 +44,10 @@ It is intentionally a first pass, not the final security model. qME still allows
 
 ## Still Temporary
 
-- Passphrase-only admin fallback
-  - After this SQL is applied, protected staff/admin database actions expect a real Supabase Auth user linked to an active `admin_principals` row.
-  - The old passphrase-only admin bridge may still load parts of the admin UI, but it should not be treated as sufficient for protected operations.
+- Admin onboarding polish
+  - Protected staff/admin database actions expect a real Supabase Auth user linked to an active `admin_principals` row.
+  - The passphrase-only admin bridge has been removed.
+  - Temporary password change, invitation emails, and password reset flow still need hardening.
 
 - `tickets`
   - Still needs a guest-owned identity/token before per-ticket RLS can distinguish one anonymous guest from another.

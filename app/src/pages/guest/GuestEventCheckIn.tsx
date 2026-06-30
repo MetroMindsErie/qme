@@ -19,6 +19,24 @@ interface GuestEventCheckInProps {
   confirmation?: string;
 }
 
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
+function normalizePhone(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  const hasLeadingPlus = trimmed.startsWith('+');
+  const digits = trimmed.replace(/\D/g, '');
+  return hasLeadingPlus ? `+${digits}` : digits;
+}
+
+function isValidPhone(value: string) {
+  const normalized = normalizePhone(value);
+  const digits = normalized.replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 15;
+}
+
 export default function GuestEventCheckIn({
   checkInCode = null,
   title = 'Event Check-In',
@@ -31,7 +49,8 @@ export default function GuestEventCheckIn({
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [contact, setContact] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [checkIn, setCheckIn] = useState<EventCheckIn | null>(null);
   const [saving, setSaving] = useState(false);
@@ -49,10 +68,23 @@ export default function GuestEventCheckIn({
         setEvent(ev);
         const stored = localStorage.getItem(storageKey(ev.id));
         if (stored) {
-          const saved = JSON.parse(stored) as { id?: string; firstName?: string; lastName?: string; contact?: string };
+          const saved = JSON.parse(stored) as {
+            id?: string;
+            firstName?: string;
+            lastName?: string;
+            contact?: string;
+            email?: string;
+            phone?: string;
+          };
           setFirstName(saved.firstName || '');
           setLastName(saved.lastName || '');
-          setContact(saved.contact || '');
+          if (saved.email || saved.phone) {
+            setEmail(saved.email || '');
+            setPhone(saved.phone || '');
+          } else if (saved.contact) {
+            setEmail(saved.contact.includes('@') ? saved.contact : '');
+            setPhone(saved.contact.includes('@') ? '' : saved.contact);
+          }
           setSubmitted(true);
           if (saved.id) {
             try {
@@ -80,15 +112,24 @@ export default function GuestEventCheckIn({
     setSaving(true);
     setError('');
     try {
-      const trimmedContact = contact.trim();
-      const contactIsEmail = trimmedContact.includes('@');
+      const trimmedEmail = email.trim();
+      const trimmedPhone = phone.trim();
+      const normalizedPhone = normalizePhone(trimmedPhone);
+      if (trimmedEmail && !isValidEmail(trimmedEmail)) {
+        setError('Please enter a valid email address or leave email blank.');
+        return;
+      }
+      if (trimmedPhone && !isValidPhone(trimmedPhone)) {
+        setError('Please enter a valid phone number with at least 10 digits or leave phone blank.');
+        return;
+      }
       const created = await createEventCheckIn({
         event_id: event.id,
         first_name: firstName,
         last_name: lastName,
         code: checkInCode,
-        email: contactIsEmail ? trimmedContact : null,
-        phone: trimmedContact && !contactIsEmail ? trimmedContact : null,
+        email: trimmedEmail || null,
+        phone: normalizedPhone || null,
       });
       const row = shouldAutoComplete
         ? await checkInEventGuest(created.id, 'general', event.id)
@@ -97,7 +138,8 @@ export default function GuestEventCheckIn({
         id: row.id,
         firstName,
         lastName,
-        contact: trimmedContact,
+        email: trimmedEmail,
+        phone: normalizedPhone,
         ts: Date.now(),
       }));
       setCheckIn(row);
@@ -262,13 +304,23 @@ export default function GuestEventCheckIn({
               style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
             />
 
-            <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Email or phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span></label>
+            <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Email <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span></label>
             <input
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               inputMode="email"
-              autoComplete="email tel"
-              placeholder="For recovering your check-in later"
+              autoComplete="email"
+              placeholder="name@example.com"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.9rem' }}
+            />
+
+            <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span></label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="216-555-0100"
               style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
             />
 

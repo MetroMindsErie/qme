@@ -228,32 +228,6 @@ export default function AdminQueueDashboard() {
     }
   }
 
-  async function handlePilotPracticeReset() {
-    if (!queue) return;
-    const activeCount = pilotTickets.length;
-    const message = activeCount > 0
-      ? `Reset practice run for "${queue.name}"? This clears all tickets in this queue and resets now serving so the next test can start clean.`
-      : `Reset practice run for "${queue.name}"?`;
-    if (!confirm(message)) return;
-
-    setSavingControls(true);
-    setControlSaveStatus('Resetting...');
-    if (saveStatusTimerRef.current) clearTimeout(saveStatusTimerRef.current);
-    try {
-      await resetQueueTickets(queue.id);
-      setNowServing(1);
-      await refreshPilotTickets();
-      setControlSaveStatus('Practice run reset');
-      saveStatusTimerRef.current = setTimeout(() => setControlSaveStatus(''), 2200);
-    } catch (e) {
-      console.error('Pilot practice reset failed', e);
-      setControlSaveStatus('Reset failed');
-      alert('Could not reset the practice run.');
-    } finally {
-      setSavingControls(false);
-    }
-  }
-
   async function saveQueueControls(patch: Partial<QueueType>) {
     if (!queue) return;
     setSavingControls(true);
@@ -435,9 +409,6 @@ export default function AdminQueueDashboard() {
               <button className="actionBtn actionBtn-primary admin-pilot-action-btn" onClick={() => applyAutoPilotPass()}>
                 Apply Flow
               </button>
-              <button className="actionBtn actionBtn-secondary admin-pilot-action-btn" disabled={savingControls} onClick={handlePilotPracticeReset}>
-                Reset Practice Run
-              </button>
               {controlSaveStatus && (
                 <span style={{ color: controlSaveStatus.includes('failed') ? '#b91c1c' : '#15803d', fontWeight: 900, fontSize: '0.86rem' }}>
                   {controlSaveStatus}
@@ -448,7 +419,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby. Use Join Status to pause or reopen guest joining; Reset Practice Run clears this queue's tickets.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby. Use Join Status to pause or reopen guest joining.
             </div>
           </div>
 

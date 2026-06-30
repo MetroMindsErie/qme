@@ -1243,6 +1243,24 @@ const QME_ROADMAP = {
               ]
             },
             {
+              id: "story-stale-queue-blocker-recovery",
+              title: "Handle stale queue guests who block active flow",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Prevent waiting or standby guests who are no longer responsive from indefinitely blocking newer ready guests in a queue.",
+              acceptanceCriteria: [
+                "Staff can identify stale waiting/standby guests who have not responded or marked nearby within an expected window.",
+                "Queue flow defines what happens to stale guests before they block release of later guests.",
+                "Policy options are evaluated, such as expire back to waiting, mark inactive, move behind ready standby guests, or require staff confirmation.",
+                "Guest-facing messaging explains when their place was paused, expired, or needs renewed nearby confirmation.",
+                "Admin can recover or reinstate a stale guest if needed.",
+                "The policy preserves fairness while keeping live queues moving during real events."
+              ],
+              notes:
+                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. This should be solved as a queue operating policy/story, not as an immediate patch."
+            },
+            {
               id: "story-queue-rule-configuration",
               title: "Configure queue rules and priority policies",
               status: "future",

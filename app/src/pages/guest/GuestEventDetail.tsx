@@ -354,29 +354,29 @@ export default function GuestEventDetail() {
               tickets = [];
             }
             if (storedTicketId) {
-              if (didLoadTickets) {
-                const listedTicket = tickets.find((row) => row.id === Number(storedTicketId));
-                if (!listedTicket || ['cancelled', 'left'].includes(listedTicket.stage ?? 'waiting')) {
+              try {
+                const ticketRow = await getQueueTicket(Number(storedTicketId), q.id, ev.id);
+                if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting')) {
                   clearQueueTicket(q.id);
                   ticket = '';
                 } else {
-                  ticket = String(listedTicket.ticket_number ?? listedTicket.id);
-                  ticketStage = listedTicket.stage;
-                  localStorage.setItem(`qme:ticket:${q.id}`, String(listedTicket.id));
-                  localStorage.setItem(`qme:ticketNum:${q.id}`, String(listedTicket.ticket_number ?? listedTicket.id));
+                  ticket = String(ticketRow.ticket_number ?? ticketRow.id);
+                  ticketStage = ticketRow.stage;
+                  localStorage.setItem(`qme:ticket:${q.id}`, String(ticketRow.id));
+                  localStorage.setItem(`qme:ticketNum:${q.id}`, String(ticketRow.ticket_number ?? ticketRow.id));
                 }
-              } else {
+              } catch {
                 try {
                   const restored = await restoreTicketForQueue(Number(storedTicketId), q.id, ev.id);
                   const ticketRow = await getQueueTicket(restored.id, q.id, ev.id);
-                  ticket = String(restored.ticketNumber);
-                  localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
-                  localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
                   if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting')) {
                     clearQueueTicket(q.id);
                     ticket = '';
                   } else {
+                    ticket = String(restored.ticketNumber);
                     ticketStage = ticketRow.stage;
+                    localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
+                    localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
                   }
                 } catch {
                   clearQueueTicket(q.id);

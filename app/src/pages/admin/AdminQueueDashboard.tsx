@@ -232,7 +232,7 @@ export default function AdminQueueDashboard() {
     if (!queue) return;
     const activeCount = pilotTickets.length;
     const message = activeCount > 0
-      ? `Reset practice run for "${queue.name}"? This resets queue tickets and now serving so the next test can start clean.`
+      ? `Reset practice run for "${queue.name}"? This clears all tickets in this queue and resets now serving so the next test can start clean.`
       : `Reset practice run for "${queue.name}"?`;
     if (!confirm(message)) return;
 
@@ -448,7 +448,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby. Use Join Status to pause or reopen guest joining; reset clears the current run.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps {standbyTarget} guests in standby, then releases only standby guests who marked themselves nearby. Use Join Status to pause or reopen guest joining; Reset Practice Run clears this queue's tickets.
             </div>
           </div>
 

@@ -534,11 +534,13 @@ export default function GuestEventDetail() {
 
           {/* Live joinable queues */}
           {visibleQueues.map((q) => {
-            const hasTicket = Boolean(q._myTicket);
-            const isCompleted = q._myStage === 'completed';
+            const isHeadshot = isHeadshotQueue(q.slug);
+            const headshotHasCredit = headshotCreditStatus === 'available' || headshotCreditStatus === 'used';
+            const hasTicket = Boolean(q._myTicket) && (!isHeadshot || headshotHasCredit);
+            const isCompleted = hasTicket && q._myStage === 'completed';
             const participationLocked = requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket;
-            const creditLocked = isHeadshotQueue(q.slug) && headshotCreditStatus === 'none' && !hasTicket;
-            const creditUsed = isHeadshotQueue(q.slug) && headshotCreditStatus === 'used' && !hasTicket;
+            const creditLocked = isHeadshot && headshotCreditStatus === 'none' && !hasTicket;
+            const creditUsed = isHeadshot && headshotCreditStatus === 'used' && !hasTicket;
             const joinPaused = (q.join_status ?? 'open') !== 'open' && !hasTicket;
             const canJoin = !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused;
             const statusLine = queueCardStatusLine({
@@ -618,11 +620,13 @@ export default function GuestEventDetail() {
           {/* Dynamic event eCes from DB */}
           {visibleEces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
-            const hasTicket = Boolean(linkedQueue?._myTicket);
-            const isCompleted = linkedQueue?._myStage === 'completed';
+            const isHeadshot = isHeadshotQueue(linkedQueue?.slug);
+            const headshotHasCredit = headshotCreditStatus === 'available' || headshotCreditStatus === 'used';
+            const hasTicket = Boolean(linkedQueue?._myTicket) && (!isHeadshot || headshotHasCredit);
+            const isCompleted = hasTicket && linkedQueue?._myStage === 'completed';
             const participationLocked = Boolean(linkedQueue && requiresCompletedCheckIn && !hasEventCheckIn && !hasTicket);
-            const creditLocked = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'none' && !hasTicket);
-            const creditUsed = Boolean(linkedQueue && isHeadshotQueue(linkedQueue.slug) && headshotCreditStatus === 'used' && !hasTicket);
+            const creditLocked = Boolean(linkedQueue && isHeadshot && headshotCreditStatus === 'none' && !hasTicket);
+            const creditUsed = Boolean(linkedQueue && isHeadshot && headshotCreditStatus === 'used' && !hasTicket);
             const joinPaused = Boolean(linkedQueue && (linkedQueue.join_status ?? 'open') !== 'open' && !hasTicket);
             const canJoin = Boolean(linkedQueue && !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused);
             const statusLine = linkedQueue ? queueCardStatusLine({

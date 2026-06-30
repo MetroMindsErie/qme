@@ -311,8 +311,11 @@ export default function GuestEventCheckIn({
               inputMode="email"
               autoComplete="email"
               placeholder="name@example.com"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.9rem' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
             />
+            <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '0.9rem' }}>
+              Optional. Used only to help recover your check-in later.
+            </div>
 
             <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span></label>
             <input
@@ -321,8 +324,11 @@ export default function GuestEventCheckIn({
               inputMode="tel"
               autoComplete="tel"
               placeholder="216-555-0100"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
             />
+            <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
+              Optional. Used only to help recover your check-in later.
+            </div>
 
             <button className="actionBtn actionBtn-primary" type="submit" style={{ margin: 0 }} disabled={saving}>
               {saving ? 'Checking In...' : 'Check In'}

@@ -12,5 +12,5 @@ returns text
 language sql
 immutable
 as $$
-  select encode(digest(convert_to(coalesce(p_guest_token, ''), 'UTF8'), 'sha256'), 'hex')
+  select encode(digest(convert_to(coalesce(p_guest_token, ''), 'UTF8'), 'sha256'::text), 'hex')
 $$;

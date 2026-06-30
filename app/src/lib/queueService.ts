@@ -126,7 +126,9 @@ async function nextTicketForQueueLegacy(queueId: string): Promise<{ id: number; 
     p_queue_id: queueId,
   });
   if (error) throw error;
-  return normalizeTicketRpcResult(data);
+  const result = normalizeTicketRpcResult(data);
+  await applyQueuePilotFlow(queueId);
+  return result;
 }
 
 export async function nextTicketForQueue(
@@ -143,7 +145,9 @@ export async function nextTicketForQueue(
     if (isMissingGuestSessionRpc(error)) return nextTicketForQueueLegacy(queueId);
     throw error;
   }
-  return normalizeTicketRpcResult(data);
+  const result = normalizeTicketRpcResult(data);
+  await applyQueuePilotFlow(queueId);
+  return result;
 }
 
 export async function peekTicketForQueue(queueId: string): Promise<number> {
@@ -410,6 +414,12 @@ function ticketIsNearbyConfirmed(ticket: Ticket) {
 }
 
 export async function applyQueuePilotFlow(queueId: string): Promise<void> {
+  const { error: rpcError } = await supabase.rpc('apply_queue_pilot_flow', {
+    p_queue_id: queueId,
+  });
+  if (!rpcError) return;
+  if (!isMissingGuestSessionRpc(rpcError)) throw rpcError;
+
   const [queue, tickets] = await Promise.all([
     getQueue(queueId),
     listQueuePilotTickets(queueId),

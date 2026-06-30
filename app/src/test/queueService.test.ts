@@ -35,6 +35,7 @@ import {
   getAdminSnapshotForQueue,
   getLostCountForQueue,
   resetQueueTickets,
+  applyQueuePilotFlow,
   onQueuesChange,
   onQueueChange,
 } from '../lib/queueService';
@@ -151,14 +152,19 @@ describe('queueService', () => {
 
   describe('nextTicketForQueue', () => {
     it('calls rpc("next_ticket_for_queue") with p_queue_id', async () => {
-      mockRpc.mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null });
+      mockRpc
+        .mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
       const result = await nextTicketForQueue('q1');
-      expect(mockRpc).toHaveBeenCalledWith('next_ticket_for_queue', { p_queue_id: 'q1' });
+      expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', { p_queue_id: 'q1' });
+      expect(mockRpc).toHaveBeenNthCalledWith(2, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
       expect(result).toEqual({ id: 7, ticketNumber: 7 });
     });
 
     it('handles legacy numeric return', async () => {
-      mockRpc.mockResolvedValueOnce({ data: 7, error: null });
+      mockRpc
+        .mockResolvedValueOnce({ data: 7, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
       const result = await nextTicketForQueue('q1');
       expect(result).toEqual({ id: 7, ticketNumber: 7 });
     });
@@ -169,26 +175,39 @@ describe('queueService', () => {
     });
 
     it('passes a guest session token when event id is available', async () => {
-      mockRpc.mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null });
+      mockRpc
+        .mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
       const result = await nextTicketForQueue('q1', 'e1');
-      expect(mockRpc).toHaveBeenCalledWith('next_ticket_for_queue', {
+      expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', {
         p_queue_id: 'q1',
         p_guest_token: expect.any(String),
       });
+      expect(mockRpc).toHaveBeenNthCalledWith(2, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
       expect(result).toEqual({ id: 7, ticketNumber: 7 });
     });
 
     it('falls back to the legacy RPC if guest-session overload is missing', async () => {
       mockRpc
         .mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', message: 'missing function' } })
-        .mockResolvedValueOnce({ data: { id: 8, ticket_number: 8 }, error: null });
+        .mockResolvedValueOnce({ data: { id: 8, ticket_number: 8 }, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
       const result = await nextTicketForQueue('q1', 'e1');
       expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', {
         p_queue_id: 'q1',
         p_guest_token: expect.any(String),
       });
       expect(mockRpc).toHaveBeenNthCalledWith(2, 'next_ticket_for_queue', { p_queue_id: 'q1' });
+      expect(mockRpc).toHaveBeenNthCalledWith(3, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
       expect(result).toEqual({ id: 8, ticketNumber: 8 });
+    });
+  });
+
+  describe('applyQueuePilotFlow', () => {
+    it('calls the database auto-flow RPC', async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: null });
+      await applyQueuePilotFlow('q1');
+      expect(mockRpc).toHaveBeenCalledWith('apply_queue_pilot_flow', { p_queue_id: 'q1' });
     });
   });
 

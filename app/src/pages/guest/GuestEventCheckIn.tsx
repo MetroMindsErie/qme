@@ -56,10 +56,10 @@ export default function GuestEventCheckIn({
           setSubmitted(true);
           if (saved.id) {
             try {
-              const row = await getEventCheckIn(saved.id);
+              const row = await getEventCheckIn(saved.id, ev.id);
               const config = getEventCheckInConfig(ev);
               setCheckIn(config.completionMode === 'auto' && row.status !== 'completed'
-                ? await checkInEventGuest(row.id, row.ticket_type ?? 'general')
+                ? await checkInEventGuest(row.id, row.ticket_type ?? 'general', ev.id)
                 : row);
             } catch { /* keep local confirmation even if fetch fails */ }
           }
@@ -91,7 +91,7 @@ export default function GuestEventCheckIn({
         phone: trimmedContact && !contactIsEmail ? trimmedContact : null,
       });
       const row = shouldAutoComplete
-        ? await checkInEventGuest(created.id, 'general')
+        ? await checkInEventGuest(created.id, 'general', event.id)
         : created;
       localStorage.setItem(storageKey(event.id), JSON.stringify({
         id: row.id,
@@ -116,11 +116,12 @@ export default function GuestEventCheckIn({
     if (!stored) return;
     const saved = JSON.parse(stored) as { id?: string };
     if (!saved.id) return;
+    const eventId = event.id;
 
     let stopped = false;
     async function refreshCheckIn() {
       try {
-        const row = await getEventCheckIn(saved.id!);
+        const row = await getEventCheckIn(saved.id!, eventId);
         if (!stopped) setCheckIn(row);
       } catch { /* */ }
     }

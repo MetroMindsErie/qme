@@ -2,12 +2,25 @@
  * checkInService.ts — event-level named check-ins for alpha testing.
  */
 import { supabase } from './supabase';
-import { tryEnsureGuestSession } from './guestSessionService';
+import { getGuestSessionToken, isMissingGuestSessionRpc, tryEnsureGuestSession } from './guestSessionService';
 import type { CreateEventCheckInInput, EventCheckIn } from '../types';
 
 export async function createEventCheckIn(
   input: CreateEventCheckInInput
 ): Promise<EventCheckIn> {
+  const guestToken = getGuestSessionToken(input.event_id);
+  const { data: scopedData, error: scopedError } = await supabase.rpc('create_event_check_in_for_guest', {
+    p_event_id: input.event_id,
+    p_guest_token: guestToken,
+    p_first_name: input.first_name,
+    p_last_name: input.last_name,
+    p_code: input.code?.trim() || null,
+    p_email: input.email?.trim() || null,
+    p_phone: input.phone?.trim() || null,
+  });
+  if (!scopedError) return scopedData as EventCheckIn;
+  if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+
   const guestSessionId = await tryEnsureGuestSession({
     eventId: input.event_id,
     firstName: input.first_name,
@@ -70,8 +83,19 @@ export async function updateEventCheckInStatus(
 
 export async function checkInEventGuest(
   id: string,
-  ticketType: NonNullable<EventCheckIn['ticket_type']>
+  ticketType: NonNullable<EventCheckIn['ticket_type']>,
+  eventId?: string | null
 ): Promise<EventCheckIn> {
+  if (eventId) {
+    const { data: scopedData, error: scopedError } = await supabase.rpc('complete_event_check_in_for_guest', {
+      p_check_in_id: id,
+      p_guest_token: getGuestSessionToken(eventId),
+      p_ticket_type: ticketType,
+    });
+    if (!scopedError) return scopedData as EventCheckIn;
+    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+  }
+
   const { data, error } = await supabase
     .from('event_check_ins')
     .update({ status: 'completed', ticket_type: ticketType })
@@ -96,7 +120,19 @@ export async function updateEventCheckInTicketType(
   return data as EventCheckIn;
 }
 
-export async function getEventCheckIn(id: string): Promise<EventCheckIn> {
+export async function getEventCheckIn(
+  id: string,
+  eventId?: string | null
+): Promise<EventCheckIn> {
+  if (eventId) {
+    const { data: scopedData, error: scopedError } = await supabase.rpc('get_event_check_in_for_guest', {
+      p_check_in_id: id,
+      p_guest_token: getGuestSessionToken(eventId),
+    });
+    if (!scopedError) return scopedData as EventCheckIn;
+    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+  }
+
   const { data, error } = await supabase
     .from('event_check_ins')
     .select('*')

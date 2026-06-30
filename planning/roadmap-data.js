@@ -630,7 +630,7 @@ const QME_ROADMAP = {
                 "Remaining database/security risks are documented before real event use."
               ],
               notes:
-                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. First RLS hardening pass added in supabase-sotc-rls-hardening.sql with companion notes in docs/sotc-rls-hardening-v1.md: admin principals/roles/memberships/event staff assignments are scoped to authenticated admins, event guest designations are staff/admin managed, guest credit writes are staff/admin only, and guest-sourced scan/code marks remain open for pilot completion. Second pass added in supabase-sprint2-setup-rls.sql: active organizations/events/expies/eCes/legacy experiences/queues remain guest-readable, while setup writes are restricted to qME superadmin, organization admin, or event admin. Third pass drafted in supabase-guest-session-foundation.sql: anonymous guest browsers receive event-scoped session tokens, event_check_ins/tickets can link to guest_sessions, queue RPC overloads can attach/verify ticket ownership, and the guest check-in form can optionally capture email/phone for later recovery. Guest credit reads and final ticket/check-in RLS should move behind the new guest-session model after this pass is run and smoke-tested. Reminder: re-engage the computer engineering student after this pass is run and smoke-tested so his review can focus on concrete policies and remaining risks."
+                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. First RLS hardening pass added in supabase-sotc-rls-hardening.sql with companion notes in docs/sotc-rls-hardening-v1.md: admin principals/roles/memberships/event staff assignments are scoped to authenticated admins, event guest designations are staff/admin managed, guest credit writes are staff/admin only, and guest-sourced scan/code marks remain open for pilot completion. Second pass added in supabase-sprint2-setup-rls.sql: active organizations/events/expies/eCes/legacy experiences/queues remain guest-readable, while setup writes are restricted to qME superadmin, organization admin, or event admin. Third pass drafted in supabase-guest-session-foundation.sql: anonymous guest browsers receive event-scoped session tokens, event_check_ins/tickets can link to guest_sessions, queue RPC overloads can attach/verify ticket ownership, and the guest check-in form can optionally capture email/phone for later recovery. Fourth pass drafted in supabase-guest-action-rls-tightening.sql: guest check-in reads/completion, ticket reads/name updates/nearby/completion, guest marks, and guest credit reads move behind guest-token verified RPCs, while direct table access for event_check_ins, tickets, event_guest_marks, and event_guest_credits becomes staff/admin scoped. Reminder: re-engage the computer engineering student after this pass is run and smoke-tested so his review can focus on concrete policies and remaining risks."
             },
             {
               id: "story-guest-session-recovery-code",
@@ -1241,6 +1241,24 @@ const QME_ROADMAP = {
                 "Temporary demo-only controls are marked.",
                 "Operational exception actions such as pause queue, announce delay, close intake, merge/split, redirect, and transfer are captured."
               ]
+            },
+            {
+              id: "story-admin-queue-tabs",
+              title: "Organize admin queue screens into focused tabs",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Refactor queue management screens so staff can work from focused tabs instead of one crowded operational page.",
+              acceptanceCriteria: [
+                "Headshot Photographer admin has a clean active queue tab showing only guests currently waiting, standby, nearby, or released for photo service.",
+                "Queue history is moved to a separate tab showing completed, left, cancelled, not-here, and stale/expired guests.",
+                "Queue settings are moved to a separate tab for join status, run mode, standby threshold, max released, reset/practice controls, and other operational configuration.",
+                "Similar tab structure can be reused by Scan-Code Adventure, future resume review, and other service queues.",
+                "Tabs are role-aware so service staff see operational work first while event admins can access settings.",
+                "Mobile and tablet layouts keep the active work view uncluttered during live operations."
+              ],
+              notes:
+                "Captured from Sprint 2 admin UX discussion. Inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. This is not part of the current RLS hardening slice, but should be considered before SOTC staff rehearsal so Headshot Photographer and similar queues have a calm, role-focused operations view."
             },
             {
               id: "story-stale-queue-blocker-recovery",

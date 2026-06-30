@@ -170,7 +170,7 @@ export default function GuestQueueTicketPage() {
           try {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
             if (saved.id) {
-              const row = await getEventCheckIn(saved.id);
+              const row = await getEventCheckIn(saved.id, ev.id);
               if (row.status === 'completed') {
                 setEventCheckInId(row.id);
                 checkInGuestName = {
@@ -181,7 +181,7 @@ export default function GuestQueueTicketPage() {
                 setGuestLastName(checkInGuestName.lastName);
                 setGuestNameSaved(Boolean(checkInGuestName.firstName || checkInGuestName.lastName));
                 setBouquetAccess(row.ticket_type ?? 'checked-in');
-                const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
+                const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot', ev.id);
                 setHeadshotCreditStatus(credit
                   ? credit.quantity > credit.used_quantity ? 'available' : 'used'
                   : 'none');
@@ -309,13 +309,13 @@ export default function GuestQueueTicketPage() {
     updateTicketGuestName(ticketId, {
       firstName: guestFirstName,
       lastName: guestLastName,
-    })
+    }, queue?.id, event?.id)
       .then((row) => setPilotTicket(row))
       .catch((err) => {
         didSyncGuestNameRef.current = false;
         console.error('Failed to sync event check-in name to queue ticket', err);
       });
-  }, [isPilotQueue, ticketId, guestFirstName, guestLastName]);
+  }, [isPilotQueue, ticketId, guestFirstName, guestLastName, queue?.id, event?.id]);
 
   useEffect(() => {
     if (!queue || !ticketId || !isPilotQueue) return;
@@ -326,7 +326,7 @@ export default function GuestQueueTicketPage() {
     let stopped = false;
     async function refreshTicket() {
       try {
-        const row = await getQueueTicket(activeTicketId);
+        const row = await getQueueTicket(activeTicketId, queueId, event?.id);
         if (['cancelled', 'left'].includes(row.stage ?? 'waiting')) {
           clearNotHereNotice(row.id);
           clearQueueTicket(queueId);
@@ -370,7 +370,7 @@ export default function GuestQueueTicketPage() {
       stopped = true;
       clearInterval(interval);
     };
-  }, [queue, ticketId, isPilotQueue, navigate, eventSlug, clearNotHereNotice]);
+  }, [queue, event?.id, ticketId, isPilotQueue, navigate, eventSlug, clearNotHereNotice]);
 
   useEffect(() => {
     lastPilotTicketRef.current = null;
@@ -408,7 +408,7 @@ export default function GuestQueueTicketPage() {
     (async () => {
       try {
         await applyQueuePilotFlow(pilotQueueId);
-        const refreshed = await getQueueTicket(activeTicketId);
+        const refreshed = await getQueueTicket(activeTicketId, pilotQueueId, event?.id);
         setPilotTicket((current) => hasSameShape(current, refreshed) ? current : refreshed);
       } catch (err) {
         console.warn('Auto flow from guest ticket state failed', err);
@@ -416,7 +416,7 @@ export default function GuestQueueTicketPage() {
         autoNearbyFlowInFlightRef.current = false;
       }
     })();
-  }, [isPilotQueue, queue?.run_mode, pilotTicket?.id, pilotTicket?.queue_id, pilotTicket?.stage, pilotTicket?.nearby_confirmed_at]);
+  }, [isPilotQueue, queue?.run_mode, event?.id, pilotTicket?.id, pilotTicket?.queue_id, pilotTicket?.stage, pilotTicket?.nearby_confirmed_at]);
 
   // Countdown timer shown on the served screen
   useEffect(() => {
@@ -566,11 +566,11 @@ export default function GuestQueueTicketPage() {
     setNearbySaving(true);
     setCompletionError('');
     try {
-      const row = await confirmTicketNearby(ticketId);
+      const row = await confirmTicketNearby(ticketId, queue?.id, event?.id);
       clearNotHereNotice(row.id);
       if (queue?.run_mode === 'auto' && row.queue_id) {
         await applyQueuePilotFlow(row.queue_id);
-        const refreshed = await getQueueTicket(row.id);
+        const refreshed = await getQueueTicket(row.id, queue?.id, event?.id);
         setPilotTicket(refreshed);
       } else {
         setPilotTicket(row);

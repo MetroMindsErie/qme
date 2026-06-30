@@ -52,10 +52,10 @@ export default function GuestQueueLanding() {
           try {
             const saved = JSON.parse(storedCheckIn) as { id?: string };
             if (saved.id) {
-              const row = await getEventCheckIn(saved.id);
+              const row = await getEventCheckIn(saved.id, ev.id);
               setBouquetAccess(row.status === 'completed' ? row.ticket_type ?? 'checked-in' : 'none');
               if (row.status === 'completed') {
-                const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
+                const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot', ev.id);
                 setHeadshotCreditStatus(credit
                   ? credit.quantity > credit.used_quantity ? 'available' : 'used'
                   : 'none');

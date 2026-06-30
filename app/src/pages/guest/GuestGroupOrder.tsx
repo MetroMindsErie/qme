@@ -57,7 +57,7 @@ export default function GuestGroupOrder() {
         if (stored) {
           if (stored.id) {
             try {
-              const row = await getEventCheckIn(stored.id);
+              const row = await getEventCheckIn(stored.id, ev.id);
               if (!stopped) {
                 setCheckIn(row);
                 setItems(await listGroupOrderItemsForCheckIn(row.id));

@@ -2,7 +2,7 @@
  * queueService.ts — CRUD for queues + queue-scoped ticket operations.
  */
 import { supabase } from './supabase';
-import { getGuestTokenForQueue, isMissingGuestSessionRpc } from './guestSessionService';
+import { getGuestSessionToken, getGuestTokenForQueue, isMissingGuestSessionRpc } from './guestSessionService';
 import type { EventGuestMark, Queue, CreateQueueInput, Ticket, UpdateQueueInput, QueueSnapshot } from '../types';
 
 // ===================== QUEUE CRUD =====================
@@ -268,8 +268,21 @@ export async function resetQueueTickets(queueId: string): Promise<void> {
 
 export async function updateTicketGuestName(
   ticketId: number,
-  input: { firstName: string; lastName: string }
+  input: { firstName: string; lastName: string },
+  queueId?: string | null,
+  eventId?: string | null
 ): Promise<Ticket> {
+  if (queueId && eventId) {
+    const { data: scopedData, error: scopedError } = await supabase.rpc('update_ticket_guest_name_for_guest', {
+      p_ticket_id: ticketId,
+      p_guest_token: getGuestTokenForQueue(queueId, eventId),
+      p_first_name: input.firstName,
+      p_last_name: input.lastName,
+    });
+    if (!scopedError) return scopedData as Ticket;
+    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+  }
+
   const { data, error } = await supabase
     .from('tickets')
     .update({
@@ -294,7 +307,20 @@ export async function listQueuePilotTickets(queueId: string): Promise<Ticket[]> 
   return (data ?? []) as Ticket[];
 }
 
-export async function getQueueTicket(ticketId: number): Promise<Ticket> {
+export async function getQueueTicket(
+  ticketId: number,
+  queueId?: string | null,
+  eventId?: string | null
+): Promise<Ticket> {
+  if (queueId && eventId) {
+    const { data: scopedData, error: scopedError } = await supabase.rpc('get_ticket_for_guest', {
+      p_ticket_id: ticketId,
+      p_guest_token: getGuestTokenForQueue(queueId, eventId),
+    });
+    if (!scopedError) return scopedData as Ticket;
+    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+  }
+
   const { data, error } = await supabase
     .from('tickets')
     .select('*')
@@ -330,7 +356,20 @@ export async function updateTicketStage(
   return data as Ticket;
 }
 
-export async function confirmTicketNearby(ticketId: number): Promise<Ticket> {
+export async function confirmTicketNearby(
+  ticketId: number,
+  queueId?: string | null,
+  eventId?: string | null
+): Promise<Ticket> {
+  if (queueId && eventId) {
+    const { data: scopedData, error: scopedError } = await supabase.rpc('confirm_ticket_nearby_for_guest', {
+      p_ticket_id: ticketId,
+      p_guest_token: getGuestTokenForQueue(queueId, eventId),
+    });
+    if (!scopedError) return scopedData as Ticket;
+    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+  }
+
   const { data, error } = await supabase
     .from('tickets')
     .update({ nearby_confirmed_at: new Date().toISOString() })
@@ -405,6 +444,22 @@ export async function completeQueueTicketAction(input: {
   source?: string;
   metadata?: Record<string, unknown>;
 }): Promise<EventGuestMark> {
+  if ((input.source ?? 'guest') === 'guest') {
+    const { data: scopedData, error: scopedError } = await supabase.rpc('complete_queue_ticket_for_guest', {
+      p_event_id: input.eventId,
+      p_ticket_id: input.ticketId,
+      p_guest_token: getGuestSessionToken(input.eventId),
+      p_mark_key: input.markKey,
+      p_mark_value: input.markValue ?? 'completed',
+      p_check_in_id: input.checkInId ?? null,
+      p_consume_credit_key: input.consumeCreditKey ?? null,
+      p_credit_guest_name: input.creditGuestName ?? null,
+      p_metadata: input.metadata ?? {},
+    });
+    if (!scopedError) return scopedData as EventGuestMark;
+    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+  }
+
   const ticket = await updateTicketStage(input.ticketId, 'completed');
 
   const payload = {

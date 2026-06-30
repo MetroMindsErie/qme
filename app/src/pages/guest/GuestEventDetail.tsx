@@ -309,12 +309,12 @@ export default function GuestEventDetail() {
         try {
           const saved = JSON.parse(storedCheckIn) as { id?: string };
           if (saved.id) {
-            const row = await getEventCheckIn(saved.id);
+            const row = await getEventCheckIn(saved.id, ev.id);
             nextEventCheckInStatus = row.status;
             if (!checkInConfig.requireCompletedForParticipation || row.status === 'completed') {
               checkInTicketType = row.ticket_type;
               nextHasEventCheckIn = true;
-              const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot');
+              const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot', ev.id);
               nextHeadshotCreditStatus = credit
                 ? credit.quantity > credit.used_quantity ? 'available' : 'used'
                 : 'none';
@@ -362,7 +362,7 @@ export default function GuestEventDetail() {
               } else {
                 try {
                   const restored = await restoreTicketForQueue(Number(storedTicketId), q.id, ev.id);
-                  const ticketRow = await getQueueTicket(restored.id);
+                  const ticketRow = await getQueueTicket(restored.id, q.id, ev.id);
                   ticket = String(restored.ticketNumber);
                   localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
                   localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));

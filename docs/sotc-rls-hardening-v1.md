@@ -10,6 +10,31 @@ It is intentionally a first pass, not the final security model. qME still allows
 
 ## Hardened Now
 
+### Pass 4: Guest Action RLS Tightening
+
+Drafted in `supabase-guest-action-rls-tightening.sql`.
+
+- `event_check_ins`
+  - Anonymous direct table access is removed.
+  - Guests create, fetch, and auto-complete only their own check-in through guest-token verified RPCs.
+  - Guest self-completion is allowed only when the event metadata sets check-in completion mode to `auto`; staff/host check-in cannot be bypassed through the guest RPC.
+  - Staff/admin direct table access is scoped by `can_manage_event_guest_action(event_id)`.
+
+- `tickets`
+  - Anonymous direct table access is removed.
+  - Guests fetch, rename, mark nearby, and complete only their own ticket through guest-token verified RPCs.
+  - Staff/admin direct ticket access is scoped through the ticket's queue event.
+
+- `event_guest_marks`
+  - Anonymous direct insert/update is removed.
+  - Guest scan/code completion now writes marks through `complete_queue_ticket_for_guest`, which verifies ticket ownership, event ownership, and optional check-in ownership.
+  - Staff/admin direct mark access is scoped by event role.
+
+- `event_guest_credits`
+  - Anonymous direct credit reads are removed.
+  - Guests can fetch a credit for their own check-in through `get_guest_credit_for_check_in_guest`.
+  - Staff/admin direct credit access remains scoped by event role.
+
 ### Pass 3: Guest Session Foundation
 
 Drafted in `supabase-guest-session-foundation.sql`.
@@ -94,10 +119,10 @@ Added in `supabase-sprint2-setup-rls.sql`.
 
 - `event_guest_credits`
   - Staff/admin only for grant, consume, update, or delete.
-  - Guest read remains open for the pilot because the guest credit UI does not yet have a durable guest identity.
+  - Guest reads move behind a guest-token RPC in the fourth pass.
 
 - `event_guest_marks`
-  - Guest-sourced completion marks remain allowed for scan/code pilot completion.
+  - Guest-sourced completion marks move behind a guest-token RPC in the fourth pass.
   - Staff/admins can manage marks.
 
 ## Still Temporary
@@ -107,21 +132,16 @@ Added in `supabase-sprint2-setup-rls.sql`.
   - The passphrase-only admin bridge has been removed.
   - Temporary password change, invitation emails, and password reset flow still need hardening.
 
-- `tickets`
-  - Guest-owned identity foundation is drafted but not yet the final RLS flip.
-  - Staff/admin ticket transitions should move behind scoped RPCs or policies in a later pass.
+- Guest session recovery
+  - Optional email/phone can be stored, but one-time recovery codes are not implemented yet.
 
-- `event_check_ins`
-  - Guest-session linking is drafted.
-  - Final RLS should expose only the current guest's check-in plus staff/admin scoped views.
+- Legacy/fallback compatibility
+  - The app still contains fallbacks for environments where the guest-session RPCs have not been installed.
+  - After `supabase-guest-action-rls-tightening.sql` is run, current production should use the scoped RPC path for guest actions.
 
-- `event_guest_credits` select
-  - Still readable by anonymous users for pilot compatibility.
-  - Write access is now staff/admin-only.
-
-- Guest-sourced marks
-  - Still allow anonymous insert when `source = 'guest'`.
-  - This preserves scan/code completion until station-code completion moves behind a safer function or signed guest context.
+- Stale queue blockers
+  - The RLS pass does not solve stale standby/released tickets.
+  - That remains a separate queue operations story so staff can clear guests who never return.
 
 ## Recommended Test After Running SQL
 
@@ -132,14 +152,14 @@ Added in `supabase-sprint2-setup-rls.sql`.
 5. Event admin can edit the SOTC Test Check-in event and event features.
 6. Anonymous user cannot create/edit organizations, events, expies, eCes, or queues by direct client write.
 7. Check-in staff/event admin can check in guests and grant photo credit.
-8. Guest can still:
+8. Guest can still, after a fresh check-in/session:
    - check in,
    - join Scan-Code Adventure,
    - join Headshot Photographer when eligible,
    - mark nearby,
    - complete scan-code adventure.
-9. Anonymous user cannot grant photo credits by direct client update.
+9. Anonymous user cannot grant photo credits, read another guest's credit, read another guest's ticket, or insert completion marks by direct client table access.
 
 ## Next Hardening Step
 
-Run and smoke-test `supabase-guest-session-foundation.sql`, then tighten `event_check_ins`, `tickets`, guest marks, and guest credit reads around the guest session model instead of broad anonymous access.
+Run and smoke-test `supabase-guest-action-rls-tightening.sql` after the matching app deploy. Then use the computer engineering review to look for policy bypasses, missing audit logs, and remaining broad direct-table access before moving deeper into event-builder work.

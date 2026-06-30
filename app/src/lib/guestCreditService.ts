@@ -1,10 +1,22 @@
 import { supabase } from './supabase';
+import { getGuestSessionToken, isMissingGuestSessionRpc } from './guestSessionService';
 import type { EventGuestCredit } from '../types';
 
 export async function getGuestCreditForCheckIn(
   checkInId: string,
-  creditKey: string
+  creditKey: string,
+  eventId?: string | null
 ): Promise<EventGuestCredit | null> {
+  if (eventId) {
+    const { data: scopedData, error: scopedError } = await supabase.rpc('get_guest_credit_for_check_in_guest', {
+      p_check_in_id: checkInId,
+      p_guest_token: getGuestSessionToken(eventId),
+      p_credit_key: creditKey,
+    });
+    if (!scopedError) return (scopedData as EventGuestCredit | null) ?? null;
+    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+  }
+
   const { data, error } = await supabase
     .from('event_guest_credits')
     .select('*')

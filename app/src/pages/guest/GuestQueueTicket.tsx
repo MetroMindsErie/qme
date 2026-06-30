@@ -213,7 +213,7 @@ export default function GuestQueueTicketPage() {
   }, [eventSlug, queueSlug]);
 
   const { nowServing } = useQueueMetric(queue?.id);
-  const { ticketId, ticketNumber, hasCheckedIn, claimTicket, checkIn, leave } = useQueueTicket(queue?.id);
+  const { ticketId, ticketNumber, hasCheckedIn, claimTicket, checkIn, leave } = useQueueTicket(queue?.id, event?.id);
 
   const [note1, setNote1]             = useState('');
   const [showCheckIn, setShowCheckIn] = useState(false);

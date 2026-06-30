@@ -361,7 +361,7 @@ export default function GuestEventDetail() {
                 }
               } else {
                 try {
-                  const restored = await restoreTicketForQueue(Number(storedTicketId), q.id);
+                  const restored = await restoreTicketForQueue(Number(storedTicketId), q.id, ev.id);
                   const ticketRow = await getQueueTicket(restored.id);
                   ticket = String(restored.ticketNumber);
                   localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));

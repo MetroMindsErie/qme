@@ -2,20 +2,32 @@
  * checkInService.ts — event-level named check-ins for alpha testing.
  */
 import { supabase } from './supabase';
+import { tryEnsureGuestSession } from './guestSessionService';
 import type { CreateEventCheckInInput, EventCheckIn } from '../types';
 
 export async function createEventCheckIn(
   input: CreateEventCheckInInput
 ): Promise<EventCheckIn> {
+  const guestSessionId = await tryEnsureGuestSession({
+    eventId: input.event_id,
+    firstName: input.first_name,
+    lastName: input.last_name,
+    email: input.email,
+    phone: input.phone,
+  });
+
+  const payload: Record<string, unknown> = {
+    event_id: input.event_id,
+    first_name: input.first_name.trim(),
+    last_name: input.last_name.trim(),
+    code: input.code?.trim() || null,
+    status: 'waiting',
+  };
+  if (guestSessionId) payload.guest_session_id = guestSessionId;
+
   const { data, error } = await supabase
     .from('event_check_ins')
-    .insert({
-      ...input,
-      first_name: input.first_name.trim(),
-      last_name: input.last_name.trim(),
-      code: input.code?.trim() || null,
-      status: 'waiting',
-    })
+    .insert(payload)
     .select()
     .single();
   if (error) throw error;

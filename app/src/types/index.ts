@@ -49,6 +49,7 @@ export interface Queue {
 export interface Ticket {
   id: number;
   queue_id: string | null;
+  guest_session_id?: string | null;
   ticket_number?: number | null;
   first_name?: string;
   last_name?: string;
@@ -216,6 +217,7 @@ export type UpdateExperienceInput = UpdateEceInput;
 export interface EventCheckIn {
   id: string;
   event_id: string;
+  guest_session_id?: string | null;
   first_name: string;
   last_name: string;
   code: string | null;
@@ -245,6 +247,8 @@ export type CreateEventCheckInInput = Pick<
   'event_id' | 'first_name' | 'last_name'
 > & {
   code?: string | null;
+  email?: string | null;
+  phone?: string | null;
 };
 
 export type CreateEventGroupOrderItemInput = Pick<

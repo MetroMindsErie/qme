@@ -2,6 +2,7 @@
  * queueService.ts — CRUD for queues + queue-scoped ticket operations.
  */
 import { supabase } from './supabase';
+import { getGuestTokenForQueue, isMissingGuestSessionRpc } from './guestSessionService';
 import type { EventGuestMark, Queue, CreateQueueInput, Ticket, UpdateQueueInput, QueueSnapshot } from '../types';
 
 // ===================== QUEUE CRUD =====================
@@ -107,16 +108,42 @@ export async function setNowServing(
 
 // ===================== QUEUE-SCOPED TICKET OPS =====================
 
-export async function nextTicketForQueue(queueId: string): Promise<{ id: number; ticketNumber: number }> {
+function normalizeTicketRpcResult(
+  data: unknown,
+  fallbackTicketId?: number
+): { id: number; ticketNumber: number } {
+  if (typeof data === 'number') {
+    return { id: fallbackTicketId ?? data, ticketNumber: data };
+  }
+  const record = data && typeof data === 'object' ? data as Record<string, unknown> : {};
+  const id = Number(record.id ?? fallbackTicketId ?? record.ticket_number ?? 0);
+  const ticketNumber = Number(record.ticket_number ?? record.ticketNumber ?? record.id ?? id);
+  return { id, ticketNumber };
+}
+
+async function nextTicketForQueueLegacy(queueId: string): Promise<{ id: number; ticketNumber: number }> {
   const { data, error } = await supabase.rpc('next_ticket_for_queue', {
     p_queue_id: queueId,
   });
   if (error) throw error;
-  // v3 migration returns JSON {id, ticket_number}; legacy returns BIGINT
-  if (typeof data === 'number') {
-    return { id: data, ticketNumber: data };
+  return normalizeTicketRpcResult(data);
+}
+
+export async function nextTicketForQueue(
+  queueId: string,
+  eventId?: string | null
+): Promise<{ id: number; ticketNumber: number }> {
+  if (!eventId) return nextTicketForQueueLegacy(queueId);
+
+  const { data, error } = await supabase.rpc('next_ticket_for_queue', {
+    p_queue_id: queueId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
+  if (error) {
+    if (isMissingGuestSessionRpc(error)) return nextTicketForQueueLegacy(queueId);
+    throw error;
   }
-  return { id: data.id, ticketNumber: data.ticket_number };
+  return normalizeTicketRpcResult(data);
 }
 
 export async function peekTicketForQueue(queueId: string): Promise<number> {
@@ -127,7 +154,7 @@ export async function peekTicketForQueue(queueId: string): Promise<number> {
   return (data as number) ?? 0;
 }
 
-export async function restoreTicketForQueue(
+async function restoreTicketForQueueLegacy(
   ticketId: number,
   queueId: string
 ): Promise<{ id: number; ticketNumber: number }> {
@@ -136,21 +163,53 @@ export async function restoreTicketForQueue(
     p_queue_id: queueId,
   });
   if (error) throw error;
-  // v3 migration returns JSON {id, ticket_number}; legacy returns BIGINT
-  if (typeof data === 'number') {
-    return { id: ticketId, ticketNumber: data };
-  }
-  return { id: data.id ?? ticketId, ticketNumber: data.ticket_number ?? data };
+  return normalizeTicketRpcResult(data, ticketId);
 }
 
-export async function checkInTicket(ticketId: number): Promise<void> {
+export async function restoreTicketForQueue(
+  ticketId: number,
+  queueId: string,
+  eventId?: string | null
+): Promise<{ id: number; ticketNumber: number }> {
+  if (!eventId) return restoreTicketForQueueLegacy(ticketId, queueId);
+
+  const { data, error } = await supabase.rpc('restore_ticket_for_queue', {
+    p_ticket_id: ticketId,
+    p_queue_id: queueId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
+  if (error) {
+    if (isMissingGuestSessionRpc(error)) return restoreTicketForQueueLegacy(ticketId, queueId);
+    throw error;
+  }
+  return normalizeTicketRpcResult(data, ticketId);
+}
+
+async function checkInTicketLegacy(ticketId: number): Promise<void> {
   const { error } = await supabase.rpc('check_in_ticket', {
     p_ticket_id: ticketId,
   });
   if (error) throw error;
 }
 
-export async function leaveQueue(
+export async function checkInTicket(
+  ticketId: number,
+  queueId?: string | null,
+  eventId?: string | null
+): Promise<void> {
+  if (!queueId || !eventId) return checkInTicketLegacy(ticketId);
+
+  const { error } = await supabase.rpc('check_in_ticket', {
+    p_ticket_id: ticketId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
+  if (error) {
+    if (isMissingGuestSessionRpc(error)) return checkInTicketLegacy(ticketId);
+    throw error;
+  }
+}
+
+async function leaveQueueLegacy(
   ticketId: number,
   reason = 'user'
 ): Promise<void> {
@@ -159,6 +218,25 @@ export async function leaveQueue(
     p_reason: reason,
   });
   if (error) throw error;
+}
+
+export async function leaveQueue(
+  ticketId: number,
+  reason = 'user',
+  queueId?: string | null,
+  eventId?: string | null
+): Promise<void> {
+  if (!queueId || !eventId) return leaveQueueLegacy(ticketId, reason);
+
+  const { error } = await supabase.rpc('leave_queue', {
+    p_ticket_id: ticketId,
+    p_reason: reason,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
+  if (error) {
+    if (isMissingGuestSessionRpc(error)) return leaveQueueLegacy(ticketId, reason);
+    throw error;
+  }
 }
 
 export async function getAdminSnapshotForQueue(

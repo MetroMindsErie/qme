@@ -10,6 +10,31 @@ It is intentionally a first pass, not the final security model. qME still allows
 
 ## Hardened Now
 
+### Pass 3: Guest Session Foundation
+
+Drafted in `supabase-guest-session-foundation.sql`.
+
+- `guest_sessions`
+  - Anonymous guest browsers get an event-scoped random token stored locally.
+  - The database stores only a SHA-256 hash of that token.
+  - Optional email/phone can be captured for later recovery-code flows without forcing guest accounts now.
+  - Staff/admins can read/manage guest sessions for events they can manage.
+  - Anonymous users cannot directly browse `guest_sessions`; they create/update through security-definer functions.
+
+- `event_check_ins`
+  - Adds nullable `guest_session_id`.
+  - New guest check-ins can link to the browser's guest session when the SQL is installed.
+  - The app falls back to legacy check-in insertion if the SQL has not been run yet.
+
+- `tickets`
+  - Adds nullable `guest_session_id`.
+  - New/restore/check-in/leave queue RPC overloads can attach and verify the browser guest session.
+  - The app falls back to legacy queue RPCs if the new overloads have not been installed yet.
+
+- Guest recovery
+  - This pass stores enough contact/session data to support future recovery by email or phone code.
+  - It does not yet send one-time codes or restore sessions across devices.
+
 ### Pass 2: Setup Surfaces
 
 Added in `supabase-sprint2-setup-rls.sql`.
@@ -83,11 +108,12 @@ Added in `supabase-sprint2-setup-rls.sql`.
   - Temporary password change, invitation emails, and password reset flow still need hardening.
 
 - `tickets`
-  - Still needs a guest-owned identity/token before per-ticket RLS can distinguish one anonymous guest from another.
-  - Staff/admin ticket transitions should move behind scoped RPCs or policies in the next pass.
+  - Guest-owned identity foundation is drafted but not yet the final RLS flip.
+  - Staff/admin ticket transitions should move behind scoped RPCs or policies in a later pass.
 
 - `event_check_ins`
-  - Still needs a check-in token or guest session before RLS can safely expose only the current guest's check-in.
+  - Guest-session linking is drafted.
+  - Final RLS should expose only the current guest's check-in plus staff/admin scoped views.
 
 - `event_guest_credits` select
   - Still readable by anonymous users for pilot compatibility.
@@ -116,4 +142,4 @@ Added in `supabase-sprint2-setup-rls.sql`.
 
 ## Next Hardening Step
 
-Add a guest participation token/session model and scoped queue/check-in RPCs so `event_check_ins`, `tickets`, guest marks, and guest credit reads can be scoped to the actual guest rather than staying broadly readable for the pilot.
+Run and smoke-test `supabase-guest-session-foundation.sql`, then tighten `event_check_ins`, `tickets`, guest marks, and guest credit reads around the guest session model instead of broad anonymous access.

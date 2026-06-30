@@ -52,7 +52,7 @@ export function getActiveQueueIds(): string[] {
  * Queue-scoped ticket hook.
  * Returns both ticketId (for API) and ticketNumber (for display).
  */
-export function useQueueTicket(queueId: string | undefined) {
+export function useQueueTicket(queueId: string | undefined, eventId?: string | null) {
   const [ticketId, setTicketId] = useState<number | null>(null);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
@@ -108,7 +108,9 @@ export function useQueueTicket(queueId: string | undefined) {
         setTicketId(id);
         setTicketNumber(Number(localStorage.getItem(localNumKey(queueId))) || id);
         try {
-          const result = await restoreTicketForQueue(id, queueId);
+          const result = eventId
+            ? await restoreTicketForQueue(id, queueId, eventId)
+            : await restoreTicketForQueue(id, queueId);
           setTicketNumber(result.ticketNumber);
           storeTicket(queueId, result.id, result.ticketNumber);
         } catch {
@@ -132,7 +134,9 @@ export function useQueueTicket(queueId: string | undefined) {
       }
 
       // Claim new
-      const result = await nextTicketForQueue(queueId);
+      const result = eventId
+        ? await nextTicketForQueue(queueId, eventId)
+        : await nextTicketForQueue(queueId);
       setTicketId(result.id);
       setTicketNumber(result.ticketNumber);
       storeTicket(queueId, result.id, result.ticketNumber);
@@ -143,7 +147,7 @@ export function useQueueTicket(queueId: string | undefined) {
     } finally {
       claimBusyRef.current = false;
     }
-  }, [queueId, ticketId]);
+  }, [queueId, eventId, ticketId]);
 
   const checkIn = useCallback(async () => {
     if (!ticketId || !queueId || hasCheckedIn) return;
@@ -152,17 +156,27 @@ export function useQueueTicket(queueId: string | undefined) {
       localStorage.setItem(checkedInKey(queueId, ticketId), '1');
     } catch { /* */ }
     try {
-      await apiCheckIn(ticketId);
+      if (eventId) {
+        await apiCheckIn(ticketId, queueId, eventId);
+      } else {
+        await apiCheckIn(ticketId);
+      }
     } catch (e) {
       console.error('check-in failed', e);
     }
-  }, [ticketId, queueId, hasCheckedIn]);
+  }, [ticketId, queueId, eventId, hasCheckedIn]);
 
   const leave = useCallback(
     async (reason = 'user') => {
       const id = ticketId || 0;
       if (id) {
-        try { await apiLeave(id, reason); } catch (e) {
+        try {
+          if (eventId && queueId) {
+            await apiLeave(id, reason, queueId, eventId);
+          } else {
+            await apiLeave(id, reason);
+          }
+        } catch (e) {
           console.warn('leave failed (non-fatal)', e);
         }
       }
@@ -171,7 +185,7 @@ export function useQueueTicket(queueId: string | undefined) {
       setTicketNumber(null);
       setHasCheckedIn(false);
     },
-    [ticketId, queueId]
+    [ticketId, queueId, eventId]
   );
 
   // Cross-tab sync

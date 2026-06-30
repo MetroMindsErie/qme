@@ -31,6 +31,7 @@ export default function GuestEventCheckIn({
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [contact, setContact] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [checkIn, setCheckIn] = useState<EventCheckIn | null>(null);
   const [saving, setSaving] = useState(false);
@@ -48,9 +49,10 @@ export default function GuestEventCheckIn({
         setEvent(ev);
         const stored = localStorage.getItem(storageKey(ev.id));
         if (stored) {
-          const saved = JSON.parse(stored) as { id?: string; firstName?: string; lastName?: string };
+          const saved = JSON.parse(stored) as { id?: string; firstName?: string; lastName?: string; contact?: string };
           setFirstName(saved.firstName || '');
           setLastName(saved.lastName || '');
+          setContact(saved.contact || '');
           setSubmitted(true);
           if (saved.id) {
             try {
@@ -78,11 +80,15 @@ export default function GuestEventCheckIn({
     setSaving(true);
     setError('');
     try {
+      const trimmedContact = contact.trim();
+      const contactIsEmail = trimmedContact.includes('@');
       const created = await createEventCheckIn({
         event_id: event.id,
         first_name: firstName,
         last_name: lastName,
         code: checkInCode,
+        email: contactIsEmail ? trimmedContact : null,
+        phone: trimmedContact && !contactIsEmail ? trimmedContact : null,
       });
       const row = shouldAutoComplete
         ? await checkInEventGuest(created.id, 'general')
@@ -91,6 +97,7 @@ export default function GuestEventCheckIn({
         id: row.id,
         firstName,
         lastName,
+        contact: trimmedContact,
         ts: Date.now(),
       }));
       setCheckIn(row);
@@ -251,6 +258,16 @@ export default function GuestEventCheckIn({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
+            />
+
+            <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Email or phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span></label>
+            <input
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+              inputMode="email"
+              autoComplete="email tel"
+              placeholder="For recovering your check-in later"
               style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
             />
 

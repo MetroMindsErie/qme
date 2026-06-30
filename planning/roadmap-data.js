@@ -630,7 +630,24 @@ const QME_ROADMAP = {
                 "Remaining database/security risks are documented before real event use."
               ],
               notes:
-                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. First RLS hardening pass added in supabase-sotc-rls-hardening.sql with companion notes in docs/sotc-rls-hardening-v1.md: admin principals/roles/memberships/event staff assignments are scoped to authenticated admins, event guest designations are staff/admin managed, guest credit writes are staff/admin only, and guest-sourced scan/code marks remain open for pilot completion. Second pass added in supabase-sprint2-setup-rls.sql: active organizations/events/expies/eCes/legacy experiences/queues remain guest-readable, while setup writes are restricted to qME superadmin, organization admin, or event admin. Tickets, event_check_ins, guest credit reads, and fully guest-owned marks still need a durable guest identity/token model before final RLS. Reminder: re-engage the computer engineering student after this pass is run and smoke-tested so his review can focus on concrete policies and remaining risks."
+                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. First RLS hardening pass added in supabase-sotc-rls-hardening.sql with companion notes in docs/sotc-rls-hardening-v1.md: admin principals/roles/memberships/event staff assignments are scoped to authenticated admins, event guest designations are staff/admin managed, guest credit writes are staff/admin only, and guest-sourced scan/code marks remain open for pilot completion. Second pass added in supabase-sprint2-setup-rls.sql: active organizations/events/expies/eCes/legacy experiences/queues remain guest-readable, while setup writes are restricted to qME superadmin, organization admin, or event admin. Third pass drafted in supabase-guest-session-foundation.sql: anonymous guest browsers receive event-scoped session tokens, event_check_ins/tickets can link to guest_sessions, queue RPC overloads can attach/verify ticket ownership, and the guest check-in form can optionally capture email/phone for later recovery. Guest credit reads and final ticket/check-in RLS should move behind the new guest-session model after this pass is run and smoke-tested. Reminder: re-engage the computer engineering student after this pass is run and smoke-tested so his review can focus on concrete policies and remaining risks."
+            },
+            {
+              id: "story-guest-session-recovery-code",
+              title: "Let guests recover their event session by email or phone code",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Allow an anonymous guest to provide email or phone, receive a short code, and recover their event check-in, queue tickets, and submitted activity state on another browser/device.",
+              acceptanceCriteria: [
+                "Guest check-in can capture email or phone as an optional contact method.",
+                "Guest can request a one-time code to recover their event session.",
+                "Successful code verification restores the guest's check-in and active tickets without creating a full admin account.",
+                "Codes expire and cannot be reused.",
+                "The feature does not expose other guests' check-ins, tickets, credits, or order/activity submissions."
+              ],
+              notes:
+                "Added during Sprint 2 guest-session hardening discussion. The first foundation pass stores optional email/phone on guest_sessions but does not yet send or verify recovery codes."
             },
             {
               id: "story-superadmin-role",

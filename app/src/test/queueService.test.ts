@@ -57,6 +57,7 @@ function chainMock(finalData: unknown, finalError: unknown = null) {
 describe('queueService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
   });
 
   // ===== CRUD =====
@@ -165,6 +166,29 @@ describe('queueService', () => {
     it('throws on error', async () => {
       mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'err' } });
       await expect(nextTicketForQueue('q1')).rejects.toEqual({ message: 'err' });
+    });
+
+    it('passes a guest session token when event id is available', async () => {
+      mockRpc.mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null });
+      const result = await nextTicketForQueue('q1', 'e1');
+      expect(mockRpc).toHaveBeenCalledWith('next_ticket_for_queue', {
+        p_queue_id: 'q1',
+        p_guest_token: expect.any(String),
+      });
+      expect(result).toEqual({ id: 7, ticketNumber: 7 });
+    });
+
+    it('falls back to the legacy RPC if guest-session overload is missing', async () => {
+      mockRpc
+        .mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', message: 'missing function' } })
+        .mockResolvedValueOnce({ data: { id: 8, ticket_number: 8 }, error: null });
+      const result = await nextTicketForQueue('q1', 'e1');
+      expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', {
+        p_queue_id: 'q1',
+        p_guest_token: expect.any(String),
+      });
+      expect(mockRpc).toHaveBeenNthCalledWith(2, 'next_ticket_for_queue', { p_queue_id: 'q1' });
+      expect(result).toEqual({ id: 8, ticketNumber: 8 });
     });
   });
 

@@ -81,6 +81,15 @@ begin
     updated_at = now()
   where event_id = p_event_id;
 
+  update public.events
+  set
+    metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
+      'test_data_reset_at',
+      now()
+    ),
+    updated_at = now()
+  where id = p_event_id;
+
   actor_id := public.current_admin_principal_id();
   if actor_id is not null then
     insert into public.admin_audit_logs (

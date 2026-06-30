@@ -10,6 +10,7 @@ import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
+import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
@@ -283,8 +284,13 @@ export default function GuestEventDetail() {
       const checkInConfig = getEventCheckInConfig(ev);
       setEvent((current) => hasSameShape(current, ev) ? current : ev);
       const qs = await listQueuesForEvent(ev.id);
+      const didClearEventReset = clearGuestStateAfterEventReset(
+        ev.id,
+        qs.map((q) => q.id),
+        getEventTestDataResetMarker(ev)
+      );
 
-      if (freshReset) {
+      if (freshReset || didClearEventReset) {
         try {
           localStorage.removeItem(`qme:eventCheckIn:${ev.id}`);
           for (let i = localStorage.length - 1; i >= 0; i--) {

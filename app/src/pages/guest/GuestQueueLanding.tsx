@@ -12,6 +12,7 @@ import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
+import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { getQueueBySlug, leaveQueue, restoreTicketForQueue } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { QEvent, Queue } from '../../types';
@@ -67,6 +68,7 @@ export default function GuestQueueLanding() {
           }
         }
         const q = await getQueueBySlug(ev.id, queueSlug);
+        clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
         setQueue(q);
       } catch (e) {
         console.error('Failed to load queue', e);

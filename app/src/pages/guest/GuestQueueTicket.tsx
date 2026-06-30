@@ -17,6 +17,7 @@ import { getEventCheckIn } from '../../lib/checkInService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
+import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import {
   applyQueuePilotFlow,
   confirmTicketNearby,
@@ -198,6 +199,7 @@ export default function GuestQueueTicketPage() {
           }
         }
         const q  = await getQueueBySlug(ev.id, queueSlug);
+        clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
         setQueue(q);
         if (checkInGuestName) {
           localStorage.setItem(queueGuestStorageKey(q.id), JSON.stringify(checkInGuestName));

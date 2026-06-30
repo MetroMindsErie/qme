@@ -370,6 +370,10 @@ begin
     and credit_key = p_credit_key
   limit 1;
 
+  if credit_row.id is null then
+    return null;
+  end if;
+
   return credit_row;
 end;
 $$;

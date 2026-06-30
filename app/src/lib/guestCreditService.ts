@@ -13,7 +13,10 @@ export async function getGuestCreditForCheckIn(
       p_guest_token: getGuestSessionToken(eventId),
       p_credit_key: creditKey,
     });
-    if (!scopedError) return (scopedData as EventGuestCredit | null) ?? null;
+    if (!scopedError) {
+      const credit = scopedData as EventGuestCredit | null;
+      return credit?.id ? credit : null;
+    }
     if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
   }
 

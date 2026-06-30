@@ -109,6 +109,15 @@ export async function deleteEvent(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// ---------- TEST DATA RESET ----------
+
+export async function resetEventTestData(id: string): Promise<void> {
+  const { error } = await supabase.rpc('reset_event_test_data', {
+    p_event_id: id,
+  });
+  if (error) throw error;
+}
+
 // ---------- Realtime ----------
 
 export function onEventsChange(callback: (payload: unknown) => void) {

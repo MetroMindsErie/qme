@@ -10,7 +10,7 @@ import {
   getCurrentAdminPrincipal,
   type CurrentAdminPrincipal,
 } from '../../lib/adminPrincipalService';
-import { getEvent } from '../../lib/eventService';
+import { getEvent, resetEventTestData } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
 import {
   addEventStaffAssignment,
@@ -44,6 +44,7 @@ export default function AdminEventDetail() {
   const [staffRole, setStaffRole] = useState<EventStaffRole>('check_in_staff');
   const [staffEceId, setStaffEceId] = useState('');
   const [staffSaving, setStaffSaving] = useState(false);
+  const [resettingEventData, setResettingEventData] = useState(false);
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
@@ -165,6 +166,26 @@ export default function AdminEventDetail() {
     }
   }
 
+  async function handleResetEventTestData() {
+    if (!event || resettingEventData) return;
+    const confirmation = window.prompt(
+      `Reset all test guest data for "${event.name}"?\n\nThis removes check-ins, queue tickets, guest sessions, guest marks/completions, credits, designations, and group order submissions. Event setup, features, queues, and staff access will stay.\n\nType RESET to continue.`
+    );
+    if (confirmation !== 'RESET') return;
+
+    setResettingEventData(true);
+    try {
+      await resetEventTestData(event.id);
+      await refresh();
+      alert('Event test data reset.');
+    } catch (error) {
+      console.error('Failed to reset event test data', error);
+      alert('Could not reset event test data.');
+    } finally {
+      setResettingEventData(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="card">
@@ -245,6 +266,16 @@ export default function AdminEventDetail() {
           >
             ← Back
           </button>
+          {canManageThisEvent && (
+          <button
+            className="actionBtn actionBtn-danger"
+            disabled={resettingEventData}
+            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
+            onClick={handleResetEventTestData}
+          >
+            {resettingEventData ? 'Resetting...' : 'Reset Test Data'}
+          </button>
+          )}
         </div>
       </div>
 

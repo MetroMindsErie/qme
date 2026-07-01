@@ -420,6 +420,35 @@ export default function GuestQueueTicketPage() {
     })();
   }, [isPilotQueue, queue?.run_mode, event?.id, pilotTicket?.id, pilotTicket?.queue_id, pilotTicket?.stage, pilotTicket?.nearby_confirmed_at]);
 
+  useEffect(() => {
+    if (!isPilotQueue || queue?.run_mode !== 'auto' || !pilotTicket?.queue_id || !event?.id) return;
+    const stage = pilotTicket.stage ?? 'waiting';
+    const shouldKeepFlowMoving =
+      stage === 'waiting' ||
+      (stage === 'standby' && !pilotTicket.nearby_confirmed_at);
+    if (!shouldKeepFlowMoving) return;
+
+    const pilotQueueId = pilotTicket.queue_id;
+    const activeTicketId = pilotTicket.id;
+    const intervalId = window.setInterval(() => {
+      if (autoNearbyFlowInFlightRef.current) return;
+      autoNearbyFlowInFlightRef.current = true;
+      (async () => {
+        try {
+          await applyQueuePilotFlow(pilotQueueId);
+          const refreshed = await getQueueTicket(activeTicketId, pilotQueueId, event.id);
+          setPilotTicket((current) => hasSameShape(current, refreshed) ? current : refreshed);
+        } catch (err) {
+          console.warn('Auto flow interval from guest ticket state failed', err);
+        } finally {
+          autoNearbyFlowInFlightRef.current = false;
+        }
+      })();
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isPilotQueue, queue?.run_mode, event?.id, pilotTicket?.id, pilotTicket?.queue_id, pilotTicket?.stage, pilotTicket?.nearby_confirmed_at]);
+
   // Countdown timer shown on the served screen
   useEffect(() => {
     if (!servedView) return;

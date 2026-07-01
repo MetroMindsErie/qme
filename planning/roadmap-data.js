@@ -1323,20 +1323,22 @@ const QME_ROADMAP = {
             {
               id: "story-stale-queue-blocker-recovery",
               title: "Handle stale queue guests who block active flow",
-              status: "future",
-              sprint: "future",
+              status: "current",
+              sprint: "now",
               summary:
-                "Prevent waiting or standby guests who are no longer responsive from indefinitely blocking newer ready guests in a queue.",
+                "Prevent Gathering guests who have not marked themselves Nearby from indefinitely blocking newer guests and slowing down a live queue.",
               acceptanceCriteria: [
-                "Staff can identify stale waiting/standby guests who have not responded or marked nearby within an expected window.",
-                "Queue flow defines what happens to stale guests before they block release of later guests.",
-                "Policy options are evaluated, such as expire back to waiting, mark inactive, move behind ready standby guests, or require staff confirmation.",
-                "Guest-facing messaging explains when their place was paused, expired, or needs renewed nearby confirmation.",
-                "Admin can recover or reinstate a stale guest if needed.",
-                "The policy preserves fairness while keeping live queues moving during real events."
+                "Gathering is treated as a prompt state, not a protected blocking position.",
+                "A non-nearby Gathering guest stops counting against the Gathering/Nearby target after a pilot bypass window.",
+                "Auto-flow can invite additional Waiting guests into Gathering when earlier Gathering guests have not responded.",
+                "Auto-release still only releases guests who tapped I'm Nearby.",
+                "The queue does not automatically remove or cancel stale Gathering guests during the SOTC pilot.",
+                "The first pilot setting uses a short 15-second bypass window for testing, with real-event timing to be configured later.",
+                "The story captures later staff actions such as nudge, skip for now, remove, and recover.",
+                "The story captures later notification support so guests can be buzzed or messaged when moved from Waiting to Gathering."
               ],
               notes:
-                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. This should be solved as a queue operating policy/story, not as an immediate patch."
+                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. Updated after product discussion: the queue must keep moving toward Nearby candidates. First implementation soft-bypasses non-nearby Gathering guests after 15 seconds and caps the Gathering/Nearby pool to avoid inviting too many people at once. Do not auto-boot for SOTC yet. Future work should make bypass/attention timing configurable and add buzz/SMS/push/in-app notification when guests move from Waiting to Gathering."
             },
             {
               id: "story-queue-rule-configuration",

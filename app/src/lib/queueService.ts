@@ -413,6 +413,14 @@ function ticketIsNearbyConfirmed(ticket: Ticket) {
   return !Object.prototype.hasOwnProperty.call(ticket, 'nearby_confirmed_at') || Boolean(ticket.nearby_confirmed_at);
 }
 
+function ticketStillBlocksGatheringTarget(ticket: Ticket) {
+  if (ticket.nearby_confirmed_at) return true;
+  const changedAt = ticket.stage_updated_at || ticket.created_at;
+  const changedAtMs = changedAt ? Date.parse(changedAt) : Number.NaN;
+  if (!Number.isFinite(changedAtMs)) return true;
+  return Date.now() - changedAtMs < 15_000;
+}
+
 export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   const { error: rpcError } = await supabase.rpc('apply_queue_pilot_flow', {
     p_queue_id: queueId,
@@ -432,14 +440,20 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   const waiting = activeTickets.filter((ticket) => (ticket.stage ?? 'waiting') === 'waiting');
   const standby = activeTickets.filter((ticket) => ticket.stage === 'standby');
   const confirmedStandby = standby.filter(ticketIsNearbyConfirmed);
-
-  for (const ticket of waiting.slice(0, Math.max(0, standbyTarget - standby.length))) {
-    await updateTicketStage(ticket.id, 'standby');
-  }
+  const blockingStandby = standby.filter(ticketStillBlocksGatheringTarget);
 
   const slots = Math.max(0, maxActive - activeReleased);
   for (const ticket of confirmedStandby.slice(0, slots)) {
     await releaseQueueTicket(ticket.id);
+  }
+
+  const standbyPoolCap = Math.max(standbyTarget, standbyTarget + maxActive + 2);
+  const inviteSlots = Math.min(
+    Math.max(0, standbyTarget - blockingStandby.length),
+    Math.max(0, standbyPoolCap - standby.length)
+  );
+  for (const ticket of waiting.slice(0, inviteSlots)) {
+    await updateTicketStage(ticket.id, 'standby');
   }
 }
 

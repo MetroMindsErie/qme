@@ -104,6 +104,13 @@ as $$
 begin
   if new.stage is distinct from old.stage then
     new.stage_updated_at = now();
+    if old.stage = 'released'
+      and new.stage = 'standby'
+      and new.nearby_confirmed_at is null then
+      new.stage = 'waiting';
+      new.gathering_snoozed_at = now();
+      new.released_at = null;
+    end if;
     if new.stage = 'released'
       and old.stage is distinct from 'released'
       and new.nearby_confirmed_at is null then

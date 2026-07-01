@@ -2,7 +2,7 @@
  * queueService.ts — CRUD for queues + queue-scoped ticket operations.
  */
 import { supabase } from './supabase';
-import { getGuestSessionToken, getGuestTokenForQueue, isMissingGuestSessionRpc } from './guestSessionService';
+import { getGuestSessionToken, getGuestTokenForQueue } from './guestSessionService';
 import type { EventGuestMark, Queue, CreateQueueInput, Ticket, UpdateQueueInput, QueueSnapshot } from '../types';
 
 export type QueueStageSummary = {
@@ -150,7 +150,6 @@ export async function nextTicketForQueue(
     p_guest_token: getGuestTokenForQueue(queueId, eventId),
   });
   if (error) {
-    if (isMissingGuestSessionRpc(error)) return nextTicketForQueueLegacy(queueId);
     throw error;
   }
   const result = normalizeTicketRpcResult(data);
@@ -191,7 +190,6 @@ export async function restoreTicketForQueue(
     p_guest_token: getGuestTokenForQueue(queueId, eventId),
   });
   if (error) {
-    if (isMissingGuestSessionRpc(error)) return restoreTicketForQueueLegacy(ticketId, queueId);
     throw error;
   }
   return normalizeTicketRpcResult(data, ticketId);
@@ -216,7 +214,6 @@ export async function checkInTicket(
     p_guest_token: getGuestTokenForQueue(queueId, eventId),
   });
   if (error) {
-    if (isMissingGuestSessionRpc(error)) return checkInTicketLegacy(ticketId);
     throw error;
   }
 }
@@ -246,7 +243,6 @@ export async function leaveQueue(
     p_guest_token: getGuestTokenForQueue(queueId, eventId),
   });
   if (error) {
-    if (isMissingGuestSessionRpc(error)) return leaveQueueLegacy(ticketId, reason);
     throw error;
   }
   await applyQueuePilotFlow(queueId);
@@ -293,7 +289,7 @@ export async function updateTicketGuestName(
       p_last_name: input.lastName,
     });
     if (!scopedError) return scopedData as Ticket;
-    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+    throw scopedError;
   }
 
   const { data, error } = await supabase
@@ -354,7 +350,7 @@ export async function getQueueTicket(
       p_guest_token: getGuestTokenForQueue(queueId, eventId),
     });
     if (!scopedError) return scopedData as Ticket;
-    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+    throw scopedError;
   }
 
   const { data, error } = await supabase
@@ -406,7 +402,7 @@ export async function confirmTicketNearby(
       p_guest_token: getGuestTokenForQueue(queueId, eventId),
     });
     if (!scopedError) return scopedData as Ticket;
-    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+    throw scopedError;
   }
 
   const { data, error } = await supabase
@@ -458,34 +454,8 @@ export async function returnGatheringTicketToWaiting(ticketId: number): Promise<
   return ticket;
 }
 
-function ticketIsActive(ticket: Ticket) {
-  return !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting')
-    && !['left', 'served'].includes(ticket.status);
-}
-
 function ticketIsNearbyConfirmed(ticket: Ticket) {
   return !Object.prototype.hasOwnProperty.call(ticket, 'nearby_confirmed_at') || Boolean(ticket.nearby_confirmed_at);
-}
-
-function ticketStillBlocksGatheringTargetForSeconds(ticket: Ticket, staleAfterSeconds: number) {
-  if (ticket.nearby_confirmed_at) return true;
-  if (staleAfterSeconds <= 0) return false;
-  const changedAt = ticket.stage_updated_at || ticket.created_at;
-  const changedAtMs = changedAt ? Date.parse(changedAt) : Number.NaN;
-  if (!Number.isFinite(changedAtMs)) return true;
-  return Date.now() - changedAtMs < staleAfterSeconds * 1000;
-}
-
-function waitingSinceMs(ticket: Ticket) {
-  const changedAt = ticket.stage_updated_at || ticket.created_at;
-  const changedAtMs = changedAt ? Date.parse(changedAt) : Number.NaN;
-  return Number.isFinite(changedAtMs) ? changedAtMs : 0;
-}
-
-function gatheringSnoozeMs(ticket: Ticket) {
-  const snoozedAt = ticket.gathering_snoozed_at;
-  const snoozedAtMs = snoozedAt ? Date.parse(snoozedAt) : Number.NaN;
-  return Number.isFinite(snoozedAtMs) ? snoozedAtMs : 0;
 }
 
 export async function applyQueuePilotFlow(queueId: string): Promise<void> {
@@ -493,46 +463,7 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
     p_queue_id: queueId,
   });
   if (!rpcError) return;
-  if (!isMissingGuestSessionRpc(rpcError)) throw rpcError;
-
-  const [queue, tickets] = await Promise.all([
-    getQueue(queueId),
-    listQueuePilotTickets(queueId),
-  ]);
-  const activeReleased = tickets.filter((ticket) => ticket.stage === 'released').length;
-  const maxActive = queue.max_active_released ?? 1;
-  const standbyTarget = queue.standby_threshold ?? 3;
-  const gatheringMax = Math.max(standbyTarget, queue.gathering_max ?? standbyTarget + maxActive + 2);
-  const staleAfterSeconds = queue.gathering_stale_after_seconds ?? 15;
-
-  const activeTickets = tickets.filter(ticketIsActive);
-  const waiting = activeTickets
-    .filter((ticket) => (ticket.stage ?? 'waiting') === 'waiting')
-    .sort((a, b) => {
-      const bySnooze = Number(Boolean(a.gathering_snoozed_at)) - Number(Boolean(b.gathering_snoozed_at));
-      if (bySnooze !== 0) return bySnooze;
-      const byWaitingSince = waitingSinceMs(a) - waitingSinceMs(b);
-      if (byWaitingSince !== 0) return byWaitingSince;
-      const bySnoozeTime = gatheringSnoozeMs(a) - gatheringSnoozeMs(b);
-      if (bySnoozeTime !== 0) return bySnoozeTime;
-      return (a.ticket_number ?? a.id) - (b.ticket_number ?? b.id);
-    });
-  const standby = activeTickets.filter((ticket) => ticket.stage === 'standby');
-  const confirmedStandby = standby.filter(ticketIsNearbyConfirmed);
-  const blockingStandby = standby.filter((ticket) => ticketStillBlocksGatheringTargetForSeconds(ticket, staleAfterSeconds));
-
-  const slots = Math.max(0, maxActive - activeReleased);
-  for (const ticket of confirmedStandby.slice(0, slots)) {
-    await releaseQueueTicket(ticket.id);
-  }
-
-  const inviteSlots = Math.min(
-    Math.max(0, standbyTarget - blockingStandby.length),
-    Math.max(0, gatheringMax - standby.length)
-  );
-  for (const ticket of waiting.slice(0, inviteSlots)) {
-    await updateTicketStage(ticket.id, 'standby');
-  }
+  throw rpcError;
 }
 
 export async function completeQueueTicketAction(input: {
@@ -559,7 +490,7 @@ export async function completeQueueTicketAction(input: {
       p_metadata: input.metadata ?? {},
     });
     if (!scopedError) return scopedData as EventGuestMark;
-    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+    throw scopedError;
   }
 
   const ticket = await updateTicketStage(input.ticketId, 'completed');

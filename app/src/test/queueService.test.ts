@@ -187,19 +187,15 @@ describe('queueService', () => {
       expect(result).toEqual({ id: 7, ticketNumber: 7 });
     });
 
-    it('falls back to the legacy RPC if guest-session overload is missing', async () => {
+    it('fails closed when guest-session overload is missing', async () => {
       mockRpc
-        .mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', message: 'missing function' } })
-        .mockResolvedValueOnce({ data: { id: 8, ticket_number: 8 }, error: null })
-        .mockResolvedValueOnce({ data: null, error: null });
-      const result = await nextTicketForQueue('q1', 'e1');
+        .mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', message: 'missing function' } });
+      await expect(nextTicketForQueue('q1', 'e1')).rejects.toEqual({ code: 'PGRST202', message: 'missing function' });
       expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', {
         p_queue_id: 'q1',
         p_guest_token: expect.any(String),
       });
-      expect(mockRpc).toHaveBeenNthCalledWith(2, 'next_ticket_for_queue', { p_queue_id: 'q1' });
-      expect(mockRpc).toHaveBeenNthCalledWith(3, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
-      expect(result).toEqual({ id: 8, ticketNumber: 8 });
+      expect(mockRpc).toHaveBeenCalledTimes(1);
     });
   });
 

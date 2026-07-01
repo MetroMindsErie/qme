@@ -136,8 +136,9 @@ Added in `supabase-sprint2-setup-rls.sql`.
   - Optional email/phone can be stored, but one-time recovery codes are not implemented yet.
 
 - Legacy/fallback compatibility
-  - The app still contains fallbacks for environments where the guest-session RPCs have not been installed.
-  - After `supabase-guest-action-rls-tightening.sql` is run, current production should use the scoped RPC path for guest actions.
+  - Guest-facing check-in, ticket, nearby, credit-read, and scan/code completion actions now fail closed when the scoped guest RPC is missing or rejects the guest token.
+  - Admin/staff table operations remain direct client calls, but are intended to be protected by authenticated RLS policies.
+  - Older environments must run `supabase-guest-session-foundation.sql` and `supabase-guest-action-rls-tightening.sql`; the app no longer silently falls back to unscoped guest table writes for those guest actions.
 
 - Stale queue blockers
   - The RLS pass does not solve stale standby/released tickets.

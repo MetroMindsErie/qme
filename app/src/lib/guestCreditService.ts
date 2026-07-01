@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { getGuestSessionToken, isMissingGuestSessionRpc } from './guestSessionService';
+import { getGuestSessionToken } from './guestSessionService';
 import type { EventGuestCredit } from '../types';
 
 export async function getGuestCreditForCheckIn(
@@ -17,7 +17,7 @@ export async function getGuestCreditForCheckIn(
       const credit = scopedData as EventGuestCredit | null;
       return credit?.id ? credit : null;
     }
-    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+    throw scopedError;
   }
 
   const { data, error } = await supabase

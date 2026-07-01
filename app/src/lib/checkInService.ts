@@ -2,7 +2,7 @@
  * checkInService.ts — event-level named check-ins for alpha testing.
  */
 import { supabase } from './supabase';
-import { getGuestSessionToken, isMissingGuestSessionRpc, tryEnsureGuestSession } from './guestSessionService';
+import { getGuestSessionToken } from './guestSessionService';
 import type { CreateEventCheckInInput, EventCheckIn } from '../types';
 
 export async function createEventCheckIn(
@@ -19,32 +19,7 @@ export async function createEventCheckIn(
     p_phone: input.phone?.trim() || null,
   });
   if (!scopedError) return scopedData as EventCheckIn;
-  if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
-
-  const guestSessionId = await tryEnsureGuestSession({
-    eventId: input.event_id,
-    firstName: input.first_name,
-    lastName: input.last_name,
-    email: input.email,
-    phone: input.phone,
-  });
-
-  const payload: Record<string, unknown> = {
-    event_id: input.event_id,
-    first_name: input.first_name.trim(),
-    last_name: input.last_name.trim(),
-    code: input.code?.trim() || null,
-    status: 'waiting',
-  };
-  if (guestSessionId) payload.guest_session_id = guestSessionId;
-
-  const { data, error } = await supabase
-    .from('event_check_ins')
-    .insert(payload)
-    .select()
-    .single();
-  if (error) throw error;
-  return data as EventCheckIn;
+  throw scopedError;
 }
 
 export async function listEventCheckIns(
@@ -93,7 +68,7 @@ export async function checkInEventGuest(
       p_ticket_type: ticketType,
     });
     if (!scopedError) return scopedData as EventCheckIn;
-    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+    throw scopedError;
   }
 
   const { data, error } = await supabase
@@ -130,7 +105,7 @@ export async function getEventCheckIn(
       p_guest_token: getGuestSessionToken(eventId),
     });
     if (!scopedError) return scopedData as EventCheckIn;
-    if (!isMissingGuestSessionRpc(scopedError)) throw scopedError;
+    throw scopedError;
   }
 
   const { data, error } = await supabase

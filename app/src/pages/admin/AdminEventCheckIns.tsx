@@ -1,10 +1,11 @@
 /**
  * Admin: Named event check-ins for the mobile bar alpha flow.
  */
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
-import { getEvent } from '../../lib/eventService';
+import { getEvent, updateEvent } from '../../lib/eventService';
+import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
 import {
   checkInEventGuest,
   listEventCheckIns,
@@ -23,6 +24,14 @@ interface AdminEventCheckInsProps {
   completedLabel?: string;
 }
 
+type CheckInAdminTab = 'live' | 'history' | 'settings';
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 export default function AdminEventCheckIns({
   checkInCode = null,
   title = 'Event Check-In',
@@ -35,6 +44,9 @@ export default function AdminEventCheckIns({
   const [photoCredits, setPhotoCredits] = useState<EventGuestCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<CheckInAdminTab>('live');
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsStatus, setSettingsStatus] = useState('');
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
@@ -118,8 +130,52 @@ export default function AdminEventCheckIns({
     }
   }
 
+  async function updateCheckInSettings(
+    patch: Partial<{
+      completionMode: EventCheckInCompletionMode;
+      requireCompletedForParticipation: boolean;
+    }>
+  ) {
+    if (!event) return;
+
+    const metadata = asRecord(event.metadata);
+    const currentCheckIn = asRecord(metadata.check_in);
+    const current = getEventCheckInConfig(event);
+    const completionMode = patch.completionMode ?? current.completionMode;
+    const enabled = completionMode !== 'none';
+    const requireCompletedForParticipation = enabled
+      ? patch.requireCompletedForParticipation ?? current.requireCompletedForParticipation
+      : false;
+
+    const nextMetadata = {
+      ...metadata,
+      check_in: {
+        ...currentCheckIn,
+        enabled,
+        completion_mode: completionMode,
+        require_completed_for_participation: requireCompletedForParticipation,
+      },
+    };
+
+    setSavingSettings(true);
+    setSettingsStatus('Saving...');
+    try {
+      const updated = await updateEvent(event.id, { metadata: nextMetadata });
+      setEvent(updated);
+      setSettingsStatus('Saved');
+      window.setTimeout(() => setSettingsStatus(''), 1800);
+    } catch (e) {
+      console.error('Failed to update check-in settings', e);
+      setSettingsStatus('Save failed');
+      alert('Could not save check-in settings.');
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
   const waiting = checkIns.filter((row) => row.status === 'waiting');
   const completed = checkIns.filter((row) => row.status === 'completed');
+  const checkInConfig = useMemo(() => getEventCheckInConfig(event), [event]);
   const eventLogoSrc = event?.slug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
     : event?.image_url || '/images/qmeFirstLogo.jpg';
@@ -141,7 +197,7 @@ export default function AdminEventCheckIns({
           {title}
         </h1>
         <p style={{ color: '#666', margin: '0.35rem 0 0' }}>
-          {event?.name || 'Event'} · {waiting.length} waiting
+          {event?.name || 'Event'} · {waiting.length} waiting · {completed.length} checked in
         </p>
       </div>
 
@@ -152,48 +208,92 @@ export default function AdminEventCheckIns({
           </div>
         )}
 
-        {waiting.length === 0 && !error && (
-          <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
-            No active check-ins yet.
-          </p>
-        )}
+        <div className="admin-tabs" role="tablist" aria-label="Check-in admin sections">
+          <button
+            type="button"
+            className={`admin-tab ${activeTab === 'live' ? 'admin-tab-active' : ''}`}
+            onClick={() => setActiveTab('live')}
+          >
+            Live Check-In
+          </button>
+          <button
+            type="button"
+            className={`admin-tab ${activeTab === 'history' ? 'admin-tab-active' : ''}`}
+            onClick={() => setActiveTab('history')}
+          >
+            History
+          </button>
+          <button
+            type="button"
+            className={`admin-tab ${activeTab === 'settings' ? 'admin-tab-active' : ''}`}
+            onClick={() => setActiveTab('settings')}
+          >
+            Settings
+          </button>
+        </div>
 
-        {waiting.map((row) => (
-          <div key={row.id} style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '1rem', marginBottom: '0.75rem', background: '#fafafa' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontWeight: 800, color: '#2f3e4f', fontSize: '1.05rem' }}>
-                  {row.first_name} {row.last_name}
-                </div>
-                <div style={{ fontSize: '0.8rem', color: '#5B4FCE', fontWeight: 700, textTransform: 'uppercase', marginTop: 4 }}>
-                  waiting
-                </div>
+        {activeTab === 'live' && (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', marginBottom: '1rem' }}>
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
+                <div style={{ color: '#8B5A00', fontSize: '1.35rem', fontWeight: 900 }}>{waiting.length}</div>
+                <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>Waiting for staff</div>
               </div>
-              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                {checkInCode || event?.slug !== 'peony-festival' ? (
-                  <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id)}>
-                    Check In
-                  </button>
-                ) : (
-                  <>
-                    <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'general')}>
-                      General
-                    </button>
-                    <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'flowers')}>
-                      Flowers
-                    </button>
-                  </>
-                )}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
+                <div style={{ color: '#00a344', fontSize: '1.35rem', fontWeight: 900 }}>{completed.length}</div>
+                <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>Checked in</div>
               </div>
             </div>
-          </div>
-        ))}
 
-        {completed.length > 0 && (
-          <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #e0e0e0' }}>
+            {waiting.length === 0 && !error && (
+              <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
+                No guests are waiting for staff check-in.
+              </p>
+            )}
+
+            {waiting.map((row) => (
+              <div key={row.id} style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '1rem', marginBottom: '0.75rem', background: '#fafafa' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ fontWeight: 800, color: '#2f3e4f', fontSize: '1.05rem' }}>
+                      {row.first_name} {row.last_name}
+                    </div>
+                    <div style={{ fontSize: '0.8rem', color: '#8B5A00', fontWeight: 800, textTransform: 'uppercase', marginTop: 4 }}>
+                      Waiting for staff
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {checkInCode || event?.slug !== 'peony-festival' ? (
+                      <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id)}>
+                        Check In
+                      </button>
+                    ) : (
+                      <>
+                        <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'general')}>
+                          General
+                        </button>
+                        <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'flowers')}>
+                          Flowers
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {activeTab === 'history' && (
+          <>
             <h2 style={{ fontSize: '1rem', margin: '0 0 0.75rem', color: '#2f3e4f' }}>
               {completedLabel} ({completed.length})
             </h2>
+            {completed.length === 0 && (
+              <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
+                No completed check-ins yet.
+              </p>
+            )}
             {completed.map((row) => {
               const hasFlowersAccess = row.ticket_type === 'flowers';
               const photoCredit = photoCredits.find((credit) => credit.check_in_id === row.id);
@@ -202,39 +302,79 @@ export default function AdminEventCheckIns({
               const accessLabel = hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
 
               return (
-              <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.65rem 0', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: '#2f3e4f' }}>
-                    {row.first_name} {row.last_name}
+                <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.8rem 0', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#2f3e4f' }}>
+                      {row.first_name} {row.last_name}
+                    </div>
+                    <div style={{ color: hasFlowersAccess ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800, marginTop: 2 }}>
+                      {checkInCode || event?.slug !== 'peony-festival' ? 'CHECKED IN' : accessLabel}
+                    </div>
                   </div>
-                  <div style={{ color: hasFlowersAccess ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800, marginTop: 2 }}>
-                    {checkInCode || event?.slug !== 'peony-festival' ? 'CHECKED IN' : accessLabel}
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    {!checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (
+                      <button
+                        className="actionBtn actionBtn-primary"
+                        style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
+                        onClick={() => updateGuestAccess(row.id, 'flowers')}
+                      >
+                        Upgrade Flowers
+                      </button>
+                    )}
+                    {event?.slug === 'sotc-test-check-in' && (
+                      <button
+                        className={hasPhotoCredit || hasUsedPhotoCredit ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
+                        style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
+                        disabled={hasPhotoCredit || hasUsedPhotoCredit}
+                        onClick={() => grantPhotoCredit(row)}
+                      >
+                        {hasUsedPhotoCredit ? 'Photo Used' : hasPhotoCredit ? 'Photo Credit' : 'Grant Photo'}
+                      </button>
+                    )}
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                  {!checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (
-                    <button
-                      className="actionBtn actionBtn-primary"
-                      style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
-                      onClick={() => updateGuestAccess(row.id, 'flowers')}
-                    >
-                      Upgrade Flowers
-                    </button>
-                  )}
-                  {event?.slug === 'sotc-test-check-in' && (
-                    <button
-                      className={hasPhotoCredit || hasUsedPhotoCredit ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
-                      style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
-                      disabled={hasPhotoCredit || hasUsedPhotoCredit}
-                      onClick={() => grantPhotoCredit(row)}
-                    >
-                      {hasUsedPhotoCredit ? 'Photo Used' : hasPhotoCredit ? 'Photo Credit' : 'Grant Photo'}
-                    </button>
-                  )}
-                </div>
-              </div>
               );
             })}
+          </>
+        )}
+
+        {activeTab === 'settings' && (
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: '#fafafa' }}>
+              <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Check-In Behavior</h2>
+              <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>
+                Check-In Mode
+              </label>
+              <select
+                value={checkInConfig.completionMode}
+                disabled={savingSettings}
+                onChange={(e) => updateCheckInSettings({ completionMode: e.target.value as EventCheckInCompletionMode })}
+                style={{ width: '100%', padding: '0.7rem', borderRadius: 8, border: '1px solid #d0d7de', marginBottom: '0.75rem' }}
+              >
+                <option value="auto">Auto check-in: guests are admitted after entering their name</option>
+                <option value="staff">Staff check-in: guests wait until staff confirms</option>
+                <option value="none">No event check-in</option>
+              </select>
+
+              <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', color: '#2f3e4f', fontWeight: 800 }}>
+                <input
+                  type="checkbox"
+                  checked={checkInConfig.requireCompletedForParticipation}
+                  disabled={savingSettings || checkInConfig.completionMode === 'none'}
+                  onChange={(e) => updateCheckInSettings({ requireCompletedForParticipation: e.target.checked })}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>Require completed check-in before guests can use event features</span>
+              </label>
+              <p style={{ color: '#667085', fontSize: '0.82rem', lineHeight: 1.45, margin: '0.75rem 0 0' }}>
+                Use staff check-in for SOTC-style control. Auto check-in is useful for lightweight tests where guests should enter immediately.
+              </p>
+              {settingsStatus && (
+                <p style={{ color: settingsStatus === 'Save failed' ? '#B71C1C' : '#00a344', fontWeight: 800, margin: '0.75rem 0 0' }}>
+                  {settingsStatus}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

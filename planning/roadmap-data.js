@@ -1255,12 +1255,30 @@ const QME_ROADMAP = {
                 "The admin event screen shows event check-in counts for people waiting for staff and people checked in.",
                 "Each queue-based event feature shows counts for Waiting, Gathering, Nearby, Your Turn, and Done.",
                 "Counts use operational labels that match the guest status language.",
-                "Counts update when the admin event screen refreshes after guest or staff actions.",
+                "Counts update through a debounced live refresh after guest or staff actions.",
                 "The overview remains read-only; detailed actions still happen in Event Check-Ins or Manage Queue.",
                 "The implementation supports Scan-Code Adventure and Headshot Photographer before the broader tab redesign."
               ],
               notes:
-                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests."
+                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions; future production-scale architecture should move these counts to operational metrics tables."
+            },
+            {
+              id: "story-operational-metrics-tables",
+              title: "Create operational metrics tables for event and queue counts",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Replace repeated admin count scans with precomputed event and queue metric rows that can power live admin overview, tabs, and future dashboards.",
+              acceptanceCriteria: [
+                "Event-level metrics include waiting-for-staff check-ins, completed check-ins, and last updated time.",
+                "Queue-level metrics include Waiting, Gathering, Nearby, Your Turn, Done, and last updated time.",
+                "Metrics update reliably when guests check in, join queues, mark nearby, are released, complete, leave, are marked not here, or event test data is reset.",
+                "Admin overview subscribes to lightweight metrics rows instead of high-volume ticket/check-in tables.",
+                "The implementation documents whether metrics are maintained by triggers, RPC refresh, or a server process.",
+                "A fallback/rebuild function exists to recalculate metrics from source tables if counts drift."
+              ],
+              notes:
+                "Captured during Sprint 2 discussion after adding live admin status overview. This is the better long-term architecture for larger events and multiple active admin/staff screens, but the pilot can first validate the overview with debounced realtime refresh."
             },
             {
               id: "story-admin-queue-tabs",

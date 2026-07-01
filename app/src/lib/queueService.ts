@@ -600,3 +600,26 @@ export function onQueueChange(
     supabase.removeChannel(channel);
   };
 }
+
+export function onQueueTicketsChange(
+  queueId: string,
+  callback: (payload: unknown) => void
+) {
+  const channel = supabase
+    .channel(`queue-tickets-${queueId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'tickets',
+        filter: `queue_id=eq.${queueId}`,
+      },
+      (payload) => callback(payload)
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}

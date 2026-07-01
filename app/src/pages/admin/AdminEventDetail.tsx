@@ -1,7 +1,7 @@
 /**
  * Admin: View event details + manage its queues (list, create, delete).
  */
-import { useEffect, useState, useCallback, type FormEvent } from 'react';
+import { useEffect, useRef, useState, useCallback, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import {
@@ -12,7 +12,7 @@ import {
 } from '../../lib/adminPrincipalService';
 import { getEvent, resetEventTestData } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
-import { listEventCheckIns } from '../../lib/checkInService';
+import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
 import {
   addEventStaffAssignment,
   archiveEventStaffAssignment,
@@ -21,7 +21,7 @@ import {
   type EventStaffRole,
 } from '../../lib/eventStaffService';
 import { findAdminPrincipalByEmail } from '../../lib/organizationStaffService';
-import { listQueuesForEvent, deleteQueue, listQueuePilotTickets } from '../../lib/queueService';
+import { listQueuesForEvent, deleteQueue, listQueuePilotTickets, onQueueTicketsChange } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { Ece, EventCheckIn, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
@@ -132,6 +132,7 @@ export default function AdminEventDetail() {
   const [staffEceId, setStaffEceId] = useState('');
   const [staffSaving, setStaffSaving] = useState(false);
   const [resettingEventData, setResettingEventData] = useState(false);
+  const refreshTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
@@ -184,6 +185,37 @@ export default function AdminEventDetail() {
   useEffect(() => {
     refresh();
   }, [refresh]);
+
+  const scheduleRefresh = useCallback(() => {
+    if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
+    refreshTimerRef.current = window.setTimeout(() => {
+      refreshTimerRef.current = null;
+      void refresh();
+    }, 750);
+  }, [refresh]);
+
+  useEffect(() => {
+    if (!event?.id) return;
+    const unsubscribe = onEventCheckInsChange(event.id, scheduleRefresh);
+    return () => {
+      unsubscribe();
+    };
+  }, [event?.id, scheduleRefresh]);
+
+  useEffect(() => {
+    const queueIds = queues.map((queue) => queue.id);
+    if (queueIds.length === 0) return;
+    const unsubscribes = queueIds.map((queueId) => onQueueTicketsChange(queueId, scheduleRefresh));
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
+  }, [queues, scheduleRefresh]);
+
+  useEffect(() => {
+    return () => {
+      if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
+    };
+  }, []);
 
   async function handleDeleteQueue(qId: string, name: string) {
     if (!confirm(`Delete queue "${name}" and all its tickets?`)) return;

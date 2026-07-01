@@ -44,6 +44,8 @@ type QueueSummary = {
   completed: number;
 };
 
+type AdminEventTab = 'operations' | 'staff' | 'setup';
+
 const emptyQueueSummary: QueueSummary = {
   waiting: 0,
   gathering: 0,
@@ -137,6 +139,7 @@ export default function AdminEventDetail() {
   const [staffEceId, setStaffEceId] = useState('');
   const [staffSaving, setStaffSaving] = useState(false);
   const [resettingEventData, setResettingEventData] = useState(false);
+  const [activeTab, setActiveTab] = useState<AdminEventTab>('operations');
   const refreshTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
   const refresh = useCallback(async () => {
@@ -446,6 +449,35 @@ export default function AdminEventDetail() {
 
       {/* Queues section */}
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
+        <div className="admin-tabs" role="tablist" aria-label="Event admin sections">
+          {[
+            ['operations', 'Operations'],
+            ['staff', 'Staff'],
+            ['setup', 'Setup'],
+          ].map(([tab, label]) => (
+            <button
+              key={tab}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={`admin-tab ${activeTab === tab ? 'admin-tab-active' : ''}`}
+              onClick={() => setActiveTab(tab as AdminEventTab)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === 'operations' && (
+        <>
+        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+          <StatusPill label="Waiting for staff" value={checkInSummary.waitingForStaff} tone={checkInSummary.waitingForStaff > 0 ? 'attention' : 'default'} />
+          <StatusPill label="Checked in" value={checkInSummary.checkedIn} tone="done" />
+        </div>
+        </>
+        )}
+
+        {activeTab === 'staff' && (
         <div style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1.2rem', margin: '0 0 0.75rem', fontWeight: 700 }}>Event Staff</h2>
           <p style={{ color: '#64748b', fontSize: '0.88rem', lineHeight: 1.45, margin: '0 0 0.85rem', fontWeight: 700 }}>
@@ -547,13 +579,40 @@ export default function AdminEventDetail() {
             );
           })}
         </div>
+        )}
 
+        {activeTab === 'setup' && canManageThisEvent && (
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', marginBottom: '1rem', background: '#f8fafc' }}>
+          <h2 style={{ fontSize: '1.2rem', margin: '0 0 0.75rem', fontWeight: 700 }}>Event Setup</h2>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' as const }}>
+            <button
+              className="actionBtn actionBtn-primary"
+              style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}
+              onClick={() => navigate(`/admin/events/${event.id}/edit`)}
+            >
+              Edit Event
+            </button>
+            <button
+              className="actionBtn actionBtn-danger"
+              disabled={resettingEventData}
+              style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem' }}
+              onClick={handleResetEventTestData}
+            >
+              {resettingEventData ? 'Resetting...' : 'Reset Test Data'}
+            </button>
+          </div>
+        </div>
+        )}
+
+        {activeTab !== 'staff' && (
+        <>
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', gap: '0.75rem', flexWrap: 'wrap' }}>
             <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 700 }}>Event Features</h2>
             {canManageThisEvent && (
             <button
               className="actionBtn actionBtn-primary"
+              hidden={activeTab !== 'setup'}
               style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
               onClick={() => navigate(`/admin/events/${event.id}/eces/new`)}
             >
@@ -634,6 +693,7 @@ export default function AdminEventDetail() {
                 {canManageThisEvent && (
                 <button
                   className="actionBtn actionBtn-secondary"
+                  hidden={activeTab !== 'setup'}
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                   onClick={() => navigate(`/admin/events/${event.id}/eces/${exp.id}/edit`)}
                 >
@@ -643,6 +703,7 @@ export default function AdminEventDetail() {
                 {canManageThisEvent && (
                 <button
                   className="actionBtn actionBtn-danger"
+                  hidden={activeTab !== 'setup'}
                   style={{ margin: 0, width: 'auto', padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                   onClick={() => handleDeleteEce(exp.id, exp.name)}
                 >
@@ -655,7 +716,7 @@ export default function AdminEventDetail() {
           })}
         </div>
 
-        {standaloneQueues.length > 0 && (
+        {activeTab === 'setup' && standaloneQueues.length > 0 && (
           <details style={{ borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
             <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: '1rem', color: '#2f3e4f' }}>
               Advanced Queue Engines
@@ -743,6 +804,8 @@ export default function AdminEventDetail() {
           </div>
         ))}
           </details>
+        )}
+        </>
         )}
       </div>
     </div>

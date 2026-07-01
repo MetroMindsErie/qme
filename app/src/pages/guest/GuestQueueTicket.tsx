@@ -7,7 +7,7 @@
  *   - Missed:    NOT checked in AND nowServing advances 2+ past ticketNumber
  *   - Manual:    guest taps "Leave Queue"
  */
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, type CSSProperties } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
@@ -919,25 +919,30 @@ export default function GuestQueueTicketPage() {
     const metadataCopy = getPilotStageCopy(linkedEce, pilotStage, copyVars);
     const hasNearbyField = pilotTicket ? Object.prototype.hasOwnProperty.call(pilotTicket, 'nearby_confirmed_at') : false;
     const nearbyConfirmed = Boolean(pilotTicket?.nearby_confirmed_at);
+    const guestDisplayStage = pilotStage === 'standby' && nearbyConfirmed ? 'nearby' : pilotStage;
     const needsNearbyConfirmation = pilotStage === 'standby' && hasNearbyField && !nearbyConfirmed;
     const defaultInstruction = pilotStage === 'standby'
       ? nearbyConfirmed
         ? "You're marked nearby. Keep this page open."
-        : `When you are close to ${locationText}, tap I'm Nearby. Keep this page open.`
+        : "When you get nearby, tap I'm Nearby."
       : linkedEce?.description || queue.description || 'Keep this page open for the next step.';
-    const instructionText = pilotStage === 'standby' && nearbyConfirmed
+    const instructionText = pilotStage === 'standby'
       ? defaultInstruction
       : metadataCopy.instruction ?? defaultInstruction;
     const statusCopy: Record<string, { title: string; detail: string }> = {
       waiting: {
         title: 'Waiting',
-        detail: 'You are checked in and in line. No action is needed yet.',
+        detail: 'You are in line. Go enjoy the event while you wait.',
       },
       standby: {
-        title: 'Standby',
+        title: 'Gathering',
         detail: nearbyConfirmed
-          ? 'Thanks. Stay nearby. You will be called soon.'
-          : `You are almost ready. Please make your way closer to ${locationText}.`,
+          ? "You're nearby. Keep this page open."
+          : "Come nearby. When you get here, tap I'm Nearby.",
+      },
+      nearby: {
+        title: 'Nearby',
+        detail: "You're nearby. Keep this page open.",
       },
       released: {
         title: 'Your Turn',
@@ -958,24 +963,36 @@ export default function GuestQueueTicketPage() {
         detail: 'You are no longer active in this queue.',
       },
     };
-    const defaultStatus = statusCopy[pilotStage] ?? statusCopy.waiting;
+    const defaultStatus = statusCopy[guestDisplayStage] ?? statusCopy.waiting;
     const status = {
-      title: metadataCopy.title ?? defaultStatus.title,
+      title: pilotStage === 'standby' ? defaultStatus.title : metadataCopy.title ?? defaultStatus.title,
       detail: pilotStage === 'standby' && nearbyConfirmed
+        ? defaultStatus.detail
+        : pilotStage === 'standby'
         ? defaultStatus.detail
         : metadataCopy.detail ?? defaultStatus.detail,
     };
     const statusTheme: Record<string, { border: string; background: string; title: string; label: string }> = {
       waiting: { border: '#7c3aed', background: '#f5f3ff', title: '#4c1d95', label: '#6d28d9' },
       standby: { border: '#eab308', background: '#fefce8', title: '#854d0e', label: '#a16207' },
+      nearby: { border: '#2563eb', background: '#eff6ff', title: '#1e3a8a', label: '#2563eb' },
       released: { border: '#f97316', background: '#fff7ed', title: '#9a3412', label: '#c2410c' },
       completed: { border: '#15803d', background: '#ecfdf5', title: '#14532d', label: '#15803d' },
       cancelled: { border: '#991b1b', background: '#fef2f2', title: '#7f1d1d', label: '#991b1b' },
       left: { border: '#6b7280', background: '#f8fafc', title: '#374151', label: '#6b7280' },
     };
-    const theme = statusTheme[pilotStage] ?? statusTheme.waiting;
+    const theme = statusTheme[guestDisplayStage] ?? statusTheme.waiting;
+    const statusSteps = [
+      { key: 'waiting', label: 'Waiting' },
+      { key: 'standby', label: 'Gathering' },
+      { key: 'nearby', label: 'Nearby' },
+      { key: 'released', label: 'Your Turn' },
+    ];
+    const statusStepIndex = pilotStage === 'completed'
+      ? statusSteps.length - 1
+      : Math.max(0, statusSteps.findIndex((step) => step.key === guestDisplayStage));
     const showLocation = pilotStage === 'standby' || pilotStage === 'released' || pilotStage === 'completed';
-    const showInstruction = pilotStage === 'standby';
+    const showInstruction = pilotStage === 'standby' && !nearbyConfirmed;
 
     return (
       <div className="card card-scrollable tkt-card tkt-pilot-card">
@@ -1005,7 +1022,11 @@ export default function GuestQueueTicketPage() {
         <div className="tkt-pilot-scroll-body">
           <div
             className="tkt-pilot-status"
-            style={{ borderColor: theme.border, background: theme.background }}
+            style={{
+              borderColor: theme.border,
+              background: theme.background,
+              '--pilot-active-color': theme.label,
+            } as CSSProperties}
           >
             <div className="tkt-pilot-label" style={{ color: theme.label }}>
               Status
@@ -1016,6 +1037,21 @@ export default function GuestQueueTicketPage() {
             <p className="tkt-pilot-status-detail">
               {status.detail}
             </p>
+            <div className="tkt-pilot-stepper" aria-label={`Current status: ${status.title}`}>
+              {statusSteps.map((step, index) => {
+                const active = index === statusStepIndex;
+                const complete = index < statusStepIndex || pilotStage === 'completed';
+                return (
+                  <div
+                    key={step.key}
+                    className={`tkt-pilot-step ${active ? 'tkt-pilot-step-active' : ''} ${complete ? 'tkt-pilot-step-complete' : ''}`}
+                  >
+                    <span className="tkt-pilot-step-dot" />
+                    <span className="tkt-pilot-step-label">{step.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {showLocation && (
@@ -1101,7 +1137,7 @@ export default function GuestQueueTicketPage() {
                 className="tkt-btn-checkin"
                 onClick={() => navigate(`/events/${eventSlug}`)}
               >
-                Back to Event
+                {pilotStage === 'waiting' ? 'Things Happening Now' : 'Back to Event'}
               </button>
               <button
                 className="tkt-leave-btn"

@@ -600,6 +600,71 @@
   font-weight: 700;
 }
 
+.tkt-pilot-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin-top: 14px;
+  position: relative;
+}
+
+.tkt-pilot-stepper::before {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  top: 9px;
+  height: 3px;
+  border-radius: 999px;
+  background: #d1d5db;
+}
+
+.tkt-pilot-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  color: #6b7280;
+  font-weight: 850;
+  text-align: center;
+}
+
+.tkt-pilot-step-dot {
+  width: 20px;
+  height: 20px;
+  border: 3px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.tkt-pilot-step-label {
+  font-size: 0.62rem;
+  line-height: 1.05;
+}
+
+.tkt-pilot-step-complete .tkt-pilot-step-dot {
+  border-color: #22c55e;
+  background: #22c55e;
+}
+
+.tkt-pilot-step-complete {
+  color: #15803d;
+}
+
+.tkt-pilot-step-active .tkt-pilot-step-dot {
+  border-color: currentColor;
+  background: currentColor;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+}
+
+.tkt-pilot-step-active {
+  color: var(--pilot-active-color, #4f46e5);
+}
+
 .tkt-pilot-location {
   margin-top: 5px;
   font-size: clamp(1.2rem, 6vw, 1.85rem);
@@ -724,6 +789,10 @@
   .tkt-pilot-status-detail {
     margin-top: 8px;
     font-size: 0.98rem;
+  }
+
+  .tkt-pilot-step-label {
+    font-size: 0.56rem;
   }
 
   .tkt-pilot-instruction {

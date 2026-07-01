@@ -39,7 +39,7 @@ function hasSameShape(left: unknown, right: unknown) {
 function queueStageStatus(stage?: Ticket['stage']): string {
   switch (stage) {
     case 'standby':
-      return 'Standby';
+      return 'Gathering';
     case 'released':
       return 'Your turn';
     case 'completed':

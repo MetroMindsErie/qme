@@ -35,3 +35,6 @@ begin
   return credit_row;
 end;
 $$;
+
+revoke all on function public.get_guest_credit_for_check_in_guest(uuid, text, text) from public;
+grant execute on function public.get_guest_credit_for_check_in_guest(uuid, text, text) to anon, authenticated;

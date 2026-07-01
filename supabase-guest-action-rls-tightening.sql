@@ -521,3 +521,32 @@ create policy "event_guest_credits_delete_staff"
   for delete
   to authenticated
   using (public.can_manage_event_guest_action(event_id));
+
+-- Keep guest-action RPC execution deterministic. These are the only guest-owned
+-- paths the browser should use once direct table access is restricted by RLS.
+revoke all on function public.guest_session_matches(uuid, uuid, text) from public;
+grant execute on function public.guest_session_matches(uuid, uuid, text) to anon, authenticated;
+
+revoke all on function public.create_event_check_in_for_guest(uuid, text, text, text, text, text, text) from public;
+grant execute on function public.create_event_check_in_for_guest(uuid, text, text, text, text, text, text) to anon, authenticated;
+
+revoke all on function public.get_event_check_in_for_guest(uuid, text) from public;
+grant execute on function public.get_event_check_in_for_guest(uuid, text) to anon, authenticated;
+
+revoke all on function public.complete_event_check_in_for_guest(uuid, text, text) from public;
+grant execute on function public.complete_event_check_in_for_guest(uuid, text, text) to anon, authenticated;
+
+revoke all on function public.get_ticket_for_guest(bigint, text) from public;
+grant execute on function public.get_ticket_for_guest(bigint, text) to anon, authenticated;
+
+revoke all on function public.update_ticket_guest_name_for_guest(bigint, text, text, text) from public;
+grant execute on function public.update_ticket_guest_name_for_guest(bigint, text, text, text) to anon, authenticated;
+
+revoke all on function public.confirm_ticket_nearby_for_guest(bigint, text) from public;
+grant execute on function public.confirm_ticket_nearby_for_guest(bigint, text) to anon, authenticated;
+
+revoke all on function public.complete_queue_ticket_for_guest(uuid, bigint, text, text, text, uuid, text, text, jsonb) from public;
+grant execute on function public.complete_queue_ticket_for_guest(uuid, bigint, text, text, text, uuid, text, text, jsonb) to anon, authenticated;
+
+revoke all on function public.get_guest_credit_for_check_in_guest(uuid, text, text) from public;
+grant execute on function public.get_guest_credit_for_check_in_guest(uuid, text, text) to anon, authenticated;

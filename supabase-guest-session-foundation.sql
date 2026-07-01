@@ -315,3 +315,27 @@ begin
   perform public.leave_queue(p_ticket_id, p_reason);
 end;
 $$;
+
+-- Keep guest-session RPC execution deterministic. SECURITY DEFINER functions
+-- still validate event/queue ownership internally; these grants only expose the
+-- intended anonymous/authenticated guest entrypoints.
+revoke all on function public.guest_token_hash(text) from public;
+grant execute on function public.guest_token_hash(text) to anon, authenticated;
+
+revoke all on function public.ensure_guest_session(uuid, text, text, text, text, text) from public;
+grant execute on function public.ensure_guest_session(uuid, text, text, text, text, text) to anon, authenticated;
+
+revoke all on function public.ensure_guest_session_for_queue(uuid, text) from public;
+grant execute on function public.ensure_guest_session_for_queue(uuid, text) to anon, authenticated;
+
+revoke all on function public.next_ticket_for_queue(uuid, text) from public;
+grant execute on function public.next_ticket_for_queue(uuid, text) to anon, authenticated;
+
+revoke all on function public.restore_ticket_for_queue(bigint, uuid, text) from public;
+grant execute on function public.restore_ticket_for_queue(bigint, uuid, text) to anon, authenticated;
+
+revoke all on function public.check_in_ticket(bigint, text) from public;
+grant execute on function public.check_in_ticket(bigint, text) to anon, authenticated;
+
+revoke all on function public.leave_queue(bigint, text, text) from public;
+grant execute on function public.leave_queue(bigint, text, text) to anon, authenticated;

@@ -139,6 +139,7 @@ Added in `supabase-sprint2-setup-rls.sql`.
   - Guest-facing check-in, ticket, nearby, credit-read, and scan/code completion actions now fail closed when the scoped guest RPC is missing or rejects the guest token.
   - Admin/staff table operations remain direct client calls, but are intended to be protected by authenticated RLS policies.
   - Older environments must run `supabase-guest-session-foundation.sql` and `supabase-guest-action-rls-tightening.sql`; the app no longer silently falls back to unscoped guest table writes for those guest actions.
+  - July 1 follow-up: guest-session and guest-action SQL now explicitly revokes default public function execution and grants only the intended browser RPCs to `anon` and `authenticated`.
 
 - Stale queue blockers
   - The RLS pass does not solve stale standby/released tickets.

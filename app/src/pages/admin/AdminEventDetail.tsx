@@ -12,6 +12,7 @@ import {
 } from '../../lib/adminPrincipalService';
 import { getEvent, resetEventTestData } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
+import { listEventCheckIns } from '../../lib/checkInService';
 import {
   addEventStaffAssignment,
   archiveEventStaffAssignment,
@@ -20,14 +21,98 @@ import {
   type EventStaffRole,
 } from '../../lib/eventStaffService';
 import { findAdminPrincipalByEmail } from '../../lib/organizationStaffService';
-import { listQueuesForEvent, deleteQueue } from '../../lib/queueService';
+import { listQueuesForEvent, deleteQueue, listQueuePilotTickets } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
-import type { Ece, QEvent, Queue } from '../../types';
+import type { Ece, EventCheckIn, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
 function isGroupOrderEce(ece: Ece): boolean {
   return ece.metadata?.interaction_mode === 'group_order';
+}
+
+type CheckInSummary = {
+  waitingForStaff: number;
+  checkedIn: number;
+};
+
+type QueueSummary = {
+  waiting: number;
+  gathering: number;
+  nearby: number;
+  released: number;
+  completed: number;
+};
+
+const emptyQueueSummary: QueueSummary = {
+  waiting: 0,
+  gathering: 0,
+  nearby: 0,
+  released: 0,
+  completed: 0,
+};
+
+function summarizeCheckIns(checkIns: EventCheckIn[]): CheckInSummary {
+  return checkIns.reduce<CheckInSummary>(
+    (summary, checkIn) => {
+      if (checkIn.status === 'completed') summary.checkedIn += 1;
+      if (checkIn.status === 'waiting' || checkIn.status === 'called') summary.waitingForStaff += 1;
+      return summary;
+    },
+    { waitingForStaff: 0, checkedIn: 0 }
+  );
+}
+
+function summarizeQueueTickets(tickets: Ticket[]): QueueSummary {
+  return tickets.reduce<QueueSummary>(
+    (summary, ticket) => {
+      const stage = ticket.stage ?? 'waiting';
+      if (stage === 'waiting') summary.waiting += 1;
+      if (stage === 'standby' && ticket.nearby_confirmed_at) summary.nearby += 1;
+      if (stage === 'standby' && !ticket.nearby_confirmed_at) summary.gathering += 1;
+      if (stage === 'released') summary.released += 1;
+      if (stage === 'completed') summary.completed += 1;
+      return summary;
+    },
+    { ...emptyQueueSummary }
+  );
+}
+
+function StatusPill({
+  label,
+  value,
+  tone = 'default',
+}: {
+  label: string;
+  value: number;
+  tone?: 'default' | 'attention' | 'ready' | 'active' | 'done';
+}) {
+  const tones = {
+    default: { background: '#f8fafc', border: '#e2e8f0', color: '#475569' },
+    attention: { background: '#fff7ed', border: '#fed7aa', color: '#9a3412' },
+    ready: { background: '#f0fdf4', border: '#bbf7d0', color: '#15803d' },
+    active: { background: '#eef2ff', border: '#c7d2fe', color: '#4338ca' },
+    done: { background: '#ecfdf5', border: '#a7f3d0', color: '#047857' },
+  }[tone];
+
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 5,
+      border: `1px solid ${tones.border}`,
+      borderRadius: 999,
+      padding: '0.28rem 0.55rem',
+      background: tones.background,
+      color: tones.color,
+      fontSize: '0.72rem',
+      fontWeight: 900,
+      lineHeight: 1,
+      whiteSpace: 'nowrap',
+    }}>
+      {label} <strong style={{ fontSize: '0.82rem' }}>{value}</strong>
+    </span>
+  );
 }
 
 export default function AdminEventDetail() {
@@ -37,6 +122,8 @@ export default function AdminEventDetail() {
   const [queues, setQueues] = useState<Queue[]>([]);
   const [eces, setEces] = useState<Ece[]>([]);
   const [eventStaff, setEventStaff] = useState<EventStaffMember[]>([]);
+  const [checkInSummary, setCheckInSummary] = useState<CheckInSummary>({ waitingForStaff: 0, checkedIn: 0 });
+  const [queueSummaries, setQueueSummaries] = useState<Record<string, QueueSummary>>({});
   const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -57,17 +144,34 @@ export default function AdminEventDetail() {
         setEvent(null);
         setQueues([]);
         setEces([]);
+        setEventStaff([]);
+        setCheckInSummary({ waitingForStaff: 0, checkedIn: 0 });
+        setQueueSummaries({});
         return;
       }
-      const [qs, exps, staff] = await Promise.all([
+      const [qs, exps, staff, checkIns] = await Promise.all([
         listQueuesForEvent(ev.id),
         listEcesForEvent(ev.id),
         listEventStaff(ev.id),
+        listEventCheckIns(ev.id),
       ]);
+      const queueSummaryPairs = await Promise.all(
+        qs.map(async (queue) => {
+          try {
+            const tickets = await listQueuePilotTickets(queue.id);
+            return [queue.id, summarizeQueueTickets(tickets)] as const;
+          } catch (error) {
+            console.warn('Could not load queue summary', queue.id, error);
+            return [queue.id, { ...emptyQueueSummary }] as const;
+          }
+        })
+      );
       setEvent(ev);
       setQueues(qs);
       setEces(exps);
       setEventStaff(staff);
+      setCheckInSummary(summarizeCheckIns(checkIns));
+      setQueueSummaries(Object.fromEntries(queueSummaryPairs));
     } catch (e) {
       console.error('Failed to load event', e);
       alert('Event not found');
@@ -284,6 +388,10 @@ export default function AdminEventDetail() {
           </button>
           )}
         </div>
+        <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
+          <StatusPill label="Waiting for staff" value={checkInSummary.waitingForStaff} tone={checkInSummary.waitingForStaff > 0 ? 'attention' : 'default'} />
+          <StatusPill label="Checked in" value={checkInSummary.checkedIn} tone="done" />
+        </div>
       </div>
 
       {/* Queues section */}
@@ -412,6 +520,7 @@ export default function AdminEventDetail() {
 
           {visibleEces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
+            const queueSummary = linkedQueue ? queueSummaries[linkedQueue.id] ?? emptyQueueSummary : null;
 
             return (
               <div
@@ -441,6 +550,15 @@ export default function AdminEventDetail() {
                 {exp.description && (
                   <div style={{ fontSize: '0.88rem', color: '#666', marginTop: '0.35rem' }}>
                     {exp.description}
+                  </div>
+                )}
+                {queueSummary && (
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.65rem' }}>
+                    <StatusPill label="Waiting" value={queueSummary.waiting} tone={queueSummary.waiting > 0 ? 'attention' : 'default'} />
+                    <StatusPill label="Gathering" value={queueSummary.gathering} tone={queueSummary.gathering > 0 ? 'active' : 'default'} />
+                    <StatusPill label="Nearby" value={queueSummary.nearby} tone={queueSummary.nearby > 0 ? 'ready' : 'default'} />
+                    <StatusPill label="Your Turn" value={queueSummary.released} tone={queueSummary.released > 0 ? 'active' : 'default'} />
+                    <StatusPill label="Done" value={queueSummary.completed} tone="done" />
                   </div>
                 )}
               </div>

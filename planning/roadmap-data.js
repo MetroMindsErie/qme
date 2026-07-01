@@ -1245,6 +1245,24 @@ const QME_ROADMAP = {
               ]
             },
             {
+              id: "story-admin-event-activity-status-overview",
+              title: "Add admin event activity status overview",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Show read-only operating counts on the admin event screen before redesigning the queue screens into tabs.",
+              acceptanceCriteria: [
+                "The admin event screen shows event check-in counts for people waiting for staff and people checked in.",
+                "Each queue-based event feature shows counts for Waiting, Gathering, Nearby, Your Turn, and Done.",
+                "Counts use operational labels that match the guest status language.",
+                "Counts update when the admin event screen refreshes after guest or staff actions.",
+                "The overview remains read-only; detailed actions still happen in Event Check-Ins or Manage Queue.",
+                "The implementation supports Scan-Code Adventure and Headshot Photographer before the broader tab redesign."
+              ],
+              notes:
+                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests."
+            },
+            {
               id: "story-admin-queue-tabs",
               title: "Organize admin queue screens into focused tabs",
               status: "future",

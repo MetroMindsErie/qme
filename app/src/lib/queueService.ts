@@ -416,41 +416,28 @@ export async function confirmTicketNearby(
 }
 
 export async function releaseQueueTicket(ticketId: number): Promise<Ticket> {
-  return updateTicketStage(ticketId, 'released');
+  const { data, error } = await supabase.rpc('admin_release_queue_ticket', {
+    p_ticket_id: ticketId,
+  });
+  if (error) throw error;
+  return data as Ticket;
 }
 
 export async function markReleasedTicketNotHere(ticketId: number): Promise<Ticket> {
-  const { data, error } = await supabase
-    .from('tickets')
-    .update({
-      stage: 'waiting',
-      gathering_snoozed_at: new Date().toISOString(),
-      nearby_confirmed_at: null,
-      released_at: null,
-    })
-    .eq('id', ticketId)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('admin_mark_queue_ticket_not_here', {
+    p_ticket_id: ticketId,
+  });
   if (error) throw error;
   return data as Ticket;
 }
 
 export async function returnGatheringTicketToWaiting(ticketId: number): Promise<Ticket> {
-  const { data, error } = await supabase
-    .from('tickets')
-    .update({
-      stage: 'waiting',
-      gathering_snoozed_at: new Date().toISOString(),
-      nearby_confirmed_at: null,
-      released_at: null,
-    })
-    .eq('id', ticketId)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('admin_return_queue_ticket_to_waiting', {
+    p_ticket_id: ticketId,
+    p_reason: 'staff_return',
+  });
   if (error) throw error;
-  const ticket = data as Ticket;
-  if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
-  return ticket;
+  return data as Ticket;
 }
 
 function ticketIsNearbyConfirmed(ticket: Ticket) {
@@ -492,84 +479,17 @@ export async function completeQueueTicketAction(input: {
     throw scopedError;
   }
 
-  const ticket = await updateTicketStage(input.ticketId, 'completed');
-
-  const payload = {
-    event_id: input.eventId,
-    ticket_id: input.ticketId,
-    check_in_id: input.checkInId ?? null,
-    mark_key: input.markKey,
-    mark_value: input.markValue ?? 'completed',
-    source: input.source ?? 'guest',
-    metadata: input.metadata ?? {},
-  };
-
-  const { data: existing, error: lookupError } = await supabase
-    .from('event_guest_marks')
-    .select('id')
-    .eq('ticket_id', input.ticketId)
-    .eq('mark_key', input.markKey)
-    .maybeSingle();
-  if (lookupError) throw lookupError;
-
-  async function consumeCreditIfNeeded() {
-    if (!input.consumeCreditKey) return;
-
-    let query = supabase
-      .from('event_guest_credits')
-      .select('*')
-      .eq('event_id', input.eventId)
-      .eq('credit_key', input.consumeCreditKey);
-
-    if (input.checkInId) {
-      query = query.eq('check_in_id', input.checkInId);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    const normalizedGuestName = input.creditGuestName?.trim().toLowerCase();
-    const credit = (data ?? []).find((row) => {
-      if (row.used_quantity >= row.quantity) return false;
-      if (input.checkInId) return true;
-      if (!normalizedGuestName) return false;
-      const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata as Record<string, unknown> : {};
-      return typeof metadata.guest_name === 'string' && metadata.guest_name.trim().toLowerCase() === normalizedGuestName;
-    });
-
-    if (!credit) return;
-
-    const { error: updateError } = await supabase
-      .from('event_guest_credits')
-      .update({
-        used_quantity: credit.used_quantity + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', credit.id);
-    if (updateError) throw updateError;
-  }
-
-  if (existing?.id) {
-    const { data, error } = await supabase
-      .from('event_guest_marks')
-      .update(payload)
-      .eq('id', existing.id)
-      .select()
-      .single();
-    if (error) throw error;
-    await consumeCreditIfNeeded();
-    if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
-    return data as EventGuestMark;
-  }
-
-  const { data, error } = await supabase
-    .from('event_guest_marks')
-    .insert(payload)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('admin_complete_queue_ticket', {
+    p_event_id: input.eventId,
+    p_ticket_id: input.ticketId,
+    p_mark_key: input.markKey,
+    p_mark_value: input.markValue ?? 'completed',
+    p_check_in_id: input.checkInId ?? null,
+    p_consume_credit_key: input.consumeCreditKey ?? null,
+    p_credit_guest_name: input.creditGuestName ?? null,
+    p_metadata: input.metadata ?? {},
+  });
   if (error) throw error;
-  await consumeCreditIfNeeded();
-  if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
   return data as EventGuestMark;
 }
 

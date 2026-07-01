@@ -10,6 +10,15 @@ It is intentionally a first pass, not the final security model. qME still allows
 
 ## Hardened Now
 
+### Pass 5: Admin Queue Action RPC Boundary
+
+Drafted in `supabase-admin-queue-action-rpcs.sql`.
+
+- Queue ticket release, Not Here, Return to Waiting, and staff/admin completion now have named authenticated RPCs.
+- Each RPC checks the actor's qME/event/queue role server-side before mutating tickets, marks, or credits.
+- The admin queue dashboard now calls those RPCs instead of directly updating `tickets`, `event_guest_marks`, or `event_guest_credits` for those operational actions.
+- The RPCs also write basic audit log entries for release, return-to-waiting/Not Here, and completion.
+
 ### Pass 4: Guest Action RLS Tightening
 
 Drafted in `supabase-guest-action-rls-tightening.sql`.
@@ -137,7 +146,8 @@ Added in `supabase-sprint2-setup-rls.sql`.
 
 - Legacy/fallback compatibility
   - Guest-facing check-in, ticket, nearby, credit-read, and scan/code completion actions now fail closed when the scoped guest RPC is missing or rejects the guest token.
-  - Admin/staff table operations remain direct client calls, but are intended to be protected by authenticated RLS policies.
+  - Queue staff/admin ticket operations have begun moving behind authenticated RPCs, starting with release, Not Here, Return to Waiting, and staff/admin completion.
+  - Some admin/staff setup and check-in operations remain direct client calls, protected by authenticated RLS policies, and should continue moving behind named RPCs where the action changes guest/event state.
   - Older environments must run `supabase-guest-session-foundation.sql` and `supabase-guest-action-rls-tightening.sql`; the app no longer silently falls back to unscoped guest table writes for those guest actions.
   - July 1 follow-up: guest-session and guest-action SQL now explicitly revokes default public function execution and grants only the intended browser RPCs to `anon` and `authenticated`.
 
@@ -164,4 +174,4 @@ Added in `supabase-sprint2-setup-rls.sql`.
 
 ## Next Hardening Step
 
-Run and smoke-test `supabase-guest-action-rls-tightening.sql` after the matching app deploy. Then use the computer engineering review to look for policy bypasses, missing audit logs, and remaining broad direct-table access before moving deeper into event-builder work.
+Run and smoke-test `supabase-admin-queue-action-rpcs.sql` after the matching app deploy. Then continue moving staff check-in/photo-credit and setup mutations behind named RPCs before the computer engineering review looks for policy bypasses, missing audit logs, and remaining broad direct-table access.

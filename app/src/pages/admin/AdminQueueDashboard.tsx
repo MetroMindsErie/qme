@@ -21,7 +21,6 @@ import {
   resetQueueTickets,
   getQueueBySlug,
   updateQueue,
-  updateTicketStage,
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
@@ -273,7 +272,7 @@ export default function AdminQueueDashboard() {
           },
         });
       } else {
-        await updateTicketStage(ticketId, stage);
+        throw new Error(`Unsupported admin queue stage transition: ${stage}`);
       }
       await refreshPilotTickets();
     } catch (e) {

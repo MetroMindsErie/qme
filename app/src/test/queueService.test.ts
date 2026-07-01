@@ -257,26 +257,16 @@ describe('queueService', () => {
   });
 
   describe('markReleasedTicketNotHere', () => {
-    it('returns the guest to waiting without immediately running auto-flow', async () => {
-      const update = vi.fn().mockReturnThis();
-      const eq = vi.fn().mockReturnThis();
-      const select = vi.fn().mockReturnThis();
-      const single = vi.fn().mockResolvedValue({
+    it('uses the admin RPC boundary', async () => {
+      mockRpc.mockResolvedValueOnce({
         data: { id: 10, queue_id: 'q1', stage: 'waiting', gathering_snoozed_at: 'now' },
         error: null,
       });
-      mockFrom.mockReturnValue({ update, eq, select, single });
 
       const result = await markReleasedTicketNotHere(10);
 
-      expect(mockFrom).toHaveBeenCalledWith('tickets');
-      expect(update).toHaveBeenCalledWith(expect.objectContaining({
-        stage: 'waiting',
-        nearby_confirmed_at: null,
-        released_at: null,
-        gathering_snoozed_at: expect.any(String),
-      }));
-      expect(eq).toHaveBeenCalledWith('id', 10);
+      expect(mockRpc).toHaveBeenCalledWith('admin_mark_queue_ticket_not_here', { p_ticket_id: 10 });
+      expect(mockFrom).not.toHaveBeenCalledWith('tickets');
       expect(mockRpc).not.toHaveBeenCalledWith('apply_queue_pilot_flow', expect.anything());
       expect(result.stage).toBe('waiting');
     });

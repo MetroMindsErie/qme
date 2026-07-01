@@ -330,7 +330,13 @@ export default function AdminQueueDashboard() {
   }
 
   if (isPilotQueue && queue && event) {
+    const isInactiveQueueTicket = (ticket: Ticket) => {
+      const stage = ticket.stage ?? 'waiting';
+      if (stage === 'completed') return false;
+      return stage === 'left' || stage === 'cancelled' || ticket.status === 'left' || ticket.status === 'served';
+    };
     const counts = pilotTickets.reduce<Record<string, number>>((acc, ticket) => {
+      if (isInactiveQueueTicket(ticket)) return acc;
       const stage = ticket.stage ?? 'waiting';
       acc[stage] = (acc[stage] ?? 0) + 1;
       return acc;
@@ -339,9 +345,9 @@ export default function AdminQueueDashboard() {
     const maxActive = queue.max_active_released ?? 1;
     const standbyTarget = queue.standby_threshold ?? 3;
     const canReleaseMore = activeReleased < maxActive;
-    const nearbyConfirmedCount = pilotTickets.filter((ticket) => ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
+    const nearbyConfirmedCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
     const displayTickets = [...pilotTickets]
-      .filter((ticket) => !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting'))
+      .filter((ticket) => !isInactiveQueueTicket(ticket) && (ticket.stage ?? 'waiting') !== 'completed')
       .sort((a, b) => {
       const byStage = ticketStageSortRank(a) - ticketStageSortRank(b);
       if (byStage !== 0) return byStage;

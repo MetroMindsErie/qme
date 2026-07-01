@@ -46,7 +46,8 @@ begin
   into active_released_count
   from public.tickets
   where queue_id = p_queue_id
-    and stage = 'released';
+    and stage = 'released'
+    and coalesce(status, '') not in ('left', 'served');
 
   slots := greatest(0, max_active - active_released_count);
 
@@ -55,6 +56,7 @@ begin
     from public.tickets
     where queue_id = p_queue_id
       and stage = 'standby'
+      and coalesce(status, '') not in ('left', 'served')
       and nearby_confirmed_at is not null
     order by ticket_number nulls last, created_at, id
     limit slots
@@ -69,6 +71,7 @@ begin
   from public.tickets
   where queue_id = p_queue_id
     and stage = 'standby'
+    and coalesce(status, '') not in ('left', 'served')
     and (
       nearby_confirmed_at is not null
       or coalesce(stage_updated_at, created_at) >= now() - interval '15 seconds'
@@ -78,13 +81,15 @@ begin
   into standby_pool_count
   from public.tickets
   where queue_id = p_queue_id
-    and stage = 'standby';
+    and stage = 'standby'
+    and coalesce(status, '') not in ('left', 'served');
 
   for ticket_record in
     select id
     from public.tickets
     where queue_id = p_queue_id
       and coalesce(stage, 'waiting') = 'waiting'
+      and coalesce(status, '') not in ('left', 'served')
     order by ticket_number nulls last, created_at, id
     limit least(
       greatest(0, standby_target - blocking_standby_count),

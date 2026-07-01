@@ -241,6 +241,7 @@ export async function leaveQueue(
     if (isMissingGuestSessionRpc(error)) return leaveQueueLegacy(ticketId, reason);
     throw error;
   }
+  await applyQueuePilotFlow(queueId);
 }
 
 export async function getAdminSnapshotForQueue(
@@ -406,7 +407,8 @@ export async function markReleasedTicketNotHere(ticketId: number): Promise<Ticke
 }
 
 function ticketIsActive(ticket: Ticket) {
-  return !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting');
+  return !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting')
+    && !['left', 'served'].includes(ticket.status);
 }
 
 function ticketIsNearbyConfirmed(ticket: Ticket) {

@@ -67,11 +67,16 @@ function summarizeQueueTickets(tickets: Ticket[]): QueueSummary {
   return tickets.reduce<QueueSummary>(
     (summary, ticket) => {
       const stage = ticket.stage ?? 'waiting';
+      if (stage === 'completed') {
+        summary.completed += 1;
+        return summary;
+      }
+      if (ticket.status === 'left' || ticket.status === 'served') return summary;
+      if (stage === 'left' || stage === 'cancelled') return summary;
       if (stage === 'waiting') summary.waiting += 1;
       if (stage === 'standby' && ticket.nearby_confirmed_at) summary.nearby += 1;
       if (stage === 'standby' && !ticket.nearby_confirmed_at) summary.gathering += 1;
       if (stage === 'released') summary.released += 1;
-      if (stage === 'completed') summary.completed += 1;
       return summary;
     },
     { ...emptyQueueSummary }

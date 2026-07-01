@@ -7,13 +7,12 @@ import Header from '../../components/Header';
 import { getEvent, updateEvent } from '../../lib/eventService';
 import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
 import {
-  checkInEventGuest,
+  adminCompleteEventCheckIn,
+  adminUpdateEventCheckInTicketType,
   listEventCheckIns,
   onEventCheckInsChange,
-  updateEventCheckInStatus,
-  updateEventCheckInTicketType,
 } from '../../lib/checkInService';
-import { listGuestCreditsForEvent, upsertGuestCreditForCheckIn } from '../../lib/guestCreditService';
+import { adminGrantGuestCreditForCheckIn, listGuestCreditsForEvent } from '../../lib/guestCreditService';
 import type { EventCheckIn, EventGuestCredit, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
@@ -88,9 +87,9 @@ export default function AdminEventCheckIns({
   ) {
     try {
       if (ticketType) {
-        await checkInEventGuest(id, ticketType);
+        await adminCompleteEventCheckIn(id, ticketType);
       } else {
-        await updateEventCheckInStatus(id, 'completed');
+        await adminCompleteEventCheckIn(id);
       }
       await refresh();
     } catch (e) {
@@ -104,7 +103,7 @@ export default function AdminEventCheckIns({
     ticketType: NonNullable<EventCheckIn['ticket_type']>
   ) {
     try {
-      await updateEventCheckInTicketType(id, ticketType);
+      await adminUpdateEventCheckInTicketType(id, ticketType);
       await refresh();
     } catch (e) {
       console.error('Failed to update guest access', e);
@@ -113,10 +112,8 @@ export default function AdminEventCheckIns({
   }
 
   async function grantPhotoCredit(row: EventCheckIn) {
-    if (!event) return;
     try {
-      await upsertGuestCreditForCheckIn({
-        eventId: event.id,
+      await adminGrantGuestCreditForCheckIn({
         checkInId: row.id,
         creditKey: 'professional_headshot',
         metadata: {

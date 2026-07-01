@@ -43,6 +43,22 @@ export async function listGuestCreditsForEvent(
   return (data ?? []) as EventGuestCredit[];
 }
 
+export async function adminGrantGuestCreditForCheckIn(input: {
+  checkInId: string;
+  creditKey: string;
+  quantity?: number;
+  metadata?: Record<string, unknown>;
+}): Promise<EventGuestCredit> {
+  const { data, error } = await supabase.rpc('admin_grant_guest_credit_for_check_in', {
+    p_check_in_id: input.checkInId,
+    p_credit_key: input.creditKey,
+    p_quantity: input.quantity ?? 1,
+    p_metadata: input.metadata ?? {},
+  });
+  if (error) throw error;
+  return data as EventGuestCredit;
+}
+
 export async function upsertGuestCreditForCheckIn(input: {
   eventId: string;
   checkInId: string;

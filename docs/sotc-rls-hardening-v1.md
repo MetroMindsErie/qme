@@ -10,6 +10,17 @@ It is intentionally a first pass, not the final security model. qME still allows
 
 ## Hardened Now
 
+### Pass 6: Admin Check-In and Photo-Credit RPC Boundary
+
+Drafted in `supabase-admin-checkin-action-rpcs.sql`.
+
+- Staff/admin event check-in completion now has a named authenticated RPC.
+- Staff/admin guest access updates, such as Peony general-to-flowers upgrades, now have a named authenticated RPC.
+- Staff/admin photo-credit grants now have a named authenticated RPC.
+- Each RPC checks the actor's event role server-side before mutating `event_check_ins` or `event_guest_credits`.
+- The admin check-in workspace now calls those RPCs instead of directly updating check-ins or upserting guest credits for these operational actions.
+- The RPCs write basic audit log entries for check-in completion, ticket/access type changes, and guest credit grants.
+
 ### Pass 5: Admin Queue Action RPC Boundary
 
 Drafted in `supabase-admin-queue-action-rpcs.sql`.
@@ -146,8 +157,9 @@ Added in `supabase-sprint2-setup-rls.sql`.
 
 - Legacy/fallback compatibility
   - Guest-facing check-in, ticket, nearby, credit-read, and scan/code completion actions now fail closed when the scoped guest RPC is missing or rejects the guest token.
-  - Queue staff/admin ticket operations have begun moving behind authenticated RPCs, starting with release, Not Here, Return to Waiting, and staff/admin completion.
-  - Some admin/staff setup and check-in operations remain direct client calls, protected by authenticated RLS policies, and should continue moving behind named RPCs where the action changes guest/event state.
+  - Queue staff/admin ticket operations have moved behind authenticated RPCs for release, Not Here, Return to Waiting, and staff/admin completion.
+  - Admin check-in completion, access updates, and photo-credit grants have moved behind authenticated RPCs.
+  - Some admin/staff setup operations remain direct client calls, protected by authenticated RLS policies, and should continue moving behind named RPCs where the action changes guest/event state.
   - Older environments must run `supabase-guest-session-foundation.sql` and `supabase-guest-action-rls-tightening.sql`; the app no longer silently falls back to unscoped guest table writes for those guest actions.
   - July 1 follow-up: guest-session and guest-action SQL now explicitly revokes default public function execution and grants only the intended browser RPCs to `anon` and `authenticated`.
 
@@ -174,4 +186,4 @@ Added in `supabase-sprint2-setup-rls.sql`.
 
 ## Next Hardening Step
 
-Run and smoke-test `supabase-admin-queue-action-rpcs.sql` after the matching app deploy. Then continue moving staff check-in/photo-credit and setup mutations behind named RPCs before the computer engineering review looks for policy bypasses, missing audit logs, and remaining broad direct-table access.
+Run and smoke-test `supabase-admin-checkin-action-rpcs.sql` after the matching app deploy. Then continue moving setup mutations and remaining staff/admin event-state changes behind named RPCs before the computer engineering review looks for policy bypasses, missing audit logs, and remaining broad direct-table access.

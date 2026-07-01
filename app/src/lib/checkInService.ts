@@ -56,6 +56,18 @@ export async function updateEventCheckInStatus(
   return data as EventCheckIn;
 }
 
+export async function adminCompleteEventCheckIn(
+  id: string,
+  ticketType?: NonNullable<EventCheckIn['ticket_type']> | null
+): Promise<EventCheckIn> {
+  const { data, error } = await supabase.rpc('admin_complete_event_check_in', {
+    p_check_in_id: id,
+    p_ticket_type: ticketType ?? null,
+  });
+  if (error) throw error;
+  return data as EventCheckIn;
+}
+
 export async function checkInEventGuest(
   id: string,
   ticketType: NonNullable<EventCheckIn['ticket_type']>,
@@ -77,6 +89,18 @@ export async function checkInEventGuest(
     .eq('id', id)
     .select()
     .single();
+  if (error) throw error;
+  return data as EventCheckIn;
+}
+
+export async function adminUpdateEventCheckInTicketType(
+  id: string,
+  ticketType: NonNullable<EventCheckIn['ticket_type']>
+): Promise<EventCheckIn> {
+  const { data, error } = await supabase.rpc('admin_update_event_check_in_ticket_type', {
+    p_check_in_id: id,
+    p_ticket_type: ticketType,
+  });
   if (error) throw error;
   return data as EventCheckIn;
 }

@@ -718,7 +718,8 @@
 }
 
 .tkt-pilot-error,
-.tkt-pilot-not-here-banner {
+.tkt-pilot-not-here-banner,
+.tkt-pilot-return-banner {
   border-radius: 8px;
   padding: 10px 12px;
   font-weight: 800;
@@ -734,6 +735,12 @@
   background: #fff7ed;
   border: 1px solid #fed7aa;
   color: #9a3412;
+}
+
+.tkt-pilot-return-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
 }
 
 .tkt-pilot-actions {

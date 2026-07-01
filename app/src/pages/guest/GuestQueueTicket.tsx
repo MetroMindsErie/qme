@@ -42,6 +42,8 @@ const SERVED_LINGER_MS = 4000;
 const PILOT_COMPLETION_CODE = '4729';
 const NOT_HERE_NOTICE =
   "Staff called you after you marked yourself nearby, but you were not at the station. You were returned to Waiting and will be invited to Gathering again when there is room.";
+const RETURN_TO_WAITING_NOTICE =
+  "Staff is keeping the line moving. When this screen says Gathering again, head to the station and tap I'm Nearby when you arrive.";
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
@@ -155,6 +157,7 @@ export default function GuestQueueTicketPage() {
   const [completionInputFocused, setCompletionInputFocused] = useState(false);
   const [nearbySaving, setNearbySaving] = useState(false);
   const [notHereNoticeActive, setNotHereNoticeActive] = useState(false);
+  const [returnToWaitingNoticeActive, setReturnToWaitingNoticeActive] = useState(false);
   const [showNotHereModal, setShowNotHereModal] = useState(false);
 
   useEffect(() => {
@@ -253,10 +256,19 @@ export default function GuestQueueTicketPage() {
     return `qme:notHereNotice:${tId}`;
   }
 
+  function returnToWaitingStorageKey(tId: number) {
+    return `qme:returnToWaitingNotice:${tId}`;
+  }
+
   const clearNotHereNotice = useCallback((tId = ticketId) => {
     setNotHereNoticeActive(false);
     setShowNotHereModal(false);
     if (tId) localStorage.removeItem(notHereStorageKey(tId));
+  }, [ticketId]);
+
+  const clearReturnToWaitingNotice = useCallback((tId = ticketId) => {
+    setReturnToWaitingNoticeActive(false);
+    if (tId) localStorage.removeItem(returnToWaitingStorageKey(tId));
   }, [ticketId]);
 
   useEffect(() => {
@@ -343,21 +355,38 @@ export default function GuestQueueTicketPage() {
           previous.stage === 'released' &&
           ['waiting', 'standby'].includes(row.stage ?? 'waiting') &&
           !row.nearby_confirmed_at;
+        const isReturnedToWaiting =
+          previous?.id === row.id &&
+          previous.stage === 'standby' &&
+          !previous.nearby_confirmed_at &&
+          (row.stage ?? 'waiting') === 'waiting' &&
+          !row.nearby_confirmed_at;
         if (isNotHereReset) {
           localStorage.setItem(notHereStorageKey(row.id), '1');
           setNotHereNoticeActive(true);
           setShowNotHereModal(true);
+          clearReturnToWaitingNotice(row.id);
+        } else if (isReturnedToWaiting) {
+          localStorage.setItem(returnToWaitingStorageKey(row.id), '1');
+          setReturnToWaitingNoticeActive(true);
         }
         if (!['waiting', 'standby'].includes(row.stage ?? 'waiting') || row.nearby_confirmed_at) {
           clearNotHereNotice(row.id);
+          clearReturnToWaitingNotice(row.id);
         } else if (localStorage.getItem(notHereStorageKey(row.id)) === '1') {
           setNotHereNoticeActive(true);
+        }
+        if ((row.stage ?? 'waiting') !== 'waiting') {
+          clearReturnToWaitingNotice(row.id);
+        } else if (localStorage.getItem(returnToWaitingStorageKey(row.id)) === '1') {
+          setReturnToWaitingNoticeActive(true);
         }
         lastPilotTicketRef.current = row;
         if (!stopped) setPilotTicket((current) => hasSameShape(current, row) ? current : row);
       } catch (e) {
         if (!stopped && isMissingTicketError(e)) {
           if (activeTicketId) clearNotHereNotice(activeTicketId);
+          if (activeTicketId) clearReturnToWaitingNotice(activeTicketId);
           clearQueueTicket(queueId);
           setPilotTicket(null);
           navigate(`/events/${targetEventSlug}`, { replace: true });
@@ -373,17 +402,20 @@ export default function GuestQueueTicketPage() {
       stopped = true;
       clearInterval(interval);
     };
-  }, [queue, event?.id, ticketId, isPilotQueue, navigate, eventSlug, clearNotHereNotice]);
+  }, [queue, event?.id, ticketId, isPilotQueue, navigate, eventSlug, clearNotHereNotice, clearReturnToWaitingNotice]);
 
   useEffect(() => {
     lastPilotTicketRef.current = null;
     if (!ticketId || !isPilotQueue) {
       setNotHereNoticeActive(false);
+      setReturnToWaitingNoticeActive(false);
       setShowNotHereModal(false);
       return;
     }
     const hasStoredNotice = localStorage.getItem(notHereStorageKey(ticketId)) === '1';
+    const hasStoredReturnNotice = localStorage.getItem(returnToWaitingStorageKey(ticketId)) === '1';
     setNotHereNoticeActive(hasStoredNotice);
+    setReturnToWaitingNoticeActive(hasStoredReturnNotice);
     setShowNotHereModal(false);
   }, [ticketId, isPilotQueue]);
 
@@ -1108,6 +1140,13 @@ export default function GuestQueueTicketPage() {
               {needsNearbyConfirmation
                 ? "Tap I'm Nearby again when you are at the station and ready to be called."
                 : 'You are back in Waiting and will be invited again when there is room.'}
+            </div>
+          )}
+
+          {returnToWaitingNoticeActive && pilotStage === 'waiting' && !notHereNoticeActive && (
+            <div className="tkt-pilot-return-banner">
+              <strong>You were moved back to Waiting.</strong>{' '}
+              {RETURN_TO_WAITING_NOTICE}
             </div>
           )}
 

@@ -36,6 +36,7 @@ import {
   getLostCountForQueue,
   resetQueueTickets,
   applyQueuePilotFlow,
+  markReleasedTicketNotHere,
   onQueuesChange,
   onQueueChange,
 } from '../lib/queueService';
@@ -252,6 +253,32 @@ describe('queueService', () => {
       mockRpc.mockResolvedValueOnce({ data: null, error: null });
       await leaveQueue(10, 'user');
       expect(mockRpc).toHaveBeenCalledWith('leave_queue', { p_ticket_id: 10, p_reason: 'user' });
+    });
+  });
+
+  describe('markReleasedTicketNotHere', () => {
+    it('returns the guest to waiting without immediately running auto-flow', async () => {
+      const update = vi.fn().mockReturnThis();
+      const eq = vi.fn().mockReturnThis();
+      const select = vi.fn().mockReturnThis();
+      const single = vi.fn().mockResolvedValue({
+        data: { id: 10, queue_id: 'q1', stage: 'waiting', gathering_snoozed_at: 'now' },
+        error: null,
+      });
+      mockFrom.mockReturnValue({ update, eq, select, single });
+
+      const result = await markReleasedTicketNotHere(10);
+
+      expect(mockFrom).toHaveBeenCalledWith('tickets');
+      expect(update).toHaveBeenCalledWith(expect.objectContaining({
+        stage: 'waiting',
+        nearby_confirmed_at: null,
+        released_at: null,
+        gathering_snoozed_at: expect.any(String),
+      }));
+      expect(eq).toHaveBeenCalledWith('id', 10);
+      expect(mockRpc).not.toHaveBeenCalledWith('apply_queue_pilot_flow', expect.anything());
+      expect(result.stage).toBe('waiting');
     });
   });
 

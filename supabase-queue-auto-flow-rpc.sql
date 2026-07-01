@@ -100,6 +100,10 @@ begin
     where queue_id = p_queue_id
       and coalesce(stage, 'waiting') = 'waiting'
       and coalesce(status, '') not in ('left', 'served')
+      and (
+        gathering_snoozed_at is null
+        or gathering_snoozed_at < now() - make_interval(secs => stale_after_seconds)
+      )
     order by
       case when gathering_snoozed_at is null then 0 else 1 end,
       coalesce(stage_updated_at, created_at),

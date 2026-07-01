@@ -432,9 +432,7 @@ export async function markReleasedTicketNotHere(ticketId: number): Promise<Ticke
     .select()
     .single();
   if (error) throw error;
-  const ticket = data as Ticket;
-  if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
-  return ticket;
+  return data as Ticket;
 }
 
 export async function returnGatheringTicketToWaiting(ticketId: number): Promise<Ticket> {

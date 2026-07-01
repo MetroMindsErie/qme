@@ -518,11 +518,11 @@ export default function GuestEventDetail() {
             <div className="ed-activity-body">
               <div className="ed-activity-name-row">
                 <span className="ed-activity-name">{isPeonyEvent ? 'Check In at Mobile Bar' : 'Event Check-In'}</span>
-                <span className="ed-badge ed-badge-active">{isWaitingForHostCheckIn ? 'WAITING' : 'START HERE'}</span>
+                <span className="ed-badge ed-badge-active">{isWaitingForHostCheckIn ? 'WAITING FOR STAFF' : 'START HERE'}</span>
               </div>
               <div className="ed-activity-desc">
                 {isWaitingForHostCheckIn
-                  ? 'Your name has been submitted. Please wait for the host to officially check you in.'
+                  ? 'Your name has been submitted. Please wait here until staff confirms your event check-in.'
                   : !isPeonyEvent
                   ? 'Enter your name when you arrive so the event team can confirm your check-in.'
                   : eventCheckInTicketType === 'flowers'
@@ -532,7 +532,7 @@ export default function GuestEventDetail() {
             </div>
             <div className="ed-activity-right">
               <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
-                {isWaitingForHostCheckIn ? 'View Status' : 'Check In'}
+                {isWaitingForHostCheckIn ? 'Check-In Status' : 'Check In'}
               </Link>
             </div>
           </div>

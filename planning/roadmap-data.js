@@ -1255,12 +1255,12 @@ const QME_ROADMAP = {
                 "The admin event screen shows event check-in counts for people waiting for staff and people checked in.",
                 "Each queue-based event feature shows counts for Waiting, Gathering, Nearby, Your Turn, and Done.",
                 "Counts use operational labels that match the guest status language.",
-                "Counts update through a debounced live refresh after guest or staff actions.",
+                "Counts update through a debounced live refresh after guest or staff actions, with a lightweight fallback refresh while the admin page is open.",
                 "The overview remains read-only; detailed actions still happen in Event Check-Ins or Manage Queue.",
                 "The implementation supports Scan-Code Adventure and Headshot Photographer before the broader tab redesign."
               ],
               notes:
-                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions; future production-scale architecture should move these counts to operational metrics tables."
+                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions plus a lightweight fallback refresh; future production-scale architecture should move these counts to operational metrics tables."
             },
             {
               id: "story-operational-metrics-tables",
@@ -1295,10 +1295,30 @@ const QME_ROADMAP = {
                 "Event admins can spot operational attention areas without opening each individual queue.",
                 "Similar tab structure can be reused by Scan-Code Adventure, future resume review, and other service queues.",
                 "Tabs are role-aware so service staff see operational work first while event admins can access settings.",
+                "Feature-scoped staff do not default into unrelated event setup, staff management, reset, or advanced queue-engine panels.",
                 "Mobile and tablet layouts keep the active work view uncluttered during live operations."
               ],
               notes:
-                "Captured from Sprint 2 admin UX discussion. Inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. This is not part of the current RLS hardening slice, but should be considered before SOTC staff rehearsal so Headshot Photographer and similar queues have a calm, role-focused operations view. Updated after 2026-06-30 testing: the main event admin should also show queue/status indicators so staff can see people in line, guests ready/nearby, people needing check-in, and guests ready for photo without drilling into every feature."
+                "Captured from Sprint 2 admin UX discussion. Inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. This is not part of the current RLS hardening slice, but should be considered before SOTC staff rehearsal so Headshot Photographer and similar queues have a calm, role-focused operations view. Updated after 2026-06-30 testing: the main event admin should also show queue/status indicators so staff can see people in line, guests ready/nearby, people needing check-in, and guests ready for photo without drilling into every feature. Role-aware tabs should keep scoped station/service staff focused on their assigned work instead of the full event setup surface."
+            },
+            {
+              id: "story-role-aware-admin-landing",
+              title: "Route staff to role-aware admin workspaces",
+              status: "future",
+              sprint: "future",
+              summary:
+                "Send admins and staff to the most relevant admin workspace based on their organization, event, and feature assignments.",
+              acceptanceCriteria: [
+                "Event admins land on the event overview with setup, staff, check-in, feature, and reset context available.",
+                "Check-in staff land on the event check-in workspace or a check-in-focused event tab.",
+                "Feature-scoped service staff land on their assigned station or queue active-work tab.",
+                "A staff user with one assignment is routed directly to that work area after sign-in.",
+                "A staff user with multiple assignments gets a simple workspace chooser.",
+                "Feature-scoped staff do not see unrelated setup panels by default.",
+                "Superadmins and organization admins retain broader navigation for support and setup."
+              ],
+              notes:
+                "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaves mostly like an event-level overview. This should be addressed with or immediately after the queue tab refactor."
             },
             {
               id: "story-stale-queue-blocker-recovery",

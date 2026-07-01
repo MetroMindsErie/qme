@@ -212,6 +212,14 @@ export default function AdminEventDetail() {
   }, [queues, scheduleRefresh]);
 
   useEffect(() => {
+    if (!event?.id) return;
+    const intervalId = window.setInterval(scheduleRefresh, 5000);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [event?.id, scheduleRefresh]);
+
+  useEffect(() => {
     return () => {
       if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
     };

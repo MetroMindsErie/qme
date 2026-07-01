@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-06-30",
+    updated: "2026-07-01",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -41,6 +41,9 @@ const QME_ROADMAP = {
         "story-planning-admin-access-controls",
         "story-event-org-owner",
         "story-event-operational-mode-config",
+        "story-admin-event-activity-status-overview",
+        "story-admin-queue-tabs",
+        "story-stale-queue-blocker-recovery",
         "story-sotc-admin-staff-rls-hardening"
       ]
     },
@@ -1247,7 +1250,7 @@ const QME_ROADMAP = {
             {
               id: "story-admin-event-activity-status-overview",
               title: "Add admin event activity status overview",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Show read-only operating counts on the admin event screen before redesigning the queue screens into tabs.",
@@ -1260,7 +1263,7 @@ const QME_ROADMAP = {
                 "The implementation supports Scan-Code Adventure and Headshot Photographer before the broader tab redesign."
               ],
               notes:
-                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions plus a lightweight two-second fallback refresh for pilot reliability; future production-scale architecture should move these counts to operational metrics tables."
+                "Added during Sprint 2 admin UX discussion. Built before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions plus a lightweight fallback refresh for pilot reliability, and was later tightened to use the safe queue count RPC for more consistent guest/admin counts. Future production-scale architecture should move these counts to operational metrics tables."
             },
             {
               id: "story-operational-metrics-tables",
@@ -1282,15 +1285,18 @@ const QME_ROADMAP = {
             },
             {
               id: "story-admin-queue-tabs",
-              title: "Organize admin queue screens into focused tabs",
-              status: "future",
-              sprint: "future",
+              title: "Organize admin operational screens into focused tabs",
+              status: "done",
+              sprint: "now",
               summary:
-                "Refactor queue management screens so staff can work from focused tabs instead of one crowded operational page.",
+                "Refactor event, queue, and check-in admin screens so staff can work from focused tabs instead of crowded operational pages.",
               acceptanceCriteria: [
+                "Main event admin is split into Operations, Staff, and Setup tabs.",
                 "Headshot Photographer admin has a clean active queue tab showing only guests currently waiting, standby, nearby, or released for photo service.",
                 "Queue history is moved to a separate tab showing completed, left, cancelled, not-here, and stale/expired guests.",
                 "Queue settings are moved to a separate tab for join status, run mode, standby threshold, max released, reset/practice controls, and other operational configuration.",
+                "Event Check-Ins are split into Live Check-In, History, and Settings tabs.",
+                "Event check-in behavior settings are available from the check-in workspace.",
                 "Main event admin overview summarizes queue health across event features, such as guests waiting, guests in standby/ready/nearby state, released guests, people needing check-in, and people ready for photo/service.",
                 "Event admins can spot operational attention areas without opening each individual queue.",
                 "Similar tab structure can be reused by Scan-Code Adventure, future resume review, and other service queues.",
@@ -1299,7 +1305,7 @@ const QME_ROADMAP = {
                 "Mobile and tablet layouts keep the active work view uncluttered during live operations."
               ],
               notes:
-                "Captured from Sprint 2 admin UX discussion. Inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. This is not part of the current RLS hardening slice, but should be considered before SOTC staff rehearsal so Headshot Photographer and similar queues have a calm, role-focused operations view. Updated after 2026-06-30 testing: the main event admin should also show queue/status indicators so staff can see people in line, guests ready/nearby, people needing check-in, and guests ready for photo without drilling into every feature. Role-aware tabs should keep scoped station/service staff focused on their assigned work instead of the full event setup surface."
+                "Captured from Sprint 2 admin UX discussion and inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. Completed first pass across main event admin, queue detail admin, and event check-in admin. Main event admin now separates Operations, Staff, and Setup; queue detail admin separates Live Line, History, and Settings; event check-in admin separates Live Check-In, History, and Settings. Role-aware routing/staff-specific landing remains a follow-up so scoped station/service staff can default into assigned work instead of the full event setup surface."
             },
             {
               id: "story-role-aware-admin-landing",
@@ -1343,7 +1349,7 @@ const QME_ROADMAP = {
                 "The story captures later notification support so guests can be buzzed or messaged when moved from Waiting to Gathering."
               ],
               notes:
-                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. Updated after product discussion: the queue must keep moving toward Nearby candidates without hiding the overflow rule in code. Current implementation exposes Gathering target, Gathering max, and stale-after seconds on the queue controls. Auto-flow can invite newer Waiting guests into Gathering up to the max when earlier Gathering guests go stale. Staff can now manually return stale non-nearby Gathering guests to Waiting; returned guests keep their ticket but move behind guests already waiting. Do not auto-boot for SOTC yet. Future work should add richer staff controls to skip/remove/remind stale Gathering guests, automate return-to-waiting when space is needed, make real-event timing configurable, and add buzz/SMS/push/in-app notification when guests move from Waiting to Gathering."
+                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. Updated after product discussion: the queue must keep moving toward Nearby candidates without hiding the overflow rule in code. Current implementation exposes Gathering target, Gathering max, and stale-after seconds on the queue controls. Auto-flow can invite newer Waiting guests into Gathering up to the max when earlier Gathering guests go stale. Staff can now manually return stale non-nearby Gathering guests to Waiting; returned guests keep their ticket but move behind guests already waiting. Do not auto-boot for SOTC yet. July 1 testing showed a remaining platform-hardening issue: a single Nearby guest may not advance to Your Turn until an admin/guest page triggers the auto-flow pass, so future production readiness should move auto-flow execution toward a durable server-side scheduler, trigger, or metrics-driven worker rather than relying on open browser screens. Future work should add richer staff controls to skip/remove/remind stale Gathering guests, automate return-to-waiting when space is needed, make real-event timing configurable, and add buzz/SMS/push/in-app notification when guests move from Waiting to Gathering."
             },
             {
               id: "story-queue-rule-configuration",

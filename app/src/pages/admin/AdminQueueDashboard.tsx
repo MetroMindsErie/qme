@@ -344,6 +344,8 @@ export default function AdminQueueDashboard() {
     const activeReleased = counts.released ?? 0;
     const maxActive = queue.max_active_released ?? 1;
     const standbyTarget = queue.standby_threshold ?? 3;
+    const gatheringMax = Math.max(standbyTarget, queue.gathering_max ?? standbyTarget + maxActive + 2);
+    const staleAfterSeconds = queue.gathering_stale_after_seconds ?? 15;
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
     const displayTickets = [...pilotTickets]
@@ -399,9 +401,24 @@ export default function AdminQueueDashboard() {
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
-                Standby nearby
-                <input type="number" min={0} value={queue.standby_threshold ?? 3} disabled={savingControls} onChange={(e) => saveQueueControls({ standby_threshold: Math.max(0, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
-                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>Guests told they are almost ready.</span>
+                Gathering target
+                <input type="number" min={0} value={standbyTarget} disabled={savingControls} onChange={(e) => {
+                  const nextTarget = Math.max(0, Number(e.target.value) || 0);
+                  void saveQueueControls({ standby_threshold: nextTarget, gathering_max: Math.max(nextTarget, gatheringMax) });
+                }} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>Normal number asked to come nearby.</span>
+              </label>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
+                Gathering max
+                <input type="number" min={standbyTarget} value={gatheringMax} disabled={savingControls} onChange={(e) => saveQueueControls({ gathering_max: Math.max(standbyTarget, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>Overflow cap when earlier guests go stale.</span>
+              </label>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
+                Stale after sec
+                <input type="number" min={0} value={staleAfterSeconds} disabled={savingControls} onChange={(e) => saveQueueControls({ gathering_stale_after_seconds: Math.max(0, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>When non-nearby guests stop blocking.</span>
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
@@ -425,7 +442,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps a capped Gathering/Nearby pool of {standbyTarget}; guests who do not tap I'm Nearby after 15 seconds stop counting as fresh blockers, but still need staff action if the pool is full. Only Nearby guests are released. Use Join Status to pause or reopen guest joining.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/Nearby guests and can overflow up to {gatheringMax} when earlier Gathering guests do not tap I'm Nearby after {staleAfterSeconds} seconds. Only Nearby guests are released. Future stale controls will move stale guests back to Waiting when space is needed.
             </div>
           </div>
 

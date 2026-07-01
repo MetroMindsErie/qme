@@ -15,6 +15,8 @@ declare
   active_released_count integer := 0;
   max_active integer := 1;
   standby_target integer := 3;
+  gathering_max integer := 6;
+  stale_after_seconds integer := 15;
   blocking_standby_count integer := 0;
   standby_pool_count integer := 0;
   slots integer := 0;
@@ -39,6 +41,8 @@ begin
 
   max_active := greatest(0, coalesce(queue_row.max_active_released, 1));
   standby_target := greatest(0, coalesce(queue_row.standby_threshold, 3));
+  gathering_max := greatest(standby_target, coalesce(queue_row.gathering_max, standby_target + max_active + 2));
+  stale_after_seconds := greatest(0, coalesce(queue_row.gathering_stale_after_seconds, 15));
 
   select count(*)
   into active_released_count
@@ -72,7 +76,10 @@ begin
     and coalesce(status, '') not in ('left', 'served')
     and (
       nearby_confirmed_at is not null
-      or coalesce(stage_updated_at, created_at) >= now() - interval '15 seconds'
+      or (
+        stale_after_seconds > 0
+        and coalesce(stage_updated_at, created_at) >= now() - make_interval(secs => stale_after_seconds)
+      )
     );
 
   select count(*)
@@ -91,7 +98,7 @@ begin
     order by ticket_number nulls last, created_at, id
     limit least(
       greatest(0, standby_target - blocking_standby_count),
-      greatest(0, standby_target - standby_pool_count)
+      greatest(0, gathering_max - standby_pool_count)
     )
   loop
     update public.tickets

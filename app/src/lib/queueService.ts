@@ -446,12 +446,13 @@ function ticketIsNearbyConfirmed(ticket: Ticket) {
   return !Object.prototype.hasOwnProperty.call(ticket, 'nearby_confirmed_at') || Boolean(ticket.nearby_confirmed_at);
 }
 
-function ticketStillBlocksGatheringTarget(ticket: Ticket) {
+function ticketStillBlocksGatheringTargetForSeconds(ticket: Ticket, staleAfterSeconds: number) {
   if (ticket.nearby_confirmed_at) return true;
+  if (staleAfterSeconds <= 0) return false;
   const changedAt = ticket.stage_updated_at || ticket.created_at;
   const changedAtMs = changedAt ? Date.parse(changedAt) : Number.NaN;
   if (!Number.isFinite(changedAtMs)) return true;
-  return Date.now() - changedAtMs < 15_000;
+  return Date.now() - changedAtMs < staleAfterSeconds * 1000;
 }
 
 export async function applyQueuePilotFlow(queueId: string): Promise<void> {
@@ -468,12 +469,14 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   const activeReleased = tickets.filter((ticket) => ticket.stage === 'released').length;
   const maxActive = queue.max_active_released ?? 1;
   const standbyTarget = queue.standby_threshold ?? 3;
+  const gatheringMax = Math.max(standbyTarget, queue.gathering_max ?? standbyTarget + maxActive + 2);
+  const staleAfterSeconds = queue.gathering_stale_after_seconds ?? 15;
 
   const activeTickets = tickets.filter(ticketIsActive);
   const waiting = activeTickets.filter((ticket) => (ticket.stage ?? 'waiting') === 'waiting');
   const standby = activeTickets.filter((ticket) => ticket.stage === 'standby');
   const confirmedStandby = standby.filter(ticketIsNearbyConfirmed);
-  const blockingStandby = standby.filter(ticketStillBlocksGatheringTarget);
+  const blockingStandby = standby.filter((ticket) => ticketStillBlocksGatheringTargetForSeconds(ticket, staleAfterSeconds));
 
   const slots = Math.max(0, maxActive - activeReleased);
   for (const ticket of confirmedStandby.slice(0, slots)) {
@@ -482,7 +485,7 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
 
   const inviteSlots = Math.min(
     Math.max(0, standbyTarget - blockingStandby.length),
-    Math.max(0, standbyTarget - standby.length)
+    Math.max(0, gatheringMax - standby.length)
   );
   for (const ticket of waiting.slice(0, inviteSlots)) {
     await updateTicketStage(ticket.id, 'standby');

@@ -13,6 +13,10 @@ alter table public.queues
     check (run_mode in ('manual', 'auto')),
   add column if not exists standby_threshold integer not null default 3
     check (standby_threshold >= 0),
+  add column if not exists gathering_max integer not null default 6
+    check (gathering_max >= 0),
+  add column if not exists gathering_stale_after_seconds integer not null default 15
+    check (gathering_stale_after_seconds >= 0),
   add column if not exists max_active_released integer not null default 1
     check (max_active_released >= 0);
 

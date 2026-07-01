@@ -480,10 +480,9 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
     await releaseQueueTicket(ticket.id);
   }
 
-  const standbyPoolCap = Math.max(standbyTarget, standbyTarget + maxActive + 2);
   const inviteSlots = Math.min(
     Math.max(0, standbyTarget - blockingStandby.length),
-    Math.max(0, standbyPoolCap - standby.length)
+    Math.max(0, standbyTarget - standby.length)
   );
   for (const ticket of waiting.slice(0, inviteSlots)) {
     await updateTicketStage(ticket.id, 'standby');

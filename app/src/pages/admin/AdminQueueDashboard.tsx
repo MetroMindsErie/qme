@@ -425,7 +425,7 @@ export default function AdminQueueDashboard() {
               </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps trying to build a Gathering/Nearby pool of {standbyTarget}; guests who do not tap I'm Nearby after 15 seconds stop blocking newer guests from being invited. Only Nearby guests are released. Use Join Status to pause or reopen guest joining.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist keeps a capped Gathering/Nearby pool of {standbyTarget}; guests who do not tap I'm Nearby after 15 seconds stop counting as fresh blockers, but still need staff action if the pool is full. Only Nearby guests are released. Use Join Status to pause or reopen guest joining.
             </div>
           </div>
 

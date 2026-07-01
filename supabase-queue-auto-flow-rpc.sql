@@ -17,7 +17,6 @@ declare
   standby_target integer := 3;
   blocking_standby_count integer := 0;
   standby_pool_count integer := 0;
-  standby_pool_cap integer := 6;
   slots integer := 0;
   ticket_record record;
 begin
@@ -40,7 +39,6 @@ begin
 
   max_active := greatest(0, coalesce(queue_row.max_active_released, 1));
   standby_target := greatest(0, coalesce(queue_row.standby_threshold, 3));
-  standby_pool_cap := greatest(standby_target, standby_target + max_active + 2);
 
   select count(*)
   into active_released_count
@@ -93,7 +91,7 @@ begin
     order by ticket_number nulls last, created_at, id
     limit least(
       greatest(0, standby_target - blocking_standby_count),
-      greatest(0, standby_pool_cap - standby_pool_count)
+      greatest(0, standby_target - standby_pool_count)
     )
   loop
     update public.tickets

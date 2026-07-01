@@ -1056,9 +1056,10 @@ export default function GuestQueueTicketPage() {
     const showLocation = pilotStage === 'standby' || pilotStage === 'released' || pilotStage === 'completed';
     const showInstruction = pilotStage === 'standby' && !nearbyConfirmed;
     const isGuestCodeTurn = pilotStage === 'released' && pilotCompletionMode === 'guest_code';
+    const isGuestActionStage = needsNearbyConfirmation || pilotStage === 'released';
 
     return (
-      <div className={`card card-scrollable tkt-card tkt-pilot-card ${isGuestCodeTurn ? 'tkt-pilot-code-turn' : ''} ${completionInputFocused ? 'tkt-pilot-code-focused' : ''}`}>
+      <div className={`card card-scrollable tkt-card tkt-pilot-card ${isGuestActionStage ? 'tkt-pilot-action-stage' : ''} ${isGuestCodeTurn ? 'tkt-pilot-code-turn' : ''} ${completionInputFocused ? 'tkt-pilot-code-focused' : ''}`}>
         {showNotHereModal && (
           <div className="tkt-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="not-here-title">
             <div className="tkt-modal">

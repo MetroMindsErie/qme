@@ -1154,6 +1154,21 @@ export default function GuestQueueTicketPage() {
               >
                 {completionSaving ? 'Completing...' : 'Complete Step'}
               </button>
+              <div className="tkt-pilot-code-secondary-actions">
+                <button
+                  className="tkt-link-btn"
+                  onClick={() => navigate(`/events/${eventSlug}`)}
+                >
+                  Back to Event
+                </button>
+                <button
+                  className="tkt-link-btn tkt-link-btn-danger"
+                  onClick={handleLeave}
+                  disabled={leaveDisabled}
+                >
+                  Leave Queue
+                </button>
+              </div>
             </div>
           )}
         </div>

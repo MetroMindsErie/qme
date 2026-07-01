@@ -730,6 +730,14 @@
   border-top: 1px solid #eef2f7;
 }
 
+.tkt-pilot-code-focused .tkt-pilot-scroll-body {
+  padding-bottom: max(18px, env(safe-area-inset-bottom, 18px));
+}
+
+.tkt-pilot-code-focused .tkt-pilot-actions {
+  display: none;
+}
+
 .tkt-modal-backdrop {
   position: absolute;
   inset: 0;

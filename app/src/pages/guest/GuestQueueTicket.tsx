@@ -152,6 +152,7 @@ export default function GuestQueueTicketPage() {
   const [completionCode, setCompletionCode] = useState('');
   const [completionError, setCompletionError] = useState('');
   const [completionSaving, setCompletionSaving] = useState(false);
+  const [completionInputFocused, setCompletionInputFocused] = useState(false);
   const [nearbySaving, setNearbySaving] = useState(false);
   const [notHereNoticeActive, setNotHereNoticeActive] = useState(false);
   const [showNotHereModal, setShowNotHereModal] = useState(false);
@@ -1024,7 +1025,7 @@ export default function GuestQueueTicketPage() {
     const showInstruction = pilotStage === 'standby' && !nearbyConfirmed;
 
     return (
-      <div className="card card-scrollable tkt-card tkt-pilot-card">
+      <div className={`card card-scrollable tkt-card tkt-pilot-card ${completionInputFocused ? 'tkt-pilot-code-focused' : ''}`}>
         {showNotHereModal && (
           <div className="tkt-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="not-here-title">
             <div className="tkt-modal">
@@ -1138,8 +1139,12 @@ export default function GuestQueueTicketPage() {
               <input
                 value={completionCode}
                 onChange={(e) => setCompletionCode(e.target.value)}
+                onFocus={() => setCompletionInputFocused(true)}
+                onBlur={() => setCompletionInputFocused(false)}
                 placeholder="Station code"
                 className="tkt-pilot-code-input"
+                inputMode="numeric"
+                autoComplete="one-time-code"
               />
               <button
                 className="tkt-btn-checkin"

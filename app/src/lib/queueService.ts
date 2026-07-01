@@ -312,6 +312,14 @@ export async function listQueuePilotTickets(queueId: string): Promise<Ticket[]> 
   return (data ?? []) as Ticket[];
 }
 
+export async function getActiveTicketCountForQueue(queueId: string): Promise<number> {
+  const { data, error } = await supabase.rpc('active_ticket_count_for_queue', {
+    p_queue_id: queueId,
+  });
+  if (error) throw error;
+  return (data as number) ?? 0;
+}
+
 export async function getQueueTicket(
   ticketId: number,
   queueId?: string | null,

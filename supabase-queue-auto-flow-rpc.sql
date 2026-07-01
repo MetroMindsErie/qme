@@ -105,3 +105,19 @@ $$;
 
 revoke all on function public.apply_queue_pilot_flow(uuid) from public;
 grant execute on function public.apply_queue_pilot_flow(uuid) to anon, authenticated;
+
+create or replace function public.active_ticket_count_for_queue(p_queue_id uuid)
+returns integer
+language sql
+security definer
+set search_path = public
+as $$
+  select count(*)::integer
+  from public.tickets
+  where queue_id = p_queue_id
+    and coalesce(stage, 'waiting') not in ('completed', 'cancelled', 'left')
+    and coalesce(status, 'waiting') not in ('left', 'served');
+$$;
+
+revoke all on function public.active_ticket_count_for_queue(uuid) from public;
+grant execute on function public.active_ticket_count_for_queue(uuid) to anon, authenticated;

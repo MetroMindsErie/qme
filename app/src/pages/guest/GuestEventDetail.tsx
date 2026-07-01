@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
-import { listQueuePilotTickets, listQueuesForEvent, getNowServing, restoreTicketForQueue, getQueueTicket } from '../../lib/queueService';
+import { getActiveTicketCountForQueue, listQueuePilotTickets, listQueuesForEvent, getNowServing, restoreTicketForQueue, getQueueTicket } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
@@ -387,13 +387,17 @@ export default function GuestEventDetail() {
             let ns = q.now_serving;
             try { ns = await getNowServing(q.id); } catch { /* */ }
             let waitingCount = 0;
-            if (didLoadTickets) {
-              waitingCount = tickets.filter((row) => {
-                const stage = row.stage ?? 'waiting';
-                return !['completed', 'cancelled', 'left'].includes(stage) && !['left', 'served'].includes(row.status);
-              }).length;
-            } else {
-              waitingCount = Math.max(0, Number(ticket || 0) - ns + 1);
+            try {
+              waitingCount = await getActiveTicketCountForQueue(q.id);
+            } catch {
+              if (didLoadTickets) {
+                waitingCount = tickets.filter((row) => {
+                  const stage = row.stage ?? 'waiting';
+                  return !['completed', 'cancelled', 'left'].includes(stage) && !['left', 'served'].includes(row.status);
+                }).length;
+              } else {
+                waitingCount = Math.max(0, Number(ticket || 0) - ns + 1);
+              }
             }
             return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns, _waitingCount: waitingCount };
           })

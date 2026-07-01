@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-06-29",
+    updated: "2026-06-30",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -719,10 +719,12 @@ const QME_ROADMAP = {
                 "SOTC Test Check-in keeps its current automated/pilot behavior through explicit configuration rather than hard-coded event assumptions.",
                 "Production events default to conservative/manual behavior unless automation is intentionally enabled.",
                 "Admin-facing language explains the selected mode well enough for qME operator, organization admin, and event staff use.",
+                "Test-data reset permissions distinguish test/demo rehearsal operations from live-event destructive operations.",
+                "If a reset confirmation is typed incorrectly, the admin receives a clear message that no reset happened.",
                 "Any temporary pilot flags are documented with replacement intent before RLS hardening."
               ],
               notes:
-                "Added during Sprint 2 product discussion after confirming that SOTC's automated test behavior should be configurable by event. This supports the Sprint 2 trust goal: an organization can independently operate an event with appropriate permissions and predictable behavior."
+                "Added during Sprint 2 product discussion after confirming that SOTC's automated test behavior should be configurable by event. This supports the Sprint 2 trust goal: an organization can independently operate an event with appropriate permissions and predictable behavior. Current implementation lets event admins reset test data because event_admin satisfies canManageEvent; before live production, decide whether destructive reset should require org admin/superadmin, event test mode, or a separate reset permission. Reset confirmation feedback was tightened on 2026-06-30 so wrong confirmation text reports that no reset happened."
             },
             {
               id: "story-event-schedules-recurrence",
@@ -1253,12 +1255,14 @@ const QME_ROADMAP = {
                 "Headshot Photographer admin has a clean active queue tab showing only guests currently waiting, standby, nearby, or released for photo service.",
                 "Queue history is moved to a separate tab showing completed, left, cancelled, not-here, and stale/expired guests.",
                 "Queue settings are moved to a separate tab for join status, run mode, standby threshold, max released, reset/practice controls, and other operational configuration.",
+                "Main event admin overview summarizes queue health across event features, such as guests waiting, guests in standby/ready/nearby state, released guests, people needing check-in, and people ready for photo/service.",
+                "Event admins can spot operational attention areas without opening each individual queue.",
                 "Similar tab structure can be reused by Scan-Code Adventure, future resume review, and other service queues.",
                 "Tabs are role-aware so service staff see operational work first while event admins can access settings.",
                 "Mobile and tablet layouts keep the active work view uncluttered during live operations."
               ],
               notes:
-                "Captured from Sprint 2 admin UX discussion. Inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. This is not part of the current RLS hardening slice, but should be considered before SOTC staff rehearsal so Headshot Photographer and similar queues have a calm, role-focused operations view."
+                "Captured from Sprint 2 admin UX discussion. Inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. This is not part of the current RLS hardening slice, but should be considered before SOTC staff rehearsal so Headshot Photographer and similar queues have a calm, role-focused operations view. Updated after 2026-06-30 testing: the main event admin should also show queue/status indicators so staff can see people in line, guests ready/nearby, people needing check-in, and guests ready for photo without drilling into every feature."
             },
             {
               id: "story-stale-queue-blocker-recovery",

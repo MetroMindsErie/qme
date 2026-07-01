@@ -21,7 +21,7 @@ import {
   type EventStaffRole,
 } from '../../lib/eventStaffService';
 import { findAdminPrincipalByEmail } from '../../lib/organizationStaffService';
-import { listQueuesForEvent, deleteQueue, listQueuePilotTickets, onQueueTicketsChange } from '../../lib/queueService';
+import { getQueueStageSummary, listQueuesForEvent, deleteQueue, listQueuePilotTickets, onQueueTicketsChange } from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { Ece, EventCheckIn, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
@@ -164,11 +164,16 @@ export default function AdminEventDetail() {
       const queueSummaryPairs = await Promise.all(
         qs.map(async (queue) => {
           try {
-            const tickets = await listQueuePilotTickets(queue.id);
-            return [queue.id, summarizeQueueTickets(tickets)] as const;
+            const summary = await getQueueStageSummary(queue.id);
+            return [queue.id, summary] as const;
           } catch (error) {
             console.warn('Could not load queue summary', queue.id, error);
-            return [queue.id, { ...emptyQueueSummary }] as const;
+            try {
+              const tickets = await listQueuePilotTickets(queue.id);
+              return [queue.id, summarizeQueueTickets(tickets)] as const;
+            } catch {
+              return [queue.id, { ...emptyQueueSummary }] as const;
+            }
           }
         })
       );

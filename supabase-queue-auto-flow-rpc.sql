@@ -121,3 +121,46 @@ $$;
 
 revoke all on function public.active_ticket_count_for_queue(uuid) from public;
 grant execute on function public.active_ticket_count_for_queue(uuid) to anon, authenticated;
+
+create or replace function public.queue_stage_summary(p_queue_id uuid)
+returns jsonb
+language sql
+security definer
+set search_path = public
+as $$
+  with scoped as (
+    select
+      coalesce(stage, 'waiting') as stage,
+      coalesce(status, 'waiting') as status,
+      nearby_confirmed_at
+    from public.tickets
+    where queue_id = p_queue_id
+  )
+  select jsonb_build_object(
+    'waiting', count(*) filter (
+      where stage = 'waiting'
+        and status not in ('left', 'served')
+    ),
+    'gathering', count(*) filter (
+      where stage = 'standby'
+        and nearby_confirmed_at is null
+        and status not in ('left', 'served')
+    ),
+    'nearby', count(*) filter (
+      where stage = 'standby'
+        and nearby_confirmed_at is not null
+        and status not in ('left', 'served')
+    ),
+    'released', count(*) filter (
+      where stage = 'released'
+        and status not in ('left', 'served')
+    ),
+    'completed', count(*) filter (
+      where stage = 'completed'
+    )
+  )
+  from scoped;
+$$;
+
+revoke all on function public.queue_stage_summary(uuid) from public;
+grant execute on function public.queue_stage_summary(uuid) to anon, authenticated;

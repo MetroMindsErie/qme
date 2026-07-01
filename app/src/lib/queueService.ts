@@ -5,6 +5,14 @@ import { supabase } from './supabase';
 import { getGuestSessionToken, getGuestTokenForQueue, isMissingGuestSessionRpc } from './guestSessionService';
 import type { EventGuestMark, Queue, CreateQueueInput, Ticket, UpdateQueueInput, QueueSnapshot } from '../types';
 
+export type QueueStageSummary = {
+  waiting: number;
+  gathering: number;
+  nearby: number;
+  released: number;
+  completed: number;
+};
+
 // ===================== QUEUE CRUD =====================
 
 function normalizeQueueDisplay(queue: Queue): Queue {
@@ -318,6 +326,21 @@ export async function getActiveTicketCountForQueue(queueId: string): Promise<num
   });
   if (error) throw error;
   return (data as number) ?? 0;
+}
+
+export async function getQueueStageSummary(queueId: string): Promise<QueueStageSummary> {
+  const { data, error } = await supabase.rpc('queue_stage_summary', {
+    p_queue_id: queueId,
+  });
+  if (error) throw error;
+  const summary = (data ?? {}) as Partial<QueueStageSummary>;
+  return {
+    waiting: Number(summary.waiting ?? 0),
+    gathering: Number(summary.gathering ?? 0),
+    nearby: Number(summary.nearby ?? 0),
+    released: Number(summary.released ?? 0),
+    completed: Number(summary.completed ?? 0),
+  };
 }
 
 export async function getQueueTicket(

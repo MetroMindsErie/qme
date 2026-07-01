@@ -375,6 +375,9 @@ export async function updateTicketStage(
   if (stage === 'released') {
     updates.released_at = now;
   }
+  if (stage === 'standby' || stage === 'released' || stage === 'completed') {
+    updates.gathering_snoozed_at = null;
+  }
   if (stage === 'completed') {
     updates.status = 'served';
     updates.completed_at = now;
@@ -442,6 +445,7 @@ export async function returnGatheringTicketToWaiting(ticketId: number): Promise<
     .from('tickets')
     .update({
       stage: 'waiting',
+      gathering_snoozed_at: new Date().toISOString(),
       nearby_confirmed_at: null,
       released_at: null,
     })
@@ -476,6 +480,12 @@ function waitingSinceMs(ticket: Ticket) {
   return Number.isFinite(changedAtMs) ? changedAtMs : 0;
 }
 
+function gatheringSnoozeMs(ticket: Ticket) {
+  const snoozedAt = ticket.gathering_snoozed_at;
+  const snoozedAtMs = snoozedAt ? Date.parse(snoozedAt) : Number.NaN;
+  return Number.isFinite(snoozedAtMs) ? snoozedAtMs : 0;
+}
+
 export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   const { error: rpcError } = await supabase.rpc('apply_queue_pilot_flow', {
     p_queue_id: queueId,
@@ -497,8 +507,12 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   const waiting = activeTickets
     .filter((ticket) => (ticket.stage ?? 'waiting') === 'waiting')
     .sort((a, b) => {
+      const bySnooze = Number(Boolean(a.gathering_snoozed_at)) - Number(Boolean(b.gathering_snoozed_at));
+      if (bySnooze !== 0) return bySnooze;
       const byWaitingSince = waitingSinceMs(a) - waitingSinceMs(b);
       if (byWaitingSince !== 0) return byWaitingSince;
+      const bySnoozeTime = gatheringSnoozeMs(a) - gatheringSnoozeMs(b);
+      if (bySnoozeTime !== 0) return bySnoozeTime;
       return (a.ticket_number ?? a.id) - (b.ticket_number ?? b.id);
     });
   const standby = activeTickets.filter((ticket) => ticket.stage === 'standby');

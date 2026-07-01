@@ -26,6 +26,7 @@ alter table public.tickets
   add column if not exists stage text not null default 'waiting'
     check (stage in ('waiting', 'standby', 'released', 'completed', 'cancelled', 'left')),
   add column if not exists stage_updated_at timestamptz not null default now(),
+  add column if not exists gathering_snoozed_at timestamptz,
   add column if not exists nearby_confirmed_at timestamptz,
   add column if not exists released_at timestamptz,
   add column if not exists completed_at timestamptz;

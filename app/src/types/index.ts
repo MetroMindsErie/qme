@@ -62,6 +62,7 @@ export interface Ticket {
   left_reason: string | null;
   left_at: string | null;
   stage_updated_at?: string;
+  gathering_snoozed_at?: string | null;
   nearby_confirmed_at?: string | null;
   released_at?: string | null;
   completed_at?: string | null;

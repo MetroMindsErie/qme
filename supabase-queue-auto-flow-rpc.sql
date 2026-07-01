@@ -95,14 +95,21 @@ begin
     where queue_id = p_queue_id
       and coalesce(stage, 'waiting') = 'waiting'
       and coalesce(status, '') not in ('left', 'served')
-    order by coalesce(stage_updated_at, created_at), ticket_number nulls last, id
+    order by
+      case when gathering_snoozed_at is null then 0 else 1 end,
+      coalesce(stage_updated_at, created_at),
+      gathering_snoozed_at nulls first,
+      ticket_number nulls last,
+      id
     limit least(
       greatest(0, standby_target - blocking_standby_count),
       greatest(0, gathering_max - standby_pool_count)
     )
   loop
     update public.tickets
-    set stage = 'standby'
+    set
+      stage = 'standby',
+      gathering_snoozed_at = null
     where id = ticket_record.id;
   end loop;
 end;

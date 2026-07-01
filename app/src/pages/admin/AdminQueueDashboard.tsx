@@ -288,7 +288,7 @@ export default function AdminQueueDashboard() {
       ? `${selectedTicket.first_name || 'Guest'} ${selectedTicket.last_name || ''}`.trim()
       : 'this guest';
     const confirmed = confirm(
-      `Mark ${guestName} as not here? They will return to standby and must tap I'm Nearby again before being called.`
+      `Mark ${guestName} as not here? They will return to Waiting/back of line and must be invited to Gathering again before they can be called.`
     );
     if (!confirmed) return;
     try {

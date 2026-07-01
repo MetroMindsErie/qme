@@ -41,7 +41,7 @@ const TIME_2_CHECKIN = 3;  // start prompting check-in when this many ahead
 const SERVED_LINGER_MS = 4000;
 const PILOT_COMPLETION_CODE = '4729';
 const NOT_HERE_NOTICE =
-  "Staff called you after you marked yourself nearby, but you were not at the station. You are still in standby. When you are nearby and ready to be called again, tap I'm Nearby.";
+  "Staff called you after you marked yourself nearby, but you were not at the station. You were returned to Waiting and will be invited to Gathering again when there is room.";
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
@@ -341,14 +341,14 @@ export default function GuestQueueTicketPage() {
         const isNotHereReset =
           previous?.id === row.id &&
           previous.stage === 'released' &&
-          row.stage === 'standby' &&
+          ['waiting', 'standby'].includes(row.stage ?? 'waiting') &&
           !row.nearby_confirmed_at;
         if (isNotHereReset) {
           localStorage.setItem(notHereStorageKey(row.id), '1');
           setNotHereNoticeActive(true);
           setShowNotHereModal(true);
         }
-        if (row.stage !== 'standby' || row.nearby_confirmed_at) {
+        if (!['waiting', 'standby'].includes(row.stage ?? 'waiting') || row.nearby_confirmed_at) {
           clearNotHereNotice(row.id);
         } else if (localStorage.getItem(notHereStorageKey(row.id)) === '1') {
           setNotHereNoticeActive(true);
@@ -1102,9 +1102,12 @@ export default function GuestQueueTicketPage() {
             </div>
           )}
 
-          {notHereNoticeActive && needsNearbyConfirmation && (
+          {notHereNoticeActive && (
             <div className="tkt-pilot-not-here-banner">
-              <strong>You were marked not here.</strong> Tap I'm Nearby again when you are at the station and ready to be called.
+              <strong>You were marked not here.</strong>{' '}
+              {needsNearbyConfirmation
+                ? "Tap I'm Nearby again when you are at the station and ready to be called."
+                : 'You are back in Waiting and will be invited again when there is room.'}
             </div>
           )}
 

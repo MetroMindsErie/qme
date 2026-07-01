@@ -22,6 +22,11 @@ declare
   slots integer := 0;
   ticket_record record;
 begin
+  -- Multiple guest/admin screens can trigger auto-flow at nearly the same time.
+  -- Serialize each queue's flow pass so concurrent calls cannot over-promote
+  -- Waiting guests beyond the configured Gathering max.
+  perform pg_advisory_xact_lock(hashtextextended(p_queue_id::text, 0));
+
   select *
   into queue_row
   from public.queues

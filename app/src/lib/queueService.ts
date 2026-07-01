@@ -423,7 +423,8 @@ export async function markReleasedTicketNotHere(ticketId: number): Promise<Ticke
   const { data, error } = await supabase
     .from('tickets')
     .update({
-      stage: 'standby',
+      stage: 'waiting',
+      gathering_snoozed_at: new Date().toISOString(),
       nearby_confirmed_at: null,
       released_at: null,
     })

@@ -1203,17 +1203,17 @@ const QME_ROADMAP = {
               status: "done",
               sprint: "now",
               summary:
-                "When staff marks a released SOTC pilot guest as Not here, keep the same ticket in standby, explain what happened, and ask the guest to tap I'm Nearby again when ready.",
+                "When staff marks a released SOTC pilot guest as Not here, keep the same ticket but return the guest to Waiting/back of line so Gathering max is preserved.",
               acceptanceCriteria: [
                 "Admin confirms before marking a released guest Not here.",
-                "A Not here guest returns to standby on the same ticket.",
+                "A Not here guest returns to Waiting/back of line on the same ticket.",
                 "Guest sees a modal explaining they were removed because they did not come when called after saying they were nearby.",
-                "Guest sees an inline standby banner until they tap I'm Nearby again.",
-                "Tapping I'm Nearby clears the recovery banner and makes the guest eligible to be called again.",
-                "Normal first-time standby does not show the Not here modal."
+                "Guest sees an inline recovery banner while they are back in Waiting or Gathering.",
+                "The guest must be invited to Gathering again before they can tap I'm Nearby and become eligible to be called.",
+                "Normal first-time Waiting or Gathering does not show the Not here modal."
               ],
               notes:
-                "Completed on 2026-06-26. First pass intentionally uses client-side transition detection rather than adding a durable database marker. If the guest page is closed during the staff action, a future database field such as not_here_at may be needed. User confirmed the recovery flow works."
+                "Completed on 2026-06-26 and revised on 2026-07-01 after multi-guest testing showed that returning Not Here guests directly to Gathering could exceed Gathering max after a freed slot was filled. First pass intentionally uses client-side transition detection rather than adding a durable database marker. If the guest page is closed during the staff action, a future database field such as not_here_at may be needed."
             },
             {
               id: "story-sotc-jalani-readiness-review",

@@ -43,6 +43,48 @@ begin
     raise exception 'not allowed to reset this event';
   end if;
 
+  create temporary table if not exists pg_temp.reset_event_queue_ids (
+    id uuid primary key
+  ) on commit drop;
+
+  create temporary table if not exists pg_temp.reset_event_check_in_ids (
+    id uuid primary key
+  ) on commit drop;
+
+  create temporary table if not exists pg_temp.reset_event_guest_session_ids (
+    id uuid primary key
+  ) on commit drop;
+
+  create temporary table if not exists pg_temp.reset_event_ticket_ids (
+    id bigint primary key
+  ) on commit drop;
+
+  truncate table pg_temp.reset_event_queue_ids;
+  truncate table pg_temp.reset_event_check_in_ids;
+  truncate table pg_temp.reset_event_guest_session_ids;
+  truncate table pg_temp.reset_event_ticket_ids;
+
+  insert into pg_temp.reset_event_queue_ids (id)
+  select id
+  from public.queues
+  where event_id = p_event_id;
+
+  insert into pg_temp.reset_event_check_in_ids (id)
+  select id
+  from public.event_check_ins
+  where event_id = p_event_id;
+
+  insert into pg_temp.reset_event_guest_session_ids (id)
+  select id
+  from public.guest_sessions
+  where event_id = p_event_id;
+
+  insert into pg_temp.reset_event_ticket_ids (id)
+  select tickets.id
+  from public.tickets tickets
+  where tickets.queue_id in (select id from pg_temp.reset_event_queue_ids)
+     or tickets.guest_session_id in (select id from pg_temp.reset_event_guest_session_ids);
+
   if to_regclass('public.event_group_order_items') is not null then
     execute 'delete from public.event_group_order_items where event_id = $1'
       using p_event_id;
@@ -50,29 +92,34 @@ begin
   end if;
 
   delete from public.event_guest_marks
-  where event_id = p_event_id;
+  where event_id = p_event_id
+     or ticket_id in (select id from pg_temp.reset_event_ticket_ids)
+     or check_in_id in (select id from pg_temp.reset_event_check_in_ids);
   get diagnostics removed_mark_count = row_count;
 
   delete from public.event_guest_designations
-  where event_id = p_event_id;
+  where event_id = p_event_id
+     or ticket_id in (select id from pg_temp.reset_event_ticket_ids)
+     or check_in_id in (select id from pg_temp.reset_event_check_in_ids);
   get diagnostics removed_designation_count = row_count;
 
   delete from public.event_guest_credits
-  where event_id = p_event_id;
+  where event_id = p_event_id
+     or ticket_id in (select id from pg_temp.reset_event_ticket_ids)
+     or check_in_id in (select id from pg_temp.reset_event_check_in_ids);
   get diagnostics removed_credit_count = row_count;
 
   delete from public.tickets tickets
-  using public.queues queues
-  where tickets.queue_id = queues.id
-    and queues.event_id = p_event_id;
+  using pg_temp.reset_event_ticket_ids target_tickets
+  where tickets.id = target_tickets.id;
   get diagnostics removed_ticket_count = row_count;
 
   delete from public.event_check_ins
-  where event_id = p_event_id;
+  where id in (select id from pg_temp.reset_event_check_in_ids);
   get diagnostics removed_check_in_count = row_count;
 
   delete from public.guest_sessions
-  where event_id = p_event_id;
+  where id in (select id from pg_temp.reset_event_guest_session_ids);
   get diagnostics removed_guest_session_count = row_count;
 
   update public.queues

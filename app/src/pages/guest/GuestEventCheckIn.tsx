@@ -25,16 +25,20 @@ function isValidEmail(value: string) {
 
 function normalizePhone(value: string) {
   const trimmed = value.trim();
-  if (!trimmed) return '';
   const hasLeadingPlus = trimmed.startsWith('+');
   const digits = trimmed.replace(/\D/g, '');
-  return hasLeadingPlus ? `+${digits}` : digits;
+  if (hasLeadingPlus && digits) return `+${digits}`;
+  if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
+  return digits;
 }
 
 function isValidPhone(value: string) {
   const normalized = normalizePhone(value);
-  const digits = normalized.replace(/\D/g, '');
-  return digits.length >= 10 && digits.length <= 15;
+  if (normalized.startsWith('+')) {
+    const digits = normalized.slice(1);
+    return digits.length >= 8 && digits.length <= 15;
+  }
+  return normalized.length === 10;
 }
 
 export default function GuestEventCheckIn({
@@ -120,7 +124,7 @@ export default function GuestEventCheckIn({
         return;
       }
       if (trimmedPhone && !isValidPhone(trimmedPhone)) {
-        setError('Please enter a valid phone number with at least 10 digits or leave phone blank.');
+        setError('Please enter a 10-digit U.S. phone number, an international number starting with +, or leave phone blank.');
         return;
       }
       const created = await createEventCheckIn({

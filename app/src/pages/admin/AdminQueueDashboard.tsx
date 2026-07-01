@@ -31,6 +31,7 @@ import '../../styles/admin.css';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type PilotCompletionMode = 'guest_code' | 'staff_served';
+type AdminQueueTab = 'live' | 'history' | 'settings';
 
 function hasSameShape(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
@@ -106,6 +107,7 @@ export default function AdminQueueDashboard() {
   const [pilotTickets, setPilotTickets] = useState<Ticket[]>([]);
   const [savingControls, setSavingControls] = useState(false);
   const [controlSaveStatus, setControlSaveStatus] = useState('');
+  const [activeQueueTab, setActiveQueueTab] = useState<AdminQueueTab>('live');
   const [loading, setLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAppliedRef = useRef<string | null>(null);
@@ -400,6 +402,26 @@ export default function AdminQueueDashboard() {
         </div>
 
         <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
+          <div className="admin-tabs" role="tablist" aria-label="Queue admin sections">
+            {[
+              ['live', 'Live Line'],
+              ['history', 'History'],
+              ['settings', 'Settings'],
+            ].map(([tab, label]) => (
+              <button
+                key={tab}
+                type="button"
+                role="tab"
+                aria-selected={activeQueueTab === tab}
+                className={`admin-tab ${activeQueueTab === tab ? 'admin-tab-active' : ''}`}
+                onClick={() => setActiveQueueTab(tab as AdminQueueTab)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {activeQueueTab === 'settings' && (
           <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f8fafc' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
@@ -448,23 +470,20 @@ export default function AdminQueueDashboard() {
             </div>
 
             <div className="admin-pilot-action-row">
-              <button className="actionBtn actionBtn-primary admin-pilot-action-btn" onClick={() => applyAutoPilotPass()}>
-                Apply Flow
-              </button>
               {controlSaveStatus && (
                 <span style={{ color: controlSaveStatus.includes('failed') ? '#b91c1c' : '#15803d', fontWeight: 900, fontSize: '0.86rem' }}>
                   {controlSaveStatus}
                 </span>
               )}
-              <span style={{ color: canReleaseMore ? '#15803d' : '#c2410c', fontWeight: 900, fontSize: '0.86rem' }}>
-                Released active: {activeReleased}/{maxActive}
-              </span>
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
               Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/Nearby guests and can overflow up to {gatheringMax} when earlier Gathering guests do not tap I'm Nearby after {staleAfterSeconds} seconds. Only Nearby guests are released. Future stale controls will move stale guests back to Waiting when space is needed.
             </div>
           </div>
+          )}
 
+          {activeQueueTab === 'settings' && (
+          <>
           {pilotCompletionMode === 'guest_code' ? (
             <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#fff', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.85rem', alignItems: 'center' }}>
               {stationUrl && <QRCodeSVG value={stationUrl} size={96} bgColor="#fff" fgColor="#1a1a2e" level="M" />}
@@ -479,6 +498,19 @@ export default function AdminQueueDashboard() {
               Click the current guest row when they step up to be served.
             </div>
           )}
+          </>
+          )}
+
+          {activeQueueTab === 'live' && (
+          <>
+          <div className="admin-pilot-action-row" style={{ marginBottom: '0.8rem' }}>
+            <button className="actionBtn actionBtn-primary admin-pilot-action-btn" onClick={() => applyAutoPilotPass()}>
+              Apply Flow
+            </button>
+            <span style={{ color: canReleaseMore ? '#15803d' : '#c2410c', fontWeight: 900, fontSize: '0.86rem' }}>
+              Released active: {activeReleased}/{maxActive}
+            </span>
+          </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
             {['waiting', 'standby', 'released', 'completed'].map((stage) => (
@@ -588,12 +620,19 @@ export default function AdminQueueDashboard() {
               );
             })
           )}
+          </>
+          )}
 
-          {completedTickets.length > 0 && (
-            <details style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.75rem 0.85rem', marginTop: '1rem', background: '#f8fafc' }}>
-              <summary style={{ cursor: 'pointer', fontWeight: 900, color: '#24364a' }}>
+          {activeQueueTab === 'history' && (
+            <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.75rem 0.85rem', background: '#f8fafc' }}>
+              <h2 style={{ fontSize: '1.05rem', margin: '0 0 0.75rem', fontWeight: 900, color: '#24364a' }}>
                 Completed guests ({completedTickets.length})
-              </summary>
+              </h2>
+              {completedTickets.length === 0 ? (
+                <p style={{ color: '#999', textAlign: 'center', padding: '1.5rem 0', margin: 0 }}>
+                  No completed guests yet.
+                </p>
+              ) : (
               <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                 {completedTickets.map((ticket) => {
                   const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
@@ -617,7 +656,8 @@ export default function AdminQueueDashboard() {
                   );
                 })}
               </div>
-            </details>
+              )}
+            </div>
           )}
         </div>
 

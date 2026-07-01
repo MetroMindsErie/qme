@@ -213,7 +213,7 @@ export default function AdminEventDetail() {
 
   useEffect(() => {
     if (!event?.id) return;
-    const intervalId = window.setInterval(scheduleRefresh, 5000);
+    const intervalId = window.setInterval(scheduleRefresh, 2000);
     return () => {
       window.clearInterval(intervalId);
     };

@@ -1255,12 +1255,12 @@ const QME_ROADMAP = {
                 "The admin event screen shows event check-in counts for people waiting for staff and people checked in.",
                 "Each queue-based event feature shows counts for Waiting, Gathering, Nearby, Your Turn, and Done.",
                 "Counts use operational labels that match the guest status language.",
-                "Counts update through a debounced live refresh after guest or staff actions, with a lightweight fallback refresh while the admin page is open.",
+                "Counts update through a debounced live refresh after guest or staff actions, with a lightweight two-second fallback refresh while the admin page is open.",
                 "The overview remains read-only; detailed actions still happen in Event Check-Ins or Manage Queue.",
                 "The implementation supports Scan-Code Adventure and Headshot Photographer before the broader tab redesign."
               ],
               notes:
-                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions plus a lightweight fallback refresh; future production-scale architecture should move these counts to operational metrics tables."
+                "Added during Sprint 2 admin UX discussion. Build this before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions plus a lightweight two-second fallback refresh for pilot reliability; future production-scale architecture should move these counts to operational metrics tables."
             },
             {
               id: "story-operational-metrics-tables",

@@ -453,7 +453,9 @@ export async function returnGatheringTicketToWaiting(ticketId: number): Promise<
     .select()
     .single();
   if (error) throw error;
-  return data as Ticket;
+  const ticket = data as Ticket;
+  if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
+  return ticket;
 }
 
 function ticketIsActive(ticket: Ticket) {

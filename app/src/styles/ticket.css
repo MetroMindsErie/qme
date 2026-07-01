@@ -730,6 +730,37 @@
   border-top: 1px solid #eef2f7;
 }
 
+.tkt-pilot-code-turn .tkt-pilot-header {
+  padding-block: 14px 10px;
+}
+
+.tkt-pilot-code-turn .tkt-pilot-scroll-body {
+  gap: 8px;
+  padding-bottom: max(18px, env(safe-area-inset-bottom, 18px));
+}
+
+.tkt-pilot-code-turn .tkt-pilot-status,
+.tkt-pilot-code-turn .tkt-pilot-panel {
+  padding: 10px 12px;
+}
+
+.tkt-pilot-code-turn .tkt-pilot-status-title {
+  font-size: clamp(1.75rem, 8.2vw, 2.6rem);
+}
+
+.tkt-pilot-code-turn .tkt-pilot-status-detail {
+  margin-top: 8px;
+  font-size: clamp(0.95rem, 4.2vw, 1.12rem);
+}
+
+.tkt-pilot-code-turn .tkt-pilot-stepper {
+  margin-top: 10px;
+}
+
+.tkt-pilot-code-turn .tkt-pilot-location {
+  font-size: clamp(1.15rem, 5.2vw, 1.55rem);
+}
+
 .tkt-pilot-code-focused .tkt-pilot-scroll-body {
   padding-bottom: max(18px, env(safe-area-inset-bottom, 18px));
 }

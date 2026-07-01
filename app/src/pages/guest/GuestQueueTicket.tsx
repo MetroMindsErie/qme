@@ -1023,9 +1023,10 @@ export default function GuestQueueTicketPage() {
       : Math.max(0, statusSteps.findIndex((step) => step.key === guestDisplayStage));
     const showLocation = pilotStage === 'standby' || pilotStage === 'released' || pilotStage === 'completed';
     const showInstruction = pilotStage === 'standby' && !nearbyConfirmed;
+    const isGuestCodeTurn = pilotStage === 'released' && pilotCompletionMode === 'guest_code';
 
     return (
-      <div className={`card card-scrollable tkt-card tkt-pilot-card ${completionInputFocused ? 'tkt-pilot-code-focused' : ''}`}>
+      <div className={`card card-scrollable tkt-card tkt-pilot-card ${isGuestCodeTurn ? 'tkt-pilot-code-turn' : ''} ${completionInputFocused ? 'tkt-pilot-code-focused' : ''}`}>
         {showNotHereModal && (
           <div className="tkt-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="not-here-title">
             <div className="tkt-modal">
@@ -1157,32 +1158,34 @@ export default function GuestQueueTicketPage() {
           )}
         </div>
 
-        <div className="tkt-actions tkt-pilot-actions">
-          {pilotStage === 'completed' ? (
-            <button
-              className="tkt-btn-checkin"
-              onClick={() => navigate(`/events/${eventSlug}`)}
-            >
-              Back to Event
-            </button>
-          ) : (
-            <>
+        {isGuestCodeTurn ? null : (
+          <div className="tkt-actions tkt-pilot-actions">
+            {pilotStage === 'completed' ? (
               <button
                 className="tkt-btn-checkin"
                 onClick={() => navigate(`/events/${eventSlug}`)}
               >
-                {pilotStage === 'waiting' ? 'Things Happening Now' : 'Back to Event'}
+                Back to Event
               </button>
-              <button
-                className="tkt-leave-btn"
-                onClick={handleLeave}
-                disabled={leaveDisabled}
-              >
-                Leave Queue
-              </button>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <button
+                  className="tkt-btn-checkin"
+                  onClick={() => navigate(`/events/${eventSlug}`)}
+                >
+                  {pilotStage === 'waiting' ? 'Things Happening Now' : 'Back to Event'}
+                </button>
+                <button
+                  className="tkt-leave-btn"
+                  onClick={handleLeave}
+                  disabled={leaveDisabled}
+                >
+                  Leave Queue
+                </button>
+              </>
+            )}
+          </div>
+        )}
       </div>
     );
   }

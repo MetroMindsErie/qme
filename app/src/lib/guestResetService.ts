@@ -15,6 +15,17 @@ function removeKeysMatching(predicate: (key: string) => boolean) {
   }
 }
 
+function getStoredCheckInCreatedAt(eventId: string): number | null {
+  try {
+    const stored = localStorage.getItem(`qme:eventCheckIn:${eventId}`);
+    if (!stored) return null;
+    const parsed = JSON.parse(stored) as { ts?: unknown };
+    return typeof parsed.ts === 'number' ? parsed.ts : null;
+  } catch {
+    return null;
+  }
+}
+
 export function getEventTestDataResetMarker(event: QEvent | null | undefined): string {
   const metadata = event?.metadata && typeof event.metadata === 'object' ? event.metadata : {};
   const marker = metadata.test_data_reset_at;
@@ -31,6 +42,17 @@ export function clearGuestStateAfterEventReset(
     const seenKey = eventResetSeenKey(eventId);
     const seenMarker = localStorage.getItem(seenKey);
     if (seenMarker === resetMarker) return false;
+
+    const resetCreatedAt = Date.parse(resetMarker);
+    const checkInCreatedAt = getStoredCheckInCreatedAt(eventId);
+    if (
+      Number.isFinite(resetCreatedAt)
+      && checkInCreatedAt
+      && checkInCreatedAt > resetCreatedAt
+    ) {
+      localStorage.setItem(seenKey, resetMarker);
+      return false;
+    }
 
     localStorage.removeItem(`qme:eventCheckIn:${eventId}`);
     localStorage.removeItem(`qme:guestSession:${eventId}`);

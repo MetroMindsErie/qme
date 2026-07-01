@@ -356,7 +356,7 @@ export default function GuestEventDetail() {
             if (storedTicketId) {
               try {
                 const ticketRow = await getQueueTicket(Number(storedTicketId), q.id, ev.id);
-                if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting') || ['left', 'served'].includes(ticketRow.status)) {
+                if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting') || ticketRow.status === 'left') {
                   clearQueueTicket(q.id);
                   ticket = '';
                 } else {
@@ -369,7 +369,7 @@ export default function GuestEventDetail() {
                 try {
                   const restored = await restoreTicketForQueue(Number(storedTicketId), q.id, ev.id);
                   const ticketRow = await getQueueTicket(restored.id, q.id, ev.id);
-                  if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting') || ['left', 'served'].includes(ticketRow.status)) {
+                  if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting') || ticketRow.status === 'left') {
                     clearQueueTicket(q.id);
                     ticket = '';
                   } else {

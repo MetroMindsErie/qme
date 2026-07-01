@@ -1335,13 +1335,15 @@ const QME_ROADMAP = {
                 "A non-nearby Gathering guest stops counting as a fresh blocker after a configurable pilot bypass window.",
                 "Auto-release still only releases guests who tapped I'm Nearby.",
                 "The queue does not automatically remove or cancel stale Gathering guests during the first SOTC pilot.",
-                "A follow-up stale-management pass moves stale Gathering guests back to Waiting when space is needed.",
+                "Staff can manually return a non-nearby Gathering guest to Waiting so they no longer hold a Gathering spot.",
+                "Returned guests remain in the queue and go behind guests already waiting.",
+                "A follow-up automation pass can move stale Gathering guests back to Waiting when space is needed.",
                 "The first pilot setting uses a short 15-second bypass window for testing, with real-event timing to be configured later.",
                 "The story captures later staff actions such as nudge, skip for now, remove, and recover.",
                 "The story captures later notification support so guests can be buzzed or messaged when moved from Waiting to Gathering."
               ],
               notes:
-                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. Updated after product discussion: the queue must keep moving toward Nearby candidates without hiding the overflow rule in code. Current implementation exposes Gathering target, Gathering max, and stale-after seconds on the queue controls. Auto-flow can invite newer Waiting guests into Gathering up to the max when earlier Gathering guests go stale. Do not auto-boot for SOTC yet. Future work should add staff controls to skip/remove/remind stale Gathering guests, move stale guests back to Waiting when space is needed, make real-event timing configurable, and add buzz/SMS/push/in-app notification when guests move from Waiting to Gathering."
+                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. Updated after product discussion: the queue must keep moving toward Nearby candidates without hiding the overflow rule in code. Current implementation exposes Gathering target, Gathering max, and stale-after seconds on the queue controls. Auto-flow can invite newer Waiting guests into Gathering up to the max when earlier Gathering guests go stale. Staff can now manually return stale non-nearby Gathering guests to Waiting; returned guests keep their ticket but move behind guests already waiting. Do not auto-boot for SOTC yet. Future work should add richer staff controls to skip/remove/remind stale Gathering guests, automate return-to-waiting when space is needed, make real-event timing configurable, and add buzz/SMS/push/in-app notification when guests move from Waiting to Gathering."
             },
             {
               id: "story-queue-rule-configuration",

@@ -437,6 +437,23 @@ export async function markReleasedTicketNotHere(ticketId: number): Promise<Ticke
   return ticket;
 }
 
+export async function returnGatheringTicketToWaiting(ticketId: number): Promise<Ticket> {
+  const { data, error } = await supabase
+    .from('tickets')
+    .update({
+      stage: 'waiting',
+      nearby_confirmed_at: null,
+      released_at: null,
+    })
+    .eq('id', ticketId)
+    .select()
+    .single();
+  if (error) throw error;
+  const ticket = data as Ticket;
+  if (ticket.queue_id) await applyQueuePilotFlow(ticket.queue_id);
+  return ticket;
+}
+
 function ticketIsActive(ticket: Ticket) {
   return !['completed', 'cancelled', 'left'].includes(ticket.stage ?? 'waiting')
     && !['left', 'served'].includes(ticket.status);
@@ -453,6 +470,12 @@ function ticketStillBlocksGatheringTargetForSeconds(ticket: Ticket, staleAfterSe
   const changedAtMs = changedAt ? Date.parse(changedAt) : Number.NaN;
   if (!Number.isFinite(changedAtMs)) return true;
   return Date.now() - changedAtMs < staleAfterSeconds * 1000;
+}
+
+function waitingSinceMs(ticket: Ticket) {
+  const changedAt = ticket.stage_updated_at || ticket.created_at;
+  const changedAtMs = changedAt ? Date.parse(changedAt) : Number.NaN;
+  return Number.isFinite(changedAtMs) ? changedAtMs : 0;
 }
 
 export async function applyQueuePilotFlow(queueId: string): Promise<void> {
@@ -473,7 +496,13 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   const staleAfterSeconds = queue.gathering_stale_after_seconds ?? 15;
 
   const activeTickets = tickets.filter(ticketIsActive);
-  const waiting = activeTickets.filter((ticket) => (ticket.stage ?? 'waiting') === 'waiting');
+  const waiting = activeTickets
+    .filter((ticket) => (ticket.stage ?? 'waiting') === 'waiting')
+    .sort((a, b) => {
+      const byWaitingSince = waitingSinceMs(a) - waitingSinceMs(b);
+      if (byWaitingSince !== 0) return byWaitingSince;
+      return (a.ticket_number ?? a.id) - (b.ticket_number ?? b.id);
+    });
   const standby = activeTickets.filter((ticket) => ticket.stage === 'standby');
   const confirmedStandby = standby.filter(ticketIsNearbyConfirmed);
   const blockingStandby = standby.filter((ticket) => ticketStillBlocksGatheringTargetForSeconds(ticket, staleAfterSeconds));

@@ -17,6 +17,7 @@ import {
   listQueuePilotTickets,
   markReleasedTicketNotHere,
   releaseQueueTicket,
+  returnGatheringTicketToWaiting,
   resetQueueTickets,
   getQueueBySlug,
   updateQueue,
@@ -297,6 +298,24 @@ export default function AdminQueueDashboard() {
     }
   }
 
+  async function returnPilotTicketToWaiting(ticketId: number) {
+    const selectedTicket = pilotTickets.find((ticket) => ticket.id === ticketId);
+    const guestName = selectedTicket
+      ? `${selectedTicket.first_name || 'Guest'} ${selectedTicket.last_name || ''}`.trim()
+      : 'this guest';
+    const confirmed = confirm(
+      `Return ${guestName} to Waiting? They will stay in the queue, but they will no longer hold a Gathering spot.`
+    );
+    if (!confirmed) return;
+    try {
+      await returnGatheringTicketToWaiting(ticketId);
+      await refreshPilotTickets();
+    } catch (e) {
+      console.error('Failed to return guest to waiting', e);
+      alert('Could not return this guest to Waiting.');
+    }
+  }
+
   const applyAutoPilotPass = useCallback(async (quiet = false) => {
     if (!queue) return;
     if (autoFlowInFlightRef.current) return;
@@ -484,6 +503,7 @@ export default function AdminQueueDashboard() {
               const isDone = ['completed', 'cancelled', 'left'].includes(stage);
               const nearbyConfirmed = isNearbyConfirmed(ticket);
               const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
+              const canReturnToWaiting = stage === 'standby' && !nearbyConfirmed;
               const canClickToServe = pilotCompletionMode === 'staff_served' && stage === 'released' && !isDone;
               const statusHint = stage === 'waiting'
                 ? 'Waiting for flow'
@@ -556,6 +576,9 @@ export default function AdminQueueDashboard() {
                   >
                     {!isDone && canReleaseTicket && (
                       <button className="actionBtn actionBtn-primary admin-pilot-guest-btn" onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
+                    )}
+                    {!isDone && canReturnToWaiting && (
+                      <button className="actionBtn actionBtn-secondary admin-pilot-guest-btn" onClick={() => returnPilotTicketToWaiting(ticket.id)}>Return to Waiting</button>
                     )}
                     {stage === 'released' && !isDone && (
                       <button className="actionBtn actionBtn-secondary admin-pilot-guest-btn" onClick={() => markPilotTicketNotHere(ticket.id)}>Not here</button>

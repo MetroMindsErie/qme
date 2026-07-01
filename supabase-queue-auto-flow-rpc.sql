@@ -95,7 +95,7 @@ begin
     where queue_id = p_queue_id
       and coalesce(stage, 'waiting') = 'waiting'
       and coalesce(status, '') not in ('left', 'served')
-    order by ticket_number nulls last, created_at, id
+    order by coalesce(stage_updated_at, created_at), ticket_number nulls last, id
     limit least(
       greatest(0, standby_target - blocking_standby_count),
       greatest(0, gathering_max - standby_pool_count)

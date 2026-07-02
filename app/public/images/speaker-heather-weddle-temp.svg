@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" viewBox="0 0 180 180" role="img" aria-label="Temporary speaker thumbnail">
+  <rect width="180" height="180" rx="28" fill="#fff7ed"/>
+  <circle cx="90" cy="72" r="38" fill="#f2c29f"/>
+  <path d="M48 70c5-31 27-48 54-43 24 5 36 25 32 58-17-15-36-20-60-11-10 4-18 3-26-4Z" fill="#9a5b2e"/>
+  <path d="M42 153c9-30 29-45 48-45s39 15 48 45z" fill="#24364a"/>
+  <path d="M65 153l25-32 25 32z" fill="#ffffff"/>
+  <circle cx="77" cy="73" r="4" fill="#26364a"/>
+  <circle cx="103" cy="73" r="4" fill="#26364a"/>
+  <path d="M80 92c8 6 13 6 20 0" stroke="#9f4a2e" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <path d="M125 44l15 14-23 2z" fill="#fbbf24"/>
+</svg>

@@ -82,7 +82,7 @@ function getEceHomeItemLimit(ece: Ece): number {
   return Math.min(Math.max(Math.floor(configured), 1), 10);
 }
 
-function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string }> {
+function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string; imageUrl: string }> {
   const metadata = asRecord(ece.metadata);
   const rawItems = Array.isArray(metadata.home_items)
     ? metadata.home_items
@@ -97,9 +97,10 @@ function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: s
         title: asString(record.title || record.name),
         meta: asString(record.meta || record.time || record.subtitle),
         note: asString(record.note || record.description),
+        imageUrl: asString(record.image_url || record.imageUrl),
       };
     })
-    .filter((item) => item.title || item.meta || item.note)
+    .filter((item) => item.title || item.meta || item.note || item.imageUrl)
     .slice(0, getEceHomeItemLimit(ece));
 }
 
@@ -834,9 +835,18 @@ export default function GuestEventDetail() {
                   <div className="ed-home-items">
                     {homeItems.map((item, index) => (
                       <div className="ed-home-item" key={`${item.title}-${index}`}>
-                        {item.title && <span className="ed-home-item-title">{item.title}</span>}
-                        {item.meta && <span className="ed-home-item-meta">{item.meta}</span>}
-                        {item.note && <span className="ed-home-item-note">{item.note}</span>}
+                        {item.imageUrl && (
+                          <img
+                            src={item.imageUrl}
+                            alt={item.title || item.meta || 'Sponsor'}
+                            className="ed-home-item-logo"
+                          />
+                        )}
+                        <span className="ed-home-item-copy">
+                          {item.title && <span className="ed-home-item-title">{item.title}</span>}
+                          {item.meta && <span className="ed-home-item-meta">{item.meta}</span>}
+                          {item.note && <span className="ed-home-item-note">{item.note}</span>}
+                        </span>
                       </div>
                     ))}
                   </div>

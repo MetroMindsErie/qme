@@ -89,12 +89,12 @@ cross join (
         'home_section_order', 30,
         'home_items_limit', 6,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', '5 Networks that turn College Connections into Career Gold', 'meta', '7:00-7:20 PM / Garage 1', 'note', 'Megan Vogias, Evlogimenos'),
-          jsonb_build_object('title', 'Personal Branding', 'meta', '7:00-7:20 PM / Garage 2', 'note', 'Alex Michaels, Prelude2Cinema Inc.'),
-          jsonb_build_object('title', 'Career Tips with McMaster Carr', 'meta', '7:20-7:40 PM / Garage 1', 'note', 'Representative from McMaster Carr'),
-          jsonb_build_object('title', 'Preparing for Law School and the Legal Field', 'meta', '7:20-7:40 PM / Garage 2', 'note', 'Adam Joines, United States Attorney''s Office'),
-          jsonb_build_object('title', 'How to decide if grad school is the right move for you', 'meta', '7:40-8:00 PM / Garage 1', 'note', 'Marleni Chavana, UB Greensfelder LLP'),
-          jsonb_build_object('title', 'Planning to buy your first house!', 'meta', '7:40-8:00 PM / Garage 2', 'note', 'Heather Weddle, American Pacific Mortgage')
+          jsonb_build_object('title', '5 Networks that turn College Connections into Career Gold', 'meta', '7:00-7:20 PM / Garage 1', 'note', 'Megan Vogias, Evlogimenos', 'image_url', '/images/speaker-megan-vogias-temp.svg'),
+          jsonb_build_object('title', 'Personal Branding', 'meta', '7:00-7:20 PM / Garage 2', 'note', 'Alex Michaels, Prelude2Cinema Inc.', 'image_url', '/images/speaker-alex-michaels-temp.svg'),
+          jsonb_build_object('title', 'Career Tips with McMaster Carr', 'meta', '7:20-7:40 PM / Garage 1', 'note', 'Representative from McMaster Carr', 'image_url', '/images/speaker-mcmaster-temp.svg'),
+          jsonb_build_object('title', 'Preparing for Law School and the Legal Field', 'meta', '7:20-7:40 PM / Garage 2', 'note', 'Adam Joines, United States Attorney''s Office', 'image_url', '/images/speaker-adam-joines-temp.svg'),
+          jsonb_build_object('title', 'How to decide if grad school is the right move for you', 'meta', '7:40-8:00 PM / Garage 1', 'note', 'Marleni Chavana, UB Greensfelder LLP', 'image_url', '/images/speaker-marleni-chavana-temp.svg'),
+          jsonb_build_object('title', 'Planning to buy your first house!', 'meta', '7:40-8:00 PM / Garage 2', 'note', 'Heather Weddle, American Pacific Mortgage', 'image_url', '/images/speaker-heather-weddle-temp.svg')
         )
       )
     ),
@@ -108,13 +108,12 @@ cross join (
         'home_section', 'sponsors',
         'home_section_title', 'Sponsors',
         'home_section_order', 40,
-        'home_items_limit', 5,
+        'home_items_limit', 4,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Summer on the Cuyahoga', 'note', 'Event host'),
-          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner'),
-          jsonb_build_object('title', 'Sherwin-Williams'),
-          jsonb_build_object('title', 'McMaster-Carr'),
-          jsonb_build_object('title', 'MetroHealth')
+          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner', 'image_url', '/images/sponsor-rock-hall.svg'),
+          jsonb_build_object('title', 'Sherwin-Williams', 'image_url', '/images/sponsor-sherwin-williams.svg'),
+          jsonb_build_object('title', 'McMaster-Carr', 'image_url', '/images/sponsor-mcmaster-carr.svg'),
+          jsonb_build_object('title', 'MetroHealth', 'image_url', '/images/sponsor-metrohealth.svg')
         )
       )
     ),

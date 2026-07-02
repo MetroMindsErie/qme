@@ -75,6 +75,11 @@ function getEceHomeActionLabel(ece: Ece): string {
   return asString(metadata.home_action_label || metadata.homeActionLabel);
 }
 
+function getEceHomeIconVariant(ece: Ece): string {
+  const metadata = asRecord(ece.metadata);
+  return asString(metadata.home_icon_variant || metadata.homeIconVariant);
+}
+
 function getEceHomeItemLimit(ece: Ece): number {
   const metadata = asRecord(ece.metadata);
   const configured = asNumber(metadata.home_items_limit || metadata.homeItemsLimit);
@@ -740,6 +745,7 @@ export default function GuestEventDetail() {
             const canJoin = Boolean(linkedQueue && !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused);
             const homeBadge = getEceHomeBadge(exp);
             const homeActionLabel = getEceHomeActionLabel(exp);
+            const homeIconVariant = getEceHomeIconVariant(exp);
             const homeItems = getEceHomeItems(exp);
             const statusLine = linkedQueue ? queueCardStatusLine({
               hasTicket,
@@ -800,7 +806,7 @@ export default function GuestEventDetail() {
               tabIndex={canAct ? 0 : undefined}
               onKeyDown={canAct ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleEceOpen(); } : undefined}
             >
-              <div className="ed-activity-icon-wrap" style={{ background: '#E8F5E9' }}>
+              <div className={`ed-activity-icon-wrap ${homeIconVariant === 'wide' ? 'ed-activity-icon-wrap-wide' : ''}`} style={{ background: '#E8F5E9' }}>
                 {exp.image_url || exp.slug === 'scan-code-adventure' || exp.slug === 'headshot-photo-station'
                   ? <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.slug === 'headshot-photo-station' ? '/images/headshot-photo-station.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
                   : <span style={{ fontSize: '1.1rem' }}>âœ¨</span>}

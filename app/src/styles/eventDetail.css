@@ -295,6 +295,11 @@
   flex-shrink: 0;
 }
 
+.ed-activity-icon-wrap-wide {
+  width: 76px;
+  background: #fff !important;
+}
+
 .ed-activity-icon-img {
   width: 100%;
   height: 100%;

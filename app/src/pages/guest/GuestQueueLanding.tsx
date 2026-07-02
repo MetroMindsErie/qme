@@ -68,7 +68,10 @@ export default function GuestQueueLanding() {
           }
         }
         const q = await getQueueBySlug(ev.id, queueSlug);
-        clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
+        const didClearEventReset = clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
+        if (didClearEventReset) {
+          setSearchParams({}, { replace: true });
+        }
         setQueue(q);
       } catch (e) {
         console.error('Failed to load queue', e);

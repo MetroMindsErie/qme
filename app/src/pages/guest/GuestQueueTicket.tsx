@@ -203,7 +203,10 @@ export default function GuestQueueTicketPage() {
           }
         }
         const q  = await getQueueBySlug(ev.id, queueSlug);
-        clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
+        const didClearEventReset = clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
+        if (didClearEventReset) {
+          setSearchParams({}, { replace: true });
+        }
         setQueue(q);
         if (checkInGuestName) {
           localStorage.setItem(queueGuestStorageKey(q.id), JSON.stringify(checkInGuestName));

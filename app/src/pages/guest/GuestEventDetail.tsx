@@ -80,6 +80,11 @@ function getEceHomeIconVariant(ece: Ece): string {
   return asString(metadata.home_icon_variant || metadata.homeIconVariant);
 }
 
+function getEceHomeItemsLayout(ece: Ece): string {
+  const metadata = asRecord(ece.metadata);
+  return asString(metadata.home_items_layout || metadata.homeItemsLayout);
+}
+
 function getEceHomeItemLimit(ece: Ece): number {
   const metadata = asRecord(ece.metadata);
   const configured = asNumber(metadata.home_items_limit || metadata.homeItemsLimit);
@@ -747,6 +752,7 @@ export default function GuestEventDetail() {
             const homeBadge = getEceHomeBadge(exp);
             const homeActionLabel = getEceHomeActionLabel(exp);
             const homeIconVariant = getEceHomeIconVariant(exp);
+            const homeItemsLayout = getEceHomeItemsLayout(exp);
             const homeItems = getEceHomeItems(exp);
             const statusLine = linkedQueue ? queueCardStatusLine({
               hasTicket,
@@ -776,7 +782,9 @@ export default function GuestEventDetail() {
               : hasTicket
               ? 'ed-card-joined'
               : '';
-            const cardClass = `ed-activity-card ed-activity-card-info ${canAct ? 'ed-card-clickable' : ''} ${cardStateClass}`;
+            const homeItemImageCount = homeItems.filter((item) => item.imageUrl).length;
+            const hasMediaRows = homeItemsLayout === 'media_rows' || homeItemImageCount > 1;
+            const cardClass = `ed-activity-card ed-activity-card-info ${hasMediaRows ? 'ed-activity-card-media-rows' : ''} ${canAct ? 'ed-card-clickable' : ''} ${cardStateClass}`;
             const handleEceOpen = () => {
               if (hasTicket && viewHref) {
                 navigate(viewHref);
@@ -807,11 +815,13 @@ export default function GuestEventDetail() {
               tabIndex={canAct ? 0 : undefined}
               onKeyDown={canAct ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleEceOpen(); } : undefined}
             >
+              {!hasMediaRows && (
               <div className={`ed-activity-icon-wrap ${homeIconVariant === 'wide' ? 'ed-activity-icon-wrap-wide' : ''}`} style={{ background: '#E8F5E9' }}>
                 {exp.image_url || exp.slug === 'scan-code-adventure' || exp.slug === 'headshot-photo-station'
                   ? <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.slug === 'headshot-photo-station' ? '/images/headshot-photo-station.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
                   : <span style={{ fontSize: '1.1rem' }}>âœ¨</span>}
               </div>
+              )}
               <div className="ed-activity-body">
                 <div className="ed-activity-name-row">
                   <span className="ed-activity-name">{exp.name}</span>

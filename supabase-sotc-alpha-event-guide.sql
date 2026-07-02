@@ -87,6 +87,7 @@ cross join (
         'home_section', 'speakers',
         'home_section_title', 'Featured Speakers',
         'home_section_order', 30,
+        'home_items_layout', 'media_rows',
         'home_items_limit', 6,
         'home_items', jsonb_build_array(
           jsonb_build_object('title', '5 Networks that turn College Connections into Career Gold', 'meta', '7:00-7:20 PM / Garage 1', 'note', 'Megan Vogias, Evlogimenos', 'image_url', '/images/speaker-megan-vogias-temp.svg'),
@@ -108,6 +109,7 @@ cross join (
         'home_section', 'sponsors',
         'home_section_title', 'Sponsors',
         'home_section_order', 40,
+        'home_items_layout', 'media_rows',
         'home_items_limit', 5,
         'home_items', jsonb_build_array(
           jsonb_build_object('title', 'Sherwin-Williams', 'image_url', '/images/sherwin-williams.png', 'image_variant', 'wide'),

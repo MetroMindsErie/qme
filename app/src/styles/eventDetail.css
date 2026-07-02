@@ -397,15 +397,14 @@
 .ed-home-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   margin-top: 5px;
 }
 
 .ed-home-item {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
   font-size: 0.68rem;
   line-height: 1.25;
   color: #657080;
@@ -422,11 +421,14 @@
   flex-shrink: 0;
 }
 
+.ed-home-item-logo-wide {
+  width: 62px;
+}
+
 .ed-home-item-copy {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   min-width: 0;
 }
 

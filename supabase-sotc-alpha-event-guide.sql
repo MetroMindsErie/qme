@@ -102,19 +102,18 @@ cross join (
       'Sponsors',
       'sponsors-guide',
       'Thanks to the organizations helping make tonight possible.',
-      '/images/sotc-sponsor-logos.png',
+      '/images/sotc-logo.png',
       'resource',
       jsonb_build_object(
         'home_section', 'sponsors',
         'home_section_title', 'Sponsors',
         'home_section_order', 40,
-        'home_icon_variant', 'wide',
         'home_items_limit', 5,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Sherwin-Williams'),
-          jsonb_build_object('title', 'MetroHealth'),
-          jsonb_build_object('title', 'McMaster-Carr'),
-          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner'),
+          jsonb_build_object('title', 'Sherwin-Williams', 'image_url', '/images/sherwin-williams.png', 'image_variant', 'wide'),
+          jsonb_build_object('title', 'MetroHealth', 'image_url', '/images/MetroHealth.png', 'image_variant', 'wide'),
+          jsonb_build_object('title', 'McMaster-Carr', 'image_url', '/images/mcmaster-carr.png', 'image_variant', 'wide'),
+          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner', 'image_url', '/images/rock&roll-hall-of-fame.png', 'image_variant', 'wide'),
           jsonb_build_object('title', 'Summer on the Cuyahoga', 'note', 'Event host')
         )
       )

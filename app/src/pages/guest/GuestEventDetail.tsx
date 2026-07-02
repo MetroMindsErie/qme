@@ -87,7 +87,7 @@ function getEceHomeItemLimit(ece: Ece): number {
   return Math.min(Math.max(Math.floor(configured), 1), 10);
 }
 
-function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string; imageUrl: string }> {
+function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string; imageUrl: string; imageVariant: string }> {
   const metadata = asRecord(ece.metadata);
   const rawItems = Array.isArray(metadata.home_items)
     ? metadata.home_items
@@ -103,6 +103,7 @@ function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: s
         meta: asString(record.meta || record.time || record.subtitle),
         note: asString(record.note || record.description),
         imageUrl: asString(record.image_url || record.imageUrl),
+        imageVariant: asString(record.image_variant || record.imageVariant),
       };
     })
     .filter((item) => item.title || item.meta || item.note || item.imageUrl)
@@ -845,7 +846,7 @@ export default function GuestEventDetail() {
                           <img
                             src={item.imageUrl}
                             alt={item.title || item.meta || 'Sponsor'}
-                            className="ed-home-item-logo"
+                            className={`ed-home-item-logo ${item.imageVariant === 'wide' ? 'ed-home-item-logo-wide' : ''}`}
                           />
                         )}
                         <span className="ed-home-item-copy">

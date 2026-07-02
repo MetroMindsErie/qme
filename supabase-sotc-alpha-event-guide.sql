@@ -55,7 +55,7 @@ cross join (
       'Resume Reviews',
       'resume-review-guide',
       'Meet with a reviewer for resume feedback and career conversation.',
-      '/images/qmeFirstLogo.jpg',
+      '/images/sotc-resume-reviews.png',
       'info',
       jsonb_build_object(
         'home_section', 'featured_experiences',
@@ -68,7 +68,7 @@ cross join (
       'Networking',
       'networking-guide',
       'Use the mixer to meet students, professionals, alumni, and employers.',
-      '/images/sotc-logo.png',
+      '/images/sotc-networking.png',
       'info',
       jsonb_build_object(
         'home_section', 'featured_experiences',

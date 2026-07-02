@@ -81,7 +81,7 @@ cross join (
       'Featured Speakers',
       'featured-speakers-guide',
       'Pop-up mini workshops at The Garage from 7:00 to 8:00 PM.',
-      '/images/sotc-logo.png',
+      '/images/sotc-speaker-lectern.png',
       'session',
       jsonb_build_object(
         'home_section', 'speakers',
@@ -122,7 +122,7 @@ cross join (
       'Food & Drinks',
       'food-drinks-guide',
       'Hors d''oeuvres and the mocktail/cocktail bar are on Level 0.',
-      '/images/qmeFirstLogo.jpg',
+      '/images/sotc-food-drinks.png',
       'resource',
       jsonb_build_object(
         'home_section', 'food_drinks',
@@ -146,7 +146,7 @@ cross join (
       'Resources',
       'resources-guide',
       'Helpful links, program notes, and things to explore during the event.',
-      '/images/qmeFirstLogo.jpg',
+      '/images/sotc-logo.png',
       'resource',
       jsonb_build_object(
         'home_section', 'resources',

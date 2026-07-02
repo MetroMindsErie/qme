@@ -31,6 +31,27 @@ from public.organizations
 cross join (
   values
     (
+      'Tonight''s Schedule',
+      'tonights-schedule-guide',
+      'Use this quick schedule to orient yourself during the mixer.',
+      '/images/sotc-logo.png',
+      'session',
+      jsonb_build_object(
+        'home_section', 'schedule',
+        'home_section_title', 'Tonight''s Schedule',
+        'home_section_order', 10,
+        'home_items_limit', 6,
+        'home_items', jsonb_build_array(
+          jsonb_build_object('title', 'Registration, sponsors, and professional headshots', 'meta', '5:30-7:30 PM / Level 1'),
+          jsonb_build_object('title', 'Networking, resume reviews, hors d''oeuvres, mocktail and cocktail bar', 'meta', '5:30-8:30 PM / Level 0', 'note', 'Card only bar; access to lower level gallery'),
+          jsonb_build_object('title', 'Host and sponsor greetings', 'meta', '6:15-6:45 PM / Level 0'),
+          jsonb_build_object('title', 'Pop-up mini workshops at The Garage', 'meta', '7:00-8:00 PM / Level 2'),
+          jsonb_build_object('title', 'All galleries open for viewing', 'meta', '7:00-8:30 PM / All levels'),
+          jsonb_build_object('title', 'Close', 'meta', '8:45 PM / All levels')
+        )
+      )
+    ),
+    (
       'Resume Reviews',
       'resume-review-guide',
       'Meet with a reviewer for resume feedback and career conversation.',
@@ -59,16 +80,21 @@ cross join (
     (
       'Featured Speakers',
       'featured-speakers-guide',
-      'See the light program moments and featured conversations for tonight.',
+      'Pop-up mini workshops at The Garage from 7:00 to 8:00 PM.',
       '/images/sotc-logo.png',
       'session',
       jsonb_build_object(
         'home_section', 'speakers',
         'home_section_title', 'Featured Speakers',
         'home_section_order', 30,
+        'home_items_limit', 6,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Welcome and SOTC remarks', 'meta', '7:00 PM', 'note', 'Main program'),
-          jsonb_build_object('title', 'Career and community conversations', 'meta', 'During mixer', 'note', 'Watch for host updates')
+          jsonb_build_object('title', '5 Networks that turn College Connections into Career Gold', 'meta', '7:00-7:20 PM / Garage 1', 'note', 'Megan Vogias, Evlogimenos'),
+          jsonb_build_object('title', 'Personal Branding', 'meta', '7:00-7:20 PM / Garage 2', 'note', 'Alex Michaels, Prelude2Cinema Inc.'),
+          jsonb_build_object('title', 'Career Tips with McMaster Carr', 'meta', '7:20-7:40 PM / Garage 1', 'note', 'Representative from McMaster Carr'),
+          jsonb_build_object('title', 'Preparing for Law School and the Legal Field', 'meta', '7:20-7:40 PM / Garage 2', 'note', 'Adam Joines, United States Attorney''s Office'),
+          jsonb_build_object('title', 'How to decide if grad school is the right move for you', 'meta', '7:40-8:00 PM / Garage 1', 'note', 'Marleni Chavana, UB Greensfelder LLP'),
+          jsonb_build_object('title', 'Planning to buy your first house!', 'meta', '7:40-8:00 PM / Garage 2', 'note', 'Heather Weddle, American Pacific Mortgage')
         )
       )
     ),
@@ -82,9 +108,37 @@ cross join (
         'home_section', 'sponsors',
         'home_section_title', 'Sponsors',
         'home_section_order', 40,
+        'home_items_limit', 5,
         'home_items', jsonb_build_array(
           jsonb_build_object('title', 'Summer on the Cuyahoga', 'note', 'Event host'),
-          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner')
+          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner'),
+          jsonb_build_object('title', 'Sherwin-Williams'),
+          jsonb_build_object('title', 'McMaster-Carr'),
+          jsonb_build_object('title', 'MetroHealth')
+        )
+      )
+    ),
+    (
+      'Food & Drinks',
+      'food-drinks-guide',
+      'Hors d''oeuvres and the mocktail/cocktail bar are on Level 0.',
+      '/images/qmeFirstLogo.jpg',
+      'resource',
+      jsonb_build_object(
+        'home_section', 'food_drinks',
+        'home_section_title', 'Food & Drinks',
+        'home_section_order', 45,
+        'home_items_limit', 9,
+        'home_items', jsonb_build_array(
+          jsonb_build_object('title', 'Bacon Wrapped Brisket with Peach BBQ', 'meta', 'GF'),
+          jsonb_build_object('title', 'Garden Fresh Vegetables with Ranch Dip'),
+          jsonb_build_object('title', 'Garlic Parmesan Potato Croquette', 'meta', 'VG'),
+          jsonb_build_object('title', 'Heirloom Tomato Bruschetta', 'meta', 'VG'),
+          jsonb_build_object('title', 'Marinated Cucumber with Edamame Hummus', 'meta', 'VG/GF'),
+          jsonb_build_object('title', 'Mini Chicken Meatballs with Mongolian BBQ'),
+          jsonb_build_object('title', 'Raspberry and Brie Puff Pastry', 'meta', 'V'),
+          jsonb_build_object('title', 'Traditional House Made Hummus with Naan'),
+          jsonb_build_object('title', 'Mocktail/Cocktail Bar', 'note', 'Credit card only')
         )
       )
     ),
@@ -99,9 +153,9 @@ cross join (
         'home_section_title', 'Resources',
         'home_section_order', 50,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Event program', 'note', 'Use this as your companion for the night'),
-          jsonb_build_object('title', 'Gallery and venue highlights', 'note', 'Look for spaces worth exploring'),
-          jsonb_build_object('title', 'Career resources', 'note', 'Keep useful links and follow-ups here')
+          jsonb_build_object('title', 'Sticker guide', 'note', 'Find guests by field and interest area'),
+          jsonb_build_object('title', 'Mixer resources page', 'note', 'summeronthecuyahoga.com mixer resources'),
+          jsonb_build_object('title', 'Gallery and venue highlights', 'note', 'All galleries open 7:00-8:30 PM')
         )
       )
     )
@@ -145,10 +199,12 @@ select
   '',
   '',
   case expies.slug
+    when 'tonights-schedule-guide' then 20
     when 'resume-review-guide' then 30
     when 'networking-guide' then 40
     when 'featured-speakers-guide' then 50
     when 'sponsors-guide' then 60
+    when 'food-drinks-guide' then 65
     when 'resources-guide' then 70
     else 100
   end,
@@ -158,10 +214,12 @@ from public.events
 join public.organizations on organizations.id = events.organization_id
 join public.expies on expies.organization_id = organizations.id
   and expies.slug in (
+    'tonights-schedule-guide',
     'resume-review-guide',
     'networking-guide',
     'featured-speakers-guide',
     'sponsors-guide',
+    'food-drinks-guide',
     'resources-guide'
   )
 where events.slug = 'sotc-test-check-in'
@@ -180,10 +238,12 @@ set
   image_url = expies.image_url,
   type = expies.type,
   sort_order = case expies.slug
+    when 'tonights-schedule-guide' then 20
     when 'resume-review-guide' then 30
     when 'networking-guide' then 40
     when 'featured-speakers-guide' then 50
     when 'sponsors-guide' then 60
+    when 'food-drinks-guide' then 65
     when 'resources-guide' then 70
     else eces.sort_order
   end,
@@ -196,10 +256,12 @@ where eces.event_id = events.id
   and events.slug = 'sotc-test-check-in'
   and expies.slug = eces.slug
   and eces.slug in (
+    'tonights-schedule-guide',
     'resume-review-guide',
     'networking-guide',
     'featured-speakers-guide',
     'sponsors-guide',
+    'food-drinks-guide',
     'resources-guide'
   );
 

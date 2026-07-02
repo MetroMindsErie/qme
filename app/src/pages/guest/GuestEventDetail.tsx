@@ -75,6 +75,13 @@ function getEceHomeActionLabel(ece: Ece): string {
   return asString(metadata.home_action_label || metadata.homeActionLabel);
 }
 
+function getEceHomeItemLimit(ece: Ece): number {
+  const metadata = asRecord(ece.metadata);
+  const configured = asNumber(metadata.home_items_limit || metadata.homeItemsLimit);
+  if (!configured) return 4;
+  return Math.min(Math.max(Math.floor(configured), 1), 10);
+}
+
 function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string }> {
   const metadata = asRecord(ece.metadata);
   const rawItems = Array.isArray(metadata.home_items)
@@ -93,7 +100,7 @@ function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: s
       };
     })
     .filter((item) => item.title || item.meta || item.note)
-    .slice(0, 4);
+    .slice(0, getEceHomeItemLimit(ece));
 }
 
 function getSectionedEces(eces: Ece[]): Array<{ key: string; title: string; order: number; eces: Ece[] }> {

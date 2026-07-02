@@ -1346,13 +1346,13 @@ const QME_ROADMAP = {
                 "Guest home can group event activities into reusable sections from eCe metadata.",
                 "Headshot Photographer remains the primary featured operational experience.",
                 "Scan-Code Adventure remains available as an optional demo station, not required for the alpha path.",
-                "Resume Reviews, Networking, Featured Speakers, Sponsors, and Resources can appear as lightweight information/event-guide activities.",
+                "Tonight's Schedule, Featured Experiences, Featured Speakers, Sponsors, Food & Drinks, and Resources can appear as lightweight information/event-guide activities.",
                 "The implementation does not hard-code SOTC-specific sections into the React screen.",
                 "Tomorrow's alpha still keeps registration simple: Student, Professional, and Professional + Photo.",
                 "Deferred architecture items remain deferred: generalized registration config, generalized credit engine, service abstraction, speaker/sponsor engines, and event guidance engine."
               ],
               notes:
-                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay visible because it is useful as an optional demo."
+                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha, then course-corrected after reviewing the 2025 SOTC brochure: qME should feel like a digital companion to a real conference, not a list of app features. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, home_items_limit, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay visible because it is useful as an optional demo."
             },
             {
               id: "story-admin-console-needs",
@@ -1918,10 +1918,13 @@ const QME_ROADMAP = {
         "Registration should remain simple for tomorrow: Student, Professional, and Professional + Photo.",
         "The guest home should start showing more of the event, but through reusable eCe configuration rather than SOTC-specific code.",
         "Scan-Code Adventure is still useful as an optional demo station even if it is not part of the main alpha path.",
+        "The 2025 SOTC brochure reframes the alpha around conference-companion usefulness: schedule, speakers, sponsors, food/drinks, resources, and only then interactive experiences.",
         "Guest Profile should be treated as event-scoped identity, attributes, access, and credits rather than a full user account."
       ],
       decisions: [
         "Keep Scan-Code Adventure in the SOTC test event as an optional demo station.",
+        "Make Professional Headshots the hero interactive experience.",
+        "Make the Event Home feel like Welcome, Tonight's Schedule, Featured Experiences, Featured Speakers, Sponsors, Food & Drinks, and Resources rather than a list of application features.",
         "Use reusable eCe metadata to configure guest-home sections, badges, ordering, and lightweight display items.",
         "Do not create generalized registration config, generalized credit engine, Service abstraction, speaker/sponsor engines, platform-wide station permission framework, or event guidance engine for tomorrow.",
         "Keep recovery contact as a future-friendly identity field, not a password account requirement.",
@@ -1936,6 +1939,7 @@ const QME_ROADMAP = {
       roadmapChanges: [
         "Added the SOTC pre-alpha event-guide story.",
         "Added a seed/data path for lightweight event-guide eCes rather than hard-coded guest-home content.",
+        "Course-corrected the seed toward the brochure: Tonight's Schedule, workshop speakers, sponsors, food/drinks, and resources.",
         "Recorded Scan-Code Adventure as retained optional demo content.",
         "Kept the next deeper product review focused on individual Experience Types."
       ],

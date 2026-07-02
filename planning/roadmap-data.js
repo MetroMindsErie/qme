@@ -1352,7 +1352,7 @@ const QME_ROADMAP = {
                 "Deferred architecture items remain deferred: generalized registration config, generalized credit engine, service abstraction, speaker/sponsor engines, and event guidance engine."
               ],
               notes:
-                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha, then course-corrected after reviewing the 2025 SOTC brochure: qME should feel like a digital companion to a real conference, not a list of app features. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, home_items_limit, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay visible because it is useful as an optional demo."
+                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha, then course-corrected after reviewing the 2025 SOTC brochure: qME should feel like a digital companion to a real conference, not a list of app features. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, home_items_layout, home_items_limit, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay visible because it is useful as an optional demo. July 2 pre-test build added brochure-style schedule, featured speakers, sponsor logos, food/drinks, resources, generic media-row rendering, and oldest-first live check-in ordering."
             },
             {
               id: "story-admin-console-needs",
@@ -1907,6 +1907,44 @@ const QME_ROADMAP = {
     }
   ],
   productReviews: [
+    {
+      id: "review-sotc-alpha-2-pretest-wrap-2026-07-02",
+      date: "2026-07-02",
+      trigger: "Pre-test wrap-up before the July 2 SOTC alpha",
+      summary:
+        "The July 2 pre-test build shifted the SOTC guest home from a list of app capabilities toward a credible event companion. Headshots remains the hero operational experience, Scan-Code Adventure remains available as an optional queue/code demo, and the event home now uses reusable eCe metadata to show schedule, featured speakers, sponsors, food/drinks, and resources without hard-coding SOTC sections into React.",
+      observations: [
+        "The product story is now clearer: qME can help guests understand what is happening at an event, not only move through a queue.",
+        "The current build is good enough to test comprehension, orientation, and operational trust with real users.",
+        "Most of the remaining risk is test/readiness risk rather than obvious implementation absence.",
+        "The event-guide content is intentionally lightweight and seeded; speaker, sponsor, schedule, food, and resource engines are not being built yet.",
+        "Reusable eCe metadata is carrying the new guest-home structure, which supports the Experience Type reuse direction."
+      ],
+      decisions: [
+        "Do not add new product behavior before the July 2 test unless something is obviously broken.",
+        "Use the test to observe whether guests understand arrival, check-in, photo eligibility, Headshots, and optional Scan-Code Adventure without founder narration.",
+        "Keep Scan-Code Adventure visible but treat it as a demo/supporting experience rather than the featured alpha path.",
+        "Treat Headshots as the featured interactive experience for the test.",
+        "Capture broad feedback after the test in an Alpha 2 Product Review instead of immediately expanding scope."
+      ],
+      risks: [
+        "Seeded brochure content may make qME look more complete than the underlying content-management model actually is.",
+        "Guests may still need clearer hierarchy between event information and action-required experiences.",
+        "The optional Scan-Code demo may distract from Headshots if testers treat all cards as equally important.",
+        "The current image/logo assets are sufficient for alpha, but not yet a durable media-management workflow."
+      ],
+      roadmapChanges: [
+        "Updated the SOTC event-guide story with the implemented metadata fields and pre-test build notes.",
+        "Kept Scan-Code Adventure in scope as optional demo content.",
+        "Confirmed no new abstractions should be introduced before the July 2 alpha.",
+        "Left speaker/sponsor/food/resource management as future Experience Type or content-model work."
+      ],
+      nextFocus: [
+        "Run the July 2 alpha with a clean reset and a short smoke test first.",
+        "Watch where guests hesitate, what they understand without prompting, and whether staff/admin flow feels controlled.",
+        "After the test, write Alpha 2 Product Review and decide whether Registration or Headshots should be reviewed next as an Experience Type."
+      ]
+    },
     {
       id: "review-sotc-pre-alpha-build-2026-07-02",
       date: "2026-07-01",

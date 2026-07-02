@@ -51,6 +51,7 @@ coverage/
 *.pdf
 
 *.sql
+!supabase-sotc-alpha-event-guide.sql
 
 # Supabase local/CLI temp artifacts
 supabase/.temp/

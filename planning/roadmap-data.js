@@ -26,32 +26,22 @@ const QME_ROADMAP = {
   sprints: [
     {
       id: "now",
-      title: "Sprint 2: Organization, Roles, Auth, and RLS",
+      title: "Foundation Validation",
       goal:
-        "Build the minimum organization, admin, staff, authentication, and RLS foundation needed before the SOTC pilot can move from guided alpha into real event readiness.",
+        "Confirm that the new organization, role, auth, guest-token, RPC, and RLS foundation is trustworthy enough to support SOTC Event Builder work.",
       storyIds: [
-        "story-governance-principles-foundation",
-        "story-org-table",
-        "story-preserve-peony-demo",
-        "story-seed-sotc-org",
-        "story-admin-org-role",
-        "story-org-staff",
-        "story-authentication-cleanup",
-        "story-temp-password-first-login",
-        "story-planning-admin-access-controls",
-        "story-event-org-owner",
-        "story-event-operational-mode-config",
-        "story-admin-event-activity-status-overview",
-        "story-admin-queue-tabs",
-        "story-stale-queue-blocker-recovery",
-        "story-sotc-admin-staff-rls-hardening"
+        "story-foundation-role-permission-smoke-matrix",
+        "story-foundation-privileged-action-matrix",
+        "story-foundation-external-db-security-review",
+        "story-foundation-jalani-admin-walkthrough",
+        "story-temp-password-first-login"
       ]
     },
     {
       id: "next",
-      title: "Next: SOTC Event Builder",
+      title: "Next: SOTC Event Builder / Program Readiness",
       goal:
-        "Model the Rock Hall mixer as an event with experiences, queues, access rules, public resources, and managed media.",
+        "After Foundation Validation, model the Rock Hall mixer as an event with experiences, queues, access rules, public resources, and managed media.",
       storyIds: [
         "story-remove-hardcoded-demo-assumptions",
         "story-experience-model",
@@ -90,6 +80,38 @@ const QME_ROADMAP = {
     }
   ],
   completedSprints: [
+    {
+      id: "completed-sprint-2-foundation",
+      title: "Completed: Sprint 2 Organization, Roles, Auth, and RLS Foundation",
+      completedDate: "2026-07-01",
+      goal:
+        "Build the minimum organization, admin, staff, authentication, and RLS foundation needed before the SOTC pilot can move from guided alpha into real event readiness.",
+      summary:
+        "Sprint 2 moved qME from founder-operated demo toward organization-ready pilot: named admin identities, organization/event ownership, staff assignments, guest session tokens, role-scoped admin access, authenticated RPC boundaries, and audit logging for newer sensitive staff/admin actions are now in place. qME is not fully production-hardened yet, but the remaining risk has shifted from architecture design to validation and hardening.",
+      storyIds: [
+        "story-governance-principles-foundation",
+        "story-org-table",
+        "story-preserve-peony-demo",
+        "story-seed-sotc-org",
+        "story-admin-org-role",
+        "story-org-staff",
+        "story-authentication-cleanup",
+        "story-planning-admin-access-controls",
+        "story-event-org-owner",
+        "story-event-operational-mode-config",
+        "story-admin-event-activity-status-overview",
+        "story-admin-queue-tabs",
+        "story-stale-queue-blocker-recovery",
+        "story-sotc-admin-staff-rls-hardening"
+      ],
+      notes: [
+        "The old temporary admin passphrase path was removed.",
+        "Jalani can sign in with named SOTC event-admin access and act only inside the SOTC event scope.",
+        "Guest-owned actions and staff/admin-owned actions are separated more clearly through guest-token RPCs and authenticated admin/staff RPCs.",
+        "Queue and check-in operational actions now have role-checked RPC boundaries and basic audit logging.",
+        "Temporary password/onboarding cleanup remains visible debt and moves into Foundation Validation."
+      ]
+    },
     {
       id: "completed-sotc-alpha-ui-stabilization",
       title: "Completed: SOTC Alpha UI Stabilization",
@@ -618,8 +640,8 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-admin-staff-rls-hardening",
               title: "Define SOTC admin/staff roles and Supabase RLS boundaries",
-              status: "current",
-              sprint: "now",
+              status: "done",
+              sprint: "completed",
               summary:
                 "Review and harden the SOTC pilot database permission model before moving beyond guided alpha testing.",
               acceptanceCriteria: [
@@ -634,6 +656,77 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. First RLS hardening pass added in supabase-sotc-rls-hardening.sql with companion notes in docs/sotc-rls-hardening-v1.md: admin principals/roles/memberships/event staff assignments are scoped to authenticated admins, event guest designations are staff/admin managed, guest credit writes are staff/admin only, and guest-sourced scan/code marks remain open for pilot completion. Second pass added in supabase-sprint2-setup-rls.sql: active organizations/events/expies/eCes/legacy experiences/queues remain guest-readable, while setup writes are restricted to qME superadmin, organization admin, or event admin. Third pass drafted in supabase-guest-session-foundation.sql: anonymous guest browsers receive event-scoped session tokens, event_check_ins/tickets can link to guest_sessions, queue RPC overloads can attach/verify ticket ownership, and the guest check-in form can optionally capture email/phone for later recovery. Fourth pass drafted in supabase-guest-action-rls-tightening.sql: guest check-in reads/completion, ticket reads/name updates/nearby/completion, guest marks, and guest credit reads move behind guest-token verified RPCs, while direct table access for event_check_ins, tickets, event_guest_marks, and event_guest_credits becomes staff/admin scoped. July 1 app hardening update: guest-facing actions now fail closed when the scoped RPC is missing or rejects the guest token, instead of falling back to unscoped direct table access. July 1 SQL follow-up: guest-session and guest-action functions now explicitly revoke default public execution and grant only intended browser RPCs to anon/authenticated roles. Admin queue RPC boundary pass added in supabase-admin-queue-action-rpcs.sql: release, Not Here, Return to Waiting, and staff/admin completion now use authenticated role-checked RPCs with basic audit logs instead of direct browser table mutations. Admin check-in RPC boundary pass added in supabase-admin-checkin-action-rpcs.sql: check-in completion, guest access/ticket-type updates, and photo-credit grants now use authenticated role-checked RPCs with audit logs instead of direct browser mutations. Reminder: re-engage the computer engineering student after this pass is run and smoke-tested so his review can focus on concrete policies and remaining risks."
+            },
+            {
+              id: "story-foundation-role-permission-smoke-matrix",
+              title: "Run role and permission smoke-test matrix",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Validate that each qME role can do what it should and cannot overreach into another organization, event, station, or guest state.",
+              acceptanceCriteria: [
+                "qME superadmin, organization admin, event admin, check-in staff, feature/station staff, and guest/anonymous paths are tested.",
+                "A signed-in admin/staff user participating as a guest is tested as a separate guest-session context, not as an admin identity.",
+                "Guest attempting an admin URL is blocked.",
+                "Check-in staff attempting queue admin is blocked unless assigned that scope.",
+                "Feature/station staff attempting event setup is blocked.",
+                "Station staff and station admin boundaries are tested where a station has elevated local actions.",
+                "Organization admin attempting another organization's event is blocked.",
+                "Event admin attempting an unrelated event is blocked.",
+                "Superadmin can access support/admin areas.",
+                "Guest token cannot read or mutate another guest's state."
+              ],
+              notes:
+                "Added by the 2026-07-01 Foundation Review. This is validation, not a broad new build phase."
+            },
+            {
+              id: "story-foundation-privileged-action-matrix",
+              title: "Document privileged action matrix",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Create a concise matrix of sensitive actions, their RPC/function path, required role, audit behavior, RLS/table protection, and remaining risk.",
+              acceptanceCriteria: [
+                "Matrix includes release guest, mark Not Here, Return to Waiting, complete ticket, complete check-in, grant photo credit, update guest access, reset test data, edit event setup, edit queue settings, and live queue controls.",
+                "Each action has a user-facing action name, code/RPC path, required role, audit behavior, RLS protection, and remaining risk.",
+                "Matrix distinguishes event-wide/destructive authority from station-level staff and station-admin authority.",
+                "Any direct-client/RLS-backed action is identified as accepted for now, moved to a follow-up, or replaced with an RPC."
+              ],
+              notes:
+                "Added by the 2026-07-01 Foundation Review to prevent protection gaps from hiding inside scattered UI/service calls."
+            },
+            {
+              id: "story-foundation-external-db-security-review",
+              title: "Re-engage computer engineering student for database/security review",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Ask the student reviewer to critique the implemented role/auth/RLS/RPC foundation rather than brainstorm an open-ended redesign.",
+              acceptanceCriteria: [
+                "Review packet includes role model, guest token approach, RLS policies, RPC boundaries, audit logging, and remaining permissive policies.",
+                "Reviewer is asked to look for obvious guest/staff/admin overreach paths.",
+                "Findings are captured as planning inbox items, decisions, or stories.",
+                "Follow-up work is bounded before SOTC Event Builder resumes."
+              ],
+              notes:
+                "The foundation is now concrete enough for useful external review. This should happen before broad platform expansion."
+            },
+            {
+              id: "story-foundation-jalani-admin-walkthrough",
+              title: "Run Jalani named-admin walkthrough",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Have Jalani walk through the SOTC admin/event-staff flow using named access to validate whether the role and UI model makes sense without founder guidance.",
+              acceptanceCriteria: [
+                "Jalani can sign in with named access.",
+                "If Jalani participates as a guest, that flow uses guest-session state and is not confused with admin sign-in.",
+                "Jalani can reach the SOTC event and not unrelated admin areas.",
+                "Walkthrough covers admin tabs, check-in flow, queue flow, Not Here, Return to Waiting, and photo-credit/headshot flow.",
+                "Confusing labels, missing affordances, and permission surprises are captured."
+              ],
+              notes:
+                "Initial sign-in and scoped event-admin access are already verified. This story is the deeper usability/operations walkthrough."
             },
             {
               id: "story-guest-session-recovery-code",
@@ -722,12 +815,14 @@ const QME_ROADMAP = {
                 "SOTC Test Check-in keeps its current automated/pilot behavior through explicit configuration rather than hard-coded event assumptions.",
                 "Production events default to conservative/manual behavior unless automation is intentionally enabled.",
                 "Admin-facing language explains the selected mode well enough for qME operator, organization admin, and event staff use.",
+                "Live Event Controls are distinguished from Event Setup: queue flow mode, gathering target, gathering max, stale timing, pause/resume, and intake behavior are operational controls that may change during an active event.",
+                "Only event admin, organization admin, or qME superadmin can modify live event controls; station staff can operate assigned stations without changing event-wide controls unless separately granted station-admin authority.",
                 "Test-data reset permissions distinguish test/demo rehearsal operations from live-event destructive operations.",
                 "If a reset confirmation is typed incorrectly, the admin receives a clear message that no reset happened.",
                 "Any temporary pilot flags are documented with replacement intent before RLS hardening."
               ],
               notes:
-                "Added during Sprint 2 product discussion after confirming that SOTC's automated test behavior should be configurable by event. This supports the Sprint 2 trust goal: an organization can independently operate an event with appropriate permissions and predictable behavior. Current implementation lets event admins reset test data because event_admin satisfies canManageEvent; before live production, decide whether destructive reset should require org admin/superadmin, event test mode, or a separate reset permission. Reset confirmation feedback was tightened on 2026-06-30 so wrong confirmation text reports that no reset happened."
+                "Added during Sprint 2 product discussion after confirming that SOTC's automated test behavior should be configurable by event. This supports the Sprint 2 trust goal: an organization can independently operate an event with appropriate permissions and predictable behavior. 2026-07-01 architecture review clarified the distinction between Event Setup, Live Operations, and Live Event Controls: controls such as queue flow mode, gathering target/max, stale timing, pause/resume, and intake behavior belong with operations and should be editable only by event admin or higher. Current implementation lets event admins reset test data because event_admin satisfies canManageEvent; before live production, decide whether destructive reset should require org admin/superadmin, event test mode, or a separate reset permission. Reset confirmation feedback was tightened on 2026-06-30 so wrong confirmation text reports that no reset happened."
             },
             {
               id: "story-event-schedules-recurrence",
@@ -863,7 +958,7 @@ const QME_ROADMAP = {
                 "Experience can store short/long description, image/logo/media, and configurable feature flags."
               ],
               notes:
-                "Trello uses 'expie' for the reusable experienceable unit. Product language can still use Experience while eCe may represent an event-specific instance."
+                "Trello uses 'expie' for the reusable experienceable unit. Product language can still use Experience while eCe may represent an event-specific instance. 2026-07-01 architecture reviews clarified that Experiences are the primary product unit, while queue is one reusable capability an Experience can compose. Experience Types should be reusable across events, organizations, and repeated placements within the same event; avoid SOTC-specific implementation when a reusable Experience Type is possible. Examples: Headshots may use queue, notifications, and status tracking; Food may use ordering, menu, notifications, and status tracking; Resume Reviews may use queue, staff assignment, and status tracking; Sponsors may use resources and passport. Open question: whether service-like experiences eventually justify a separate Service layer."
             },
             {
               id: "story-experience-types",
@@ -876,6 +971,8 @@ const QME_ROADMAP = {
                 "Type names are documented.",
                 "Sponsor and vendor are intentionally distinguished.",
                 "Types drive guest UI defaults without hard-coding the SOTC event.",
+                "Experience Types are reusable across multiple organizations, multiple events, and multiple placements within one event.",
+                "Service-like types such as Headshots, Resume Reviews, and Food Ordering are examined without introducing a Service abstraction prematurely.",
                 "Types can later provide configuration templates for headshot photographer, food truck, food/beverage vendor, performance, speaker, and similar patterns."
               ]
             },
@@ -888,6 +985,7 @@ const QME_ROADMAP = {
                 "Allow an experience/expie to enable feature modules such as menu, queue, merchandising, media, guest-facing content, or later POS integration.",
               acceptanceCriteria: [
                 "Experience can enable/disable feature modules with configuration flags.",
+                "Queue is treated as one reusable capability, not the definition of an Experience.",
                 "Experience can publish guest-facing content such as descriptions, menus, prices, modifiers, allergens, preparation time, or limited-time offerings.",
                 "Food/menu items can support searchable tags such as chicken, pesto, gluten free, or nuts.",
                 "POS/API integration remains a future option, not a July dependency."
@@ -1035,11 +1133,15 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Admin can assign or update guest tags.",
                 "Queue access can read guest tags.",
+                "Recoverable photo benefits require email or mobile number before the benefit is granted.",
+                "If staff selects Student or Professional + Photo and no recovery contact exists, the guest is placed into a Needs More Info state automatically rather than relying on staff judgment.",
+                "Needs More Info returns the guest to the check-in screen with previous information retained, a clear explanation, and email-or-phone collection.",
+                "Staff sees Waiting for recovery contact while contact information is missing and Ready to Check In after the guest resubmits; staff still completes check-in manually.",
                 "Photo completion can update tag/state.",
                 "A separate profession/networking tag placeholder is supported for later colored-nametag or networking use."
               ],
               notes:
-                "2026-06-11 PO review: photo access is marked at registration/check-in, not imported. Professional-general is a distinct state from professional-photo-eligible."
+                "2026-06-11 PO review: photo access is marked at registration/check-in, not imported. Professional-general is a distinct state from professional-photo-eligible. 2026-07-01 architecture review clarified that guest participation remains accountless by default, but recoverable assets such as complimentary or purchased professional headshots require recoverable contact information before the asset is granted. This is recoverability, not authentication."
             },
             {
               id: "story-photographer-console",
@@ -1232,6 +1334,25 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Alpha-test inbox finding: Alpha test went well. Jalani Ball helped lead the test and can help move the pilot toward ready."
+            },
+            {
+              id: "story-sotc-pre-alpha-event-guide",
+              title: "Shape SOTC guest home as event guide for pre-alpha",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Use reusable eCe metadata to make the SOTC guest home feel like an event companion for the next alpha, without creating SOTC-only UI or removing the Scan-Code demo station.",
+              acceptanceCriteria: [
+                "Guest home can group event activities into reusable sections from eCe metadata.",
+                "Headshot Photographer remains the primary featured operational experience.",
+                "Scan-Code Adventure remains available as an optional demo station, not required for the alpha path.",
+                "Resume Reviews, Networking, Featured Speakers, Sponsors, and Resources can appear as lightweight information/event-guide activities.",
+                "The implementation does not hard-code SOTC-specific sections into the React screen.",
+                "Tomorrow's alpha still keeps registration simple: Student, Professional, and Professional + Photo.",
+                "Deferred architecture items remain deferred: generalized registration config, generalized credit engine, service abstraction, speaker/sponsor engines, and event guidance engine."
+              ],
+              notes:
+                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay visible because it is useful as an optional demo."
             },
             {
               id: "story-admin-console-needs",
@@ -1787,6 +1908,169 @@ const QME_ROADMAP = {
   ],
   productReviews: [
     {
+      id: "review-sotc-pre-alpha-build-2026-07-02",
+      date: "2026-07-01",
+      trigger: "Pre-alpha build direction for the July 2 SOTC alpha",
+      summary:
+        "This review keeps the next SOTC alpha focused on feeling like a real event companion rather than a technical demo. The immediate build should improve the guest home with reusable event-guide activities, preserve the Scan-Code demo station as optional, and avoid introducing broad new abstractions before the experience types are reviewed.",
+      observations: [
+        "The alpha should show a credible event flow: arrival, registration, event home, then experiences.",
+        "Registration should remain simple for tomorrow: Student, Professional, and Professional + Photo.",
+        "The guest home should start showing more of the event, but through reusable eCe configuration rather than SOTC-specific code.",
+        "Scan-Code Adventure is still useful as an optional demo station even if it is not part of the main alpha path.",
+        "Guest Profile should be treated as event-scoped identity, attributes, access, and credits rather than a full user account."
+      ],
+      decisions: [
+        "Keep Scan-Code Adventure in the SOTC test event as an optional demo station.",
+        "Use reusable eCe metadata to configure guest-home sections, badges, ordering, and lightweight display items.",
+        "Do not create generalized registration config, generalized credit engine, Service abstraction, speaker/sponsor engines, platform-wide station permission framework, or event guidance engine for tomorrow.",
+        "Keep recovery contact as a future-friendly identity field, not a password account requirement.",
+        "After tomorrow's test, create an Alpha 2 Product Review rather than logging every observation as an immediate fix."
+      ],
+      risks: [
+        "Adding event-guide content too quickly could make the alpha look broader than the implemented operational depth.",
+        "Hard-coding SOTC sections would weaken the reusable Experience Type direction.",
+        "Keeping Scan-Code visible could confuse the main alpha path unless it is clearly treated as optional/demo.",
+        "Registration, credits, and recovery-contact concepts could become tangled if they are overbuilt before tomorrow's test."
+      ],
+      roadmapChanges: [
+        "Added the SOTC pre-alpha event-guide story.",
+        "Added a seed/data path for lightweight event-guide eCes rather than hard-coded guest-home content.",
+        "Recorded Scan-Code Adventure as retained optional demo content.",
+        "Kept the next deeper product review focused on individual Experience Types."
+      ],
+      nextFocus: [
+        "Run the July 2 alpha as an event companion test.",
+        "Watch whether guests understand registration, photo eligibility, headshot access, and optional/demo activities.",
+        "After testing, write Alpha 2 Product Review and decide whether Registration or Headshots should be the next Experience Type review."
+      ]
+    },
+    {
+      id: "review-product-architecture-part-3-2026-07-01",
+      date: "2026-07-01",
+      trigger: "Refinement of product architecture decisions after Part 2 review",
+      summary:
+        "This review refined the event authority, queue commitment, and experience reuse decisions. It clarified that station admin distinctions are station-defined rather than universal, live/destructive event controls remain above station authority, queue stale timing may differ by commitment state, and Experience Types should be reusable before qME introduces any new Service abstraction.",
+      observations: [
+        "Most items were clarifications rather than new implementation work.",
+        "Station Staff and Station Admin should not be treated as universally distinct platform roles.",
+        "Some stations may need elevated local station actions, while others may have no practical difference between station staff and station admin.",
+        "Experience Types should be designed for reuse across organizations, events, and repeated placements inside the same event.",
+        "The Experience versus Service relationship is important but should remain unresolved until Registration, Headshots, Resume Reviews, and Food Ordering provide more evidence."
+      ],
+      decisions: [
+        "Station Staff versus Station Admin is station-defined, not platform-defined.",
+        "Reset, destructive actions, event-wide configuration, live event control settings, and cross-station operations remain event admin or higher.",
+        "On My Way extends grace time but does not make a guest callable; only I'm Nearby makes a guest callable.",
+        "Future queue tuning should consider different stale timers for Gathering, On My Way, and I'm Nearby.",
+        "Everything possible should be designed as a reusable Experience Type rather than a SOTC-specific implementation.",
+        "Do not introduce a Service layer yet; keep Experience versus Service as an open architecture question."
+      ],
+      risks: [
+        "Over-modeling station admin as a universal role could create unnecessary complexity.",
+        "Under-modeling elevated station actions could leave check-in and future station workflows too coarse.",
+        "SOTC-specific implementations could weaken reuse if they are not generalized into Experience Types.",
+        "Introducing a Service abstraction too early could make the architecture heavier before the product has enough evidence."
+      ],
+      roadmapChanges: [
+        "Refined the station authority decision to make station-admin differences station-defined.",
+        "Refined the queue commitment decision with state-specific stale-timer guidance.",
+        "Strengthened experience reuse guidance on the experience model stories.",
+        "Added Experience versus Service as an explicit open architecture question.",
+        "Kept implementation backlog unchanged except for planning/story-note refinements."
+      ],
+      nextFocus: [
+        "Begin reviewing individual Experience Types instead of adding more platform abstraction.",
+        "Review Registration first, then Headshots, Resume Reviews, Passport, Sponsors, and Food Ordering.",
+        "Let those experience designs validate whether qME needs a separate Service concept."
+      ]
+    },
+    {
+      id: "review-product-architecture-part-2-2026-07-01",
+      date: "2026-07-01",
+      trigger: "Follow-up product architecture discussion after the Foundation Review",
+      summary:
+        "This review reduced architectural ambiguity before more implementation. The discussion clarified qME as an event platform where guest participation, admin/staff operations, recoverable assets, event authority, queue commitment, live controls, and experience composition each have distinct product rules.",
+      observations: [
+        "The goal of this discussion was not feature expansion, but clarifying how qME should behave as an event platform.",
+        "A single person may hold admin/staff roles while also participating as a guest, but guest participation remains a separate operational context.",
+        "Recoverable benefits need recoverable contact information, even when the guest experience remains accountless.",
+        "Experiences are the primary product unit; queues are one reusable capability an experience may compose.",
+        "Live Event Controls are distinct from Event Setup and may legitimately change during active operations."
+      ],
+      decisions: [
+        "Guest participation continues to use guest-session context even when the same human is signed in as an admin or staff user.",
+        "Recoverable assets such as complimentary or purchased professional headshots require email or mobile number before the asset is granted.",
+        "Student or Professional + Photo without recovery contact automatically becomes Needs More Info; staff should not manually decide this.",
+        "Event authority hierarchy is qME superadmin, organization admin, event admin, then event staff, with future station staff/station admin distinction.",
+        "Queue commitment moves from Waiting to Gathering to optional On My Way to I'm Nearby to Your Turn to Done; only I'm Nearby makes a guest callable.",
+        "Live Event Controls such as flow mode, gathering target/max, stale timing, pause/resume, and intake behavior belong with operations and require event admin or higher.",
+        "Experience architecture should compose reusable capabilities such as queue, ordering, menu, resources, passport, notifications, staff assignment, and status tracking."
+      ],
+      risks: [
+        "Admin identity and guest identity could become confusing if UI does not keep contexts visibly separate.",
+        "Recoverable-contact requirements could create check-in friction if the Needs More Info path is not clear.",
+        "Station-level authority could become too broad unless station staff and station admin are modeled deliberately.",
+        "Queue terminology and status progression could drift across experiences unless the commitment model is documented and reused.",
+        "Live controls could be mistaken for setup controls unless admin screens separate them clearly."
+      ],
+      roadmapChanges: [
+        "Added architecture decisions for guest/admin context separation, recoverable assets, Needs More Info, event authority, queue commitment, live event controls, and experience capabilities.",
+        "Updated Foundation Validation criteria to test guest/admin context separation and station-level authority boundaries.",
+        "Updated privileged action matrix criteria to include live queue controls and station-level authority.",
+        "Updated headshot eligibility criteria with recoverable-contact and Needs More Info behavior.",
+        "Updated experience model notes to treat queue as a reusable capability rather than the definition of an experience."
+      ],
+      nextFocus: [
+        "Validate role and permission boundaries before broad platform expansion.",
+        "Review experience-by-experience starting with Registration, then Headshots, Resume Reviews, Passport, Sponsors, and Food Ordering.",
+        "Keep architecture ahead of implementation without expanding the backlog beyond near-term validation needs."
+      ]
+    },
+    {
+      id: "review-foundation-organization-roles-auth-rls-2026-07-01",
+      date: "2026-07-01",
+      trigger: "Sprint 2 foundation completion and external product/security review direction",
+      summary:
+        "Sprint 2 moved qME from a founder-operated demo toward an organization-ready pilot. Named admin identities, organization ownership, event ownership, staff assignments, guest session tokens, authenticated RPC boundaries, role-scoped admin access, and audit logging for newer staff/admin actions are now real enough for external validation. qME should not be treated as fully production-hardened yet; the remaining risk has shifted from architecture design to validation and hardening.",
+      observations: [
+        "Removing the old temporary admin passphrase was a major trust milestone.",
+        "Role boundaries are now understandable: qME superadmin, organization admin, event admin, feature/station staff, and guest/anonymous.",
+        "Guest actions and staff/admin actions are separated more clearly through guest-token and authenticated admin/staff RPCs.",
+        "The product is no longer only operated by the founder in demo mode.",
+        "The main remaining risk is no longer whether qME can design the foundation, but whether the implemented foundation has been tested correctly across roles and edge cases."
+      ],
+      decisions: [
+        "Do not jump directly into broad platform expansion.",
+        "Run a short Foundation Validation checkpoint before deeper SOTC Event Builder work.",
+        "Re-engage the computer engineering student now that concrete role/auth/RLS structure exists to review.",
+        "Continue using role-based access rather than building a full custom permissions engine.",
+        "Complete only a focused RLS/RPC consistency pass before returning toward product work."
+      ],
+      risks: [
+        "Some privileged actions may still have inconsistent protection paths.",
+        "Role boundaries may be conceptually clear but need cross-role testing.",
+        "Audit logging may not yet cover every sensitive action consistently.",
+        "Temporary onboarding/password flows still need cleanup.",
+        "Admin mistake recovery remains limited.",
+        "Event reset/test-mode permissions may need stricter live-event rules."
+      ],
+      roadmapChanges: [
+        "Closed Sprint 2 as a completed foundation sprint.",
+        "Created Foundation Validation as the current short checkpoint sprint.",
+        "Added role/permission smoke matrix, privileged action matrix, external database/security review, and Jalani named-admin walkthrough stories.",
+        "Kept temporary password first-login cleanup visible in the validation sprint.",
+        "Moved full SOTC Event Builder / Program Readiness behind Foundation Validation."
+      ],
+      nextFocus: [
+        "Run role and permission smoke-test matrix.",
+        "Document privileged action matrix.",
+        "Re-engage the computer engineering student for database/security review.",
+        "Run Jalani named-admin walkthrough.",
+        "Decide whether temporary password cleanup is completed now or explicitly deferred."
+      ]
+    },
+    {
       id: "review-sotc-alpha-2026-06-24",
       date: "2026-06-24",
       trigger: "SOTC student alpha test and external roadmap review",
@@ -1846,10 +2130,10 @@ const QME_ROADMAP = {
     {
       id: "inbox-remind-db-hardening-student-after-role-structure",
       title: "Reminder: re-engage computer engineering student for database hardening review",
-      disposition: "reminder",
+      disposition: "ready",
       summary:
-        "After the platform stabilization pass adds basic user structure for organization, admin, and staff roles, send the database hardening message to the computer engineering student who offered to help. Wait until there is enough concrete role/auth structure for his review to be bounded and useful.",
-      linkedStoryIds: ["story-sotc-admin-staff-rls-hardening"],
+        "The platform stabilization pass now has enough concrete organization, admin, staff, guest-token, RLS, and RPC structure for a bounded review. Re-engage the computer engineering student and ask him to critique the implemented foundation: role model, guest token approach, RLS policies, RPC boundaries, audit logging, remaining permissive policies, and obvious ways a guest or staff user could overreach.",
+      linkedStoryIds: ["story-sotc-admin-staff-rls-hardening", "story-foundation-external-db-security-review"],
       createdAt: "2026-06-26T00:00:00.000Z"
     },
     {
@@ -1939,6 +2223,62 @@ const QME_ROADMAP = {
     }
   ],
   decisions: [
+    {
+      id: "decision-guest-admin-context-separation",
+      title: "Guest participation is separate from admin/staff operations",
+      status: "decided",
+      prompt:
+        "A person may simultaneously be qME superadmin, organization admin, event admin, event staff, and guest, but signing into admin is not the same as participating as a guest. Guest participation continues through the guest-session model; future credential management may unify identity, but operational context remains separate."
+    },
+    {
+      id: "decision-recoverable-assets-contact-required",
+      title: "Recoverable assets require recoverable contact before grant",
+      status: "decided",
+      prompt:
+        "Guest participation remains accountless by default, but recoverable assets such as complimentary or purchased professional headshots require email or mobile number before the benefit is granted. This is about recoverability, not authentication."
+    },
+    {
+      id: "decision-needs-more-info-recovery-contact",
+      title: "Missing recovery contact creates Needs More Info state",
+      status: "decided",
+      prompt:
+        "When staff selects Student or Professional + Photo and no recovery contact exists, the system should automatically put the guest into Needs More Info. The guest returns to check-in with prior information retained, provides email or phone, and resubmits. Staff sees Waiting for recovery contact, then Ready to Check In, and still completes check-in manually."
+    },
+    {
+      id: "decision-event-authority-hierarchy",
+      title: "Event authority hierarchy and station authority",
+      status: "decided",
+      prompt:
+        "Authority hierarchy is qME superadmin, organization admin, event admin, and event staff. Event staff are assigned to one or more event activities/stations. A station may optionally distinguish Station Staff from Station Admin, but that distinction is station-defined rather than platform-defined: some stations may have no practical difference, while others may use Station Admin for elevated local actions such as check-in photo credit grants or guest classification resolution. Event-wide/destructive actions such as reset, event configuration, live event control settings, destructive operations, and cross-station configuration remain event admin or higher."
+    },
+    {
+      id: "decision-queue-commitment-model",
+      title: "Queue commitment model",
+      status: "decided",
+      prompt:
+        "Queue progression is Waiting, Gathering, optional On My Way, I'm Nearby, Your Turn, Done. On My Way extends guest grace time but does not make the guest callable. Only I'm Nearby allows progression to Your Turn. Return to Waiting requires a later I'm Nearby confirmation. Future tuning should consider separate stale timers for Gathering, On My Way, and I'm Nearby."
+    },
+    {
+      id: "decision-live-event-controls",
+      title: "Live Event Controls are operational, not setup",
+      status: "decided",
+      prompt:
+        "Distinguish Event Setup, Live Operations, and Live Event Controls. Controls such as queue flow mode, gathering target, gathering max, stale timing, pause/resume, and intake behavior may change during live operations and should be editable only by event admin or higher."
+    },
+    {
+      id: "decision-experiences-compose-capabilities",
+      title: "Experiences compose reusable platform capabilities",
+      status: "decided",
+      prompt:
+        "Experiences are the primary product unit. Queue is one reusable capability, not the definition of an experience. Experiences may compose capabilities such as queue, ordering, menu, notifications, status tracking, staff assignment, resources, and passport. Experience Types should be reusable across multiple events, multiple organizations, and multiple times within the same event; avoid SOTC-specific implementations whenever a reusable Experience Type is possible."
+    },
+    {
+      id: "decision-experience-service-relationship",
+      title: "What is the relationship between Experience and Service?",
+      status: "open",
+      prompt:
+        "Headshots, Resume Reviews, and Food Ordering appear to behave like services, while Sponsors, Galleries, Resources, and Passport do not naturally behave as services. Do not introduce a Service layer yet. Let the answer emerge while designing Registration, Headshots, Resume Reviews, and Food Ordering."
+    },
     {
       id: "decision-peony-demo-preservation",
       title: "Peony Festival remains the working demo",

@@ -218,6 +218,22 @@
 }
 
 /* ── Activity card ──────────────────────────────────────────── */
+.ed-home-section {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex-shrink: 0;
+}
+
+.ed-home-section-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+  color: #657080;
+  text-transform: uppercase;
+  padding: 5px 2px 0;
+}
+
 .ed-activity-card {
   display: flex;
   align-items: center;
@@ -373,6 +389,37 @@
 }
 
 /* ── Badges ─────────────────────────────────────────────────── */
+.ed-home-items {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.ed-home-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 0.68rem;
+  line-height: 1.25;
+  color: #657080;
+}
+
+.ed-home-item-title {
+  font-weight: 700;
+  color: #26364a;
+}
+
+.ed-home-item-meta {
+  font-weight: 700;
+  color: var(--qme-purple);
+}
+
+.ed-home-item-note {
+  color: #7c8795;
+}
+
 .ed-badge {
   font-size: 0.6rem;
   font-weight: 700;

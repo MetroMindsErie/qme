@@ -32,8 +32,90 @@ function isGroupOrderEce(ece: Ece): boolean {
   return ece.metadata?.interaction_mode === 'group_order';
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function asString(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function asNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
 function hasSameShape(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+function getEceHomeSection(ece: Ece): string {
+  const metadata = asRecord(ece.metadata);
+  return asString(metadata.home_section || metadata.homeSection);
+}
+
+function getEceHomeSectionTitle(ece: Ece): string {
+  const metadata = asRecord(ece.metadata);
+  return asString(metadata.home_section_title || metadata.homeSectionTitle || metadata.home_section || metadata.homeSection);
+}
+
+function getEceHomeSectionOrder(ece: Ece): number {
+  const metadata = asRecord(ece.metadata);
+  return asNumber(metadata.home_section_order || metadata.homeSectionOrder) ?? 100;
+}
+
+function getEceHomeBadge(ece: Ece): string {
+  const metadata = asRecord(ece.metadata);
+  return asString(metadata.home_badge || metadata.homeBadge);
+}
+
+function getEceHomeActionLabel(ece: Ece): string {
+  const metadata = asRecord(ece.metadata);
+  return asString(metadata.home_action_label || metadata.homeActionLabel);
+}
+
+function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string }> {
+  const metadata = asRecord(ece.metadata);
+  const rawItems = Array.isArray(metadata.home_items)
+    ? metadata.home_items
+    : Array.isArray(metadata.homeItems)
+    ? metadata.homeItems
+    : [];
+
+  return rawItems
+    .map((item) => {
+      const record = asRecord(item);
+      return {
+        title: asString(record.title || record.name),
+        meta: asString(record.meta || record.time || record.subtitle),
+        note: asString(record.note || record.description),
+      };
+    })
+    .filter((item) => item.title || item.meta || item.note)
+    .slice(0, 4);
+}
+
+function getSectionedEces(eces: Ece[]): Array<{ key: string; title: string; order: number; eces: Ece[] }> {
+  const hasConfiguredSections = eces.some((ece) => getEceHomeSection(ece));
+  const fallbackTitle = hasConfiguredSections ? 'Featured Experiences' : '';
+  const groups = new Map<string, { key: string; title: string; order: number; eces: Ece[] }>();
+
+  eces.forEach((ece) => {
+    const key = getEceHomeSection(ece) || 'default';
+    const title = getEceHomeSectionTitle(ece) || fallbackTitle;
+    const order = getEceHomeSectionOrder(ece);
+    const current = groups.get(key);
+    if (current) {
+      current.eces.push(ece);
+      current.order = Math.min(current.order, order);
+      if (!current.title && title) current.title = title;
+      return;
+    }
+    groups.set(key, { key, title, order, eces: [ece] });
+  });
+
+  return Array.from(groups.values()).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
 }
 
 function queueStageStatus(stage?: Ticket['stage']): string {
@@ -453,6 +535,7 @@ export default function GuestEventDetail() {
   const visibleEces = checkInConfig.enabled
     ? eces.filter((ece) => ece.type !== 'check_in')
     : eces;
+  const eceSections = getSectionedEces(visibleEces);
   const linkedEceQueueIds = new Set(visibleEces.map((ece) => ece.queue_id).filter(Boolean));
   const visibleQueues = queues.filter((q) => !linkedEceQueueIds.has(q.id));
   const checkInCardCount = checkInConfig.enabled ? 1 : 0;
@@ -631,7 +714,12 @@ export default function GuestEventDetail() {
           })}
 
           {/* Dynamic event eCes from DB */}
-          {visibleEces.map((exp) => {
+          {eceSections.map((section) => (
+            <div key={section.key} className="ed-home-section">
+              {section.title && (
+                <div className="ed-home-section-title">{section.title}</div>
+              )}
+              {section.eces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
             const isHeadshot = isHeadshotQueue(linkedQueue?.slug);
             const headshotHasCredit = headshotCreditStatus === 'available' || headshotCreditStatus === 'used';
@@ -642,6 +730,9 @@ export default function GuestEventDetail() {
             const creditUsed = Boolean(linkedQueue && isHeadshot && headshotCreditStatus === 'used' && !hasTicket);
             const joinPaused = Boolean(linkedQueue && (linkedQueue.join_status ?? 'open') !== 'open' && !hasTicket);
             const canJoin = Boolean(linkedQueue && !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused);
+            const homeBadge = getEceHomeBadge(exp);
+            const homeActionLabel = getEceHomeActionLabel(exp);
+            const homeItems = getEceHomeItems(exp);
             const statusLine = linkedQueue ? queueCardStatusLine({
               hasTicket,
               stage: linkedQueue._myStage,
@@ -685,11 +776,11 @@ export default function GuestEventDetail() {
               : creditLocked || creditUsed || joinPaused
               ? ''
               : isGroupOrder
-              ? 'Order'
+              ? homeActionLabel || 'Order'
               : linkedQueue
-              ? 'Join'
+              ? homeActionLabel || 'Join'
               : exp.type === 'check_in'
-              ? 'Check In'
+              ? homeActionLabel || 'Check In'
               : '';
 
             return (
@@ -709,6 +800,9 @@ export default function GuestEventDetail() {
               <div className="ed-activity-body">
                 <div className="ed-activity-name-row">
                   <span className="ed-activity-name">{exp.name}</span>
+                  {homeBadge && (
+                    <span className="ed-badge ed-badge-featured">{homeBadge}</span>
+                  )}
                 </div>
                 {isCompleted ? null : participationLocked ? (
                   <div className="ed-activity-desc">Complete Event Check-In above before joining this experience.</div>
@@ -727,6 +821,17 @@ export default function GuestEventDetail() {
                 {(linkedQueue || groupOrderStatusLine) && (
                   <div className="ed-ticket-note">
                     {linkedQueue ? statusLine : groupOrderStatusLine}
+                  </div>
+                )}
+                {homeItems.length > 0 && (
+                  <div className="ed-home-items">
+                    {homeItems.map((item, index) => (
+                      <div className="ed-home-item" key={`${item.title}-${index}`}>
+                        {item.title && <span className="ed-home-item-title">{item.title}</span>}
+                        {item.meta && <span className="ed-home-item-meta">{item.meta}</span>}
+                        {item.note && <span className="ed-home-item-note">{item.note}</span>}
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -749,7 +854,9 @@ export default function GuestEventDetail() {
               </div>
             </div>
             );
-          })}
+              })}
+            </div>
+          ))}
 
           {/* Static informational activities */}
           {visibleStaticActivities.map((act) => {

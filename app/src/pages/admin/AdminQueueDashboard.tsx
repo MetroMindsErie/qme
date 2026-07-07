@@ -11,7 +11,7 @@ import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import {
-  applyQueuePilotFlow,
+  adminApplyQueuePilotFlow,
   completeQueueTicketAction,
   getQueue,
   listQueuePilotTickets,
@@ -322,7 +322,7 @@ export default function AdminQueueDashboard() {
     if (autoFlowInFlightRef.current) return;
     autoFlowInFlightRef.current = true;
     try {
-      await applyQueuePilotFlow(queue.id);
+      await adminApplyQueuePilotFlow(queue.id);
       await refreshPilotTickets();
     } catch (e) {
       console.error('Auto pass failed', e);

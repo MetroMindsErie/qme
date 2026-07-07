@@ -452,6 +452,13 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   throw rpcError;
 }
 
+export async function adminApplyQueuePilotFlow(queueId: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_apply_queue_pilot_flow', {
+    p_queue_id: queueId,
+  });
+  if (error) throw error;
+}
+
 export async function completeQueueTicketAction(input: {
   eventId: string;
   ticketId: number;

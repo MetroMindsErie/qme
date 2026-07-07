@@ -4,7 +4,10 @@
 -- Moves queue advancement out of the admin browser so auto-assist queues can
 -- advance when guests join or mark nearby, even if no staff queue screen is open.
 
-create or replace function public.apply_queue_pilot_flow(p_queue_id uuid)
+create or replace function public.run_queue_pilot_flow(
+  p_queue_id uuid,
+  p_force boolean default false
+)
 returns void
 language plpgsql
 security definer
@@ -36,7 +39,7 @@ begin
     raise exception 'Queue not found.';
   end if;
 
-  if coalesce(queue_row.run_mode, 'manual') <> 'auto' then
+  if not p_force and coalesce(queue_row.run_mode, 'manual') <> 'auto' then
     return;
   end if;
 
@@ -124,8 +127,48 @@ begin
 end;
 $$;
 
+revoke all on function public.run_queue_pilot_flow(uuid, boolean) from public;
+
+create or replace function public.apply_queue_pilot_flow(p_queue_id uuid)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  select public.run_queue_pilot_flow(p_queue_id, false);
+$$;
+
 revoke all on function public.apply_queue_pilot_flow(uuid) from public;
 grant execute on function public.apply_queue_pilot_flow(uuid) to anon, authenticated;
+
+create or replace function public.admin_apply_queue_pilot_flow(p_queue_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  target_event_id uuid;
+begin
+  select event_id
+    into target_event_id
+  from public.queues
+  where id = p_queue_id;
+
+  if target_event_id is null then
+    raise exception 'Queue not found.';
+  end if;
+
+  if not public.can_manage_queue_guest_action(target_event_id, p_queue_id) then
+    raise exception 'not allowed to apply queue flow';
+  end if;
+
+  perform public.run_queue_pilot_flow(p_queue_id, true);
+end;
+$$;
+
+revoke all on function public.admin_apply_queue_pilot_flow(uuid) from public;
+grant execute on function public.admin_apply_queue_pilot_flow(uuid) to authenticated;
 
 create or replace function public.active_ticket_count_for_queue(p_queue_id uuid)
 returns integer

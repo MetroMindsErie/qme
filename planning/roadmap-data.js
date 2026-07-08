@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-07-01",
+    updated: "2026-07-08",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -34,6 +34,9 @@ const QME_ROADMAP = {
         "story-foundation-privileged-action-matrix",
         "story-foundation-external-db-security-review",
         "story-foundation-jalani-admin-walkthrough",
+        "story-role-aware-admin-landing",
+        "story-station-operational-control-visibility",
+        "story-queue-automation-observability",
         "story-temp-password-first-login"
       ]
     },
@@ -996,17 +999,20 @@ const QME_ROADMAP = {
             {
               id: "story-experience-hierarchy-grouping",
               title: "Explore experience hierarchy and grouping",
-              status: "future",
+              status: "discovery",
               sprint: "future",
               summary:
-                "Support grouping multiple related experiences by owner, type, or location, such as the same lemonade stand in multiple locations.",
+                "Explore the likely reusable layer between Experience Type and Station: an organization-owned reusable definition that can be placed into one or more events/stations.",
               acceptanceCriteria: [
                 "Relationship between organization-owned expies and event-specific instances is documented.",
                 "Same experience can appear in multiple locations or times.",
-                "Grouping can support future smart ordering or routing."
+                "Grouping can support future smart ordering or routing.",
+                "Examples are tested conceptually: Food & Beverage > Lemonade Stand > West Patio Station; Professional Headshots > Corporate Headshot > Photographer A.",
+                "The model is validated through Registration, Headshots, Resume Reviews, and Food discussions before implementation.",
+                "The discovery avoids adding a Service layer until enough evidence exists."
               ],
               notes:
-                "Imported from Trello expie hierarchy notes."
+                "Imported from Trello expie hierarchy notes. July 8 Alpha 2/Product Discovery identified this as a likely missing reusable layer, but explicitly deferred implementation until more Experience Type discussions validate the shape."
             },
             {
               id: "story-experience-suspend",
@@ -1431,8 +1437,8 @@ const QME_ROADMAP = {
             {
               id: "story-role-aware-admin-landing",
               title: "Route staff to role-aware admin workspaces",
-              status: "future",
-              sprint: "future",
+              status: "current",
+              sprint: "now",
               summary:
                 "Send admins and staff to the most relevant admin workspace based on their organization, event, and feature assignments.",
               acceptanceCriteria: [
@@ -1442,10 +1448,49 @@ const QME_ROADMAP = {
                 "A staff user with one assignment is routed directly to that work area after sign-in.",
                 "A staff user with multiple assignments gets a simple workspace chooser.",
                 "Feature-scoped staff do not see unrelated setup panels by default.",
-                "Superadmins and organization admins retain broader navigation for support and setup."
+                "Superadmins and organization admins retain broader navigation for support and setup.",
+                "Role visibility is explicit: each role has documented visible tabs, hidden tabs, read-only tabs, and editable controls.",
+                "Station Staff and Station Supervisor boundaries are finalized before broader platform expansion.",
+                "Station Supervisor versus Event Admin control ownership is documented for queue controls, photo-credit/service controls, reset, and cross-station actions."
               ],
               notes:
-                "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaves mostly like an event-level overview. This should be addressed with or immediately after the queue tab refactor."
+                "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaves mostly like an event-level overview. July 8 Alpha 2 review shifted this from permission checks to workspace visibility: qME Superadmin, Organization Admin, Event Admin, Station Supervisor, and Station Staff need clear tab visibility, read-only/edit boundaries, and operational-control ownership."
+            },
+            {
+              id: "story-station-operational-control-visibility",
+              title: "Make station operational controls visible and understandable",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Expose station-level operating settings in a way staff can understand, while preserving edit permissions for the appropriate authority level.",
+              acceptanceCriteria: [
+                "Station screens show Gathering Target, Gathering Max, Gathering timeout, On My Way timeout, Not Here cooldown, and Auto Flow where applicable.",
+                "Visibility is separated from editability: staff can understand queue behavior even when they cannot change settings.",
+                "Event Admin or higher can edit event-wide/live-control settings.",
+                "Station Supervisor editability is decided per station/control rather than assumed globally.",
+                "Read-only controls explain why they are locked for the current role.",
+                "Settings use operational labels that match the guest queue language."
+              ],
+              notes:
+                "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed that hidden queue settings made correct behavior look broken. Station staff need to understand why the line behaves as it does, even when only Event Admin or higher can change the controls."
+            },
+            {
+              id: "story-queue-automation-observability",
+              title: "Explain queue automation blockers to operators",
+              status: "current",
+              sprint: "now",
+              summary:
+                "When automation does not move a guest, show the reason so staff know whether the queue is working, cooling down, paused, full, or blocked by eligibility.",
+              acceptanceCriteria: [
+                "Queue admin surfaces show when a guest is Cooling Down and, where practical, the remaining time.",
+                "Queue admin surfaces explain when Gathering is full.",
+                "Queue admin surfaces explain when Auto Flow is paused or manual.",
+                "Queue admin surfaces explain when a guest is waiting for a required credit or eligibility condition.",
+                "Apply Flow feedback reports when no movement happened and why.",
+                "Not Here recovery follows the policy: cooldown, return to active Waiting, then normal progression by original queue order with no extra punishment."
+              ],
+              notes:
+                "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed the queue engine could be behaving correctly while operators thought it was stuck because the cooldown timer and other blockers were invisible. qME should explain automation decisions, not make staff infer them."
             },
             {
               id: "story-stale-queue-blocker-recovery",
@@ -1482,11 +1527,12 @@ const QME_ROADMAP = {
               acceptanceCriteria: [
                 "Queue rules can include capacity thresholds, max digital positions, intake rates, and average service time.",
                 "Rules can include commitment prompts, expiration, grace periods, skip/reinsert behavior, and no-show policies.",
+                "Rules can distinguish Gathering timeout, optional On My Way timeout, I'm Nearby grace, and Not Here cooldown.",
                 "Priority structures can support premium tiers, staff passes, accessibility accommodations, or weighted/batched service.",
                 "This remains future configuration until a concrete event requires it."
               ],
               notes:
-                "Imported from Trello/provisional queue rules."
+                "Imported from Trello/provisional queue rules. July 8 Alpha 2 review clarified that Not Here should cool down, return to active Waiting, and resume normal progression without additional punishment; cooldown itself is the penalty."
             },
             {
               id: "story-notification-policies",
@@ -1908,6 +1954,58 @@ const QME_ROADMAP = {
   ],
   productReviews: [
     {
+      id: "review-alpha-2-product-discovery-2026-07-08",
+      date: "2026-07-08",
+      trigger: "July 2 SOTC alpha, Jalani testing, queue operations testing, and follow-up product discovery",
+      summary:
+        "Alpha 2 moved qME from a working SOTC demo toward a clearer event-companion and operations platform. The product decisions are mostly planning decisions, not immediate feature expansion: finalize operational role visibility, make station controls understandable, explain queue automation behavior, keep Not Here as a cooldown-and-return policy, and continue validating reusable Experience Type architecture before adding generalized engines.",
+      observations: [
+        "The queue engine often behaved correctly while operators believed it was broken because cooldowns and automation blockers were invisible.",
+        "The next role problem is less about whether permission checks exist and more about whether each role lands in the right workspace with the right tabs and controls.",
+        "Station operational settings are product UI, not just configuration; staff need to understand them even when they cannot edit them.",
+        "The Event Home direction is working better as a digital event companion than as an application-feature list.",
+        "Guest Profile should remain event-scoped: identity, attributes, access, and station-specific credits.",
+        "Credits should stay station/experience-specific for now, such as Headshot Credit, Cookie Credit, Drink Credit, or Bouquet Credit.",
+        "A likely reusable layer exists between Experience Type and Station: an organization-owned reusable definition that can be placed in one or more event stations.",
+        "The cookie event is useful as a product experiment for ordering, credits, approvals, fulfillment, and feedback, but not as a commercial feature direction yet."
+      ],
+      decisions: [
+        "Finalize operational role visibility for qME Superadmin, Organization Admin, Event Admin, Station Supervisor, and Station Staff before broader platform expansion.",
+        "Determine which tabs each role sees, which tabs are hidden, which tabs are read-only, and which controls are editable.",
+        "Treat Station Supervisor versus Station Staff as operational workspace authority, while preserving event-wide/destructive controls for Event Admin or higher.",
+        "Show station operational controls such as Gathering Target, Gathering Max, Gathering timeout, On My Way timeout, Not Here cooldown, and Auto Flow at the station level.",
+        "Whenever automation prevents an action, qME should explain why: Cooling Down, Gathering full, Auto Flow paused, Waiting for credits, or similar.",
+        "Use the Not Here policy of cooldown, return to active Waiting, and resume progression according to original queue order. Cooldown itself is the penalty.",
+        "Continue moving Event Home toward Welcome, Schedule, Featured Experiences, Featured Speakers, Sponsors, Food & Drinks, and Resources using reusable metadata.",
+        "Keep registration outcomes Student, Professional, and Professional + Photo for SOTC; do not generalize registration policy yet.",
+        "Do not build a generalized credit engine, service abstraction, configurable registration engine, generalized speaker/sponsor engines, payment, or POS integration yet.",
+        "Use Product Reviews increasingly to capture hypotheses, evidence, and decisions in the Test > Discovery > Resolution > Test rhythm."
+      ],
+      risks: [
+        "If queue automation remains opaque, correct behavior will still feel unreliable during live operations.",
+        "If role visibility is not finalized, station staff may see too much setup surface or miss the operational workspace they need.",
+        "If station controls are editable without clear authority boundaries, live-event operators may accidentally change event-wide behavior.",
+        "If the Experience Type hierarchy is implemented too early, qME may add a wrong abstraction before Registration, Headshots, Resume Reviews, and Food provide enough evidence.",
+        "If credits are generalized too soon, simple station-specific grant/use rules may become unnecessarily heavy."
+      ],
+      roadmapChanges: [
+        "Moved role-aware admin landing/workspace visibility into the current Foundation Validation focus.",
+        "Added station operational control visibility as a current story.",
+        "Added queue automation observability as a current story.",
+        "Updated queue rule configuration with state-specific timeouts and Not Here recovery policy.",
+        "Updated experience hierarchy/grouping discovery with the organization reusable definition concept.",
+        "Kept generalized credit engine, Service abstraction, registration config, speaker/sponsor engines, payment, and POS integration deferred.",
+        "Captured cookie event as a future product experiment rather than a commercial feature."
+      ],
+      nextFocus: [
+        "Finalize role/tab/control visibility across Superadmin, Organization Admin, Event Admin, Station Supervisor, and Station Staff.",
+        "Make station queue controls visible and explainable, even where read-only.",
+        "Add operator-facing reasons when flow automation does not move someone.",
+        "Review individual Experience Types, beginning with Registration and Headshots.",
+        "Use the cookie event as a tiny complete experiment only after the SOTC operational foundation is stable."
+      ]
+    },
+    {
       id: "review-sotc-alpha-2-pretest-wrap-2026-07-02",
       date: "2026-07-02",
       trigger: "Pre-test wrap-up before the July 2 SOTC alpha",
@@ -2153,6 +2251,19 @@ const QME_ROADMAP = {
   ],
   inbox: [
     {
+      id: "inbox-cookie-event-product-experiment",
+      title: "Cookie event as tiny product experiment",
+      disposition: "future",
+      summary:
+        "Treat a cookie event as a small complete product experiment, not a commercial feature. Use it to validate ordering, station-specific credits, approvals, fulfillment, and feedback with the smallest possible event surface. Do not use it to justify a generalized credit engine, payment/POS integration, or service abstraction yet.",
+      linkedStoryIds: [
+        "story-experience-configuration",
+        "story-experience-hierarchy-grouping",
+        "story-guest-intentions"
+      ],
+      createdAt: "2026-07-08T00:00:00.000Z"
+    },
+    {
       id: "inbox-test-lab-group-dinner-order",
       title: "qME Test Lab group dinner order pilot",
       disposition: "future",
@@ -2321,6 +2432,27 @@ const QME_ROADMAP = {
       status: "open",
       prompt:
         "Headshots, Resume Reviews, and Food Ordering appear to behave like services, while Sponsors, Galleries, Resources, and Passport do not naturally behave as services. Do not introduce a Service layer yet. Let the answer emerge while designing Registration, Headshots, Resume Reviews, and Food Ordering."
+    },
+    {
+      id: "decision-event-scoped-guest-profile",
+      title: "Guest Profile is event-scoped",
+      status: "decided",
+      prompt:
+        "Guest Profile is event-scoped for now and contains identity, attributes, access, and credits for that event. It should not be treated as a full cross-event user account until product evidence requires it."
+    },
+    {
+      id: "decision-station-specific-credits",
+      title: "Credits stay station/experience-specific for now",
+      status: "decided",
+      prompt:
+        "Credits are experience or station specific for now, such as Headshot Credit, Cookie Credit, Drink Credit, or Bouquet Credit. Do not build a generalized credit engine yet; let multiple concrete experience designs reveal what needs to be common."
+    },
+    {
+      id: "decision-org-reusable-definition-layer",
+      title: "Possible reusable layer between Experience Type and Station",
+      status: "open",
+      prompt:
+        "A likely missing layer exists between Experience Type and Station: an organization-owned reusable definition that can be placed into one or more stations or events. Examples include Food & Beverage > Lemonade Stand > West Patio Station and Professional Headshots > Corporate Headshot > Photographer A. Do not implement yet; validate through Registration, Headshots, Resume Reviews, and Food."
     },
     {
       id: "decision-peony-demo-preservation",

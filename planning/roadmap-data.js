@@ -1621,12 +1621,12 @@ const QME_ROADMAP = {
                 "The July recommendation preserves a simple fallback that staff can execute under pressure."
               ],
               notes:
-                "Possible model: qME auto-advances, guest receives Your Turn, photographer calls guest by name, guest taps I've Been Called, and completion is guest-confirmed, timed, photographer-confirmed, or supervisor-confirmed. July 14 pre-meeting direction selected a small Headshot guest-service acknowledgement prototype using a durable service-start marker rather than a new queue stage."
+                "Final pre-meeting model supports both operating paths. In the low-staff path, qME moves the guest to Your Turn, the photographer calls their name, and the guest taps I've Been Called to record a durable service-start marker and complete the ticket. In the admin-operated path, staff calls the name from the queue list and clicks Mark Served, completing the guest directly. Not Here remains the exception path."
             },
             {
               id: "story-headshot-service-start-acknowledgement",
               title: "Prototype Headshot guest-called completion",
-              status: "current",
+              status: "done",
               sprint: "next",
               summary:
                 "Add a Headshot-only guest action after Your Turn so the guest can confirm they were called by the photographer; for the low-staff pilot this completes the Headshot queue ticket and frees the next guest.",
@@ -1638,11 +1638,13 @@ const QME_ROADMAP = {
                 "The action completes the Headshot ticket after the marker is recorded, moving the guest into admin history and freeing queue capacity.",
                 "The guest sees completion progress and then the normal all-set return-to-event state.",
                 "Admin or Station Supervisor can see the service-start timestamp where practical.",
+                "Admin-operated Headshot queues can also mark a nearby guest served directly, completing the ticket and moving it to history.",
+                "Completion by either guest or admin nudges auto-flow so the next ready guest can advance.",
                 "Not Here controls remain available before the guest taps I've Been Called.",
                 "No SMS, photographer screen, or durable notification-event infrastructure is introduced for this prototype."
               ],
               notes:
-                "Pre-meeting prototype for Tanya/Eric discussion. This intentionally records a service-start mark/timestamp and then uses completed as the low-staff terminal state, rather than adding an active_service ticket stage."
+                "Built and tested for Tanya/Eric discussion. The implementation records a service-start mark/timestamp for the guest path and then uses completed as the low-staff terminal state, rather than adding an active_service ticket stage. Admin Mark Served creates the normal completion timestamp/mark without pretending the guest tapped I've Been Called."
             }
           ]
         }

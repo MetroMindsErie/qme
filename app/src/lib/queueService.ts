@@ -533,7 +533,8 @@ export async function getQueueServiceMarkForGuest(input: {
     p_mark_key: input.markKey ?? 'headshot_service_started',
   });
   if (error) throw error;
-  return (data as EventGuestMark | null) ?? null;
+  const mark = (data as EventGuestMark | null) ?? null;
+  return mark?.id ? mark : null;
 }
 
 export async function listEventGuestMarksForTickets(

@@ -110,6 +110,10 @@ begin
     and mark_key = coalesce(nullif(p_mark_key, ''), 'headshot_service_started')
   limit 1;
 
+  if mark_row.id is null then
+    return null;
+  end if;
+
   return mark_row;
 end;
 $$;

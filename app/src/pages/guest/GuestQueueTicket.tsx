@@ -736,6 +736,13 @@ export default function GuestQueueTicketPage() {
       });
       clearNotHereNotice();
       setPilotTicket((prev) => prev ? { ...prev, stage: 'completed', completed_at: completionMark.created_at } : prev);
+      if (queue.run_mode === 'auto') {
+        try {
+          await applyQueuePilotFlow(queue.id);
+        } catch (flowErr) {
+          console.warn('Auto flow after headshot completion failed', flowErr);
+        }
+      }
       setServedView(true);
       setTimeout(() => navigate(`/events/${eventSlug}`), SERVED_LINGER_MS);
     } catch (err) {

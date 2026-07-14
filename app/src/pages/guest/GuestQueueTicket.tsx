@@ -252,6 +252,7 @@ export default function GuestQueueTicketPage() {
   const didSyncGuestNameRef = useRef(false);
   const lastPilotTicketRef = useRef<Ticket | null>(null);
   const autoNearbyFlowInFlightRef = useRef(false);
+  const headshotCompletionInFlightRef = useRef(false);
 
   const checkInConfig = getEventCheckInConfig(event);
   const isPilotQueue = event?.slug === 'sotc-test-check-in';
@@ -259,6 +260,7 @@ export default function GuestQueueTicketPage() {
   const pilotStage = pilotTicket?.stage ?? 'waiting';
   const pilotCompletionMode = getPilotCompletionMode(linkedEce, queue?.slug);
   const pilotCompletionCode = getPilotCompletionCode(linkedEce);
+  const isHeadshotQueue = queue?.slug === 'headshot-photo-station';
   const queueImageSrc = queue?.slug === 'scan-code-adventure'
     ? '/images/dog-through-hoop.png'
     : queue?.slug === 'headshot-photo-station'
@@ -475,6 +477,13 @@ export default function GuestQueueTicketPage() {
       stopped = true;
     };
   }, [isPilotQueue, queue?.slug, queue?.id, event?.id, ticketId]);
+
+  useEffect(() => {
+    if (!serviceStartedMark || !isPilotQueue || !isHeadshotQueue || pilotStage !== 'released') return;
+    if (servedView || completionSaving || headshotCompletionInFlightRef.current) return;
+    void completeHeadshotFromServiceMark(serviceStartedMark);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serviceStartedMark?.id, isPilotQueue, isHeadshotQueue, pilotStage, servedView, completionSaving]);
 
   useEffect(() => {
     const code = searchParams.get('code');
@@ -706,9 +715,41 @@ export default function GuestQueueTicketPage() {
 
   // ── Loading / error states ────────────────────────────────────────────────
 
+  async function completeHeadshotFromServiceMark(mark: EventGuestMark) {
+    if (!event?.id || !queue?.id || !ticketId) return;
+    if (headshotCompletionInFlightRef.current) return;
+    headshotCompletionInFlightRef.current = true;
+    setCompletionSaving(true);
+    try {
+      const completionMark = await completeQueueTicketAction({
+        eventId: event.id,
+        ticketId,
+        markKey: getPilotMarkKey(linkedEce, queue.slug),
+        checkInId: eventCheckInId,
+        consumeCreditKey: 'professional_headshot',
+        metadata: {
+          queue_slug: queue.slug,
+          guest_name: `${guestFirstName} ${guestLastName}`.trim() || undefined,
+          service_started_mark_id: mark.id,
+          completion_method: 'guest_called_acknowledgement',
+        },
+      });
+      clearNotHereNotice();
+      setPilotTicket((prev) => prev ? { ...prev, stage: 'completed', completed_at: completionMark.created_at } : prev);
+      setServedView(true);
+      setTimeout(() => navigate(`/events/${eventSlug}`), SERVED_LINGER_MS);
+    } catch (err) {
+      console.error('Failed to complete headshot acknowledgement', err);
+      setServiceStartError('Could not finish this yet. Please show staff this screen.');
+    } finally {
+      setCompletionSaving(false);
+      headshotCompletionInFlightRef.current = false;
+    }
+  }
+
   async function acknowledgeHeadshotCalled() {
     if (!event?.id || !queue?.id || !ticketId) return;
-    if (serviceStartedMark || serviceStartSaving) return;
+    if (serviceStartSaving || completionSaving) return;
     setServiceStartSaving(true);
     setServiceStartError('');
     try {
@@ -725,9 +766,10 @@ export default function GuestQueueTicketPage() {
         },
       });
       setServiceStartedMark(mark);
+      await completeHeadshotFromServiceMark(mark);
     } catch (err) {
       console.error('Failed to acknowledge headshot service start', err);
-      setServiceStartError('Could not record this yet. Please show staff this screen.');
+      setServiceStartError('Could not finish this yet. Please show staff this screen.');
     } finally {
       setServiceStartSaving(false);
     }
@@ -750,7 +792,6 @@ export default function GuestQueueTicketPage() {
   }
 
   const isBouquetQueue = queue.slug === 'wrapped-bouquets';
-  const isHeadshotQueue = queue.slug === 'headshot-photo-station';
   const hasFlowersAccess = bouquetAccess === 'flowers';
   const needsBouquetAccess = isBouquetQueue && !hasFlowersAccess;
   const needsHeadshotCredit = isHeadshotQueue && !ticketId && headshotCreditStatus !== 'available';
@@ -1093,7 +1134,7 @@ export default function GuestQueueTicketPage() {
       released: {
         title: 'Your Turn',
         detail: pilotCompletionMode === 'staff_served'
-          ? `Go to ${locationText}. Staff will complete this step when you are served.`
+          ? `Step in for your headshot. Tap I've Been Called when the photographer calls your name.`
           : `Go to ${locationText}. Enter the station code there to complete this step.`,
       },
       completed: {
@@ -1273,7 +1314,7 @@ export default function GuestQueueTicketPage() {
               </p>
               {serviceStartedMark ? (
                 <div className="tkt-pilot-service-started">
-                  <strong>I've Been Called recorded.</strong>
+                  <strong>{completionSaving ? 'Completing headshot...' : "I've Been Called recorded."}</strong>
                   {formatServiceStartTime(serviceStartedMark.created_at) && (
                     <span> Recorded at {formatServiceStartTime(serviceStartedMark.created_at)}.</span>
                   )}
@@ -1282,9 +1323,9 @@ export default function GuestQueueTicketPage() {
                 <button
                   className="tkt-btn-checkin"
                   onClick={acknowledgeHeadshotCalled}
-                  disabled={serviceStartSaving}
+                  disabled={serviceStartSaving || completionSaving}
                 >
-                  {serviceStartSaving ? 'Recording...' : "I've Been Called"}
+                  {serviceStartSaving || completionSaving ? 'Completing...' : "I've Been Called"}
                 </button>
               )}
               {serviceStartError && (

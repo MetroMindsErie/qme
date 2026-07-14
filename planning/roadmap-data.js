@@ -1625,23 +1625,24 @@ const QME_ROADMAP = {
             },
             {
               id: "story-headshot-service-start-acknowledgement",
-              title: "Prototype Headshot guest service-start acknowledgement",
+              title: "Prototype Headshot guest-called completion",
               status: "current",
               sprint: "next",
               summary:
-                "Add a Headshot-only guest action after Your Turn so the guest can confirm they were called by the photographer and are beginning service.",
+                "Add a Headshot-only guest action after Your Turn so the guest can confirm they were called by the photographer; for the low-staff pilot this completes the Headshot queue ticket and frees the next guest.",
               acceptanceCriteria: [
                 "I’ve Been Called appears only for Headshot guests in Your Turn.",
                 "Supporting copy says: Tap this when the photographer calls your name and you are starting your headshot.",
                 "The action writes a durable headshot_service_started marker tied to the guest/ticket.",
                 "Repeated taps do not create duplicate service-start records.",
-                "The guest sees an acknowledged state after tapping.",
+                "The action completes the Headshot ticket after the marker is recorded, moving the guest into admin history and freeing queue capacity.",
+                "The guest sees completion progress and then the normal all-set return-to-event state.",
                 "Admin or Station Supervisor can see the service-start timestamp where practical.",
-                "Completion and Not Here controls remain unchanged.",
+                "Not Here controls remain available before the guest taps I've Been Called.",
                 "No SMS, photographer screen, or durable notification-event infrastructure is introduced for this prototype."
               ],
               notes:
-                "Pre-meeting prototype for Tanya/Eric discussion. This intentionally records a service-start mark/timestamp rather than adding an active_service ticket stage."
+                "Pre-meeting prototype for Tanya/Eric discussion. This intentionally records a service-start mark/timestamp and then uses completed as the low-staff terminal state, rather than adding an active_service ticket stage."
             }
           ]
         }

@@ -23,11 +23,13 @@ import {
   confirmTicketNearby,
   completeQueueTicketAction,
   getQueueBySlug,
+  getQueueServiceMarkForGuest,
   getQueueTicket,
+  markQueueServiceStartedForGuest,
   updateTicketGuestName,
 } from '../../lib/queueService';
 import { formatTime } from '../../lib/utils';
-import type { Ece, QEvent, Queue, Ticket } from '../../types';
+import type { Ece, EventGuestMark, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 import '../../styles/ticket.css';
@@ -44,6 +46,7 @@ const NOT_HERE_NOTICE =
   "Staff called you after you marked yourself nearby, but you were not at the station. You were returned to Waiting and will be invited to Gathering again when there is room.";
 const RETURN_TO_WAITING_NOTICE =
   "Staff is keeping the line moving. When this screen says Gathering again, head to the station and tap I'm Nearby when you arrive.";
+const HEADSHOT_SERVICE_STARTED_MARK_KEY = 'headshot_service_started';
 
 type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
@@ -122,6 +125,13 @@ function getPilotMarkKey(ece: Ece | null, queueSlug = 'queue') {
   return asString(asRecord(ece?.metadata).mark_key) ?? `${queueSlug.replaceAll('-', '_')}_complete`;
 }
 
+function formatServiceStartTime(value?: string | null) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 function getStepStates(
   hasCheckedIn: boolean,
   nowServing: number,
@@ -159,6 +169,10 @@ export default function GuestQueueTicketPage() {
   const [notHereNoticeActive, setNotHereNoticeActive] = useState(false);
   const [returnToWaitingNoticeActive, setReturnToWaitingNoticeActive] = useState(false);
   const [showNotHereModal, setShowNotHereModal] = useState(false);
+  const [showYourTurnModal, setShowYourTurnModal] = useState(false);
+  const [serviceStartedMark, setServiceStartedMark] = useState<EventGuestMark | null>(null);
+  const [serviceStartSaving, setServiceStartSaving] = useState(false);
+  const [serviceStartError, setServiceStartError] = useState('');
 
   useEffect(() => {
     if (!eventSlug || !queueSlug) return;
@@ -340,6 +354,7 @@ export default function GuestQueueTicketPage() {
 
     const activeTicketId = ticketId;
     const queueId = queue.id;
+    const activeQueueSlug = queue.slug;
     const targetEventSlug = eventSlug;
     let stopped = false;
     async function refreshTicket() {
@@ -364,6 +379,11 @@ export default function GuestQueueTicketPage() {
           !previous.nearby_confirmed_at &&
           (row.stage ?? 'waiting') === 'waiting' &&
           !row.nearby_confirmed_at;
+        const isHeadshotYourTurn =
+          activeQueueSlug === 'headshot-photo-station' &&
+          previous?.id === row.id &&
+          previous.stage !== 'released' &&
+          (row.stage ?? 'waiting') === 'released';
         if (isNotHereReset) {
           localStorage.setItem(notHereStorageKey(row.id), '1');
           setNotHereNoticeActive(true);
@@ -372,6 +392,9 @@ export default function GuestQueueTicketPage() {
         } else if (isReturnedToWaiting) {
           localStorage.setItem(returnToWaitingStorageKey(row.id), '1');
           setReturnToWaitingNoticeActive(true);
+        }
+        if (isHeadshotYourTurn) {
+          setShowYourTurnModal(true);
         }
         if (!['waiting', 'standby'].includes(row.stage ?? 'waiting') || row.nearby_confirmed_at) {
           clearNotHereNotice(row.id);
@@ -413,6 +436,7 @@ export default function GuestQueueTicketPage() {
       setNotHereNoticeActive(false);
       setReturnToWaitingNoticeActive(false);
       setShowNotHereModal(false);
+      setShowYourTurnModal(false);
       return;
     }
     const hasStoredNotice = localStorage.getItem(notHereStorageKey(ticketId)) === '1';
@@ -420,7 +444,37 @@ export default function GuestQueueTicketPage() {
     setNotHereNoticeActive(hasStoredNotice);
     setReturnToWaitingNoticeActive(hasStoredReturnNotice);
     setShowNotHereModal(false);
+    setShowYourTurnModal(false);
   }, [ticketId, isPilotQueue]);
+
+  useEffect(() => {
+    if (!isPilotQueue || queue?.slug !== 'headshot-photo-station' || !event?.id || !queue?.id || !ticketId) {
+      setServiceStartedMark(null);
+      setServiceStartError('');
+      return;
+    }
+
+    let stopped = false;
+    getQueueServiceMarkForGuest({
+      eventId: event.id,
+      queueId: queue.id,
+      ticketId,
+      markKey: HEADSHOT_SERVICE_STARTED_MARK_KEY,
+    })
+      .then((mark) => {
+        if (!stopped) setServiceStartedMark(mark);
+      })
+      .catch((err) => {
+        if (!stopped) {
+          console.warn('Failed to load service-start marker', err);
+          setServiceStartedMark(null);
+        }
+      });
+
+    return () => {
+      stopped = true;
+    };
+  }, [isPilotQueue, queue?.slug, queue?.id, event?.id, ticketId]);
 
   useEffect(() => {
     const code = searchParams.get('code');
@@ -651,6 +705,33 @@ export default function GuestQueueTicketPage() {
   }
 
   // ── Loading / error states ────────────────────────────────────────────────
+
+  async function acknowledgeHeadshotCalled() {
+    if (!event?.id || !queue?.id || !ticketId) return;
+    if (serviceStartedMark || serviceStartSaving) return;
+    setServiceStartSaving(true);
+    setServiceStartError('');
+    try {
+      const mark = await markQueueServiceStartedForGuest({
+        eventId: event.id,
+        queueId: queue.id,
+        ticketId,
+        markKey: HEADSHOT_SERVICE_STARTED_MARK_KEY,
+        checkInId: eventCheckInId,
+        metadata: {
+          queue_slug: queue.slug,
+          guest_name: `${guestFirstName} ${guestLastName}`.trim() || undefined,
+          label: "I've Been Called",
+        },
+      });
+      setServiceStartedMark(mark);
+    } catch (err) {
+      console.error('Failed to acknowledge headshot service start', err);
+      setServiceStartError('Could not record this yet. Please show staff this screen.');
+    } finally {
+      setServiceStartSaving(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -1075,6 +1156,18 @@ export default function GuestQueueTicketPage() {
           </div>
         )}
 
+        {showYourTurnModal && isHeadshotQueue && pilotStage === 'released' && (
+          <div className="tkt-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="your-turn-title">
+            <div className="tkt-modal">
+              <h2 id="your-turn-title">It's your turn</h2>
+              <p>Go to the Headshot Photographer. When the photographer calls your name, tap I've Been Called.</p>
+              <button className="tkt-btn-checkin" onClick={() => setShowYourTurnModal(false)}>
+                OK
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="tkt-pilot-header">
           <div className="tkt-pilot-title-wrap">
             <div className="tkt-pilot-event">
@@ -1167,6 +1260,38 @@ export default function GuestQueueTicketPage() {
           {completionError && pilotStage === 'standby' && (
             <div className="tkt-pilot-error">
               {completionError}
+            </div>
+          )}
+
+          {isHeadshotQueue && pilotStage === 'released' && pilotCompletionMode === 'staff_served' && (
+            <div className="tkt-pilot-panel">
+              <h2>
+                Photographer called you?
+              </h2>
+              <p>
+                Tap this when the photographer calls your name and you are starting your headshot.
+              </p>
+              {serviceStartedMark ? (
+                <div className="tkt-pilot-service-started">
+                  <strong>I've Been Called recorded.</strong>
+                  {formatServiceStartTime(serviceStartedMark.created_at) && (
+                    <span> Recorded at {formatServiceStartTime(serviceStartedMark.created_at)}.</span>
+                  )}
+                </div>
+              ) : (
+                <button
+                  className="tkt-btn-checkin"
+                  onClick={acknowledgeHeadshotCalled}
+                  disabled={serviceStartSaving}
+                >
+                  {serviceStartSaving ? 'Recording...' : "I've Been Called"}
+                </button>
+              )}
+              {serviceStartError && (
+                <div className="tkt-pilot-error">
+                  {serviceStartError}
+                </div>
+              )}
             </div>
           )}
 

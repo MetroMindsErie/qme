@@ -500,6 +500,58 @@ export async function completeQueueTicketAction(input: {
   return data as EventGuestMark;
 }
 
+export async function markQueueServiceStartedForGuest(input: {
+  eventId: string;
+  ticketId: number;
+  queueId: string;
+  markKey?: string;
+  checkInId?: string | null;
+  metadata?: Record<string, unknown>;
+}): Promise<EventGuestMark> {
+  const { data, error } = await supabase.rpc('mark_queue_service_started_for_guest', {
+    p_event_id: input.eventId,
+    p_ticket_id: input.ticketId,
+    p_guest_token: getGuestTokenForQueue(input.queueId, input.eventId),
+    p_mark_key: input.markKey ?? 'headshot_service_started',
+    p_check_in_id: input.checkInId ?? null,
+    p_metadata: input.metadata ?? {},
+  });
+  if (error) throw error;
+  return data as EventGuestMark;
+}
+
+export async function getQueueServiceMarkForGuest(input: {
+  eventId: string;
+  ticketId: number;
+  queueId: string;
+  markKey?: string;
+}): Promise<EventGuestMark | null> {
+  const { data, error } = await supabase.rpc('get_queue_service_mark_for_guest', {
+    p_event_id: input.eventId,
+    p_ticket_id: input.ticketId,
+    p_guest_token: getGuestTokenForQueue(input.queueId, input.eventId),
+    p_mark_key: input.markKey ?? 'headshot_service_started',
+  });
+  if (error) throw error;
+  return (data as EventGuestMark | null) ?? null;
+}
+
+export async function listEventGuestMarksForTickets(
+  eventId: string,
+  ticketIds: number[],
+  markKey: string
+): Promise<EventGuestMark[]> {
+  if (ticketIds.length === 0) return [];
+  const { data, error } = await supabase
+    .from('event_guest_marks')
+    .select('*')
+    .eq('event_id', eventId)
+    .eq('mark_key', markKey)
+    .in('ticket_id', ticketIds);
+  if (error) throw error;
+  return (data ?? []) as EventGuestMark[];
+}
+
 // ===================== REALTIME =====================
 
 export function onQueuesChange(

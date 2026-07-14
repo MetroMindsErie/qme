@@ -52,6 +52,7 @@ const QME_ROADMAP = {
         "story-sotc-notification-july-fallback",
         "story-headshot-queue",
         "story-headshot-low-staff-operating-model",
+        "story-headshot-service-start-acknowledgement",
         "story-resume-review-queue",
         "story-resource-cards",
         "story-passport-activity"
@@ -1608,7 +1609,7 @@ const QME_ROADMAP = {
             {
               id: "story-headshot-low-staff-operating-model",
               title: "Explore low-staff Headshot operating model",
-              status: "discovery",
+              status: "current",
               sprint: "next",
               summary:
                 "Review safe Headshot workflows where qME can advance the queue and the photographer may not need to operate qME directly.",
@@ -1620,7 +1621,27 @@ const QME_ROADMAP = {
                 "The July recommendation preserves a simple fallback that staff can execute under pressure."
               ],
               notes:
-                "Possible model: qME auto-advances, guest receives Your Turn, photographer calls guest by name, guest taps I've Been Called or Starting My Headshot, and completion is guest-confirmed, timed, photographer-confirmed, or supervisor-confirmed. Do not implement until operational model is chosen."
+                "Possible model: qME auto-advances, guest receives Your Turn, photographer calls guest by name, guest taps I've Been Called, and completion is guest-confirmed, timed, photographer-confirmed, or supervisor-confirmed. July 14 pre-meeting direction selected a small Headshot guest-service acknowledgement prototype using a durable service-start marker rather than a new queue stage."
+            },
+            {
+              id: "story-headshot-service-start-acknowledgement",
+              title: "Prototype Headshot guest service-start acknowledgement",
+              status: "current",
+              sprint: "next",
+              summary:
+                "Add a Headshot-only guest action after Your Turn so the guest can confirm they were called by the photographer and are beginning service.",
+              acceptanceCriteria: [
+                "I’ve Been Called appears only for Headshot guests in Your Turn.",
+                "Supporting copy says: Tap this when the photographer calls your name and you are starting your headshot.",
+                "The action writes a durable headshot_service_started marker tied to the guest/ticket.",
+                "Repeated taps do not create duplicate service-start records.",
+                "The guest sees an acknowledged state after tapping.",
+                "Admin or Station Supervisor can see the service-start timestamp where practical.",
+                "Completion and Not Here controls remain unchanged.",
+                "No SMS, photographer screen, or durable notification-event infrastructure is introduced for this prototype."
+              ],
+              notes:
+                "Pre-meeting prototype for Tanya/Eric discussion. This intentionally records a service-start mark/timestamp rather than adding an active_service ticket stage."
             }
           ]
         }

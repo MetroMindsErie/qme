@@ -14,6 +14,7 @@ import {
   adminApplyQueuePilotFlow,
   completeQueueTicketAction,
   getQueue,
+  listEventGuestMarksForTickets,
   listQueuePilotTickets,
   markReleasedTicketNotHere,
   releaseQueueTicket,
@@ -24,13 +25,14 @@ import {
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
-import type { Queue as QueueType, QEvent, EventCheckIn, Ticket, Ece } from '../../types';
+import type { Queue as QueueType, QEvent, EventCheckIn, EventGuestMark, Ticket, Ece } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 type PilotCompletionMode = 'guest_code' | 'staff_served';
 type AdminQueueTab = 'live' | 'history' | 'settings';
+const HEADSHOT_SERVICE_STARTED_MARK_KEY = 'headshot_service_started';
 
 function hasSameShape(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
@@ -61,6 +63,13 @@ function ticketQueuePosition(ticket: Ticket) {
 function ticketCompletedTime(ticket: Ticket) {
   const parsed = Date.parse(ticket.completed_at ?? ticket.stage_updated_at ?? ticket.created_at);
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatServiceStartTime(value?: string | null) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 function ticketStageSortRank(ticket: Ticket) {
@@ -104,6 +113,7 @@ export default function AdminQueueDashboard() {
   const { nowServing, setNowServing } = useQueueMetric(metricQueueId);
   const [flowersCheckIns, setFlowersCheckIns] = useState<EventCheckIn[]>([]);
   const [pilotTickets, setPilotTickets] = useState<Ticket[]>([]);
+  const [serviceStartedMarks, setServiceStartedMarks] = useState<Record<number, EventGuestMark>>({});
   const [savingControls, setSavingControls] = useState(false);
   const [controlSaveStatus, setControlSaveStatus] = useState('');
   const [activeQueueTab, setActiveQueueTab] = useState<AdminQueueTab>('live');
@@ -188,10 +198,25 @@ export default function AdminQueueDashboard() {
     try {
       const rows = await listQueuePilotTickets(queue.id);
       setPilotTickets((current) => hasSameShape(current, rows) ? current : rows);
+      if (event?.id && queue.slug === 'headshot-photo-station') {
+        const marks = await listEventGuestMarksForTickets(
+          event.id,
+          rows.map((row) => row.id),
+          HEADSHOT_SERVICE_STARTED_MARK_KEY
+        );
+        setServiceStartedMarks(
+          marks.reduce<Record<number, EventGuestMark>>((acc, mark) => {
+            if (mark.ticket_id) acc[mark.ticket_id] = mark;
+            return acc;
+          }, {})
+        );
+      } else {
+        setServiceStartedMarks({});
+      }
     } catch (e) {
       console.error('pilot tickets fetch failed', e);
     }
-  }, [queue?.id, isPilotQueue]);
+  }, [queue?.id, queue?.slug, event?.id, isPilotQueue]);
 
   useEffect(() => {
     refreshPilotTickets();
@@ -536,6 +561,8 @@ export default function AdminQueueDashboard() {
               const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
               const canReturnToWaiting = stage === 'standby' && !nearbyConfirmed;
               const canClickToServe = pilotCompletionMode === 'staff_served' && stage === 'released' && !isDone;
+              const serviceStartedMark = serviceStartedMarks[ticket.id];
+              const serviceStartedTime = formatServiceStartTime(serviceStartedMark?.created_at);
               const statusHint = stage === 'waiting'
                 ? 'Waiting for flow'
                 : stage === 'standby' && !nearbyConfirmed
@@ -595,6 +622,11 @@ export default function AdminQueueDashboard() {
                         Click name when guest steps up
                       </div>
                     )}
+                    {serviceStartedMark && (
+                      <div style={{ color: '#2563eb', fontSize: '0.78rem', fontWeight: 900, marginTop: 5 }}>
+                        I've Been Called{serviceStartedTime ? ` at ${serviceStartedTime}` : ''}
+                      </div>
+                    )}
                     {!canClickToServe && statusHint && (
                       <div style={{ color: '#64748b', fontSize: '0.78rem', fontWeight: 800, marginTop: 5 }}>
                         {statusHint}
@@ -635,6 +667,7 @@ export default function AdminQueueDashboard() {
               <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
                 {completedTickets.map((ticket) => {
                   const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
+                  const serviceStartedTime = formatServiceStartTime(serviceStartedMarks[ticket.id]?.created_at);
                   return (
                     <div
                       key={ticket.id}
@@ -650,7 +683,9 @@ export default function AdminQueueDashboard() {
                       }}
                     >
                       <span style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</span>
-                      <span style={{ color: stageColor.completed, fontSize: '0.76rem', fontWeight: 900, textTransform: 'uppercase' }}>Completed</span>
+                      <span style={{ color: stageColor.completed, fontSize: '0.76rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                        Completed{serviceStartedTime ? ` · Called ${serviceStartedTime}` : ''}
+                      </span>
                     </div>
                   );
                 })}

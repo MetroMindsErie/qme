@@ -296,6 +296,9 @@ export default function AdminQueueDashboard() {
             guest_name: guestName || undefined,
           },
         });
+        if (queue?.run_mode === 'auto' && queue.id) {
+          await adminApplyQueuePilotFlow(queue.id);
+        }
       } else {
         throw new Error(`Unsupported admin queue stage transition: ${stage}`);
       }
@@ -559,6 +562,7 @@ export default function AdminQueueDashboard() {
               const isDone = ['completed', 'cancelled', 'left'].includes(stage);
               const nearbyConfirmed = isNearbyConfirmed(ticket);
               const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
+              const adminServesDirectly = pilotCompletionMode === 'staff_served' && canReleaseTicket;
               const canReturnToWaiting = stage === 'standby' && !nearbyConfirmed;
               const canClickToServe = pilotCompletionMode === 'staff_served' && stage === 'released' && !isDone;
               const serviceStartedMark = serviceStartedMarks[ticket.id];
@@ -638,7 +642,12 @@ export default function AdminQueueDashboard() {
                     onClick={(event) => event.stopPropagation()}
                   >
                     {!isDone && canReleaseTicket && (
-                      <button className="actionBtn actionBtn-primary admin-pilot-guest-btn" onClick={() => setPilotStage(ticket.id, 'released')}>Release</button>
+                      <button
+                        className="actionBtn actionBtn-primary admin-pilot-guest-btn"
+                        onClick={() => setPilotStage(ticket.id, adminServesDirectly ? 'completed' : 'released')}
+                      >
+                        {adminServesDirectly ? 'Mark Served' : 'Release'}
+                      </button>
                     )}
                     {!isDone && canReturnToWaiting && (
                       <button className="actionBtn actionBtn-secondary admin-pilot-guest-btn" onClick={() => returnPilotTicketToWaiting(ticket.id)}>Return to Waiting</button>

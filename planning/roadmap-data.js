@@ -2089,6 +2089,43 @@ const QME_ROADMAP = {
       ]
     },
     {
+      id: "review-headshot-operating-model-2026-07-14",
+      date: "2026-07-14",
+      trigger: "Post-implementation reflection after testing the dual Headshot operating model",
+      summary:
+        "The Headshot model now demonstrates a reusable operational pattern: queue progression can remain simple while durable service milestones capture what happened inside the station. The July prototype supports both guest-confirmed and admin-operated completion without adding an active_service ticket state.",
+      observations: [
+        "Recording I've Been Called as a durable service-start marker rather than another queue state kept the queue lifecycle simpler while preserving useful operational timestamps.",
+        "Headshots now demonstrates a possible Queue -> Service Starts -> Queue Complete pattern that may apply to other Experience Types later.",
+        "Photographer interaction should remain minimal: guests participate, Station Supervisors handle exceptions, and photographers stay focused on photography.",
+        "The admin-operated path and guest-confirmed path can coexist as two valid operating modes for the same station.",
+        "The next Experience Type review should likely be Food & Beverage because it can validate menus, station-specific credits, fulfillment, approvals, and reusable station operations."
+      ],
+      decisions: [
+        "Prefer durable operational events/timestamps over new queue states when the state is an analytic or service milestone rather than a routing state.",
+        "Do not introduce an active_service ticket state for Headshots before the Tanya/Eric discussion.",
+        "Do not add photographer-specific controls unless the operating discussion proves they are necessary.",
+        "Treat the Cookie Event as a product experiment for ordering, credits, approvals, fulfillment, and feedback, not as a commercial product direction.",
+        "Keep the possible Experience Type -> organization-owned reusable definition -> Station layer as an open architecture question."
+      ],
+      risks: [
+        "If service milestones are over-generalized too soon, qME may create an abstraction before Food, Resume Reviews, Registration, and Networking validate it.",
+        "If photographer controls are added prematurely, qME may create operational burden for the person who should be focused on service delivery.",
+        "If completed remains the only terminal state, history display must clearly distinguish guest-called completion from admin-served completion."
+      ],
+      roadmapChanges: [
+        "Marked the Headshot guest-called completion prototype done.",
+        "Updated the low-staff Headshot operating model notes with both the guest and admin completion paths.",
+        "Captured Food & Beverage as the recommended next Experience Type review lens.",
+        "Reinforced the open architecture question about an organization-owned reusable definition between Experience Type and Station."
+      ],
+      nextFocus: [
+        "Use the Headshot model in the Tanya/Eric meeting to validate whether guest confirmation and admin Mark Served are operationally understandable.",
+        "Review Food & Beverage as the next Experience Type before introducing any new service layer.",
+        "Keep SMS/phone buzzing out of the immediate build unless the meeting makes it essential and compliance setup is realistic."
+      ]
+    },
+    {
       id: "review-alpha-2-product-discovery-2026-07-08",
       date: "2026-07-08",
       trigger: "July 2 SOTC alpha, Jalani testing, queue operations testing, and follow-up product discovery",

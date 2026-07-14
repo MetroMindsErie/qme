@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-07-08",
+    updated: "2026-07-14",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -49,7 +49,9 @@ const QME_ROADMAP = {
         "story-remove-hardcoded-demo-assumptions",
         "story-experience-model",
         "story-managed-image-storage",
+        "story-sotc-notification-july-fallback",
         "story-headshot-queue",
+        "story-headshot-low-staff-operating-model",
         "story-resume-review-queue",
         "story-resource-cards",
         "story-passport-activity"
@@ -1548,6 +1550,77 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Imported from Trello/provisional notification policy notes."
+            },
+            {
+              id: "story-sotc-notification-july-fallback",
+              title: "Define July notification fallback for SOTC queues",
+              status: "current",
+              sprint: "next",
+              summary:
+                "Determine and implement the reliable July notification behavior for Headshots and other SOTC queues before committing to SMS or web push.",
+              acceptanceCriteria: [
+                "Guest receives clear in-app modal/banner messaging for Waiting to Gathering, Your Turn, Not Here, and Return to Waiting/Cooldown events while the guest page is open.",
+                "Guest-facing notifications include an acknowledgement action and enough timestamp/history context to understand what changed.",
+                "Optional sound is evaluated only as an in-app enhancement after guest interaction, not as the primary notification channel.",
+                "The fallback explicitly documents that closed pages and backgrounded mobile browsers are not reliable without SMS or push.",
+                "Staff guidance and event signage explain the July fallback behavior for Headshots.",
+                "SMS is not promised for July until provider setup, consent, compliance, delivery logging, and duplicate prevention are confirmed."
+              ],
+              notes:
+                "Added from July 14 notification feasibility review. Tanya asked whether qME can buzz guests when queue status changes. Current reliable July path is in-app notification while the page is open, with SMS treated as a compliance-gated enhancement and web push treated as poor fit for a one-time iPhone-heavy event."
+            },
+            {
+              id: "story-notification-event-architecture",
+              title: "Create notification-event architecture",
+              status: "ready",
+              sprint: "future",
+              summary:
+                "Separate domain status changes from delivery channels by recording notification events before delivering in-app, SMS, push, or future channels.",
+              acceptanceCriteria: [
+                "Domain actions such as queue movement, Not Here, cooldown completion, order-ready, or reminders can create durable notification events.",
+                "Notification events include event/check-in/ticket context, notification type, transition, idempotency key, created timestamp, and acknowledgement/read fields.",
+                "Channel delivery records track in-app, SMS, push, or future delivery attempts separately.",
+                "Duplicate prevention is based on idempotency keys rather than client-side timing.",
+                "Untrusted browsers cannot directly trigger SMS delivery.",
+                "The architecture supports audit review and future delivery channels without coupling queue logic directly to one provider."
+              ],
+              notes:
+                "Preferred direction: domain status change -> create notification event -> deliver in-app -> optionally deliver SMS -> later support web push or other channels."
+            },
+            {
+              id: "story-sms-notification-feasibility",
+              title: "Evaluate transactional SMS for event notifications",
+              status: "discovery",
+              sprint: "future",
+              summary:
+                "Investigate whether SMS can responsibly support queue and reminder notifications after account, compliance, consent, and delivery constraints are understood.",
+              acceptanceCriteria: [
+                "Provider setup requirements are documented, including sender registration and approval timing.",
+                "Opt-in, STOP/HELP, consent copy, and message-purpose requirements are documented before any live SMS commitment.",
+                "Existing phone capture is reviewed and updated if explicit SMS consent is required.",
+                "Server-side delivery architecture is documented so guests cannot trigger arbitrary SMS from the browser.",
+                "Delivery logging, duplicate prevention, and failure handling are designed before SMS is used at a live event.",
+                "A go/no-go decision is made before SMS becomes part of a guest promise."
+              ],
+              notes:
+                "Twilio or similar SMS may be useful, but July 22 timing is risky unless registration/verification and compliance are already complete. Treat SMS as a pilot add-on, not the core notification fallback."
+            },
+            {
+              id: "story-headshot-low-staff-operating-model",
+              title: "Explore low-staff Headshot operating model",
+              status: "discovery",
+              sprint: "next",
+              summary:
+                "Review safe Headshot workflows where qME can advance the queue and the photographer may not need to operate qME directly.",
+              acceptanceCriteria: [
+                "At least two operating models are documented for Tanya/Eric discussion.",
+                "Models distinguish photographer-free, guest-confirmed, timed, and supervisor-assisted completion options.",
+                "Risks are documented for false guest confirmation, missed guests, photo-credit misuse, and inaccurate completion.",
+                "Required state-model changes are identified before adding states such as active service or starting headshot.",
+                "The July recommendation preserves a simple fallback that staff can execute under pressure."
+              ],
+              notes:
+                "Possible model: qME auto-advances, guest receives Your Turn, photographer calls guest by name, guest taps I've Been Called or Starting My Headshot, and completion is guest-confirmed, timed, photographer-confirmed, or supervisor-confirmed. Do not implement until operational model is chosen."
             }
           ]
         }
@@ -1953,6 +2026,44 @@ const QME_ROADMAP = {
     }
   ],
   productReviews: [
+    {
+      id: "review-notification-feasibility-2026-07-14",
+      date: "2026-07-14",
+      trigger: "Tanya asked whether qME can buzz guests for Headshots and other queue status changes before the July 22 SOTC event",
+      summary:
+        "The reliable July notification path is in-app status-change messaging while the guest page is open. SMS may become valuable, but it should not be promised until sender registration, opt-in consent, delivery logging, duplicate prevention, and provider approval timing are confirmed. Mobile web push is not a good July primary channel because iPhone guests would need Home Screen installation and notification permission.",
+      observations: [
+        "Current guest queue pages already detect Not Here and Return to Waiting transitions and show in-app messaging.",
+        "The guest queue page currently relies on frequent refresh/polling and page-visible behavior; a closed or heavily backgrounded mobile browser cannot be treated as reachable.",
+        "Optional sound can help only after a guest has interacted with the page and should not be treated as a guaranteed background buzz.",
+        "SMS requires explicit consent language, provider setup, sender registration/verification, server-side triggering, delivery logs, and duplicate prevention.",
+        "Queue and notification architecture should remain provider-agnostic: domain status changes should create notification events, and delivery channels should process those events."
+      ],
+      decisions: [
+        "Do not promise SMS for July 22 unless account/compliance setup is complete and tested.",
+        "Use in-app modal/banner notifications as the July fallback for Waiting to Gathering, Your Turn, Not Here, and Return to Waiting/Cooldown.",
+        "Treat sound as an optional in-app enhancement, not a replacement for SMS or push.",
+        "Keep mobile web push as a later channel, not a July solution for a one-time event.",
+        "Discuss low-staff Headshot operating models with Tanya/Eric before adding new queue states such as active service."
+      ],
+      risks: [
+        "Guests may close the page or lock their phone and miss in-app-only notifications.",
+        "SMS timing may fail if sender registration, campaign approval, or consent language is not ready.",
+        "Web push friction may distract guests and staff during a one-time event.",
+        "Adding Headshot-specific states too quickly may make the reusable queue model less generic."
+      ],
+      roadmapChanges: [
+        "Added July notification fallback story for SOTC queues.",
+        "Added notification-event architecture story.",
+        "Added SMS notification feasibility story.",
+        "Added low-staff Headshot operating model discovery story."
+      ],
+      nextFocus: [
+        "Choose the July Headshot notification promise: in-app only, or in-app plus SMS pilot if compliance is ready.",
+        "Add in-app notifications and acknowledgement/history before any SMS channel work.",
+        "Review Headshot operating models with Tanya/Eric and decide whether guest confirmation or supervisor completion is the safest alpha path."
+      ]
+    },
     {
       id: "review-alpha-2-product-discovery-2026-07-08",
       date: "2026-07-08",

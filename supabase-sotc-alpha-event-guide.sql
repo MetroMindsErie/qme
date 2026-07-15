@@ -40,15 +40,17 @@ cross join (
         'home_section', 'schedule',
         'home_section_title', 'Full Event Schedule',
         'home_section_order', 10,
-        'home_items_limit', 6,
+        'home_items_limit', 9,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Registration and sponsor tables', 'meta', '5:30-7:30 PM / Level 0'),
+          jsonb_build_object('title', 'Registration', 'meta', '5:30-7:30 PM / Level 1'),
+          jsonb_build_object('title', 'Sponsors', 'meta', '5:30-7:30 PM / Level 0'),
           jsonb_build_object('title', 'Professional headshots', 'meta', '5:30-7:30 PM / Level 3'),
-          jsonb_build_object('title', 'Resume reviews', 'meta', '5:30-8:30 PM / Level 0'),
-          jsonb_build_object('title', 'Networking, hors d''oeuvres, mocktail and cocktail bar', 'meta', '5:30-8:30 PM / Level 1'),
-          jsonb_build_object('title', 'Host and sponsor greetings', 'meta', '6:15-6:45 PM / Level 0'),
+          jsonb_build_object('title', 'Resume + LinkedIn reviews', 'meta', '5:30-8:30 PM / Level 0'),
+          jsonb_build_object('title', 'Networking, hors d''oeuvres, mocktail and cocktail bar', 'meta', '5:30-8:30 PM / Level 1', 'note', 'Card only bar; access to lower level gallery'),
+          jsonb_build_object('title', 'Welcome & greetings', 'meta', '6:15-6:45 PM / Level 1'),
           jsonb_build_object('title', 'Pop-up mini workshops at The Garage', 'meta', '7:00-8:00 PM / Level 2'),
-          jsonb_build_object('title', 'All galleries open for viewing', 'meta', '7:00-8:30 PM / All levels')
+          jsonb_build_object('title', 'All galleries open for viewing', 'meta', '7:00-8:30 PM / All levels'),
+          jsonb_build_object('title', 'Close', 'meta', '8:45 PM / All levels')
         )
       )
     ),
@@ -124,7 +126,7 @@ cross join (
     (
       'Food & Drinks',
       'food-drinks-guide',
-      'Hors d''oeuvres and the mocktail/cocktail bar are on Level 0.',
+      'Hors d''oeuvres and the mocktail/cocktail bar are on Level 1.',
       '/images/sotc-food-drinks.png',
       'resource',
       jsonb_build_object(
@@ -155,12 +157,27 @@ cross join (
         'home_section', 'resources',
         'home_section_title', 'Event Resources',
         'home_section_order', 30,
+        'home_items_limit', 12,
         'home_items', jsonb_build_array(
           jsonb_build_object(
             'title', 'Mixer Resources',
             'note', 'Open the SOTC mixer resources page.',
-            'url', 'https://sites.google.com/summeronthecuyahoga.com/mixerresourcespage?usp=sharing'
-          )
+            'url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit'
+          ),
+          jsonb_build_object(
+            'title', 'Sticker Guide',
+            'note', 'Open the guide to sticker colors and guest interests.',
+            'url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit'
+          ),
+          jsonb_build_object('title', 'Communication & Marketing', 'meta', 'Green sticker'),
+          jsonb_build_object('title', 'Education', 'meta', 'Blue sticker'),
+          jsonb_build_object('title', 'Economics & Business', 'meta', 'Purple sticker'),
+          jsonb_build_object('title', 'Humanities & Art', 'meta', 'Pink sticker'),
+          jsonb_build_object('title', 'Healthcare', 'meta', 'Red sticker'),
+          jsonb_build_object('title', 'Law & Public Policy', 'meta', 'Orange sticker'),
+          jsonb_build_object('title', 'Academia', 'meta', 'Yellow sticker'),
+          jsonb_build_object('title', 'Nonprofit & Social Impact', 'meta', 'Coral sticker'),
+          jsonb_build_object('title', 'S.T.E.M', 'meta', 'Steel blue sticker')
         )
       )
     )

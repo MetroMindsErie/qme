@@ -2,7 +2,7 @@
  * Guest: Event detail page — live queues + informational activity cards.
  * Redesigned for I-Pitch demo: Live badge, stats bar, clickable menus.
  */
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, type KeyboardEvent, type MouseEvent } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
 import { getActiveTicketCountForQueue, listQueuePilotTickets, listQueuesForEvent, getNowServing, restoreTicketForQueue, getQueueTicket } from '../../lib/queueService';
@@ -80,6 +80,11 @@ function getEceHomeActionLabel(ece: Ece): string {
   return asString(metadata.home_action_label || metadata.homeActionLabel);
 }
 
+function getEceHomeUrl(ece: Ece): string {
+  const metadata = asRecord(ece.metadata);
+  return asString(metadata.home_url || metadata.homeUrl || metadata.url);
+}
+
 function getEceHomeIconVariant(ece: Ece): string {
   const metadata = asRecord(ece.metadata);
   return asString(metadata.home_icon_variant || metadata.homeIconVariant);
@@ -97,7 +102,38 @@ function getEceHomeItemLimit(ece: Ece): number {
   return Math.min(Math.max(Math.floor(configured), 1), 10);
 }
 
-function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string; imageUrl: string; imageVariant: string; url: string }> {
+type HomeItemDetail = {
+  label: string;
+  value: string;
+  color: string;
+};
+
+type HomeItem = {
+  title: string;
+  meta: string;
+  note: string;
+  imageUrl: string;
+  imageVariant: string;
+  url: string;
+  details: HomeItemDetail[];
+  detailsMode: string;
+};
+
+function getHomeItemDetails(value: unknown): HomeItemDetail[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((detail) => {
+      const record = asRecord(detail);
+      return {
+        label: asString(record.label || record.title || record.name),
+        value: asString(record.value || record.meta || record.note || record.description),
+        color: asString(record.color),
+      };
+    })
+    .filter((detail) => detail.label || detail.value || detail.color);
+}
+
+function getEceHomeItems(ece: Ece): HomeItem[] {
   const metadata = asRecord(ece.metadata);
   const rawItems = Array.isArray(metadata.home_items)
     ? metadata.home_items
@@ -115,9 +151,11 @@ function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: s
         imageUrl: asString(record.image_url || record.imageUrl),
         imageVariant: asString(record.image_variant || record.imageVariant),
         url: asString(record.url || record.href || record.link_url || record.linkUrl),
+        details: getHomeItemDetails(record.details || record.items),
+        detailsMode: asString(record.detail_presentation || record.detailPresentation || record.details_mode || record.detailsMode),
       };
     })
-    .filter((item) => item.title || item.meta || item.note || item.imageUrl || item.url)
+    .filter((item) => item.title || item.meta || item.note || item.imageUrl || item.url || item.details.length)
     .slice(0, getEceHomeItemLimit(ece));
 }
 
@@ -378,6 +416,7 @@ export default function GuestEventDetail() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('just now');
   const [activeMenu, setActiveMenu] = useState<MenuConfig | null>(null);
+  const [activeHomeItem, setActiveHomeItem] = useState<HomeItem | null>(null);
   const [hasEventCheckIn, setHasEventCheckIn] = useState(false);
   const [eventCheckInStatus, setEventCheckInStatus] = useState<EventCheckIn['status'] | null>(null);
   const [eventCheckInTicketType, setEventCheckInTicketType] = useState<'general' | 'flowers' | null>(null);
@@ -758,6 +797,7 @@ export default function GuestEventDetail() {
             const canJoin = Boolean(linkedQueue && !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused);
             const homeBadge = getEceHomeBadge(exp);
             const homeActionLabel = getEceHomeActionLabel(exp);
+            const homeUrl = getEceHomeUrl(exp);
             const homeIconVariant = getEceHomeIconVariant(exp);
             const homeItemsLayout = getEceHomeItemsLayout(exp);
             const homeItems = getEceHomeItems(exp);
@@ -783,7 +823,7 @@ export default function GuestEventDetail() {
             const viewHref = linkedQueue
               ? `/events/${eventSlug}/q/${linkedQueue.slug}/ticket`
               : '';
-            const canAct = Boolean(actionHref || viewHref);
+            const canAct = Boolean(actionHref || viewHref || homeUrl);
             const cardStateClass = isCompleted || creditUsed
               ? 'ed-card-completed'
               : hasTicket
@@ -797,6 +837,8 @@ export default function GuestEventDetail() {
                 navigate(viewHref);
               } else if (actionHref) {
                 navigate(actionHref);
+              } else if (homeUrl) {
+                window.open(homeUrl, '_blank', 'noopener,noreferrer');
               }
             };
             const actionText = hasTicket
@@ -809,6 +851,8 @@ export default function GuestEventDetail() {
               ? homeActionLabel || 'Order'
               : linkedQueue
               ? homeActionLabel || 'Join'
+              : homeUrl
+              ? homeActionLabel || 'Open'
               : exp.type === 'check_in'
               ? homeActionLabel || 'Check In'
               : '';
@@ -857,8 +901,23 @@ export default function GuestEventDetail() {
                 )}
                 {homeItems.length > 0 && (
                   <div className="ed-home-items">
-                    {homeItems.map((item, index) => (
-                      <div className="ed-home-item" key={`${item.title}-${index}`}>
+                    {homeItems.map((item, index) => {
+                      const opensDetails = item.details.length > 0 && item.detailsMode === 'modal';
+                      const openDetail = (e: MouseEvent | KeyboardEvent) => {
+                        if (!opensDetails) return;
+                        e.stopPropagation();
+                        setActiveHomeItem(item);
+                      };
+
+                      return (
+                      <div
+                        className={`ed-home-item ${opensDetails ? 'ed-home-item-clickable' : ''}`}
+                        key={`${item.title}-${index}`}
+                        role={opensDetails ? 'button' : undefined}
+                        tabIndex={opensDetails ? 0 : undefined}
+                        onClick={opensDetails ? openDetail : undefined}
+                        onKeyDown={opensDetails ? (e) => { if (e.key === 'Enter' || e.key === ' ') openDetail(e); } : undefined}
+                      >
                         {item.imageUrl && (
                           <img
                             src={item.imageUrl}
@@ -877,12 +936,27 @@ export default function GuestEventDetail() {
                             >
                               {item.title}
                             </a>
-                          ) : item.title && <span className="ed-home-item-title">{item.title}</span>}
+                          ) : item.title && (
+                            <span className={`ed-home-item-title ${opensDetails ? 'ed-home-item-link' : ''}`}>
+                              {item.title}
+                            </span>
+                          )}
                           {item.meta && <span className="ed-home-item-meta">{item.meta}</span>}
                           {item.note && <span className="ed-home-item-note">{item.note}</span>}
+                          {item.details.length > 0 && !opensDetails && (
+                            <span className="ed-home-item-details">
+                              {item.details.map((detail, detailIndex) => (
+                                <span className="ed-home-item-detail-row" key={`${detail.label}-${detailIndex}`}>
+                                  <span className="ed-home-item-detail-label">{detail.label}</span>
+                                  {detail.value && <span className="ed-home-item-detail-value">{detail.value}</span>}
+                                </span>
+                              ))}
+                            </span>
+                          )}
                         </span>
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -893,7 +967,18 @@ export default function GuestEventDetail() {
                     <div className="ed-serving-num">{linkedQueue?._waitingCount ?? 0}</div>
                   </div>
                 )}
-                {actionText && (
+                {actionText && homeUrl && !actionHref && !viewHref ? (
+                  <button
+                    type="button"
+                    className="ed-action-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEceOpen();
+                    }}
+                  >
+                    {actionText}
+                  </button>
+                ) : actionText && (
                   <Link
                     to={hasTicket && viewHref ? viewHref : actionHref}
                     className={`ed-action-btn ${hasTicket ? 'ed-action-btn-secondary' : ''}`}
@@ -958,6 +1043,30 @@ export default function GuestEventDetail() {
 
       {/* Menu bottom sheet — rendered outside card so it overlays everything */}
       <MenuModal config={activeMenu} onClose={() => setActiveMenu(null)} />
+      {activeHomeItem && (
+        <div className="ed-detail-overlay" role="dialog" aria-modal="true">
+          <div className="ed-detail-panel">
+            <button type="button" className="ed-detail-close" onClick={() => setActiveHomeItem(null)}>
+              Close
+            </button>
+            <h2>{activeHomeItem.title}</h2>
+            {activeHomeItem.note && <p>{activeHomeItem.note}</p>}
+            <div className="ed-detail-list">
+              {activeHomeItem.details.map((detail, index) => (
+                <div className="ed-detail-row" key={`${detail.label}-${index}`}>
+                  {detail.color && (
+                    <span className="ed-detail-dot" style={{ background: detail.color }} />
+                  )}
+                  <span className="ed-detail-text">
+                    <span className="ed-detail-label">{detail.label}</span>
+                    {detail.value && <span className="ed-detail-value">{detail.value}</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

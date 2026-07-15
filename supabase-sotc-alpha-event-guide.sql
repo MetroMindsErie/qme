@@ -59,10 +59,9 @@ cross join (
       '/images/sotc-resume-reviews.png',
       'info',
       jsonb_build_object(
-        'home_section', 'featured_experiences',
-        'home_section_title', 'Featured Experiences',
-        'home_section_order', 20,
-        'home_visible', false,
+        'home_section', 'more_experiences',
+        'home_section_title', 'More to Explore',
+        'home_section_order', 70,
         'home_badge', 'Career'
       )
     ),
@@ -73,10 +72,9 @@ cross join (
       '/images/sotc-networking.png',
       'info',
       jsonb_build_object(
-        'home_section', 'featured_experiences',
-        'home_section_title', 'Featured Experiences',
-        'home_section_order', 20,
-        'home_visible', false,
+        'home_section', 'more_experiences',
+        'home_section_title', 'More to Explore',
+        'home_section_order', 70,
         'home_badge', 'Mixer'
       )
     ),
@@ -207,12 +205,12 @@ select
   '',
   case expies.slug
     when 'tonights-schedule-guide' then 20
-    when 'resume-review-guide' then 30
-    when 'networking-guide' then 40
     when 'resources-guide' then 50
     when 'featured-speakers-guide' then 60
     when 'sponsors-guide' then 70
     when 'food-drinks-guide' then 80
+    when 'resume-review-guide' then 90
+    when 'networking-guide' then 95
     else 100
   end,
   expies.default_metadata,
@@ -246,12 +244,12 @@ set
   type = expies.type,
   sort_order = case expies.slug
     when 'tonights-schedule-guide' then 20
-    when 'resume-review-guide' then 30
-    when 'networking-guide' then 40
     when 'resources-guide' then 50
     when 'featured-speakers-guide' then 60
     when 'sponsors-guide' then 70
     when 'food-drinks-guide' then 80
+    when 'resume-review-guide' then 90
+    when 'networking-guide' then 95
     else eces.sort_order
   end,
   metadata = expies.default_metadata,

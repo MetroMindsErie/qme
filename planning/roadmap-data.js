@@ -2062,7 +2062,7 @@ const QME_ROADMAP = {
         "Eventbrite attendee lookup is now the preferred registration direction, but the export must be reviewed before designing lookup, duplicate handling, or walk-in recovery.",
         "Registration staff primarily need a live list of guests who have self checked in and now need name tags/materials.",
         "Walk-up professional headshots for guests without a prepaid photo remain outside qME for July and use the photographer's Venmo/payment flow.",
-        "The SOTC guest home should prioritize Full Event Schedule, Professional Headshots, Event Resources, Featured Speakers, Sponsors, and Food & Drinks.",
+        "The SOTC guest home should prioritize Full Event Schedule, Professional Headshots, Event Resources, Featured Speakers, Sponsors, and Food & Drinks, with Resume Reviews and Networking visible lower on the page.",
         "Scan-Code Adventure should not appear in the July guest-facing home, but can remain available as an internal/demo capability."
       ],
       decisions: [
@@ -2072,7 +2072,8 @@ const QME_ROADMAP = {
         "Defer Eventbrite attendee import, attendee lookup, self-registration, duplicate handling, and walk-in recovery until the actual attendee data is received and reviewed.",
         "Use last year's speaker, sponsor, and food/drink information as temporary placeholder content until SOTC provides updated content.",
         "Update the SOTC schedule/floor assignments immediately using the Mixer Resources direction.",
-        "Remove Scan-Code Adventure from the July guest experience while preserving it for demo/internal use."
+        "Remove Scan-Code Adventure from the July guest home while preserving it for demo/internal use.",
+        "Keep Resume Reviews and Networking visible as lower-priority guest-home cards."
       ],
       risks: [
         "Eventbrite may include duplicate names or insufficient identifying fields.",

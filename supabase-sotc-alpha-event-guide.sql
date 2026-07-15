@@ -4,7 +4,7 @@
 --
 -- This keeps the guest event home generic: sections are driven by expie/eCe
 -- metadata instead of hard-coded SOTC UI. Scan-Code Adventure remains available
--- as an optional demo station, but Headshots becomes the primary featured item.
+-- as an internal/demo station, but it is hidden from the July guest home.
 
 insert into public.expies (
   organization_id,
@@ -31,23 +31,24 @@ from public.organizations
 cross join (
   values
     (
-      'Tonight''s Schedule',
+      'Full Event Schedule',
       'tonights-schedule-guide',
       'Use this quick schedule to orient yourself during the mixer.',
       '/images/sotc-logo.png',
       'session',
       jsonb_build_object(
         'home_section', 'schedule',
-        'home_section_title', 'Tonight''s Schedule',
+        'home_section_title', 'Full Event Schedule',
         'home_section_order', 10,
         'home_items_limit', 6,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Registration, sponsors, and professional headshots', 'meta', '5:30-7:30 PM / Level 1'),
-          jsonb_build_object('title', 'Networking, resume reviews, hors d''oeuvres, mocktail and cocktail bar', 'meta', '5:30-8:30 PM / Level 0', 'note', 'Card only bar; access to lower level gallery'),
+          jsonb_build_object('title', 'Registration and sponsor tables', 'meta', '5:30-7:30 PM / Level 0'),
+          jsonb_build_object('title', 'Professional headshots', 'meta', '5:30-7:30 PM / Level 3'),
+          jsonb_build_object('title', 'Resume reviews', 'meta', '5:30-8:30 PM / Level 0'),
+          jsonb_build_object('title', 'Networking, hors d''oeuvres, mocktail and cocktail bar', 'meta', '5:30-8:30 PM / Level 1'),
           jsonb_build_object('title', 'Host and sponsor greetings', 'meta', '6:15-6:45 PM / Level 0'),
           jsonb_build_object('title', 'Pop-up mini workshops at The Garage', 'meta', '7:00-8:00 PM / Level 2'),
-          jsonb_build_object('title', 'All galleries open for viewing', 'meta', '7:00-8:30 PM / All levels'),
-          jsonb_build_object('title', 'Close', 'meta', '8:45 PM / All levels')
+          jsonb_build_object('title', 'All galleries open for viewing', 'meta', '7:00-8:30 PM / All levels')
         )
       )
     ),
@@ -61,6 +62,7 @@ cross join (
         'home_section', 'featured_experiences',
         'home_section_title', 'Featured Experiences',
         'home_section_order', 20,
+        'home_visible', false,
         'home_badge', 'Career'
       )
     ),
@@ -74,6 +76,7 @@ cross join (
         'home_section', 'featured_experiences',
         'home_section_title', 'Featured Experiences',
         'home_section_order', 20,
+        'home_visible', false,
         'home_badge', 'Mixer'
       )
     ),
@@ -86,7 +89,7 @@ cross join (
       jsonb_build_object(
         'home_section', 'speakers',
         'home_section_title', 'Featured Speakers',
-        'home_section_order', 30,
+        'home_section_order', 40,
         'home_items_layout', 'media_rows',
         'home_items_limit', 6,
         'home_items', jsonb_build_array(
@@ -108,7 +111,7 @@ cross join (
       jsonb_build_object(
         'home_section', 'sponsors',
         'home_section_title', 'Sponsors',
-        'home_section_order', 40,
+        'home_section_order', 50,
         'home_items_layout', 'media_rows',
         'home_items_limit', 5,
         'home_items', jsonb_build_array(
@@ -129,7 +132,7 @@ cross join (
       jsonb_build_object(
         'home_section', 'food_drinks',
         'home_section_title', 'Food & Drinks',
-        'home_section_order', 45,
+        'home_section_order', 60,
         'home_items_limit', 9,
         'home_items', jsonb_build_array(
           jsonb_build_object('title', 'Bacon Wrapped Brisket with Peach BBQ', 'meta', 'GF'),
@@ -147,17 +150,19 @@ cross join (
     (
       'Resources',
       'resources-guide',
-      'Helpful links, program notes, and things to explore during the event.',
+      'Open the SOTC mixer resources page for the digital guide and event materials.',
       '/images/sotc-logo.png',
       'resource',
       jsonb_build_object(
         'home_section', 'resources',
-        'home_section_title', 'Resources',
-        'home_section_order', 50,
+        'home_section_title', 'Event Resources',
+        'home_section_order', 30,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Sticker guide', 'note', 'Find guests by field and interest area'),
-          jsonb_build_object('title', 'Mixer resources page', 'note', 'summeronthecuyahoga.com mixer resources'),
-          jsonb_build_object('title', 'Gallery and venue highlights', 'note', 'All galleries open 7:00-8:30 PM')
+          jsonb_build_object(
+            'title', 'Mixer Resources',
+            'note', 'Open the SOTC mixer resources page.',
+            'url', 'https://sites.google.com/summeronthecuyahoga.com/mixerresourcespage?usp=sharing'
+          )
         )
       )
     )
@@ -204,10 +209,10 @@ select
     when 'tonights-schedule-guide' then 20
     when 'resume-review-guide' then 30
     when 'networking-guide' then 40
-    when 'featured-speakers-guide' then 50
-    when 'sponsors-guide' then 60
-    when 'food-drinks-guide' then 65
-    when 'resources-guide' then 70
+    when 'resources-guide' then 50
+    when 'featured-speakers-guide' then 60
+    when 'sponsors-guide' then 70
+    when 'food-drinks-guide' then 80
     else 100
   end,
   expies.default_metadata,
@@ -243,10 +248,10 @@ set
     when 'tonights-schedule-guide' then 20
     when 'resume-review-guide' then 30
     when 'networking-guide' then 40
-    when 'featured-speakers-guide' then 50
-    when 'sponsors-guide' then 60
-    when 'food-drinks-guide' then 65
-    when 'resources-guide' then 70
+    when 'resources-guide' then 50
+    when 'featured-speakers-guide' then 60
+    when 'sponsors-guide' then 70
+    when 'food-drinks-guide' then 80
     else eces.sort_order
   end,
   metadata = expies.default_metadata,
@@ -288,6 +293,7 @@ set
     'home_section', 'optional_demo',
     'home_section_title', 'Optional Demo Station',
     'home_section_order', 80,
+    'home_visible', false,
     'home_badge', 'Demo'
   )
 from public.events

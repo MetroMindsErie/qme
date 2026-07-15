@@ -2051,6 +2051,52 @@ const QME_ROADMAP = {
   ],
   productReviews: [
     {
+      id: "review-tanya-eric-sotc-operating-model-2026-07-15",
+      date: "2026-07-15",
+      trigger: "Tanya/Eric/SOTC intern meeting clarified the July 22 operating model and simplified the SOTC guest home",
+      summary:
+        "The July operating model is clearer and narrower: Headshots remain the primary operational experience using a hybrid guest-confirmed/Supervisor-assisted model, Eventbrite self-check-in is the preferred registration direction but must wait for the actual export, walk-up paid professional headshots stay outside qME for July, and the guest home should feel like a digital event companion led by schedule, Headshots, resources, speakers, sponsors, and food/drinks.",
+      observations: [
+        "Photographers should remain focused on photography rather than operating qME.",
+        "Evan will serve as Station Supervisor near the photographer and use the active queue for exceptions such as Not Here or manual Mark Served.",
+        "Eventbrite attendee lookup is now the preferred registration direction, but the export must be reviewed before designing lookup, duplicate handling, or walk-in recovery.",
+        "Registration staff primarily need a live list of guests who have self checked in and now need name tags/materials.",
+        "Walk-up professional headshots for guests without a prepaid photo remain outside qME for July and use the photographer's Venmo/payment flow.",
+        "The SOTC guest home should prioritize Full Event Schedule, Professional Headshots, Event Resources, Featured Speakers, Sponsors, and Food & Drinks.",
+        "Scan-Code Adventure should not appear in the July guest-facing home, but can remain available as an internal/demo capability."
+      ],
+      decisions: [
+        "Adopt the hybrid Headshot operating model: guest-confirmed completion via I've Been Called plus Station Supervisor/Admin Mark Served and Not Here recovery.",
+        "Do not add photographer-specific controls unless later testing proves they are useful.",
+        "Keep walk-up Venmo headshots outside qME for July.",
+        "Defer Eventbrite attendee import, attendee lookup, self-registration, duplicate handling, and walk-in recovery until the actual attendee data is received and reviewed.",
+        "Use last year's speaker, sponsor, and food/drink information as temporary placeholder content until SOTC provides updated content.",
+        "Update the SOTC schedule/floor assignments immediately using the Mixer Resources direction.",
+        "Remove Scan-Code Adventure from the July guest experience while preserving it for demo/internal use."
+      ],
+      risks: [
+        "Eventbrite may include duplicate names or insufficient identifying fields.",
+        "Unknown Eventbrite data quality could change the self-check-in design.",
+        "Walk-ins may require a recovery workflow that is not yet designed.",
+        "Placeholder speakers, sponsors, logos, links, and food information must be replaced before production use.",
+        "Event-specific styling must feel like SOTC while remaining mobile-readable and not overly hard-coded."
+      ],
+      roadmapChanges: [
+        "Added Tanya/Eric meeting direction as a Product Review.",
+        "Prioritized guest-home updates before Eventbrite/self-registration work.",
+        "Kept SMS, web push, photographer console, generalized speaker/sponsor engines, Food & Beverage ordering, and Experience hierarchy changes deferred.",
+        "Clarified that Scan-Code Adventure remains a reusable/demo capability but is removed from the July SOTC guest home."
+      ],
+      nextFocus: [
+        "Update the SOTC guest home order and content.",
+        "Update schedule and floor assignments.",
+        "Receive and analyze the Eventbrite export before designing attendee lookup/self-check-in.",
+        "Receive updated speakers, sponsors, logos, links, and food information.",
+        "Continue Headshot operational rehearsals.",
+        "Finalize July in-app notification behavior."
+      ]
+    },
+    {
       id: "review-notification-feasibility-2026-07-14",
       date: "2026-07-14",
       trigger: "Tanya asked whether qME can buzz guests for Headshots and other queue status changes before the July 22 SOTC event",

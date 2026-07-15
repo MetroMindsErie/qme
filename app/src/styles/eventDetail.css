@@ -437,6 +437,11 @@
   color: #26364a;
 }
 
+.ed-home-item-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .ed-home-item-meta {
   font-weight: 700;
   color: var(--qme-purple);

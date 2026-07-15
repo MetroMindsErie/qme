@@ -55,6 +55,11 @@ function getEceHomeSection(ece: Ece): string {
   return asString(metadata.home_section || metadata.homeSection);
 }
 
+function isEceHomeVisible(ece: Ece): boolean {
+  const metadata = asRecord(ece.metadata);
+  return metadata.home_visible !== false && metadata.homeVisible !== false;
+}
+
 function getEceHomeSectionTitle(ece: Ece): string {
   const metadata = asRecord(ece.metadata);
   return asString(metadata.home_section_title || metadata.homeSectionTitle || metadata.home_section || metadata.homeSection);
@@ -92,7 +97,7 @@ function getEceHomeItemLimit(ece: Ece): number {
   return Math.min(Math.max(Math.floor(configured), 1), 10);
 }
 
-function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string; imageUrl: string; imageVariant: string }> {
+function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: string; imageUrl: string; imageVariant: string; url: string }> {
   const metadata = asRecord(ece.metadata);
   const rawItems = Array.isArray(metadata.home_items)
     ? metadata.home_items
@@ -109,9 +114,10 @@ function getEceHomeItems(ece: Ece): Array<{ title: string; meta: string; note: s
         note: asString(record.note || record.description),
         imageUrl: asString(record.image_url || record.imageUrl),
         imageVariant: asString(record.image_variant || record.imageVariant),
+        url: asString(record.url || record.href || record.link_url || record.linkUrl),
       };
     })
-    .filter((item) => item.title || item.meta || item.note || item.imageUrl)
+    .filter((item) => item.title || item.meta || item.note || item.imageUrl || item.url)
     .slice(0, getEceHomeItemLimit(ece));
 }
 
@@ -551,11 +557,12 @@ export default function GuestEventDetail() {
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
   const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus);
   const isWaitingForHostCheckIn = hasSubmittedEventCheckIn && !hasEventCheckIn;
-  const visibleEces = checkInConfig.enabled
+  const homeEligibleEces = checkInConfig.enabled
     ? eces.filter((ece) => ece.type !== 'check_in')
     : eces;
+  const visibleEces = homeEligibleEces.filter(isEceHomeVisible);
   const eceSections = getSectionedEces(visibleEces);
-  const linkedEceQueueIds = new Set(visibleEces.map((ece) => ece.queue_id).filter(Boolean));
+  const linkedEceQueueIds = new Set(homeEligibleEces.map((ece) => ece.queue_id).filter(Boolean));
   const visibleQueues = queues.filter((q) => !linkedEceQueueIds.has(q.id));
   const checkInCardCount = checkInConfig.enabled ? 1 : 0;
   const sessionCount =
@@ -860,7 +867,17 @@ export default function GuestEventDetail() {
                           />
                         )}
                         <span className="ed-home-item-copy">
-                          {item.title && <span className="ed-home-item-title">{item.title}</span>}
+                          {item.title && item.url ? (
+                            <a
+                              href={item.url}
+                              className="ed-home-item-title ed-home-item-link"
+                              target="_blank"
+                              rel="noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {item.title}
+                            </a>
+                          ) : item.title && <span className="ed-home-item-title">{item.title}</span>}
                           {item.meta && <span className="ed-home-item-meta">{item.meta}</span>}
                           {item.note && <span className="ed-home-item-note">{item.note}</span>}
                         </span>

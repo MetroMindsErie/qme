@@ -180,6 +180,17 @@ export default function GuestQueueTicketPage() {
       try {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
+        const q  = await getQueueBySlug(ev.id, queueSlug);
+        const didClearEventReset = clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
+        if (didClearEventReset) {
+          clearQueueTicket(q.id);
+          setGuestFirstName('');
+          setGuestLastName('');
+          setGuestNameSaved(false);
+          setSearchParams({}, { replace: true });
+        }
+        setQueue(q);
+
         const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
         let checkInGuestName: { firstName: string; lastName: string } | null = null;
         setEventCheckInId(null);
@@ -216,12 +227,6 @@ export default function GuestQueueTicketPage() {
             setHeadshotCreditStatus('none');
           }
         }
-        const q  = await getQueueBySlug(ev.id, queueSlug);
-        const didClearEventReset = clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
-        if (didClearEventReset) {
-          setSearchParams({}, { replace: true });
-        }
-        setQueue(q);
         if (checkInGuestName) {
           localStorage.setItem(queueGuestStorageKey(q.id), JSON.stringify(checkInGuestName));
         }

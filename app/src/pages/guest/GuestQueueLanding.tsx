@@ -46,6 +46,14 @@ export default function GuestQueueLanding() {
       try {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
+        const q = await getQueueBySlug(ev.id, queueSlug);
+        const didClearEventReset = clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
+        if (didClearEventReset) {
+          clearQueueTicket(q.id);
+          setSearchParams({}, { replace: true });
+        }
+        setQueue(q);
+
         const storedCheckIn = localStorage.getItem(`qme:eventCheckIn:${ev.id}`);
         setBouquetAccess('none');
         setHeadshotCreditStatus('none');
@@ -67,12 +75,6 @@ export default function GuestQueueLanding() {
             setHeadshotCreditStatus('none');
           }
         }
-        const q = await getQueueBySlug(ev.id, queueSlug);
-        const didClearEventReset = clearGuestStateAfterEventReset(ev.id, [q.id], getEventTestDataResetMarker(ev));
-        if (didClearEventReset) {
-          setSearchParams({}, { replace: true });
-        }
-        setQueue(q);
       } catch (e) {
         console.error('Failed to load queue', e);
       } finally {

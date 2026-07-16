@@ -71,12 +71,31 @@ create policy "event_guest_credits_delete_staff"
   to authenticated
   using (public.can_manage_event_guest_action(event_id));
 
--- 3. Lock down the one-time bootstrap escalation helper.
+-- 3. Remove legacy anonymous direct table grants from sensitive admin/guest
+-- tables. Anonymous guest flows should use token-verified RPCs; authenticated
+-- admin/staff flows remain protected by RLS policies.
+revoke all on public.admin_principals from anon;
+revoke all on public.platform_roles from anon;
+revoke all on public.organization_memberships from anon;
+revoke all on public.event_staff_assignments from anon;
+revoke all on public.event_check_ins from anon;
+revoke all on public.tickets from anon;
+revoke all on public.event_guest_marks from anon;
+
+grant select, insert, update, delete on public.admin_principals to authenticated;
+grant select, insert, update, delete on public.platform_roles to authenticated;
+grant select, insert, update, delete on public.organization_memberships to authenticated;
+grant select, insert, update, delete on public.event_staff_assignments to authenticated;
+grant select, insert, update, delete on public.event_check_ins to authenticated;
+grant select, insert, update, delete on public.tickets to authenticated;
+grant select, insert, update, delete on public.event_guest_marks to authenticated;
+
+-- 4. Lock down the one-time bootstrap escalation helper.
 revoke all on function public.grant_qme_superadmin(uuid, text, text) from public;
 revoke all on function public.grant_qme_superadmin(uuid, text, text) from anon;
 revoke all on function public.grant_qme_superadmin(uuid, text, text) from authenticated;
 
--- 4. Admin queue completion must not be directly executable by anon.
+-- 5. Admin queue completion must not be directly executable by anon.
 -- Guest completion remains available through complete_queue_ticket_for_guest,
 -- which verifies the guest token and ticket ownership internally.
 revoke all on function public.admin_complete_queue_ticket(uuid, bigint, text, text, uuid, text, text, jsonb) from public;

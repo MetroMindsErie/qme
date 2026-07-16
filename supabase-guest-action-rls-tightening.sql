@@ -5,12 +5,17 @@
 -- Intent:
 -- - move guest-owned check-in and ticket actions behind token-verified RPCs
 -- - keep staff/admin table access scoped by role helpers
--- - preserve current app compatibility while the client moves off direct table access
+-- - preserve admin/staff table compatibility while guest actions move off direct
+--   anonymous table access
 
-grant select, insert, update, delete on public.event_check_ins to anon, authenticated;
-grant select, insert, update, delete on public.tickets to anon, authenticated;
-grant select, insert, update, delete on public.event_guest_marks to anon, authenticated;
-grant select, insert, update, delete on public.event_guest_credits to anon, authenticated;
+revoke all on public.event_check_ins from anon;
+revoke all on public.tickets from anon;
+revoke all on public.event_guest_marks from anon;
+revoke all on public.event_guest_credits from anon;
+grant select, insert, update, delete on public.event_check_ins to authenticated;
+grant select, insert, update, delete on public.tickets to authenticated;
+grant select, insert, update, delete on public.event_guest_marks to authenticated;
+grant select, insert, update, delete on public.event_guest_credits to authenticated;
 
 create or replace function public.guest_session_matches(
   target_guest_session_id uuid,

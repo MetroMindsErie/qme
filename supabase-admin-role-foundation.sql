@@ -320,15 +320,14 @@ begin
 end;
 $$;
 
--- Temporary alpha policies while Supabase Auth and role-aware RLS are wired.
--- These are intentionally broad so the current pilot/admin screens continue
--- to work. Replace in the SOTC RLS hardening pass.
+-- Admin role tables require named Supabase Auth access. Anonymous guest flows
+-- should never read or write these tables directly.
 grant usage on schema public to anon, authenticated;
-grant select, insert, update, delete on public.admin_principals to anon, authenticated;
-grant select, insert, update, delete on public.platform_roles to anon, authenticated;
-grant select, insert, update, delete on public.organization_memberships to anon, authenticated;
-grant select, insert, update, delete on public.event_staff_assignments to anon, authenticated;
-grant select, insert on public.admin_audit_logs to anon, authenticated;
+grant select, insert, update, delete on public.admin_principals to authenticated;
+grant select, insert, update, delete on public.platform_roles to authenticated;
+grant select, insert, update, delete on public.organization_memberships to authenticated;
+grant select, insert, update, delete on public.event_staff_assignments to authenticated;
+grant select, insert on public.admin_audit_logs to authenticated;
 
 alter table public.admin_principals enable row level security;
 alter table public.platform_roles enable row level security;
@@ -340,7 +339,7 @@ drop policy if exists "admin_principals_all" on public.admin_principals;
 create policy "admin_principals_all"
   on public.admin_principals
   for all
-  to anon, authenticated
+  to authenticated
   using (true)
   with check (true);
 
@@ -348,7 +347,7 @@ drop policy if exists "platform_roles_all" on public.platform_roles;
 create policy "platform_roles_all"
   on public.platform_roles
   for all
-  to anon, authenticated
+  to authenticated
   using (true)
   with check (true);
 
@@ -356,7 +355,7 @@ drop policy if exists "organization_memberships_all" on public.organization_memb
 create policy "organization_memberships_all"
   on public.organization_memberships
   for all
-  to anon, authenticated
+  to authenticated
   using (true)
   with check (true);
 
@@ -364,7 +363,7 @@ drop policy if exists "event_staff_assignments_all" on public.event_staff_assign
 create policy "event_staff_assignments_all"
   on public.event_staff_assignments
   for all
-  to anon, authenticated
+  to authenticated
   using (true)
   with check (true);
 
@@ -372,12 +371,12 @@ drop policy if exists "admin_audit_logs_select_all" on public.admin_audit_logs;
 create policy "admin_audit_logs_select_all"
   on public.admin_audit_logs
   for select
-  to anon, authenticated
+  to authenticated
   using (true);
 
 drop policy if exists "admin_audit_logs_insert_all" on public.admin_audit_logs;
 create policy "admin_audit_logs_insert_all"
   on public.admin_audit_logs
   for insert
-  to anon, authenticated
+  to authenticated
   with check (true);

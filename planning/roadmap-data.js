@@ -751,7 +751,7 @@ const QME_ROADMAP = {
                 "Verification SQL, remediation SQL, tests, manual deployment actions, and remaining risks are documented for Ahmed follow-up."
               ],
               notes:
-                "Added by the 2026-07-16 security review. This pauses unrelated feature expansion until emergency findings are verified and closed."
+                "Added by the 2026-07-16 security review. This pauses unrelated feature expansion until emergency findings are verified and closed. July 16 follow-up: smoke-test reset bug was fixed, then security work resumed by updating remediation/current SQL to revoke anonymous direct table grants from admin_principals, platform_roles, organization_memberships, event_staff_assignments, event_check_ins, tickets, event_guest_marks, event_guest_credits, and event_group_order_items while preserving authenticated RLS access and scoped anonymous guest RPCs."
             },
             {
               id: "story-guest-session-recovery-code",

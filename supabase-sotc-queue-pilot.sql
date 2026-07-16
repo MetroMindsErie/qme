@@ -136,9 +136,10 @@ before update on public.tickets
 for each row
 execute function public.set_ticket_stage_updated_at();
 
-grant select, insert, update, delete on public.event_guest_marks to anon, authenticated;
-grant select, insert, update, delete on public.event_guest_designations to anon, authenticated;
-grant select, insert, update, delete on public.event_guest_credits to anon, authenticated;
+-- Guest actions now use scoped RPCs; do not grant anonymous direct table access.
+grant select, insert, update, delete on public.event_guest_marks to authenticated;
+grant select, insert, update, delete on public.event_guest_designations to authenticated;
+grant select, insert, update, delete on public.event_guest_credits to authenticated;
 
 alter table public.event_guest_marks enable row level security;
 alter table public.event_guest_designations enable row level security;
@@ -148,7 +149,7 @@ drop policy if exists "event_guest_marks_all" on public.event_guest_marks;
 create policy "event_guest_marks_all"
   on public.event_guest_marks
   for all
-  to anon, authenticated
+  to authenticated
   using (true)
   with check (true);
 
@@ -156,7 +157,7 @@ drop policy if exists "event_guest_designations_all" on public.event_guest_desig
 create policy "event_guest_designations_all"
   on public.event_guest_designations
   for all
-  to anon, authenticated
+  to authenticated
   using (true)
   with check (true);
 
@@ -164,7 +165,7 @@ drop policy if exists "event_guest_credits_all" on public.event_guest_credits;
 create policy "event_guest_credits_all"
   on public.event_guest_credits
   for all
-  to anon, authenticated
+  to authenticated
   using (true)
   with check (true);
 

@@ -8,11 +8,11 @@
 -- Intent:
 -- - protect admin identity/role tables behind authenticated qME admins
 -- - restrict SOTC credit/designation mutations to event/staff/admin roles
--- - preserve anonymous guest participation where qME still lacks durable guest auth
+-- - preserve anonymous guest participation through scoped RPCs, not direct table access
 --
--- Remaining known gap:
--- Tickets and event_check_ins still need a guest identity/token model before
--- per-guest RLS can safely replace the current anonymous pilot access pattern.
+-- Guest identity/token RPCs are added in supabase-guest-session-foundation.sql
+-- and supabase-guest-action-rls-tightening.sql. Do not restore anonymous direct
+-- table grants for guest check-ins, tickets, marks, or credits.
 
 grant usage on schema public to anon, authenticated;
 
@@ -24,9 +24,11 @@ grant select, insert, update, delete on public.organization_memberships to authe
 grant select, insert, update, delete on public.event_staff_assignments to authenticated;
 grant select, insert on public.admin_audit_logs to authenticated;
 
-grant select, insert, update, delete on public.event_guest_marks to anon, authenticated;
+revoke all on public.event_guest_marks from anon;
 grant select, insert, update, delete on public.event_guest_designations to authenticated;
-grant select, insert, update, delete on public.event_guest_credits to anon, authenticated;
+revoke all on public.event_guest_credits from anon;
+grant select, insert, update, delete on public.event_guest_marks to authenticated;
+grant select, insert, update, delete on public.event_guest_credits to authenticated;
 
 -- Helper: event-scoped staff, including queue/eCe-scoped station/service roles.
 create or replace function public.has_event_staff_role(
@@ -258,27 +260,25 @@ create policy "admin_audit_logs_insert_admin"
     )
   );
 
--- Guest marks: guests may still create guest-sourced completion marks for
--- pilot code/scan completion. Staff/admins can read and manage marks.
+-- Guest marks: guest-sourced completion marks now go through scoped RPCs.
+-- Staff/admins can read and manage marks directly under RLS.
 drop policy if exists "event_guest_marks_all" on public.event_guest_marks;
 drop policy if exists "event_guest_marks_select_scoped" on public.event_guest_marks;
 create policy "event_guest_marks_select_scoped"
   on public.event_guest_marks
   for select
-  to anon, authenticated
+  to authenticated
   using (
-    source = 'guest'
-    or public.can_manage_event_guest_action(event_id)
+    public.can_manage_event_guest_action(event_id)
   );
 
 drop policy if exists "event_guest_marks_insert_guest_or_staff" on public.event_guest_marks;
 create policy "event_guest_marks_insert_guest_or_staff"
   on public.event_guest_marks
   for insert
-  to anon, authenticated
+  to authenticated
   with check (
-    source = 'guest'
-    or public.can_manage_event_guest_action(event_id)
+    public.can_manage_event_guest_action(event_id)
   );
 
 drop policy if exists "event_guest_marks_update_staff" on public.event_guest_marks;
@@ -327,16 +327,16 @@ create policy "event_guest_designations_delete_staff"
   to authenticated
   using (public.can_manage_event_guest_action(event_id));
 
--- Credits: guests can read enough to know their credit state in the pilot.
--- Granting, consuming, or resetting credits is staff/admin only.
+-- Credits: guests read credit state through scoped RPCs. Direct table access is
+-- staff/admin only.
 drop policy if exists "event_guest_credits_all" on public.event_guest_credits;
 drop policy if exists "event_guest_credits_select_pilot" on public.event_guest_credits;
 create policy "event_guest_credits_select_pilot"
   on public.event_guest_credits
   for select
-  to anon, authenticated
+  to authenticated
   using (
-    true
+    public.can_manage_event_guest_action(event_id)
   );
 
 drop policy if exists "event_guest_credits_insert_staff" on public.event_guest_credits;

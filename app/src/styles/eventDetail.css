@@ -534,6 +534,15 @@
   gap: 10px;
 }
 
+.ed-detail-frame {
+  clear: both;
+  width: 100%;
+  min-height: min(68vh, 560px);
+  border: 1px solid #e4e7ec;
+  border-radius: 10px;
+  background: #fff;
+}
+
 .ed-detail-row {
   display: flex;
   align-items: center;

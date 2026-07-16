@@ -911,20 +911,22 @@ export default function GuestEventDetail() {
                   <div className="ed-home-items">
                     {homeItems.map((item, index) => {
                       const opensDetails = item.details.length > 0 && item.detailsMode === 'modal';
+                      const opensEmbed = Boolean(item.url) && item.detailsMode === 'embed';
+                      const opensModal = opensDetails || opensEmbed;
                       const openDetail = (e: MouseEvent | KeyboardEvent) => {
-                        if (!opensDetails) return;
+                        if (!opensModal) return;
                         e.stopPropagation();
                         setActiveHomeItem(item);
                       };
 
                       return (
                       <div
-                        className={`ed-home-item ${opensDetails ? 'ed-home-item-clickable' : ''}`}
+                        className={`ed-home-item ${opensModal ? 'ed-home-item-clickable' : ''}`}
                         key={`${item.title}-${index}`}
-                        role={opensDetails ? 'button' : undefined}
-                        tabIndex={opensDetails ? 0 : undefined}
-                        onClick={opensDetails ? openDetail : undefined}
-                        onKeyDown={opensDetails ? (e) => { if (e.key === 'Enter' || e.key === ' ') openDetail(e); } : undefined}
+                        role={opensModal ? 'button' : undefined}
+                        tabIndex={opensModal ? 0 : undefined}
+                        onClick={opensModal ? openDetail : undefined}
+                        onKeyDown={opensModal ? (e) => { if (e.key === 'Enter' || e.key === ' ') openDetail(e); } : undefined}
                       >
                         {item.imageUrl && (
                           <img
@@ -934,7 +936,7 @@ export default function GuestEventDetail() {
                           />
                         )}
                         <span className="ed-home-item-copy">
-                          {item.title && item.url ? (
+                          {item.title && item.url && !opensEmbed ? (
                             <a
                               href={item.url}
                               className="ed-home-item-title ed-home-item-link"
@@ -945,7 +947,7 @@ export default function GuestEventDetail() {
                               {item.title}
                             </a>
                           ) : item.title && (
-                            <span className={`ed-home-item-title ${opensDetails ? 'ed-home-item-link' : ''}`}>
+                            <span className={`ed-home-item-title ${opensModal ? 'ed-home-item-link' : ''}`}>
                               {item.title}
                             </span>
                           )}
@@ -1059,19 +1061,27 @@ export default function GuestEventDetail() {
             </button>
             <h2>{activeHomeItem.title}</h2>
             {activeHomeItem.note && <p>{activeHomeItem.note}</p>}
-            <div className="ed-detail-list">
-              {activeHomeItem.details.map((detail, index) => (
-                <div className="ed-detail-row" key={`${detail.label}-${index}`}>
-                  {detail.color && (
-                    <span className="ed-detail-dot" style={{ background: detail.color }} />
-                  )}
-                  <span className="ed-detail-text">
-                    <span className="ed-detail-label">{detail.label}</span>
-                    {detail.value && <span className="ed-detail-value">{detail.value}</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
+            {activeHomeItem.detailsMode === 'embed' && activeHomeItem.url ? (
+              <iframe
+                className="ed-detail-frame"
+                src={activeHomeItem.url}
+                title={activeHomeItem.title}
+              />
+            ) : (
+              <div className="ed-detail-list">
+                {activeHomeItem.details.map((detail, index) => (
+                  <div className="ed-detail-row" key={`${detail.label}-${index}`}>
+                    {detail.color && (
+                      <span className="ed-detail-dot" style={{ background: detail.color }} />
+                    )}
+                    <span className="ed-detail-text">
+                      <span className="ed-detail-label">{detail.label}</span>
+                      {detail.value && <span className="ed-detail-value">{detail.value}</span>}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -194,7 +194,8 @@ cross join (
           jsonb_build_object(
             'title', 'Mixer Resources',
             'note', 'Open the SOTC mixer resources page for the digital guide and event materials.',
-            'url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit'
+            'url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit',
+            'detail_presentation', 'embed'
           ),
           jsonb_build_object(
             'title', 'Sticker Guide',

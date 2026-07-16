@@ -111,7 +111,6 @@ type HomeItemDetail = {
   label: string;
   value: string;
   color: string;
-  url: string;
 };
 
 type HomeItem = {
@@ -134,7 +133,6 @@ function getHomeItemDetails(value: unknown): HomeItemDetail[] {
         label: asString(record.label || record.title || record.name),
         value: asString(record.value || record.meta || record.note || record.description),
         color: asString(record.color),
-        url: asString(record.url || record.href || record.link_url || record.linkUrl),
       };
     })
     .filter((detail) => detail.label || detail.value || detail.color);
@@ -1069,13 +1067,7 @@ export default function GuestEventDetail() {
                     <span className="ed-detail-dot" style={{ background: detail.color }} />
                   )}
                   <span className="ed-detail-text">
-                    {detail.url ? (
-                      <a className="ed-detail-label ed-detail-link" href={detail.url} target="_blank" rel="noreferrer">
-                        {detail.label}
-                      </a>
-                    ) : (
-                      <span className="ed-detail-label">{detail.label}</span>
-                    )}
+                    <span className="ed-detail-label">{detail.label}</span>
                     {detail.value && <span className="ed-detail-value">{detail.value}</span>}
                   </span>
                 </div>

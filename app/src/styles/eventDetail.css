@@ -563,11 +563,6 @@
   font-weight: 800;
 }
 
-.ed-detail-link {
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
 .ed-detail-value {
   color: #657080;
   font-size: 0.78rem;

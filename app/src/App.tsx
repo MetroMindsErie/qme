@@ -6,6 +6,7 @@ import AdminEventForm from './pages/admin/AdminEventForm';
 import AdminEventDetail from './pages/admin/AdminEventDetail';
 import AdminEventCheckIns from './pages/admin/AdminEventCheckIns';
 import AdminGroupOrderDashboard from './pages/admin/AdminGroupOrderDashboard';
+import AdminLanding from './pages/admin/AdminLanding';
 import AdminQueueForm from './pages/admin/AdminQueueForm';
 import AdminQueueDashboard from './pages/admin/AdminQueueDashboard';
 import AdminOrganizationList from './pages/admin/AdminOrganizationList';
@@ -91,7 +92,7 @@ function App() {
         <Route path="/events/:eventSlug/q/:queueSlug/ticket" element={<QueueTicketPage />} />
 
         {/* ===== Admin: kept for operator use ===== */}
-        <Route path="/admin" element={<Navigate to="/admin/events" replace />} />
+        <Route path="/admin" element={<AdminPage><AdminLanding /></AdminPage>} />
         <Route path="/admin/organizations" element={<AdminPage><AdminOrganizationList /></AdminPage>} />
         <Route path="/admin/organizations/:organizationId" element={<AdminPage><AdminOrganizationDetail /></AdminPage>} />
         <Route path="/admin/organizations/:organizationId/expies/new" element={<AdminPage><AdminExpieForm /></AdminPage>} />

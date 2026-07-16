@@ -170,6 +170,7 @@ end;
 $$;
 
 revoke all on function public.admin_apply_queue_pilot_flow(uuid) from public;
+revoke all on function public.admin_apply_queue_pilot_flow(uuid) from anon;
 grant execute on function public.admin_apply_queue_pilot_flow(uuid) to authenticated;
 
 create or replace function public.active_ticket_count_for_queue(p_queue_id uuid)

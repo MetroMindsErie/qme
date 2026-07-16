@@ -244,10 +244,13 @@ end;
 $$;
 
 revoke all on function public.admin_complete_event_check_in(uuid, text) from public;
+revoke all on function public.admin_complete_event_check_in(uuid, text) from anon;
 grant execute on function public.admin_complete_event_check_in(uuid, text) to authenticated;
 
 revoke all on function public.admin_update_event_check_in_ticket_type(uuid, text) from public;
+revoke all on function public.admin_update_event_check_in_ticket_type(uuid, text) from anon;
 grant execute on function public.admin_update_event_check_in_ticket_type(uuid, text) to authenticated;
 
 revoke all on function public.admin_grant_guest_credit_for_check_in(uuid, text, integer, jsonb) from public;
+revoke all on function public.admin_grant_guest_credit_for_check_in(uuid, text, integer, jsonb) from anon;
 grant execute on function public.admin_grant_guest_credit_for_check_in(uuid, text, integer, jsonb) to authenticated;

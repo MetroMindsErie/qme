@@ -338,13 +338,17 @@ revoke all on function public.can_manage_queue_guest_action(uuid, uuid) from pub
 grant execute on function public.can_manage_queue_guest_action(uuid, uuid) to authenticated;
 
 revoke all on function public.admin_release_queue_ticket(bigint) from public;
+revoke all on function public.admin_release_queue_ticket(bigint) from anon;
 grant execute on function public.admin_release_queue_ticket(bigint) to authenticated;
 
 revoke all on function public.admin_return_queue_ticket_to_waiting(bigint, text) from public;
+revoke all on function public.admin_return_queue_ticket_to_waiting(bigint, text) from anon;
 grant execute on function public.admin_return_queue_ticket_to_waiting(bigint, text) to authenticated;
 
 revoke all on function public.admin_mark_queue_ticket_not_here(bigint) from public;
+revoke all on function public.admin_mark_queue_ticket_not_here(bigint) from anon;
 grant execute on function public.admin_mark_queue_ticket_not_here(bigint) to authenticated;
 
 revoke all on function public.admin_complete_queue_ticket(uuid, bigint, text, text, uuid, text, text, jsonb) from public;
+revoke all on function public.admin_complete_queue_ticket(uuid, bigint, text, text, uuid, text, text, jsonb) from anon;
 grant execute on function public.admin_complete_queue_ticket(uuid, bigint, text, text, uuid, text, text, jsonb) to authenticated;

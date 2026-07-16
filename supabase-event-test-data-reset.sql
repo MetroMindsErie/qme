@@ -170,4 +170,5 @@ end;
 $$;
 
 revoke all on function public.reset_event_test_data(uuid) from public;
+revoke all on function public.reset_event_test_data(uuid) from anon;
 grant execute on function public.reset_event_test_data(uuid) to authenticated;

@@ -1,13 +1,11 @@
--- qME queue practice reset.
+-- qME queue reset role hardening.
 -- Run after:
 -- - supabase-admin-role-foundation.sql
 -- - supabase-sotc-rls-hardening.sql
--- - supabase-sotc-queue-pilot.sql
+-- - supabase-queue-practice-reset.sql
 --
--- Intent:
--- - make the admin "Reset Practice Run" button clear queue test remnants
--- - remove queue tickets that drive Waiting/Standby/Released/Completed counts
--- - preserve event check-ins and check-in-linked credits, which are event-level
+-- This keeps the legacy queue-level reset available for event admins, org admins,
+-- and qME superadmins, but removes reset authority from station/service staff.
 
 create or replace function public.reset_queue_for_queue(
   p_queue_id uuid
@@ -99,3 +97,8 @@ $$;
 revoke all on function public.reset_queue_for_queue(uuid) from public;
 revoke all on function public.reset_queue_for_queue(uuid) from anon;
 grant execute on function public.reset_queue_for_queue(uuid) to authenticated;
+
+select
+  'public.reset_queue_for_queue(uuid)' as signature,
+  has_function_privilege('anon', 'public.reset_queue_for_queue(uuid)', 'execute') as anon_can_execute,
+  has_function_privilege('authenticated', 'public.reset_queue_for_queue(uuid)', 'execute') as authenticated_can_execute;

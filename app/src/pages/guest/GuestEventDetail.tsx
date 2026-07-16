@@ -111,6 +111,7 @@ type HomeItemDetail = {
   label: string;
   value: string;
   color: string;
+  url: string;
 };
 
 type HomeItem = {
@@ -133,6 +134,7 @@ function getHomeItemDetails(value: unknown): HomeItemDetail[] {
         label: asString(record.label || record.title || record.name),
         value: asString(record.value || record.meta || record.note || record.description),
         color: asString(record.color),
+        url: asString(record.url || record.href || record.link_url || record.linkUrl),
       };
     })
     .filter((detail) => detail.label || detail.value || detail.color);
@@ -911,8 +913,7 @@ export default function GuestEventDetail() {
                   <div className="ed-home-items">
                     {homeItems.map((item, index) => {
                       const opensDetails = item.details.length > 0 && item.detailsMode === 'modal';
-                      const opensEmbed = Boolean(item.url) && item.detailsMode === 'embed';
-                      const opensModal = opensDetails || opensEmbed;
+                      const opensModal = opensDetails;
                       const openDetail = (e: MouseEvent | KeyboardEvent) => {
                         if (!opensModal) return;
                         e.stopPropagation();
@@ -936,7 +937,7 @@ export default function GuestEventDetail() {
                           />
                         )}
                         <span className="ed-home-item-copy">
-                          {item.title && item.url && !opensEmbed ? (
+                          {item.title && item.url ? (
                             <a
                               href={item.url}
                               className="ed-home-item-title ed-home-item-link"
@@ -1061,27 +1062,25 @@ export default function GuestEventDetail() {
             </button>
             <h2>{activeHomeItem.title}</h2>
             {activeHomeItem.note && <p>{activeHomeItem.note}</p>}
-            {activeHomeItem.detailsMode === 'embed' && activeHomeItem.url ? (
-              <iframe
-                className="ed-detail-frame"
-                src={activeHomeItem.url}
-                title={activeHomeItem.title}
-              />
-            ) : (
-              <div className="ed-detail-list">
-                {activeHomeItem.details.map((detail, index) => (
-                  <div className="ed-detail-row" key={`${detail.label}-${index}`}>
-                    {detail.color && (
-                      <span className="ed-detail-dot" style={{ background: detail.color }} />
-                    )}
-                    <span className="ed-detail-text">
+            <div className="ed-detail-list">
+              {activeHomeItem.details.map((detail, index) => (
+                <div className="ed-detail-row" key={`${detail.label}-${index}`}>
+                  {detail.color && (
+                    <span className="ed-detail-dot" style={{ background: detail.color }} />
+                  )}
+                  <span className="ed-detail-text">
+                    {detail.url ? (
+                      <a className="ed-detail-label ed-detail-link" href={detail.url} target="_blank" rel="noreferrer">
+                        {detail.label}
+                      </a>
+                    ) : (
                       <span className="ed-detail-label">{detail.label}</span>
-                      {detail.value && <span className="ed-detail-value">{detail.value}</span>}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+                    )}
+                    {detail.value && <span className="ed-detail-value">{detail.value}</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

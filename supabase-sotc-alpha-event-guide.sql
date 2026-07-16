@@ -194,8 +194,22 @@ cross join (
           jsonb_build_object(
             'title', 'Mixer Resources',
             'note', 'Open the SOTC mixer resources page for the digital guide and event materials.',
-            'url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit',
-            'detail_presentation', 'embed'
+            'detail_presentation', 'modal',
+            'details', jsonb_build_array(
+              jsonb_build_object(
+                'label', 'Open Full Guide',
+                'value', 'Launch the full Canva mixer resources page.',
+                'url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit'
+              ),
+              jsonb_build_object(
+                'label', 'Sticker Guide',
+                'value', 'Use sticker colors to find guests with shared interests.'
+              ),
+              jsonb_build_object(
+                'label', 'Event Schedule',
+                'value', 'See what is happening by time and location.'
+              )
+            )
           ),
           jsonb_build_object(
             'title', 'Sticker Guide',

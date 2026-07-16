@@ -689,7 +689,7 @@ const QME_ROADMAP = {
             {
               id: "story-foundation-privileged-action-matrix",
               title: "Document privileged action matrix",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Create a concise matrix of sensitive actions, their RPC/function path, required role, audit behavior, RLS/table protection, and remaining risk.",
@@ -700,7 +700,7 @@ const QME_ROADMAP = {
                 "Any direct-client/RLS-backed action is identified as accepted for now, moved to a follow-up, or replaced with an RPC."
               ],
               notes:
-                "Added by the 2026-07-01 Foundation Review to prevent protection gaps from hiding inside scattered UI/service calls."
+                "Added by the 2026-07-01 Foundation Review to prevent protection gaps from hiding inside scattered UI/service calls. Completed July 16 with docs/privileged-action-matrix-v1.md. The matrix documents guest check-in/session actions, admin check-in/photo-credit actions, queue flow/release/Not Here/Return to Waiting/completion, Headshot guest service-start self-completion, destructive reset controls, setup mutations, admin principal management, and bootstrap restrictions. Current conclusion: emergency anonymous/admin RPC boundaries are much stronger and verified live; the next layer is station-role clarity, role-aware workspace visibility, and moving remaining important setup mutations behind named audited RPCs where direct RLS is still ambiguous."
             },
             {
               id: "story-foundation-external-db-security-review",

@@ -17,6 +17,8 @@ alter table public.queues
     check (gathering_max >= 0),
   add column if not exists gathering_stale_after_seconds integer not null default 15
     check (gathering_stale_after_seconds >= 0),
+  add column if not exists not_here_cooldown_seconds integer not null default 300
+    check (not_here_cooldown_seconds >= 0),
   add column if not exists max_active_released integer not null default 1
     check (max_active_released >= 0);
 

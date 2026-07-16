@@ -367,7 +367,16 @@ export default function AdminQueueDashboard() {
       void applyAutoPilotPass(true);
     }, 2000);
     return () => clearInterval(interval);
-  }, [isPilotQueue, queue?.run_mode, queue?.standby_threshold, queue?.max_active_released, applyAutoPilotPass]);
+  }, [
+    isPilotQueue,
+    queue?.run_mode,
+    queue?.standby_threshold,
+    queue?.gathering_max,
+    queue?.gathering_stale_after_seconds,
+    queue?.not_here_cooldown_seconds,
+    queue?.max_active_released,
+    applyAutoPilotPass,
+  ]);
 
   if (loading) {
     return (
@@ -394,6 +403,7 @@ export default function AdminQueueDashboard() {
     const standbyTarget = queue.standby_threshold ?? 3;
     const gatheringMax = Math.max(standbyTarget, queue.gathering_max ?? standbyTarget + maxActive + 2);
     const staleAfterSeconds = queue.gathering_stale_after_seconds ?? 15;
+    const notHereCooldownSeconds = queue.not_here_cooldown_seconds ?? 300;
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
     const displayTickets = [...pilotTickets]
@@ -484,9 +494,15 @@ export default function AdminQueueDashboard() {
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
-                Stale after sec
+                Gathering stale sec
                 <input type="number" min={0} value={staleAfterSeconds} disabled={savingControls} onChange={(e) => saveQueueControls({ gathering_stale_after_seconds: Math.max(0, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
-                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>When non-nearby guests stop blocking.</span>
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>When non-nearby Gathering guests stop blocking.</span>
+              </label>
+
+              <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
+                Not Here cooldown sec
+                <input type="number" min={0} value={notHereCooldownSeconds} disabled={savingControls} onChange={(e) => saveQueueControls({ not_here_cooldown_seconds: Math.max(0, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>How long a Not Here guest waits before they can be invited again.</span>
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
@@ -504,7 +520,7 @@ export default function AdminQueueDashboard() {
               )}
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/Nearby guests and can overflow up to {gatheringMax} when earlier Gathering guests do not tap I'm Nearby after {staleAfterSeconds} seconds. Only Nearby guests are released. Future stale controls will move stale guests back to Waiting when space is needed.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/Nearby guests and can overflow up to {gatheringMax} when earlier Gathering guests do not tap I'm Nearby after {staleAfterSeconds} seconds. Guests marked Not Here wait {notHereCooldownSeconds} seconds before they can be invited again. Only Nearby guests are released.
             </div>
           </div>
           )}

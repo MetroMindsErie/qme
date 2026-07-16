@@ -43,6 +43,7 @@ export interface Queue {
   standby_threshold?: number;
   gathering_max?: number;
   gathering_stale_after_seconds?: number;
+  not_here_cooldown_seconds?: number;
   max_active_released?: number;
   created_at: string;
   updated_at: string;
@@ -92,7 +93,7 @@ export type CreateQueueInput = Pick<
 
 export type UpdateQueueInput = Partial<Omit<CreateQueueInput, 'event_id'>> & Partial<Pick<
   Queue,
-  'join_status' | 'run_mode' | 'standby_threshold' | 'gathering_max' | 'gathering_stale_after_seconds' | 'max_active_released'
+  'join_status' | 'run_mode' | 'standby_threshold' | 'gathering_max' | 'gathering_stale_after_seconds' | 'not_here_cooldown_seconds' | 'max_active_released'
 >>;
 
 export interface Expie {

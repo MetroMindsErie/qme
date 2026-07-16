@@ -1,8 +1,13 @@
--- qME SOTC queue auto-flow RPC.
+-- qME queue Not Here cooldown split.
 -- Run after supabase-sotc-queue-pilot.sql.
 --
--- Moves queue advancement out of the admin browser so auto-assist queues can
--- advance when guests join or mark nearby, even if no staff queue screen is open.
+-- Separates two queue timing concepts:
+-- - gathering_stale_after_seconds: when non-nearby Gathering guests stop blocking
+-- - not_here_cooldown_seconds: when a Not Here guest may be invited again
+
+alter table public.queues
+  add column if not exists not_here_cooldown_seconds integer not null default 300
+    check (not_here_cooldown_seconds >= 0);
 
 create or replace function public.run_queue_pilot_flow(
   p_queue_id uuid,
@@ -26,9 +31,6 @@ declare
   slots integer := 0;
   ticket_record record;
 begin
-  -- Multiple guest/admin screens can trigger auto-flow at nearly the same time.
-  -- Serialize each queue's flow pass so concurrent calls cannot over-promote
-  -- Waiting guests beyond the configured Gathering max.
   perform pg_advisory_xact_lock(hashtextextended(p_queue_id::text, 0));
 
   select *
@@ -130,103 +132,3 @@ end;
 $$;
 
 revoke all on function public.run_queue_pilot_flow(uuid, boolean) from public;
-
-create or replace function public.apply_queue_pilot_flow(p_queue_id uuid)
-returns void
-language sql
-security definer
-set search_path = public
-as $$
-  select public.run_queue_pilot_flow(p_queue_id, false);
-$$;
-
-revoke all on function public.apply_queue_pilot_flow(uuid) from public;
-grant execute on function public.apply_queue_pilot_flow(uuid) to anon, authenticated;
-
-create or replace function public.admin_apply_queue_pilot_flow(p_queue_id uuid)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  target_event_id uuid;
-begin
-  select event_id
-    into target_event_id
-  from public.queues
-  where id = p_queue_id;
-
-  if target_event_id is null then
-    raise exception 'Queue not found.';
-  end if;
-
-  if not public.can_manage_queue_guest_action(target_event_id, p_queue_id) then
-    raise exception 'not allowed to apply queue flow';
-  end if;
-
-  perform public.run_queue_pilot_flow(p_queue_id, true);
-end;
-$$;
-
-revoke all on function public.admin_apply_queue_pilot_flow(uuid) from public;
-grant execute on function public.admin_apply_queue_pilot_flow(uuid) to authenticated;
-
-create or replace function public.active_ticket_count_for_queue(p_queue_id uuid)
-returns integer
-language sql
-security definer
-set search_path = public
-as $$
-  select count(*)::integer
-  from public.tickets
-  where queue_id = p_queue_id
-    and coalesce(stage, 'waiting') not in ('completed', 'cancelled', 'left')
-    and coalesce(status, 'waiting') not in ('left', 'served');
-$$;
-
-revoke all on function public.active_ticket_count_for_queue(uuid) from public;
-grant execute on function public.active_ticket_count_for_queue(uuid) to anon, authenticated;
-
-create or replace function public.queue_stage_summary(p_queue_id uuid)
-returns jsonb
-language sql
-security definer
-set search_path = public
-as $$
-  with scoped as (
-    select
-      coalesce(stage, 'waiting') as stage,
-      coalesce(status, 'waiting') as status,
-      nearby_confirmed_at
-    from public.tickets
-    where queue_id = p_queue_id
-  )
-  select jsonb_build_object(
-    'waiting', count(*) filter (
-      where stage = 'waiting'
-        and status not in ('left', 'served')
-    ),
-    'gathering', count(*) filter (
-      where stage = 'standby'
-        and nearby_confirmed_at is null
-        and status not in ('left', 'served')
-    ),
-    'nearby', count(*) filter (
-      where stage = 'standby'
-        and nearby_confirmed_at is not null
-        and status not in ('left', 'served')
-    ),
-    'released', count(*) filter (
-      where stage = 'released'
-        and status not in ('left', 'served')
-    ),
-    'completed', count(*) filter (
-      where stage = 'completed'
-    )
-  )
-  from scoped;
-$$;
-
-revoke all on function public.queue_stage_summary(uuid) from public;
-grant execute on function public.queue_stage_summary(uuid) to anon, authenticated;

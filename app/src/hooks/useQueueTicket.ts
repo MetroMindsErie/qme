@@ -98,7 +98,7 @@ export function useQueueTicket(queueId: string | undefined, eventId?: string | n
 
   // Claim or adopt a ticket for this queue
   const claimTicket = useCallback(async (): Promise<number | null> => {
-    if (!queueId || claimBusyRef.current) return ticketId;
+    if (!queueId || !eventId || claimBusyRef.current) return ticketId;
     claimBusyRef.current = true;
     try {
       // Already have one?
@@ -108,9 +108,7 @@ export function useQueueTicket(queueId: string | undefined, eventId?: string | n
         setTicketId(id);
         setTicketNumber(Number(localStorage.getItem(localNumKey(queueId))) || id);
         try {
-          const result = eventId
-            ? await restoreTicketForQueue(id, queueId, eventId)
-            : await restoreTicketForQueue(id, queueId);
+          const result = await restoreTicketForQueue(id, queueId, eventId);
           setTicketNumber(result.ticketNumber);
           storeTicket(queueId, result.id, result.ticketNumber);
         } catch {
@@ -134,9 +132,7 @@ export function useQueueTicket(queueId: string | undefined, eventId?: string | n
       }
 
       // Claim new
-      const result = eventId
-        ? await nextTicketForQueue(queueId, eventId)
-        : await nextTicketForQueue(queueId);
+      const result = await nextTicketForQueue(queueId, eventId);
       setTicketId(result.id);
       setTicketNumber(result.ticketNumber);
       storeTicket(queueId, result.id, result.ticketNumber);
@@ -150,17 +146,13 @@ export function useQueueTicket(queueId: string | undefined, eventId?: string | n
   }, [queueId, eventId, ticketId]);
 
   const checkIn = useCallback(async () => {
-    if (!ticketId || !queueId || hasCheckedIn) return;
+    if (!ticketId || !queueId || !eventId || hasCheckedIn) return;
     setHasCheckedIn(true);
     try {
       localStorage.setItem(checkedInKey(queueId, ticketId), '1');
     } catch { /* */ }
     try {
-      if (eventId) {
-        await apiCheckIn(ticketId, queueId, eventId);
-      } else {
-        await apiCheckIn(ticketId);
-      }
+      await apiCheckIn(ticketId, queueId, eventId);
     } catch (e) {
       console.error('check-in failed', e);
     }
@@ -173,8 +165,6 @@ export function useQueueTicket(queueId: string | undefined, eventId?: string | n
         try {
           if (eventId && queueId) {
             await apiLeave(id, reason, queueId, eventId);
-          } else {
-            await apiLeave(id, reason);
           }
         } catch (e) {
           console.warn('leave failed (non-fatal)', e);

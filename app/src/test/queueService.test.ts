@@ -152,30 +152,12 @@ describe('queueService', () => {
   // ===== Queue-scoped RPCs =====
 
   describe('nextTicketForQueue', () => {
-    it('calls rpc("next_ticket_for_queue") with p_queue_id', async () => {
-      mockRpc
-        .mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null })
-        .mockResolvedValueOnce({ data: null, error: null });
-      const result = await nextTicketForQueue('q1');
-      expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', { p_queue_id: 'q1' });
-      expect(mockRpc).toHaveBeenNthCalledWith(2, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
-      expect(result).toEqual({ id: 7, ticketNumber: 7 });
+    it('requires event scope for guest ticket claims', async () => {
+      await expect(nextTicketForQueue('q1')).rejects.toThrow('Guest queue action requires queue and event scope.');
+      expect(mockRpc).not.toHaveBeenCalled();
     });
 
-    it('handles legacy numeric return', async () => {
-      mockRpc
-        .mockResolvedValueOnce({ data: 7, error: null })
-        .mockResolvedValueOnce({ data: null, error: null });
-      const result = await nextTicketForQueue('q1');
-      expect(result).toEqual({ id: 7, ticketNumber: 7 });
-    });
-
-    it('throws on error', async () => {
-      mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'err' } });
-      await expect(nextTicketForQueue('q1')).rejects.toEqual({ message: 'err' });
-    });
-
-    it('passes a guest session token when event id is available', async () => {
+    it('calls rpc("next_ticket_for_queue") with queue id and guest token', async () => {
       mockRpc
         .mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null })
         .mockResolvedValueOnce({ data: null, error: null });
@@ -186,6 +168,19 @@ describe('queueService', () => {
       });
       expect(mockRpc).toHaveBeenNthCalledWith(2, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
       expect(result).toEqual({ id: 7, ticketNumber: 7 });
+    });
+
+    it('handles legacy numeric return', async () => {
+      mockRpc
+        .mockResolvedValueOnce({ data: 7, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
+      const result = await nextTicketForQueue('q1', 'e1');
+      expect(result).toEqual({ id: 7, ticketNumber: 7 });
+    });
+
+    it('throws on error', async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: { message: 'err' } });
+      await expect(nextTicketForQueue('q1', 'e1')).rejects.toEqual({ message: 'err' });
     });
 
     it('fails closed when guest-session overload is missing', async () => {
@@ -223,36 +218,62 @@ describe('queueService', () => {
   });
 
   describe('restoreTicketForQueue', () => {
-    it('calls rpc("restore_ticket_for_queue") with ticket id and queue id', async () => {
+    it('requires event scope for guest ticket restore', async () => {
+      await expect(restoreTicketForQueue(5, 'q1')).rejects.toThrow('Guest queue action requires queue and event scope.');
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('calls rpc("restore_ticket_for_queue") with ticket id, queue id, and guest token', async () => {
       mockRpc.mockResolvedValueOnce({ data: { id: 5, ticket_number: 5 }, error: null });
-      const result = await restoreTicketForQueue(5, 'q1');
+      const result = await restoreTicketForQueue(5, 'q1', 'e1');
       expect(mockRpc).toHaveBeenCalledWith('restore_ticket_for_queue', {
         p_ticket_id: 5,
         p_queue_id: 'q1',
+        p_guest_token: expect.any(String),
       });
       expect(result).toEqual({ id: 5, ticketNumber: 5 });
     });
 
     it('handles legacy numeric return', async () => {
       mockRpc.mockResolvedValueOnce({ data: 5, error: null });
-      const result = await restoreTicketForQueue(5, 'q1');
+      const result = await restoreTicketForQueue(5, 'q1', 'e1');
       expect(result).toEqual({ id: 5, ticketNumber: 5 });
     });
   });
 
   describe('checkInTicket', () => {
-    it('calls rpc("check_in_ticket") with the ticket id', async () => {
+    it('requires event scope for guest ticket check-in', async () => {
+      await expect(checkInTicket(10)).rejects.toThrow('Guest queue action requires queue and event scope.');
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('calls rpc("check_in_ticket") with the ticket id and guest token', async () => {
       mockRpc.mockResolvedValueOnce({ data: null, error: null });
-      await checkInTicket(10);
-      expect(mockRpc).toHaveBeenCalledWith('check_in_ticket', { p_ticket_id: 10 });
+      await checkInTicket(10, 'q1', 'e1');
+      expect(mockRpc).toHaveBeenCalledWith('check_in_ticket', {
+        p_ticket_id: 10,
+        p_guest_token: expect.any(String),
+      });
     });
   });
 
   describe('leaveQueue', () => {
-    it('calls rpc("leave_queue") with ticket id and reason', async () => {
-      mockRpc.mockResolvedValueOnce({ data: null, error: null });
-      await leaveQueue(10, 'user');
-      expect(mockRpc).toHaveBeenCalledWith('leave_queue', { p_ticket_id: 10, p_reason: 'user' });
+    it('requires event scope for guest queue leave', async () => {
+      await expect(leaveQueue(10, 'user')).rejects.toThrow('Guest queue action requires queue and event scope.');
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('calls rpc("leave_queue") with ticket id, reason, and guest token', async () => {
+      mockRpc
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: null, error: null });
+      await leaveQueue(10, 'user', 'q1', 'e1');
+      expect(mockRpc).toHaveBeenNthCalledWith(1, 'leave_queue', {
+        p_ticket_id: 10,
+        p_reason: 'user',
+        p_guest_token: expect.any(String),
+      });
+      expect(mockRpc).toHaveBeenNthCalledWith(2, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
     });
   });
 

@@ -129,21 +129,20 @@ function normalizeTicketRpcResult(
   return { id, ticketNumber };
 }
 
-async function nextTicketForQueueLegacy(queueId: string): Promise<{ id: number; ticketNumber: number }> {
-  const { data, error } = await supabase.rpc('next_ticket_for_queue', {
-    p_queue_id: queueId,
-  });
-  if (error) throw error;
-  const result = normalizeTicketRpcResult(data);
-  await applyQueuePilotFlow(queueId);
-  return result;
+function requireGuestQueueScope(
+  queueId?: string | null,
+  eventId?: string | null
+): asserts queueId is string {
+  if (!queueId || !eventId) {
+    throw new Error('Guest queue action requires queue and event scope.');
+  }
 }
 
 export async function nextTicketForQueue(
   queueId: string,
   eventId?: string | null
 ): Promise<{ id: number; ticketNumber: number }> {
-  if (!eventId) return nextTicketForQueueLegacy(queueId);
+  requireGuestQueueScope(queueId, eventId);
 
   const { data, error } = await supabase.rpc('next_ticket_for_queue', {
     p_queue_id: queueId,
@@ -165,24 +164,12 @@ export async function peekTicketForQueue(queueId: string): Promise<number> {
   return (data as number) ?? 0;
 }
 
-async function restoreTicketForQueueLegacy(
-  ticketId: number,
-  queueId: string
-): Promise<{ id: number; ticketNumber: number }> {
-  const { data, error } = await supabase.rpc('restore_ticket_for_queue', {
-    p_ticket_id: ticketId,
-    p_queue_id: queueId,
-  });
-  if (error) throw error;
-  return normalizeTicketRpcResult(data, ticketId);
-}
-
 export async function restoreTicketForQueue(
   ticketId: number,
   queueId: string,
   eventId?: string | null
 ): Promise<{ id: number; ticketNumber: number }> {
-  if (!eventId) return restoreTicketForQueueLegacy(ticketId, queueId);
+  requireGuestQueueScope(queueId, eventId);
 
   const { data, error } = await supabase.rpc('restore_ticket_for_queue', {
     p_ticket_id: ticketId,
@@ -193,13 +180,6 @@ export async function restoreTicketForQueue(
     throw error;
   }
   return normalizeTicketRpcResult(data, ticketId);
-}
-
-async function checkInTicketLegacy(ticketId: number): Promise<void> {
-  const { error } = await supabase.rpc('check_in_ticket', {
-    p_ticket_id: ticketId,
-  });
-  if (error) throw error;
 }
 
 export async function checkInTicket(
@@ -207,7 +187,7 @@ export async function checkInTicket(
   queueId?: string | null,
   eventId?: string | null
 ): Promise<void> {
-  if (!queueId || !eventId) return checkInTicketLegacy(ticketId);
+  requireGuestQueueScope(queueId, eventId);
 
   const { error } = await supabase.rpc('check_in_ticket', {
     p_ticket_id: ticketId,
@@ -216,17 +196,6 @@ export async function checkInTicket(
   if (error) {
     throw error;
   }
-}
-
-async function leaveQueueLegacy(
-  ticketId: number,
-  reason = 'user'
-): Promise<void> {
-  const { error } = await supabase.rpc('leave_queue', {
-    p_ticket_id: ticketId,
-    p_reason: reason,
-  });
-  if (error) throw error;
 }
 
 export async function leaveQueue(
@@ -235,7 +204,7 @@ export async function leaveQueue(
   queueId?: string | null,
   eventId?: string | null
 ): Promise<void> {
-  if (!queueId || !eventId) return leaveQueueLegacy(ticketId, reason);
+  requireGuestQueueScope(queueId, eventId);
 
   const { error } = await supabase.rpc('leave_queue', {
     p_ticket_id: ticketId,
@@ -281,26 +250,14 @@ export async function updateTicketGuestName(
   queueId?: string | null,
   eventId?: string | null
 ): Promise<Ticket> {
-  if (queueId && eventId) {
-    const { data: scopedData, error: scopedError } = await supabase.rpc('update_ticket_guest_name_for_guest', {
-      p_ticket_id: ticketId,
-      p_guest_token: getGuestTokenForQueue(queueId, eventId),
-      p_first_name: input.firstName,
-      p_last_name: input.lastName,
-    });
-    if (!scopedError) return scopedData as Ticket;
-    throw scopedError;
-  }
+  requireGuestQueueScope(queueId, eventId);
 
-  const { data, error } = await supabase
-    .from('tickets')
-    .update({
-      first_name: input.firstName.trim(),
-      last_name: input.lastName.trim(),
-    })
-    .eq('id', ticketId)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('update_ticket_guest_name_for_guest', {
+    p_ticket_id: ticketId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+    p_first_name: input.firstName,
+    p_last_name: input.lastName,
+  });
   if (error) throw error;
   return data as Ticket;
 }
@@ -344,20 +301,12 @@ export async function getQueueTicket(
   queueId?: string | null,
   eventId?: string | null
 ): Promise<Ticket> {
-  if (queueId && eventId) {
-    const { data: scopedData, error: scopedError } = await supabase.rpc('get_ticket_for_guest', {
-      p_ticket_id: ticketId,
-      p_guest_token: getGuestTokenForQueue(queueId, eventId),
-    });
-    if (!scopedError) return scopedData as Ticket;
-    throw scopedError;
-  }
+  requireGuestQueueScope(queueId, eventId);
 
-  const { data, error } = await supabase
-    .from('tickets')
-    .select('*')
-    .eq('id', ticketId)
-    .single();
+  const { data, error } = await supabase.rpc('get_ticket_for_guest', {
+    p_ticket_id: ticketId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
   if (error) throw error;
   return data as Ticket;
 }
@@ -396,21 +345,12 @@ export async function confirmTicketNearby(
   queueId?: string | null,
   eventId?: string | null
 ): Promise<Ticket> {
-  if (queueId && eventId) {
-    const { data: scopedData, error: scopedError } = await supabase.rpc('confirm_ticket_nearby_for_guest', {
-      p_ticket_id: ticketId,
-      p_guest_token: getGuestTokenForQueue(queueId, eventId),
-    });
-    if (!scopedError) return scopedData as Ticket;
-    throw scopedError;
-  }
+  requireGuestQueueScope(queueId, eventId);
 
-  const { data, error } = await supabase
-    .from('tickets')
-    .update({ nearby_confirmed_at: new Date().toISOString() })
-    .eq('id', ticketId)
-    .select()
-    .single();
+  const { data, error } = await supabase.rpc('confirm_ticket_nearby_for_guest', {
+    p_ticket_id: ticketId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
   if (error) throw error;
   return data as Ticket;
 }

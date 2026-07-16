@@ -68,13 +68,13 @@ describe('useQueueTicket', () => {
 
   it('claimTicket creates a new ticket if none stored', async () => {
     mockNextTicket.mockResolvedValue({ id: 20, ticketNumber: 20 });
-    const { result } = renderHook(() => useQueueTicket('q1'));
+    const { result } = renderHook(() => useQueueTicket('q1', 'e1'));
 
     await act(async () => {
       await result.current.claimTicket();
     });
 
-    expect(mockNextTicket).toHaveBeenCalledWith('q1');
+    expect(mockNextTicket).toHaveBeenCalledWith('q1', 'e1');
     expect(result.current.ticketId).toBe(20);
     expect(result.current.ticketNumber).toBe(20);
     expect(localStorage.getItem('qme:ticket:q1')).toBe('20');
@@ -84,38 +84,48 @@ describe('useQueueTicket', () => {
   it('claimTicket restores existing ticket', async () => {
     localStorage.setItem('qme:ticket:q1', '15');
     mockRestore.mockResolvedValue({ id: 15, ticketNumber: 15 });
+    const { result } = renderHook(() => useQueueTicket('q1', 'e1'));
+
+    await act(async () => {
+      await result.current.claimTicket();
+    });
+
+    expect(mockRestore).toHaveBeenCalledWith(15, 'q1', 'e1');
+    expect(result.current.ticketId).toBe(15);
+  });
+
+  it('does not claim until event scope is available', async () => {
     const { result } = renderHook(() => useQueueTicket('q1'));
 
     await act(async () => {
       await result.current.claimTicket();
     });
 
-    expect(mockRestore).toHaveBeenCalledWith(15, 'q1');
-    expect(result.current.ticketId).toBe(15);
+    expect(mockNextTicket).not.toHaveBeenCalled();
   });
 
   it('checkIn sets hasCheckedIn and calls API', async () => {
     localStorage.setItem('qme:ticket:q1', '15');
-    const { result } = renderHook(() => useQueueTicket('q1'));
+    const { result } = renderHook(() => useQueueTicket('q1', 'e1'));
 
     await act(async () => {
       await result.current.checkIn();
     });
 
     expect(result.current.hasCheckedIn).toBe(true);
-    expect(mockCheckIn).toHaveBeenCalledWith(15);
+    expect(mockCheckIn).toHaveBeenCalledWith(15, 'q1', 'e1');
     expect(localStorage.getItem('qme:checkedIn:q1:15')).toBe('1');
   });
 
   it('leave clears localStorage and calls API', async () => {
     localStorage.setItem('qme:ticket:q1', '15');
-    const { result } = renderHook(() => useQueueTicket('q1'));
+    const { result } = renderHook(() => useQueueTicket('q1', 'e1'));
 
     await act(async () => {
       await result.current.leave('user');
     });
 
-    expect(mockLeave).toHaveBeenCalledWith(15, 'user');
+    expect(mockLeave).toHaveBeenCalledWith(15, 'user', 'q1', 'e1');
     expect(result.current.ticketId).toBeNull();
     expect(result.current.ticketNumber).toBeNull();
     expect(localStorage.getItem('qme:ticket:q1')).toBeNull();

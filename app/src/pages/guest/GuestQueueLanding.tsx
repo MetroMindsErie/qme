@@ -111,11 +111,11 @@ export default function GuestQueueLanding() {
   }, [updateUI]);
 
   useEffect(() => {
-    if (!queue) return;
+    if (!queue || !event?.id) return;
     const storedTicketId = getStoredQueueTicket(queue.id);
     if (!storedTicketId) return;
     let cancelled = false;
-    restoreTicketForQueue(Number(storedTicketId), queue.id, event?.id)
+    restoreTicketForQueue(Number(storedTicketId), queue.id, event.id)
       .catch(() => {
         if (cancelled) return;
         clearQueueTicket(queue.id);
@@ -145,10 +145,10 @@ export default function GuestQueueLanding() {
   }
 
   async function handleLeave() {
-    if (!queue) return;
+    if (!queue || !event?.id) return;
     const id = Number(getStoredQueueTicket(queue.id) || 0);
     if (id) {
-      try { await leaveQueue(id, 'user', queue.id, event?.id); } catch (e) {
+      try { await leaveQueue(id, 'user', queue.id, event.id); } catch (e) {
         console.warn('leave POST failed (non-fatal)', e);
       }
     }

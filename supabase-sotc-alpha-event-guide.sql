@@ -188,10 +188,14 @@ cross join (
         'home_section', 'resources',
         'home_section_title', 'Event Resources',
         'home_section_order', 30,
-        'home_url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit',
-        'home_action_label', 'Open',
+        'home_hide_card_header', true,
         'home_items_limit', 2,
         'home_items', jsonb_build_array(
+          jsonb_build_object(
+            'title', 'Mixer Resources',
+            'note', 'Open the SOTC mixer resources page for the digital guide and event materials.',
+            'url', 'https://www.canva.com/design/DAHNDWvk1Us/bqgkWOqfYwW2JQWMBB87cg/edit'
+          ),
           jsonb_build_object(
             'title', 'Sticker Guide',
             'note', 'Open the guide to sticker colors and guest interests.',

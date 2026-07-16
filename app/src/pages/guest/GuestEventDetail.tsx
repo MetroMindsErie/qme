@@ -85,6 +85,11 @@ function getEceHomeUrl(ece: Ece): string {
   return asString(metadata.home_url || metadata.homeUrl || metadata.url);
 }
 
+function shouldHideEceHomeHeader(ece: Ece): boolean {
+  const metadata = asRecord(ece.metadata);
+  return metadata.home_hide_card_header === true || metadata.homeHideCardHeader === true;
+}
+
 function getEceHomeIconVariant(ece: Ece): string {
   const metadata = asRecord(ece.metadata);
   return asString(metadata.home_icon_variant || metadata.homeIconVariant);
@@ -798,6 +803,7 @@ export default function GuestEventDetail() {
             const homeBadge = getEceHomeBadge(exp);
             const homeActionLabel = getEceHomeActionLabel(exp);
             const homeUrl = getEceHomeUrl(exp);
+            const hideHomeHeader = shouldHideEceHomeHeader(exp);
             const homeIconVariant = getEceHomeIconVariant(exp);
             const homeItemsLayout = getEceHomeItemsLayout(exp);
             const homeItems = getEceHomeItems(exp);
@@ -874,13 +880,15 @@ export default function GuestEventDetail() {
               </div>
               )}
               <div className="ed-activity-body">
-                <div className="ed-activity-name-row">
-                  <span className="ed-activity-name">{exp.name}</span>
-                  {homeBadge && (
-                    <span className="ed-badge ed-badge-featured">{homeBadge}</span>
-                  )}
-                </div>
-                {isCompleted ? null : participationLocked ? (
+                {!hideHomeHeader && (
+                  <div className="ed-activity-name-row">
+                    <span className="ed-activity-name">{exp.name}</span>
+                    {homeBadge && (
+                      <span className="ed-badge ed-badge-featured">{homeBadge}</span>
+                    )}
+                  </div>
+                )}
+                {hideHomeHeader || isCompleted ? null : participationLocked ? (
                   <div className="ed-activity-desc">Complete Event Check-In above before joining this experience.</div>
                 ) : creditLocked ? (
                   <div className="ed-activity-desc">A headshot photo credit is required to join this station.</div>

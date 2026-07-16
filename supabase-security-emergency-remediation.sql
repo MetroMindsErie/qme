@@ -76,5 +76,11 @@ revoke all on function public.grant_qme_superadmin(uuid, text, text) from public
 revoke all on function public.grant_qme_superadmin(uuid, text, text) from anon;
 revoke all on function public.grant_qme_superadmin(uuid, text, text) from authenticated;
 
-commit;
+-- 4. Admin queue completion must not be directly executable by anon.
+-- Guest completion remains available through complete_queue_ticket_for_guest,
+-- which verifies the guest token and ticket ownership internally.
+revoke all on function public.admin_complete_queue_ticket(uuid, bigint, text, text, uuid, text, text, jsonb) from public;
+revoke all on function public.admin_complete_queue_ticket(uuid, bigint, text, text, uuid, text, text, jsonb) from anon;
+grant execute on function public.admin_complete_queue_ticket(uuid, bigint, text, text, uuid, text, text, jsonb) to authenticated;
 
+commit;

@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-07-14",
+    updated: "2026-07-16",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -26,9 +26,9 @@ const QME_ROADMAP = {
   sprints: [
     {
       id: "now",
-      title: "Foundation Validation",
+      title: "Operational Readiness",
       goal:
-        "Confirm that the new organization, role, auth, guest-token, RPC, and RLS foundation is trustworthy enough to support SOTC Event Builder work.",
+        "Prepare qME for July SOTC operations by focusing on customer content, event operations, rehearsal, usability, and deployment readiness rather than new platform foundation.",
       storyIds: [
         "story-foundation-role-permission-smoke-matrix",
         "story-foundation-privileged-action-matrix",
@@ -44,7 +44,7 @@ const QME_ROADMAP = {
       id: "next",
       title: "Next: SOTC Event Builder / Program Readiness",
       goal:
-        "After Foundation Validation, model the Rock Hall mixer as an event with experiences, queues, access rules, public resources, and managed media.",
+        "After Operational Readiness, deepen the Rock Hall mixer model with experiences, queues, access rules, public resources, and managed media.",
       storyIds: [
         "story-remove-hardcoded-demo-assumptions",
         "story-experience-model",
@@ -115,7 +115,7 @@ const QME_ROADMAP = {
         "Jalani can sign in with named SOTC event-admin access and act only inside the SOTC event scope.",
         "Guest-owned actions and staff/admin-owned actions are separated more clearly through guest-token RPCs and authenticated admin/staff RPCs.",
         "Queue and check-in operational actions now have role-checked RPC boundaries and basic audit logging.",
-        "Temporary password/onboarding cleanup remains visible debt and moves into Foundation Validation."
+        "Temporary password/onboarding cleanup remains visible debt and moves into Operational Readiness."
       ]
     },
     {
@@ -2064,6 +2064,8 @@ const QME_ROADMAP = {
         "Walk-up professional headshots for guests without a prepaid photo remain outside qME for July and use the photographer's Venmo/payment flow.",
         "The SOTC guest home should prioritize Full Event Schedule, Professional Headshots, Event Resources, Featured Speakers, Sponsors, and Food & Drinks, with Resume Reviews and Networking visible lower on the page.",
         "The Mixer Resources Canva page cannot be embedded reliably in qME because Canva refused iframe display during testing.",
+        "External content should remain external unless recreating it natively in qME adds interaction, personalization, or operational support. Canva pages, PDFs, and Google Docs should usually stay as external links.",
+        "The project is now primarily waiting on customer content rather than software architecture: attendee data, speakers, sponsors, logos, links, and food information.",
         "Scan-Code Adventure should not appear in the July guest-facing home, but can remain available as an internal/demo capability."
       ],
       decisions: [
@@ -2092,12 +2094,10 @@ const QME_ROADMAP = {
         "Clarified that Scan-Code Adventure remains a reusable/demo capability but is removed from the July SOTC guest home."
       ],
       nextFocus: [
-        "Update the SOTC guest home order and content.",
-        "Update schedule and floor assignments.",
-        "Receive and analyze the Eventbrite export before designing attendee lookup/self-check-in.",
-        "Receive updated speakers, sponsors, logos, links, and food information.",
-        "Continue Headshot operational rehearsals.",
-        "Finalize July in-app notification behavior."
+        "Completed: SOTC guest-home information architecture, schedule/layout, event guide structure, Event Resources with external Mixer Resources link, temporary speaker/sponsor/food content, and removal of Scan-Code Adventure from the July guest experience while preserving it as a reusable/demo capability.",
+        "Waiting on SOTC: Eventbrite attendee export, updated speaker list, updated sponsor list, updated sponsor logos, sponsor destination links, and updated food/drink information.",
+        "On hold until Eventbrite export is reviewed: attendee lookup, self-registration, duplicate-name handling, walk-in recovery, and registration UX based on imported attendees.",
+        "Current development focus: continue refining the Headshot operational workflow, rehearse the Station Supervisor operating model, finalize July in-app notification behavior, and continue operational readiness rather than adding platform features."
       ]
     },
     {
@@ -2211,7 +2211,7 @@ const QME_ROADMAP = {
         "If credits are generalized too soon, simple station-specific grant/use rules may become unnecessarily heavy."
       ],
       roadmapChanges: [
-        "Moved role-aware admin landing/workspace visibility into the current Foundation Validation focus.",
+        "Moved role-aware admin landing/workspace visibility into the current Operational Readiness focus.",
         "Added station operational control visibility as a current story.",
         "Added queue automation observability as a current story.",
         "Updated queue rule configuration with state-specific timeouts and Not Here recovery policy.",

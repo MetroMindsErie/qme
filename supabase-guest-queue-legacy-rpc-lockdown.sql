@@ -8,19 +8,19 @@
 do $$
 begin
   if to_regprocedure('public.next_ticket_for_queue(uuid)') is not null then
-    revoke all on function public.next_ticket_for_queue(uuid) from anon, authenticated;
+    revoke all on function public.next_ticket_for_queue(uuid) from public, anon, authenticated;
   end if;
 
   if to_regprocedure('public.restore_ticket_for_queue(bigint, uuid)') is not null then
-    revoke all on function public.restore_ticket_for_queue(bigint, uuid) from anon, authenticated;
+    revoke all on function public.restore_ticket_for_queue(bigint, uuid) from public, anon, authenticated;
   end if;
 
   if to_regprocedure('public.check_in_ticket(bigint)') is not null then
-    revoke all on function public.check_in_ticket(bigint) from anon, authenticated;
+    revoke all on function public.check_in_ticket(bigint) from public, anon, authenticated;
   end if;
 
   if to_regprocedure('public.leave_queue(bigint, text)') is not null then
-    revoke all on function public.leave_queue(bigint, text) from anon, authenticated;
+    revoke all on function public.leave_queue(bigint, text) from public, anon, authenticated;
   end if;
 end;
 $$;

@@ -31,9 +31,9 @@ const QME_ROADMAP = {
         "Prepare qME for July SOTC operations by focusing on customer content, event operations, rehearsal, usability, and deployment readiness rather than new platform foundation.",
       storyIds: [
         "story-security-emergency-remediation",
-        "story-foundation-role-permission-smoke-matrix",
         "story-foundation-privileged-action-matrix",
         "story-foundation-external-db-security-review",
+        "story-foundation-role-permission-smoke-matrix",
         "story-foundation-jalani-admin-walkthrough",
         "story-role-aware-admin-landing",
         "story-station-operational-control-visibility",
@@ -684,7 +684,7 @@ const QME_ROADMAP = {
                 "Guest token cannot read or mutate another guest's state."
               ],
               notes:
-                "Added by the 2026-07-01 Foundation Review. This is validation, not a broad new build phase."
+                "Added by the 2026-07-01 Foundation Review. This is validation, not a broad new build phase. July 16 security smoke test verified the roles currently in real use: anonymous guests can check in, join Headshot, mark nearby, and complete via guest self-service; qME superadmin can complete check-in, grant photo credit, operate Headshot, and complete guests; Jalani/event admin can reset event test data after the hardening changes. Station Staff and Station Supervisor are not yet fully productized roles, so their smoke test remains pending under role-aware admin landing and station-role finalization."
             },
             {
               id: "story-foundation-privileged-action-matrix",
@@ -738,7 +738,7 @@ const QME_ROADMAP = {
             {
               id: "story-security-emergency-remediation",
               title: "Complete Ahmed security emergency remediation pass",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Verify and close confirmed high-risk security findings from Ahmed's review before resuming nonessential feature expansion.",
@@ -751,7 +751,7 @@ const QME_ROADMAP = {
                 "Verification SQL, remediation SQL, tests, manual deployment actions, and remaining risks are documented for Ahmed follow-up."
               ],
               notes:
-                "Added by the 2026-07-16 security review. This pauses unrelated feature expansion until emergency findings are verified and closed. July 16 follow-up: smoke-test reset bug was fixed, then security work resumed by updating remediation/current SQL to revoke anonymous direct table grants from admin_principals, platform_roles, organization_memberships, event_staff_assignments, event_check_ins, tickets, event_guest_marks, event_guest_credits, and event_group_order_items while preserving authenticated RLS access and scoped anonymous guest RPCs."
+                "Added by the 2026-07-16 security review. This paused unrelated feature expansion until emergency findings were verified and closed. July 16 follow-up: smoke-test reset bug was fixed, then security work resumed by updating remediation/current SQL to revoke anonymous direct table grants from admin_principals, platform_roles, organization_memberships, event_staff_assignments, event_check_ins, tickets, event_guest_marks, event_guest_credits, and event_group_order_items while preserving authenticated RLS access and scoped anonymous guest RPCs. Live verification now shows sensitive table RLS enabled, no direct anon table grants on the reviewed sensitive tables, no permissive using-true policies on those tables, no guest-credit rows without check-in ownership, clean group-order data audit, legacy unscoped guest queue RPCs revoked, queue reset restricted to event-admin-or-above internally, and admin/staff RPC execute grants cleaned so anon is false and authenticated remains true with internal role checks. Functional smoke test after remediation verified guest check-in/Headshot self-service, superadmin check-in/photo-credit/queue operation, and Jalani event-admin reset."
             },
             {
               id: "story-guest-session-recovery-code",

@@ -1361,7 +1361,7 @@ const QME_ROADMAP = {
                 "Deferred architecture items remain deferred: generalized registration config, generalized credit engine, service abstraction, speaker/sponsor engines, and event guidance engine."
               ],
               notes:
-                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha, then course-corrected after reviewing the 2025 SOTC brochure: qME should feel like a digital companion to a real conference, not a list of app features. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, home_items_layout, home_items_limit, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay visible because it is useful as an optional demo. July 2 pre-test build added brochure-style schedule, featured speakers, sponsor logos, food/drinks, resources, generic media-row rendering, oldest-first live check-in ordering, and reset hardening so stale guest queue tabs with old join intent cannot recreate tickets after event test data is reset."
+                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha, then course-corrected after reviewing the 2025 SOTC brochure: qME should feel like a digital companion to a real conference, not a list of app features. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, home_items_layout, home_items_limit, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay available because it is useful as an optional demo, while July guest-home emphasis stays on Headshots and the event guide. July 2 pre-test build added brochure-style schedule, featured speakers, sponsor logos, food/drinks, resources, generic media-row rendering, oldest-first live check-in ordering, and reset hardening so stale guest queue tabs with old join intent cannot recreate tickets after event test data is reset. July 16 content refinement grouped schedule items by time with item/location rows, kept Resume Reviews and Networking lower on the guest home, made Sticker Guide a native qME modal, and kept Mixer Resources as a direct Canva link after Canva blocked embedded display."
             },
             {
               id: "story-admin-console-needs",
@@ -2063,6 +2063,7 @@ const QME_ROADMAP = {
         "Registration staff primarily need a live list of guests who have self checked in and now need name tags/materials.",
         "Walk-up professional headshots for guests without a prepaid photo remain outside qME for July and use the photographer's Venmo/payment flow.",
         "The SOTC guest home should prioritize Full Event Schedule, Professional Headshots, Event Resources, Featured Speakers, Sponsors, and Food & Drinks, with Resume Reviews and Networking visible lower on the page.",
+        "The Mixer Resources Canva page cannot be embedded reliably in qME because Canva refused iframe display during testing.",
         "Scan-Code Adventure should not appear in the July guest-facing home, but can remain available as an internal/demo capability."
       ],
       decisions: [
@@ -2072,6 +2073,7 @@ const QME_ROADMAP = {
         "Defer Eventbrite attendee import, attendee lookup, self-registration, duplicate handling, and walk-in recovery until the actual attendee data is received and reviewed.",
         "Use last year's speaker, sponsor, and food/drink information as temporary placeholder content until SOTC provides updated content.",
         "Update the SOTC schedule/floor assignments immediately using the Mixer Resources direction.",
+        "Keep Mixer Resources as a direct external Canva link, while keeping Sticker Guide as a native qME pop-up.",
         "Remove Scan-Code Adventure from the July guest home while preserving it for demo/internal use.",
         "Keep Resume Reviews and Networking visible as lower-priority guest-home cards."
       ],
@@ -2086,6 +2088,7 @@ const QME_ROADMAP = {
         "Added Tanya/Eric meeting direction as a Product Review.",
         "Prioritized guest-home updates before Eventbrite/self-registration work.",
         "Kept SMS, web push, photographer console, generalized speaker/sponsor engines, Food & Beverage ordering, and Experience hierarchy changes deferred.",
+        "Captured the resource-link decision: external guide links should stay direct unless qME recreates the content natively.",
         "Clarified that Scan-Code Adventure remains a reusable/demo capability but is removed from the July SOTC guest home."
       ],
       nextFocus: [

@@ -1,32 +1,91 @@
 const crypto = require("crypto");
 
 const INTAKE_DOCUMENT_ID = "flexlink-intake-2026-06-18";
-const ACCESS_HASH = "3d1d6f19aaabe37e908b01aabe9314e61efc9d3e3db37c2f45926f08c11d6cbe";
-const COOKIE_NAME = "flexlink_intake_access";
-const ONE_DAY = 60 * 60 * 24;
+const COOKIE_NAME = "flexlink_intake_session_v2";
+const SESSION_TTL_SECONDS = 60 * 60 * 4;
+const SCRYPT_N = 16384;
+const SCRYPT_R = 8;
+const SCRYPT_P = 1;
+const attempts = new Map();
 
-function hash(value = "") {
-  return crypto.createHash("sha256").update(String(value)).digest("hex");
+function base64UrlEncode(value) {
+  return Buffer.from(value).toString("base64url");
 }
 
-function hasAccessCookie(req) {
+function base64UrlDecode(value) {
+  return Buffer.from(value, "base64url").toString("utf8");
+}
+
+function timingSafeEqualBuffers(left, right) {
+  return left.length === right.length && crypto.timingSafeEqual(left, right);
+}
+
+function verifyPasscode(passcode, storedHash) {
+  const parts = String(storedHash || "").split("$");
+  if (parts.length !== 6 || parts[0] !== "scrypt") return false;
+
+  const [, nValue, rValue, pValue, saltHex, expectedHex] = parts;
+  const expected = Buffer.from(expectedHex, "hex");
+  const actual = crypto.scryptSync(String(passcode || ""), Buffer.from(saltHex, "hex"), expected.length, {
+    N: Number(nValue),
+    r: Number(rValue),
+    p: Number(pValue),
+    maxmem: 64 * 1024 * 1024
+  });
+
+  return timingSafeEqualBuffers(actual, expected);
+}
+
+function signSession(payload, secret) {
+  const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+  const signature = crypto
+    .createHmac("sha256", secret)
+    .update(encodedPayload)
+    .digest("base64url");
+  return `${encodedPayload}.${signature}`;
+}
+
+function verifySessionToken(token, secret) {
+  const [encodedPayload, signature] = String(token || "").split(".");
+  if (!encodedPayload || !signature) return false;
+
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(encodedPayload)
+    .digest();
+  const actualSignature = Buffer.from(signature, "base64url");
+  if (!timingSafeEqualBuffers(actualSignature, expectedSignature)) return false;
+
+  try {
+    const payload = JSON.parse(base64UrlDecode(encodedPayload));
+    return typeof payload.exp === "number" && payload.exp > Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function getCookieValue(req, name) {
   const cookie = req.headers.cookie || "";
   return cookie
     .split(";")
     .map((part) => part.trim())
-    .some((part) => part === `${COOKIE_NAME}=${ACCESS_HASH}`);
+    .find((part) => part.startsWith(`${name}=`))
+    ?.slice(name.length + 1);
 }
 
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env.SUPABASE_SERVICE_KEY ||
-    process.env.SUPABASE_ANON_KEY ||
-    process.env.VITE_SUPABASE_ANON_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   if (!url || !key) return null;
   return { url: url.replace(/\/$/, ""), key };
+}
+
+function getAuthConfig() {
+  const passcodeHash = process.env.FLEXLINK_INTAKE_PASSCODE_HASH;
+  const sessionSecret = process.env.FLEXLINK_INTAKE_SESSION_SECRET;
+  if (!passcodeHash || !sessionSecret) return null;
+  return { passcodeHash, sessionSecret };
 }
 
 function parseBody(req) {
@@ -39,6 +98,33 @@ function parseBody(req) {
 
 function cleanText(value, maxLength) {
   return String(value || "").trim().slice(0, maxLength);
+}
+
+function getClientKey(req) {
+  const forwarded = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwarded || req.socket?.remoteAddress || "unknown";
+}
+
+function isRateLimited(req) {
+  const key = getClientKey(req);
+  const now = Date.now();
+  const record = attempts.get(key);
+  if (!record || record.resetAt <= now) {
+    attempts.set(key, { count: 0, resetAt: now + 15 * 60 * 1000 });
+    return false;
+  }
+  return record.count >= 8;
+}
+
+function recordFailedAttempt(req) {
+  const key = getClientKey(req);
+  const now = Date.now();
+  const record = attempts.get(key) || { count: 0, resetAt: now + 15 * 60 * 1000 };
+  attempts.set(key, { count: record.count + 1, resetAt: record.resetAt });
+}
+
+function clearAttempts(req) {
+  attempts.delete(getClientKey(req));
 }
 
 async function fetchExisting(config) {
@@ -95,27 +181,44 @@ module.exports = async function handler(req, res) {
   }
 
   const config = getSupabaseConfig();
-  if (!config || typeof fetch !== "function") {
+  const authConfig = getAuthConfig();
+  if (!config || !authConfig || typeof fetch !== "function") {
     res.status(500).json({ error: "Intake storage is not configured" });
     return;
   }
 
   const body = parseBody(req);
   if (body.action === "verify") {
-    if (hash(String(body.pin || "").trim()) !== ACCESS_HASH) {
+    if (isRateLimited(req)) {
+      res.status(429).json({ error: "Too many attempts. Try again later." });
+      return;
+    }
+
+    if (!verifyPasscode(String(body.pin || "").trim(), authConfig.passcodeHash)) {
+      recordFailedAttempt(req);
+      console.warn("Flexlink intake verification failed");
       res.status(401).json({ error: "Invalid access code" });
       return;
     }
 
+    clearAttempts(req);
+    const sessionToken = signSession(
+      {
+        exp: Date.now() + SESSION_TTL_SECONDS * 1000,
+        nonce: crypto.randomBytes(16).toString("hex")
+      },
+      authConfig.sessionSecret
+    );
+
     res.setHeader(
       "Set-Cookie",
-      `${COOKIE_NAME}=${ACCESS_HASH}; Max-Age=${ONE_DAY}; Path=/; HttpOnly; Secure; SameSite=Strict`
+      `${COOKIE_NAME}=${sessionToken}; Max-Age=${SESSION_TTL_SECONDS}; Path=/; HttpOnly; Secure; SameSite=Strict`
     );
     res.status(200).json({ ok: true });
     return;
   }
 
-  if (!hasAccessCookie(req)) {
+  if (!verifySessionToken(getCookieValue(req, COOKIE_NAME), authConfig.sessionSecret)) {
     res.status(401).json({ error: "Access code required" });
     return;
   }

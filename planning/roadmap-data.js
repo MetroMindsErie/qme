@@ -30,6 +30,7 @@ const QME_ROADMAP = {
       goal:
         "Prepare qME for July SOTC operations by focusing on customer content, event operations, rehearsal, usability, and deployment readiness rather than new platform foundation.",
       storyIds: [
+        "story-security-emergency-remediation",
         "story-foundation-role-permission-smoke-matrix",
         "story-foundation-privileged-action-matrix",
         "story-foundation-external-db-security-review",
@@ -733,6 +734,24 @@ const QME_ROADMAP = {
               ],
               notes:
                 "Initial sign-in and scoped event-admin access are already verified. This story is the deeper usability/operations walkthrough."
+            },
+            {
+              id: "story-security-emergency-remediation",
+              title: "Complete Ahmed security emergency remediation pass",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Verify and close confirmed high-risk security findings from Ahmed's review before resuming nonessential feature expansion.",
+              acceptanceCriteria: [
+                "Each emergency finding is classified as confirmed/exploitable, confirmed lower-risk, already fixed, not reproducible, or deferred defense-in-depth.",
+                "Anonymous group-order writes and broad guest-credit reads are verified against live Supabase and closed if present.",
+                "Flexlink intake no longer contains committed secret/hash material, no longer uses a hash as a bearer cookie, and hard-fails without service-role configuration.",
+                "Credit consumption requires durable guest/check-in identity and does not authorize by display name.",
+                "Superadmin/bootstrap and other privileged functions have explicit execute grants and cannot be called by ordinary authenticated users.",
+                "Verification SQL, remediation SQL, tests, manual deployment actions, and remaining risks are documented for Ahmed follow-up."
+              ],
+              notes:
+                "Added by the 2026-07-16 security review. This pauses unrelated feature expansion until emergency findings are verified and closed."
             },
             {
               id: "story-guest-session-recovery-code",
@@ -2050,6 +2069,56 @@ const QME_ROADMAP = {
     }
   ],
   productReviews: [
+    {
+      id: "review-security-ahmed-emergency-remediation-2026-07-16",
+      date: "2026-07-16",
+      trigger: "Ahmed completed a database/security review and ChatGPT converted the feedback into an emergency verification/remediation plan",
+      summary:
+        "The next operating-readiness focus is security evidence, not new product expansion. Recent hardening substantially improved qME, but high-risk exposure may remain in older pilot SQL, legacy permissive policies, weak Flexlink intake auth, display-name credit binding, and privileged bootstrap functions. The work must verify live Supabase state, close confirmed emergency paths, and produce evidence for Ahmed to review.",
+      observations: [
+        "The hardening pass substantially improved the platform, but older pilot paths can still become production vulnerabilities if not explicitly retired.",
+        "Remaining high-risk issues are concentrated in legacy/pilot policies, old auth shortcuts, and weak identity binding.",
+        "Dynamic admin assignment is intentional and required for the product; the fix is stronger authorization and audit boundaries, not hard-coded administrators.",
+        "UI role visibility is not authorization.",
+        "Guest names must never serve as authorization identifiers.",
+        "Notification, ordering, and future registration work must build on verified guest identity and narrow server enforcement.",
+        "Production security status cannot be inferred from repo files alone; live grants, policies, function grants, and deployed secrets must be verified."
+      ],
+      decisions: [
+        "Pause nonessential platform expansion until confirmed emergency findings are fixed or classified.",
+        "Preserve SOTC event-guide/content work where it does not touch vulnerable write paths.",
+        "Keep dynamic role assignment, but verify all privileged role mutation functions and EXECUTE grants.",
+        "Fix confirmed anonymous data exposure and write paths first.",
+        "Require verified guest/check-in identity for credits and guest-owned actions.",
+        "Remove committed/fake-secret bearer mechanisms from Flexlink intake.",
+        "Require evidence and regression tests or SQL verification for every security closure.",
+        "Re-engage Ahmed after the bounded remediation pass."
+      ],
+      risks: [
+        "Legacy SQL may reintroduce vulnerabilities if rerun.",
+        "Deployed Supabase schema may differ from repository assumptions.",
+        "Existing data may have been altered or enumerated before policies were tightened.",
+        "Broad rewrites immediately before SOTC could create operational regressions.",
+        "Overreliance on RLS helpers without live tests can create false confidence.",
+        "Moving every write behind service-role APIs without careful design could create a large privileged backend attack surface."
+      ],
+      roadmapChanges: [
+        "Added emergency security remediation as the first current Operational Readiness story.",
+        "Created verification/remediation packet expectations for Ahmed follow-up.",
+        "Kept feature work paused unless explicitly approved while emergency findings are addressed."
+      ],
+      nextFocus: [
+        "Verify findings against live/current state.",
+        "Fix emergency anonymous write/read paths.",
+        "Rotate and rebuild Flexlink intake authentication.",
+        "Fix credit identity binding.",
+        "Lock down privilege-escalation functions.",
+        "Run role/RPC/policy regression tests.",
+        "Produce remediation matrix and deployment checklist.",
+        "Ask Ahmed to review the diff and evidence.",
+        "Resume nonessential feature work only after emergency closure."
+      ]
+    },
     {
       id: "review-tanya-eric-sotc-operating-model-2026-07-15",
       date: "2026-07-15",

@@ -1,5 +1,8 @@
 -- qME group order pilot.
--- Run after supabase-org-event-foundation.sql and supabase-expie-ece-foundation.sql.
+-- Run after:
+-- - supabase-org-event-foundation.sql
+-- - supabase-expie-ece-foundation.sql
+-- - supabase-sotc-rls-hardening.sql or equivalent role helper setup
 --
 -- This creates a clean qME Test Lab organization/event for lightweight
 -- request-list testing, starting with a dinner group order use case.
@@ -60,19 +63,23 @@ before update on public.event_group_order_items
 for each row
 execute function public.set_event_group_order_items_updated_at();
 
-grant select, insert, update, delete on public.event_group_order_items to anon, authenticated;
+-- Security note:
+-- This started as a dinner-test pilot table. Do not grant anonymous direct
+-- mutations here. Guest-owned ordering needs a token-verified RPC before this
+-- becomes an event feature again.
+revoke all on public.event_group_order_items from anon;
+grant select, insert, update, delete on public.event_group_order_items to authenticated;
 
 alter table public.event_group_order_items enable row level security;
 
--- Temporary pilot policy. Replace during Sprint 2 RLS hardening with separate
--- guest-owned insert/select and admin/staff update policies.
 drop policy if exists "event_group_order_items_all" on public.event_group_order_items;
-create policy "event_group_order_items_all"
+drop policy if exists "event_group_order_items_staff_all" on public.event_group_order_items;
+create policy "event_group_order_items_staff_all"
   on public.event_group_order_items
   for all
-  to anon, authenticated
-  using (true)
-  with check (true);
+  to authenticated
+  using (public.can_manage_event_guest_action(event_id))
+  with check (public.can_manage_event_guest_action(event_id));
 
 insert into public.organizations (name, slug, description, logo_url, status)
 values (

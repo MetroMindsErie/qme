@@ -204,7 +204,6 @@ declare
   existing_mark_id uuid;
   mark_row public.event_guest_marks;
   credit_row public.event_guest_credits;
-  normalized_guest_name text;
 begin
   select *
     into ticket_row
@@ -280,7 +279,9 @@ begin
   end if;
 
   if p_consume_credit_key is not null then
-    normalized_guest_name := lower(trim(coalesce(p_credit_guest_name, '')));
+    if p_check_in_id is null then
+      raise exception 'check-in identity is required to consume guest credit';
+    end if;
 
     select *
       into credit_row
@@ -288,14 +289,7 @@ begin
     where credits.event_id = p_event_id
       and credits.credit_key = p_consume_credit_key
       and credits.used_quantity < credits.quantity
-      and (
-        (p_check_in_id is not null and credits.check_in_id = p_check_in_id)
-        or (
-          p_check_in_id is null
-          and normalized_guest_name <> ''
-          and lower(trim(coalesce(credits.metadata->>'guest_name', ''))) = normalized_guest_name
-        )
-      )
+      and credits.check_in_id = p_check_in_id
     order by credits.created_at
     limit 1;
 

@@ -38,7 +38,7 @@ Station Supervisor and Station Staff are operational workspace roles. They shoul
 | Event check-in Settings tab | Yes | Yes | Yes | Read-only unless explicitly elevated | Hidden/read-only |
 | Complete guest check-in | Yes | Yes | Yes | If assigned to check-in | If assigned to check-in |
 | Update ticket/access type | Yes | Yes | Yes | Station-specific decision; likely supervisor for Registration | Usually no |
-| Grant photo credit | Yes | Yes | Yes | Station-specific decision; likely supervisor for Registration | Usually no |
+| Grant photo credit | Yes | Yes | Yes | Station-specific decision; allowed for SOTC Registration/Check-In Staff in July pilot | Allowed for SOTC Registration/Check-In Staff in July pilot |
 | Queue/station Live Line tab | Yes | Yes | Yes | Yes for assigned station | Yes for assigned station |
 | Queue/station History tab | Yes | Yes | Yes | Yes for assigned station | Read-only or hidden by station |
 | Queue/station Settings tab | Yes | Yes | Yes | Hidden for July pilot unless explicitly promoted | Hidden |
@@ -60,7 +60,7 @@ Examples:
 
 | Station | Supervisor authority candidate | Staff authority candidate |
 |---|---|---|
-| Event Check-In / Registration | Complete check-in, resolve classification, grant photo credit, view history | Complete check-in if assigned; classification/photo credit may be supervisor-only |
+| Event Check-In / Registration | Complete check-in, resolve classification, grant photo credit, view history | Complete check-in if assigned; photo credit grant is allowed for the SOTC July pilot per Tanya's operational guidance; classification/photo credit may become supervisor-only later |
 | Headshot Photographer | Handle Not Here, Return to Waiting, Mark Served, understand settings | Mark Served/Not Here may be enough; photographer should not need qME if guest self-completion works |
 | Scan-Code Adventure | Manage line exceptions, apply flow, view code/settings | Usually not needed for July; demo/support only |
 | Resume Reviews | Likely similar to Headshots but may need provider-specific queue visibility | Mark served/complete for assigned reviewer station |
@@ -82,13 +82,14 @@ For the July SOTC pilot:
 
 - Evan/qME superadmin can operate/support anything.
 - Jalani/event admin can operate the assigned SOTC event and reset test data.
+- Assigned SOTC check-in staff may grant photo credit during the July pilot. Tanya previously said this was acceptable for the SOTC operating model. Keep this as an explicit pilot policy choice, not an assumed platform default.
 - Station Supervisor is the model for Headshot exceptions, even if Evan fills that role during testing.
 - Photographer should not need to operate qME for the preferred Headshot flow.
 - Station Staff UI should be kept focused on assigned station work before broader staff onboarding.
 
 ## Open Follow-Ups
 
-- Decide whether Check-In Staff can grant photo credit or whether that requires Station Supervisor/Event Admin.
+- Revisit after SOTC whether Check-In Staff should keep photo-credit grant authority, or whether future events require Station Supervisor/Event Admin.
 - Decide whether Station Staff can use Not Here and Return to Waiting, or whether those are supervisor-only.
 - Role-aware admin landing/routing is implemented for the current need.
 - Hide or lock tabs based on role and assignment only when a real staff model requires it.

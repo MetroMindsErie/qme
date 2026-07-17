@@ -72,6 +72,39 @@ complete:
 Remaining work is now onboarding polish and hardening, not replacing the
 passphrase gate.
 
+## Pilot Staff Onboarding Bridge
+
+As of 2026-07-17, event admins and above can add limited event staff from the
+event Staff tab. If the email does not already match an active qME admin
+principal, the app creates a Supabase Auth user, creates the linked
+`admin_principals` row, assigns limited event staff access, and shows a generated
+temporary password to the event admin.
+
+For this pilot, the temporary password is stored in
+`admin_principals.metadata.temporary_password` so the Staff tab can show a
+`Password` button after refresh. This is intentionally a short-term operational
+bridge, not a long-term credential model.
+
+The temporary password metadata is removed when the staff person signs in and
+completes the first-login profile screen. That screen asks for:
+
+- email, prefilled from the admin principal;
+- first name and last name, with at least one required;
+- optional mobile phone.
+
+Profile completion is handled through `/api/admin-complete-profile`, which uses
+the signed-in user's bearer token and the server-side service role to update only
+that user's own active `admin_principals` row. This avoids broad client-side
+update access to `admin_principals` under the hardened RLS model.
+
+Replacement intent:
+
+- use proper invite emails, password reset, magic link, or forced password-change
+  flow;
+- stop storing temporary passwords in application metadata;
+- add stronger audit around staff user creation and credential delivery;
+- support more mature account recovery and identity changes.
+
 ## Not In This Slice
 
 - invitation workflow;

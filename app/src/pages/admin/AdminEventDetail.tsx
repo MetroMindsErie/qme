@@ -10,7 +10,7 @@ import {
   getCurrentAdminPrincipal,
   type CurrentAdminPrincipal,
 } from '../../lib/adminPrincipalService';
-import { createAdminUserWithAuth } from '../../lib/adminPrincipalAdminService';
+import { createAdminUserWithAuth, resetStaffPasswordWithAuth } from '../../lib/adminPrincipalAdminService';
 import { getEvent, resetEventTestData } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
@@ -149,7 +149,9 @@ export default function AdminEventDetail() {
   const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [staffEmail, setStaffEmail] = useState('');
+  const [staffSearch, setStaffSearch] = useState('');
   const [staffSaving, setStaffSaving] = useState(false);
+  const [staffNotice, setStaffNotice] = useState('');
   const [createdStaffPassword, setCreatedStaffPassword] = useState<{ email: string; password: string } | null>(null);
   const [passwordModal, setPasswordModal] = useState<{ email: string; password: string } | null>(null);
   const [resettingEventData, setResettingEventData] = useState(false);
@@ -293,6 +295,7 @@ export default function AdminEventDetail() {
       const normalizedEmail = staffEmail.trim().toLowerCase();
       let principal = await findAdminPrincipalByEmail(normalizedEmail);
       let temporaryPassword = '';
+      const existingPrincipal = Boolean(principal);
       if (!principal) {
         temporaryPassword = generateStaffPassword();
         const created = await createAdminUserWithAuth({
@@ -309,12 +312,18 @@ export default function AdminEventDetail() {
         });
         principal = created.principal;
       }
+      if (existingPrincipal && !principal.auth_user_id) {
+        setStaffNotice(`${normalizedEmail} has a qME profile, but it is not linked to a login yet. Create or link their login from Admin Users before assigning event staff access.`);
+        alert('This qME profile is not linked to a login yet.');
+        return;
+      }
       const alreadyAssigned = eventStaff.some((member) =>
         member.assignment.principal_id === principal.id
         && member.assignment.role === EVENT_STAFF_ROLE
         && !member.assignment.ece_id
       );
       if (alreadyAssigned) {
+        setStaffNotice(`${normalizedEmail} already has staff access for this event.`);
         alert('That admin already has staff access for this event.');
         return;
       }
@@ -329,12 +338,42 @@ export default function AdminEventDetail() {
       });
       setStaffEmail('');
       setCreatedStaffPassword(temporaryPassword ? { email: normalizedEmail, password: temporaryPassword } : null);
+      setStaffNotice(existingPrincipal
+        ? `${normalizedEmail} already has a qME login. They can use their existing credentials for this event, or you can reset their password from their staff row.`
+        : ''
+      );
       setEventStaff(await listEventStaff(event.id));
     } catch (error) {
       console.error('Failed to add event staff', error);
       alert('Could not add event staff. Check whether this person already has an active/duplicate assignment.');
     } finally {
       setStaffSaving(false);
+    }
+  }
+
+  async function handleResetStaffPassword(member: EventStaffMember) {
+    if (!event || !member.principal?.id || !member.principal.email) return;
+    if (!member.principal.auth_user_id) {
+      alert('This staff profile is not linked to a login yet.');
+      return;
+    }
+    const name = member.principal.display_name || member.principal.email;
+    if (!confirm(`Reset the password for ${name}? They will need the new temporary password to sign in.`)) return;
+
+    const temporaryPassword = generateStaffPassword();
+    try {
+      await resetStaffPasswordWithAuth({
+        principalId: member.principal.id,
+        eventId: event.id,
+        password: temporaryPassword,
+      });
+      setPasswordModal({ email: member.principal.email, password: temporaryPassword });
+      setCreatedStaffPassword(null);
+      setStaffNotice(`${member.principal.email} has a new temporary password. Share it with them directly.`);
+      setEventStaff(await listEventStaff(event.id));
+    } catch (error) {
+      console.error('Failed to reset staff password', error);
+      alert('Could not reset staff password.');
     }
   }
 
@@ -423,6 +462,17 @@ export default function AdminEventDetail() {
       : []),
   ];
   const eceById = new Map(eces.map((ece) => [ece.id, ece]));
+  const staffSearchText = staffSearch.trim().toLowerCase();
+  const filteredEventStaff = staffSearchText
+    ? eventStaff.filter((member) => {
+        const principal = member.principal;
+        return [
+          principal?.display_name,
+          principal?.email,
+          member.assignment.role.replaceAll('_', ' '),
+        ].some((value) => value?.toLowerCase().includes(staffSearchText));
+      })
+    : eventStaff;
 
   return (
     <div className="card card-scrollable admin-event-detail-card" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -506,6 +556,7 @@ export default function AdminEventDetail() {
           </p>
 
           {canManageThisEvent && currentAdmin && (
+            <>
             <form onSubmit={handleAddEventStaff} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2f3e4f', fontSize: '0.82rem', fontWeight: 800, flex: '1 1 210px' }}>
                 Staff Email
@@ -514,6 +565,7 @@ export default function AdminEventDetail() {
                   onChange={(formEvent) => {
                     setStaffEmail(formEvent.target.value);
                     setCreatedStaffPassword(null);
+                    setStaffNotice('');
                   }}
                   type="email"
                   placeholder="staff@example.com"
@@ -538,11 +590,28 @@ export default function AdminEventDetail() {
                 {staffSaving ? 'Adding...' : 'Add Event Staff'}
               </button>
             </form>
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2f3e4f', fontSize: '0.82rem', fontWeight: 800, marginBottom: '1rem' }}>
+              Search Event Staff
+              <input
+                value={staffSearch}
+                onChange={(formEvent) => setStaffSearch(formEvent.target.value)}
+                type="search"
+                placeholder="Search first, last, or email"
+                style={{ padding: '0.65rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: 8, fontSize: '0.95rem' }}
+              />
+            </label>
+            </>
           )}
 
           {createdStaffPassword && (
             <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', color: '#065f46', fontWeight: 800, lineHeight: 1.45 }}>
               New staff login created for {createdStaffPassword.email}. Password: <span style={{ fontFamily: 'monospace' }}>{createdStaffPassword.password}</span>
+            </div>
+          )}
+
+          {staffNotice && (
+            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', color: '#1d4ed8', fontWeight: 800, lineHeight: 1.45 }}>
+              {staffNotice}
             </div>
           )}
 
@@ -558,7 +627,13 @@ export default function AdminEventDetail() {
             </p>
           )}
 
-          {eventStaff.map((member) => {
+          {currentAdmin && eventStaff.length > 0 && filteredEventStaff.length === 0 && (
+            <p style={{ color: '#999', padding: '1.25rem 0', textAlign: 'center' }}>
+              No event staff match that search.
+            </p>
+          )}
+
+          {filteredEventStaff.map((member) => {
             const scopedEce = member.assignment.ece_id ? eceById.get(member.assignment.ece_id) : null;
             const principalMetadata = asRecord(member.principal?.metadata);
             const temporaryPassword = typeof principalMetadata.temporary_password === 'string'
@@ -587,6 +662,16 @@ export default function AdminEventDetail() {
                       Password
                     </button>
                   )}
+                  {!temporaryPassword && member.principal?.auth_user_id && member.principal?.email && (
+                    <button
+                      className="actionBtn actionBtn-secondary"
+                      type="button"
+                      style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+                      onClick={() => handleResetStaffPassword(member)}
+                    >
+                      Reset Password
+                    </button>
+                  )}
                   <button
                     className="actionBtn actionBtn-danger"
                     type="button"
@@ -606,7 +691,7 @@ export default function AdminEventDetail() {
               <div style={{ width: '100%', maxWidth: 360, background: '#fff', borderRadius: 10, padding: '1rem', border: '1px solid #d1d5db', boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25)' }}>
                 <h3 style={{ margin: '0 0 0.5rem', color: '#1f2d3d', fontSize: '1.1rem' }}>Staff Password</h3>
                 <p style={{ margin: '0 0 0.75rem', color: '#64748b', fontWeight: 700, lineHeight: 1.4 }}>
-                  Share this with {passwordModal.email}. This button disappears after they complete first login.
+                  Share this with {passwordModal.email}. The Password button remains on this staff row until they sign in with this temporary password.
                 </p>
                 <div style={{ border: '1px solid #cbd5e1', borderRadius: 8, padding: '0.85rem', fontFamily: 'monospace', fontWeight: 900, background: '#f8fafc', color: '#1f2d3d', marginBottom: '0.85rem' }}>
                   {passwordModal.password}

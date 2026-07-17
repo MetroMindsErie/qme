@@ -117,3 +117,50 @@ export async function completeOwnAdminProfile(input: {
   }
   return body.principal as AdminPrincipal;
 }
+
+export async function clearOwnTemporaryPassword(): Promise<AdminPrincipal> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error('No active admin session.');
+
+  const response = await fetch('/api/admin-clear-temporary-password', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.error || 'Could not clear temporary password.');
+  }
+  return body.principal as AdminPrincipal;
+}
+
+export async function resetStaffPasswordWithAuth(input: {
+  principalId: string;
+  eventId: string;
+  password: string;
+}): Promise<AdminPrincipal> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error('No active admin session.');
+
+  const response = await fetch('/api/admin-reset-staff-password', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.error || 'Could not reset staff password.');
+  }
+  return body.principal as AdminPrincipal;
+}

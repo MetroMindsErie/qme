@@ -80,13 +80,22 @@ principal, the app creates a Supabase Auth user, creates the linked
 `admin_principals` row, assigns limited event staff access, and shows a generated
 temporary password to the event admin.
 
+If the email already belongs to an active qME admin principal, qME reuses that
+existing account and only adds the event-scoped staff assignment. The admin is
+told that the staff person can use their existing credentials for this event.
+If the person cannot find their password, the event Staff tab can generate a new
+temporary password for that event staff row.
+
 For this pilot, the temporary password is stored in
 `admin_principals.metadata.temporary_password` so the Staff tab can show a
 `Password` button after refresh. This is intentionally a short-term operational
 bridge, not a long-term credential model.
 
 The temporary password metadata is removed when the staff person signs in and
-completes the first-login profile screen. That screen asks for:
+completes the first-login profile screen. Reset passwords do not wipe or require
+profile onboarding again; the reset temporary password remains visible in the
+Staff tab until the staff person signs in with it, then the row returns to a
+`Reset Password` action. The first-login profile screen asks for:
 
 - email, prefilled from the admin principal;
 - first name and last name, with at least one required;

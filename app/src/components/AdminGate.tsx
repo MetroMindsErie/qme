@@ -1,7 +1,7 @@
 import { FormEvent, ReactNode, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentAdminPrincipal, signInAdmin, signOutAdmin, type CurrentAdminPrincipal } from '../lib/adminPrincipalService';
-import { completeOwnAdminProfile } from '../lib/adminPrincipalAdminService';
+import { clearOwnTemporaryPassword, completeOwnAdminProfile } from '../lib/adminPrincipalAdminService';
 import '../styles/shared.css';
 import '../styles/admin.css';
 
@@ -43,10 +43,18 @@ export default function AdminGate({ children }: AdminGateProps) {
     event.preventDefault();
     setError('');
     try {
-      const admin = await signInAdmin(email.trim(), password);
+      let admin = await signInAdmin(email.trim(), password);
       if (!admin) {
         setError('Signed in, but this user is not linked to an active qME admin principal.');
         return;
+      }
+      const metadata = admin.principal.metadata ?? {};
+      if (metadata.onboarding_required !== true && typeof metadata.temporary_password === 'string') {
+        const updatedPrincipal = await clearOwnTemporaryPassword();
+        admin = {
+          ...admin,
+          principal: updatedPrincipal,
+        };
       }
       setCurrentAdmin(admin);
       setPassword('');

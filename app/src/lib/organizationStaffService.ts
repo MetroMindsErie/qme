@@ -38,17 +38,21 @@ export async function listOrganizationStaff(organizationId: string): Promise<Org
 }
 
 export async function findAdminPrincipalByEmail(email: string): Promise<AdminPrincipal | null> {
-  const normalizedEmail = email.trim();
+  const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return null;
 
   const { data, error } = await supabase
     .from('admin_principals')
     .select('*')
-    .ilike('email', normalizedEmail)
+    .eq('email', normalizedEmail)
     .eq('status', 'active')
-    .maybeSingle();
+    .limit(2);
   if (error) throw error;
-  return (data as AdminPrincipal | null) ?? null;
+  const rows = (data ?? []) as AdminPrincipal[];
+  if (rows.length > 1) {
+    throw new Error('Multiple active admin principals match that email. Use the exact principal record.');
+  }
+  return rows[0] ?? null;
 }
 
 export async function addOrganizationMembership(input: {

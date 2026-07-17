@@ -132,6 +132,7 @@ as $$
 declare
   check_in_row public.event_check_ins;
   check_in_mode text;
+  resolved_ticket_type text;
 begin
   check_in_row := public.get_event_check_in_for_guest(p_check_in_id, p_guest_token);
 
@@ -144,10 +145,15 @@ begin
     raise exception 'guest self check-in completion is not enabled for this event';
   end if;
 
+  resolved_ticket_type := coalesce(nullif(trim(coalesce(p_ticket_type, '')), ''), 'general');
+  if resolved_ticket_type not in ('general', 'flowers') then
+    raise exception 'guest ticket type is not allowed';
+  end if;
+
   update public.event_check_ins
   set
     status = 'completed',
-    ticket_type = coalesce(nullif(p_ticket_type, ''), 'general'),
+    ticket_type = coalesce(ticket_type, resolved_ticket_type),
     updated_at = now()
   where id = p_check_in_id
   returning * into check_in_row;

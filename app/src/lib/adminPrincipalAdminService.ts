@@ -19,7 +19,7 @@ export async function createAdminPrincipal(input: CreateAdminPrincipalInput): Pr
     .from('admin_principals')
     .insert({
       ...input,
-      email: input.email?.trim() || null,
+      email: input.email?.trim().toLowerCase() || null,
       phone: input.phone?.trim() || null,
       auth_user_id: input.auth_user_id?.trim() || null,
       metadata: input.metadata ?? { source: 'admin-principals-ui' },
@@ -38,7 +38,7 @@ export async function updateAdminPrincipal(
     .from('admin_principals')
     .update({
       ...input,
-      email: input.email === undefined ? undefined : input.email?.trim() || null,
+      email: input.email === undefined ? undefined : input.email?.trim().toLowerCase() || null,
       phone: input.phone === undefined ? undefined : input.phone?.trim() || null,
       auth_user_id: input.auth_user_id === undefined ? undefined : input.auth_user_id?.trim() || null,
     })
@@ -50,16 +50,20 @@ export async function updateAdminPrincipal(
 }
 
 export async function findAdminPrincipalByEmail(email: string): Promise<AdminPrincipal | null> {
-  const normalizedEmail = email.trim();
+  const normalizedEmail = email.trim().toLowerCase();
   if (!normalizedEmail) return null;
 
   const { data, error } = await supabase
     .from('admin_principals')
     .select('*')
-    .ilike('email', normalizedEmail)
-    .maybeSingle();
+    .eq('email', normalizedEmail)
+    .limit(2);
   if (error) throw error;
-  return (data as AdminPrincipal | null) ?? null;
+  const rows = (data ?? []) as AdminPrincipal[];
+  if (rows.length > 1) {
+    throw new Error('Multiple admin principals match that email. Use the exact principal record.');
+  }
+  return rows[0] ?? null;
 }
 
 export async function createAdminUserWithAuth(input: {

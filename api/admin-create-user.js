@@ -144,8 +144,10 @@ async function createAuthUser(config, input) {
 }
 
 async function findPrincipalByEmail(config, email) {
+  const normalizedEmail = String(email || "").trim().toLowerCase();
+  if (!normalizedEmail) return null;
   const response = await fetch(
-    `${config.url}/rest/v1/admin_principals?email=ilike.${encodeURIComponent(email)}&select=*`,
+    `${config.url}/rest/v1/admin_principals?email=eq.${encodeURIComponent(normalizedEmail)}&select=*&limit=2`,
     {
       headers: {
         apikey: config.serviceKey,
@@ -156,6 +158,9 @@ async function findPrincipalByEmail(config, email) {
   );
   if (!response.ok) throw new Error(`Principal email lookup failed: ${response.status}`);
   const rows = await response.json();
+  if (rows.length > 1) {
+    throw new Error("Multiple admin principals match that email. Resolve the duplicate before creating a login.");
+  }
   return rows[0] || null;
 }
 
@@ -177,7 +182,7 @@ async function saveAdminPrincipal(config, input, authUserId) {
       auth_user_id: authUserId,
       principal_type: input.principalType,
       display_name: input.displayName,
-      email: input.email,
+      email: input.email.trim().toLowerCase(),
       phone: input.phone || null,
       status: "active",
       metadata: {

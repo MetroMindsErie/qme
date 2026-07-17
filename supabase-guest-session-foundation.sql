@@ -136,9 +136,13 @@ begin
     last_name = coalesce(nullif(trim(coalesce(excluded.last_name, '')), ''), guest_sessions.last_name),
     email = coalesce(excluded.email, guest_sessions.email),
     phone = coalesce(excluded.phone, guest_sessions.phone),
-    status = 'active',
     last_seen_at = now()
+  where guest_sessions.status = 'active'
   returning id into resolved_session_id;
+
+  if resolved_session_id is null then
+    raise exception 'guest session is not active';
+  end if;
 
   return resolved_session_id;
 end;

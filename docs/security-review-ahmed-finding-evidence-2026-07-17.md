@@ -16,10 +16,10 @@ Purpose: prepare an evidence-based response to Ahmed's remaining security findin
 | # | Finding | Status | Evidence |
 |---|---|---|---|
 | 1 | Flexlink intake auth | Partially remediated; env/deploy verification still required | `api/flexlink-intake.js` uses env-backed scrypt hash, signed v2 HttpOnly cookie, and service-role-only Supabase access. Need confirm Vercel envs and passcode rotation. |
-| 2 | Guest check-in ticket type | Open hardening item | `complete_event_check_in_for_guest` still accepts `p_ticket_type` and writes it when event completion mode is `auto`. Needs allowed-value / grant-policy validation before self-registration is broadly enabled. |
+| 2 | Guest check-in ticket type | Repo fixed; pending live SQL/regression | `complete_event_check_in_for_guest` now applies a narrow nonprivileged guest allowlist (`general`, `flowers`), defaults empty input to `general`, rejects privileged/unknown values, and preserves preexisting authoritative classifications. |
 | 3 | `event_guest_marks` authorization | Mostly remediated; direct exploit test still useful | Live grants/RLS/function checks show anon direct table access removed and guest mark writes routed through token-scoped RPCs. |
 | 4 | Completion upsert overwriting staff intent | Partially remediated | Headshot service-start preserves existing mark source/value on conflict. Generic guest completion still overwrites guest mark on conflict; staff/admin completion intentionally writes admin source. |
-| 5 | Revoked guest-session reactivation | Open required if revocation is used | `ensure_guest_session` sets `status = 'active'` on conflict, so a revoked token hash could be reactivated. |
+| 5 | Revoked guest-session reactivation | Repo fixed; pending live SQL/regression | `ensure_guest_session` no longer reactivates an existing inactive token hash on conflict and raises if the presented token maps to a non-active session. |
 | 6 | Guest-token lifecycle | Partially remediated | Tokens are hashed in DB and reset-aware in browser, but no full TTL/forget-me lifecycle yet. |
 | 7 | `guest_session_matches` implementation | Implemented with hashed token; minor review remains | Uses `public.guest_token_hash(p_guest_token)` and checks `status = 'active'`. Hash uses `extensions.digest`. |
 | 8 | Role helper correctness | Mostly implemented; station-role granularity deferred | `has_event_role`, org role, superadmin helpers check active status. Station Supervisor vs Station Staff remains product-finalization work. |
@@ -30,8 +30,8 @@ Purpose: prepare an evidence-based response to Ahmed's remaining security findin
 | 13 | Rate limiting inventory | Deferred / provider-level needed | Flexlink has best-effort in-memory rate limiting. Auth/admin APIs rely mostly on Supabase/Vercel controls. |
 | 14 | Password/admin auth controls | Pilot acceptable; long-term invite flow needed | Admin/staff auth uses Supabase Auth and temporary staff password bridge. This is documented as a pilot bridge. |
 | 15 | Browser storage and PII | Partially mitigated; lifecycle work remains | Guest tokens/check-in IDs live in localStorage. Reset marker clears event-local state. No full TTL/minimization policy yet. |
-| 16 | Principal email lookup | Open hardening item | Server route still looks up principal by `email=ilike...`; should move to exact normalized lookup or auth user id. |
-| 17 | Build/deployment hygiene | Deferred hardening | Vercel build currently runs `cd app && npm install && npm run build`; prefer lockfile and `npm ci`. |
+| 16 | Principal email lookup | Repo fixed; pending deploy/smoke | Admin/staff principal lookup now trims/lowercases email and uses exact equality with duplicate-match refusal. Long-term canonical identity should still prefer auth user id. |
+| 17 | Build/deployment hygiene | Reviewed; deferred | `npm ci` was tested but not adopted because the local Windows/Dropbox workspace hit dependency file-lock issues. Keep `npm install` for SOTC and revisit after the pilot. |
 | 18 | Secret comparisons | Flexlink remediated | Flexlink uses `crypto.timingSafeEqual` for passcode hash and cookie signature checks. |
 | 19 | `SECURITY DEFINER` safety | Mostly implemented; inventory should be reviewed periodically | New RPCs use `set search_path = public`. Function EXECUTE grants are now live-verified. |
 | 20 | Legacy SQL/redeploy | Improved; still procedural risk | Legacy guest queue RPC EXECUTE revoked live. Old group-order pilot is now marked superseded/security-disabled. |
@@ -112,24 +112,29 @@ Still needed:
 
 ### 2. Guest Check-In Ticket Type
 
-Status: **open hardening item.**
+Status: **repo fixed; pending live SQL/regression.**
 
 Evidence:
 
 - `supabase-guest-action-rls-tightening.sql` defines `complete_event_check_in_for_guest(p_check_in_id, p_guest_token, p_ticket_type text default 'general')`.
 - It first verifies guest ownership through `get_event_check_in_for_guest`.
 - It only self-completes if event metadata has `check_in.completion_mode = 'auto'`.
-- It then writes `ticket_type = coalesce(nullif(p_ticket_type, ''), 'general')`.
+- It now resolves guest-controlled ticket type server-side:
+  - `null` / empty input becomes `general`
+  - only `general` and `flowers` are currently allowed guest self-check-in values
+  - privileged or unknown values such as `professional_photo`, `staff`, or random strings raise an exception
+  - existing authoritative `event_check_ins.ticket_type` is preserved with `coalesce(ticket_type, resolved_ticket_type)`
 
 Risk:
 
-- For future self-registration, an anon guest with a valid guest token for their own check-in could choose a ticket type unless additional validation is added.
-- Current SOTC staff-confirmed flow reduces the immediate exposure, but this should not be considered closed for Eventbrite/self-registration.
+- This is intentionally narrow for the SOTC pilot.
+- Eventbrite-imported or staff-assigned classifications remain authoritative because guest self-check-in cannot overwrite an existing ticket type.
+- Future configurable registration outcomes still need grant-policy design before broader self-registration.
 
 Recommended fix:
 
-- Restrict guest self-completion ticket type to a server-side allowed set derived from event configuration or force a default.
-- Move classification grants such as photo eligibility behind staff/admin actions or imported attendee data.
+- Run `supabase-pre-sotc-bounded-security-fixes.sql` against live Supabase.
+- Run `supabase-pre-sotc-bounded-security-regression.sql`; expected final row is `pre_sotc_bounded_security_regression_passed`.
 
 ### 3. `event_guest_marks` Authorization
 
@@ -171,21 +176,27 @@ Recommendation:
 
 ### 5. Revoked Guest-Session Reactivation
 
-Status: **open required if revocation is a real control.**
+Status: **repo fixed; pending live SQL/regression.**
 
 Evidence:
 
 - `ensure_guest_session` inserts by `(event_id, token_hash)`.
-- On conflict it updates guest profile data and sets `status = 'active'`.
+- On conflict it now updates profile fields only when the existing session is still `active`.
+- If the presented token maps to a revoked/replaced/non-active session, the function raises `guest session is not active`.
 
 Risk:
 
-- If a guest session is revoked/suspended but the same browser token is presented again, the function can reactivate it.
+- Re-presenting a revoked/replaced token should now fail closed instead of restoring authority.
+- The current schema does not have a separate `expired` status/expiry policy; that remains part of the broader guest-token lifecycle work.
 
 Recommended fix:
 
-- On conflict, do not set `status = 'active'` if existing status is revoked/suspended.
-- Raise an exception or require a fresh token/session when status is not active.
+- Run the bounded regression SQL to verify:
+  - active returning session continues to work
+  - revoked session fails
+  - revoked token remains non-active after retry
+  - replaced token fails
+  - unrelated new valid token can create a fresh active session
 
 ### 6. Guest-Token Lifecycle
 
@@ -368,42 +379,45 @@ Recommendation:
 
 ### 16. Principal Email Lookup
 
-Status: **open hardening item.**
+Status: **repo fixed; pending deploy/smoke.**
 
 Evidence:
 
-- `api/admin-create-user.js` uses `email=ilike.<encoded email>` to find an existing admin principal.
-- `organizationStaffService` and `adminPrincipalAdminService` also use email lookup patterns.
+- `api/admin-create-user.js`, `organizationStaffService`, and `adminPrincipalAdminService` now normalize email by trimming and lowercasing.
+- They use exact equality lookups rather than wildcard-sensitive `ilike`.
+- They limit candidate results and fail if multiple exact matches exist.
+- Newly created/updated principal emails are stored lowercased.
 
 Risk:
 
-- Email is mutable and can collide operationally.
-- `ilike` is more permissive than an exact normalized lookup.
+- Email remains an operational identifier, not the ideal canonical identity.
+- `%` and `_` no longer broaden matches through `ilike`.
+- Duplicate exact matches fail instead of silently choosing a principal.
 
 Recommended fix:
 
-- Normalize email into a canonical field with unique constraints where appropriate.
-- Prefer auth user id / principal id once the user exists.
+- Prefer auth user id / principal id for future account identity.
 - For multi-email support, introduce account identity records rather than treating email as the permanent identity.
 
 ### 17. Build/Deployment Hygiene
 
-Status: **deferred hardening.**
+Status: **reviewed; deferred.**
 
 Evidence:
 
-- `vercel.json` build command is `cd app && npm install && npm run build`.
+- `vercel.json` build command remains `cd app && npm install && npm run build`.
 - Root `package.json` delegates build to `npm --prefix app run build`.
+- `app/package-lock.json` exists, but local `npm ci` verification was blocked by Windows/Dropbox file-lock behavior in `node_modules`.
 
 Risk:
 
 - `npm install` in deployment is less reproducible than `npm ci` against a committed lockfile.
+- Changing the production build command immediately before SOTC is higher risk until the lockfile/build path can be verified in a cleaner environment.
 
 Recommended fix:
 
-- Commit/maintain lockfile intentionally.
-- Use `npm ci` in production build.
-- Add CI/build checks before deploy if project grows beyond the current pilot cadence.
+- Re-test `npm ci` after SOTC in a clean workspace/CI environment.
+- Then update Vercel build command if the clean build succeeds and rollback is straightforward.
 
 ### 18. Secret Comparisons
 
@@ -484,7 +498,7 @@ Recommendation:
 
 Recommended before the July 22 SOTC event:
 
-1. Fix revoked guest-session reactivation if revocation is expected to be meaningful before/during the event.
+1. Run `supabase-pre-sotc-bounded-security-fixes.sql` and `supabase-pre-sotc-bounded-security-regression.sql` against live Supabase.
 2. Confirm Flexlink envs and passcode rotation if Flexlink remains accessible.
 3. Run direct anon PostgREST mutation checks for:
    - `event_check_ins`
@@ -496,7 +510,41 @@ Recommended before the July 22 SOTC event:
    - policies
    - function grants
    - group-order regression sections
-5. Decide whether self-completion ticket type needs to be locked before any auto/self-registration path is used.
+5. Smoke test guest check-in, Headshot join/nearby/completion, superadmin operations, and Jalani event-admin reset after deploying the bounded pass.
+
+## Pre-SOTC Bounded Pass - 2026-07-17
+
+Files changed:
+
+- `supabase-guest-session-foundation.sql`
+- `supabase-guest-action-rls-tightening.sql`
+- `supabase-pre-sotc-bounded-security-fixes.sql`
+- `supabase-pre-sotc-bounded-security-regression.sql`
+- `api/admin-create-user.js`
+- `app/src/lib/adminPrincipalAdminService.ts`
+- `app/src/lib/organizationStaffService.ts`
+
+Behavior changed:
+
+- Revoked/replaced guest sessions no longer become active again when the same token is re-presented.
+- Guest self-check-in ticket type is constrained to the current nonprivileged allowlist (`general`, `flowers`) and cannot overwrite existing authoritative classifications.
+- Administrative principal email lookup no longer uses wildcard-sensitive `ilike`; exact normalized email equality is used where email fallback remains necessary.
+
+Regression and build checks run locally:
+
+- `rg` confirmed no remaining `email=ilike` / `.ilike('email'...)` paths in `api` or `app/src`.
+- `npx tsc -b` passed in `app`.
+- `node --check api\admin-create-user.js` passed.
+- `npx vite build --outDir $env:TEMP\qme-vite-build-verify --emptyOutDir true` passed.
+- Direct `npx vite build` to the default `dist` folder was blocked by a Windows/Dropbox file lock on the existing `dist/images` folder, not by a TypeScript or app build error.
+- `npm ci` was attempted but not adopted because the local workspace hit dependency file-lock issues; build command remains unchanged for SOTC.
+
+Live verification still required:
+
+- Run `supabase-pre-sotc-bounded-security-fixes.sql`.
+- Run `supabase-pre-sotc-bounded-security-regression.sql` and confirm `pre_sotc_bounded_security_regression_passed`.
+- Re-run the existing emergency verification SQL and attach all result sets.
+- Deploy the app commit and smoke test guest, superadmin, and Jalani event-admin flows.
 
 ## Safe Deferrals
 

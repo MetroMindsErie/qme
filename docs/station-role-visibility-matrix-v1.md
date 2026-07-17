@@ -41,7 +41,7 @@ Station Supervisor and Station Staff are operational workspace roles. They shoul
 | Grant photo credit | Yes | Yes | Yes | Station-specific decision; likely supervisor for Registration | Usually no |
 | Queue/station Live Line tab | Yes | Yes | Yes | Yes for assigned station | Yes for assigned station |
 | Queue/station History tab | Yes | Yes | Yes | Yes for assigned station | Read-only or hidden by station |
-| Queue/station Settings tab | Yes | Yes | Yes | Visible for assigned station; selected controls editable only if event allows | Hidden or read-only explanation |
+| Queue/station Settings tab | Yes | Yes | Yes | Hidden for July pilot unless explicitly promoted | Hidden |
 | Apply Flow / Auto assist nudge | Yes | Yes | Yes | Yes for assigned queue | Possibly yes for assigned queue if simple |
 | Mark Not Here | Yes | Yes | Yes | Yes for assigned queue | Usually yes for assigned queue |
 | Return to Waiting | Yes | Yes | Yes | Yes for assigned queue | Usually yes for assigned queue |
@@ -97,4 +97,4 @@ For the July SOTC pilot:
 
 ## July 17 Scope Decision
 
-Do not spend more implementation energy on deeper Station Staff / Station Supervisor UI permissions until SOTC requests a specific staffing pattern that needs it. For the current pilot, named Event Admins are easy to create and sufficient for Jalani/Evan-style operation. The station-role model remains documented for Ahmed/security review and future product work, but the build should stay focused on concrete event-readiness needs.
+Do not spend more implementation energy on deeper Station Staff / Station Supervisor UI permissions until SOTC requests a specific staffing pattern that needs it. For the current pilot, named Event Admins are easy to create and sufficient for Jalani/Evan-style operation. Limited Staff can work assigned live operations surfaces, but event-wide setup and queue/station Settings stay behind Event Admin, Organization Admin, or qME Superadmin authority. The station-role model remains documented for Ahmed/security review and future product work, but the build should stay focused on concrete event-readiness needs.

@@ -24,6 +24,12 @@ import {
   updateQueue,
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
+import {
+  canAccessEvent,
+  canManageEvent,
+  getCurrentAdminPrincipal,
+  type CurrentAdminPrincipal,
+} from '../../lib/adminPrincipalService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
 import type { Queue as QueueType, QEvent, EventCheckIn, EventGuestMark, Ticket, Ece } from '../../types';
 import '../../styles/shared.css';
@@ -117,6 +123,8 @@ export default function AdminQueueDashboard() {
   const [savingControls, setSavingControls] = useState(false);
   const [controlSaveStatus, setControlSaveStatus] = useState('');
   const [activeQueueTab, setActiveQueueTab] = useState<AdminQueueTab>('live');
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
   const inputRef = useRef<HTMLInputElement>(null);
   const lastAppliedRef = useRef<string | null>(null);
@@ -143,6 +151,16 @@ export default function AdminQueueDashboard() {
     (async () => {
       try {
         const ev = await getEvent(eventId);
+        const admin = await getCurrentAdminPrincipal();
+        setCurrentAdmin(admin);
+        if (!admin || !canAccessEvent(admin, ev)) {
+          setAccessDenied(true);
+          setQueue(null);
+          setEvent(ev);
+          setLinkedEce(null);
+          return;
+        }
+        setAccessDenied(false);
         let q: QueueType;
         try {
           q = await getQueue(queueId);
@@ -161,6 +179,12 @@ export default function AdminQueueDashboard() {
       }
     })();
   }, [queueId, eventId, navigate]);
+
+  useEffect(() => {
+    if (activeQueueTab === 'settings' && event && (!currentAdmin || !canManageEvent(currentAdmin, event))) {
+      setActiveQueueTab('live');
+    }
+  }, [activeQueueTab, currentAdmin, event]);
 
   const refreshFlowersCheckIns = useCallback(async () => {
     if (!event?.id || !isBouquetQueue) {
@@ -386,7 +410,36 @@ export default function AdminQueueDashboard() {
     );
   }
 
+  if (accessDenied) {
+    return (
+      <div className="card">
+        <Header titleLine1="ADMIN" titleLine2="QUEUE" />
+        <div style={{ padding: '1rem 1.25rem', textAlign: 'center' }}>
+          <h1 className="headline" style={{ fontSize: '1.4rem', marginBottom: '0.75rem' }}>
+            Queue access unavailable
+          </h1>
+          <p style={{ color: '#64748b', lineHeight: 1.45, margin: '0 0 1rem' }}>
+            Your staff account is not assigned to this queue's event.
+          </p>
+          <button
+            type="button"
+            className="actionBtn actionBtn-secondary"
+            onClick={() => navigate(eventId ? `/admin/events/${eventId}` : '/admin/events')}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   if (isPilotQueue && queue && event) {
+    const canManageThisEvent = Boolean(currentAdmin && canManageEvent(currentAdmin, event));
+    const queueTabs: Array<[AdminQueueTab, string]> = [
+      ['live', 'Live Line'],
+      ['history', 'History'],
+      ...(canManageThisEvent ? [['settings', 'Settings'] as [AdminQueueTab, string]] : []),
+    ];
     const isInactiveQueueTicket = (ticket: Ticket) => {
       const stage = ticket.stage ?? 'waiting';
       if (stage === 'completed') return false;
@@ -440,11 +493,7 @@ export default function AdminQueueDashboard() {
 
         <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
           <div className="admin-tabs" role="tablist" aria-label="Queue admin sections">
-            {[
-              ['live', 'Live Line'],
-              ['history', 'History'],
-              ['settings', 'Settings'],
-            ].map(([tab, label]) => (
+            {queueTabs.map(([tab, label]) => (
               <button
                 key={tab}
                 type="button"
@@ -458,7 +507,7 @@ export default function AdminQueueDashboard() {
             ))}
           </div>
 
-          {activeQueueTab === 'settings' && (
+          {activeQueueTab === 'settings' && canManageThisEvent && (
           <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f8fafc' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
@@ -525,7 +574,7 @@ export default function AdminQueueDashboard() {
           </div>
           )}
 
-          {activeQueueTab === 'settings' && (
+          {activeQueueTab === 'settings' && canManageThisEvent && (
           <>
           {pilotCompletionMode === 'guest_code' ? (
             <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#fff', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.85rem', alignItems: 'center' }}>

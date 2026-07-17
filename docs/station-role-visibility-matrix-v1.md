@@ -90,7 +90,11 @@ For the July SOTC pilot:
 
 - Decide whether Check-In Staff can grant photo credit or whether that requires Station Supervisor/Event Admin.
 - Decide whether Station Staff can use Not Here and Return to Waiting, or whether those are supervisor-only.
-- Add role-aware admin landing/routing.
-- Hide or lock tabs based on role and assignment.
-- Add read-only explanations for controls a user can see but cannot edit.
+- Role-aware admin landing/routing is implemented for the current need.
+- Hide or lock tabs based on role and assignment only when a real staff model requires it.
+- Add read-only explanations for controls a user can see but cannot edit when those controls are exposed to non-admin station users.
 - Add stronger audit coverage for staff assignment/setup changes.
+
+## July 17 Scope Decision
+
+Do not spend more implementation energy on deeper Station Staff / Station Supervisor UI permissions until SOTC requests a specific staffing pattern that needs it. For the current pilot, named Event Admins are easy to create and sufficient for Jalani/Evan-style operation. The station-role model remains documented for Ahmed/security review and future product work, but the build should stay focused on concrete event-readiness needs.

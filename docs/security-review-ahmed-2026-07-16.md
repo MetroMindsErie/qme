@@ -41,4 +41,4 @@ Generate a scrypt hash locally with a one-off script that does not print or comm
 - UI visibility remains separate from authorization.
 - Group ordering is intentionally locked down rather than rebuilt during this emergency pass.
 - Production closure depends on applying SQL and rerunning verification in the deployed Supabase project.
-
+- Station-level privilege refinement is documented in `docs/station-role-visibility-matrix-v1.md`, but it is intentionally not being overbuilt before SOTC asks for distinct Station Staff / Station Supervisor permissions. The current pilot can create named Event Admins easily, and the security boundary still relies on role-checked RPCs/RLS rather than UI hiding alone.

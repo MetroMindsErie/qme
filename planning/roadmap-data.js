@@ -1459,7 +1459,7 @@ const QME_ROADMAP = {
             {
               id: "story-role-aware-admin-landing",
               title: "Route staff to role-aware admin workspaces",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Send admins and staff to the most relevant admin workspace based on their organization, event, and feature assignments.",
@@ -1476,7 +1476,7 @@ const QME_ROADMAP = {
                 "Station Supervisor versus Event Admin control ownership is documented for queue controls, photo-credit/service controls, reset, and cross-station actions."
               ],
               notes:
-                "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaves mostly like an event-level overview. July 8 Alpha 2 review shifted this from permission checks to workspace visibility: qME Superadmin, Organization Admin, Event Admin, Station Supervisor, and Station Staff need clear tab visibility, read-only/edit boundaries, and operational-control ownership. July 16 update: target role/workspace/control boundaries are documented in docs/station-role-visibility-matrix-v1.md. First implementation slice added a role-aware /admin landing: broad admins route to /admin/events, single-assignment event/station/check-in staff route directly to the assigned workspace, and multi-assignment staff see a simple workspace chooser. Remaining implementation: hide/read-lock setup/settings/reset controls by role inside the event, check-in, and queue pages."
+                "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaved mostly like an event-level overview. July 8 Alpha 2 review shifted this from permission checks to workspace visibility. July 16 update: target role/workspace/control boundaries are documented in docs/station-role-visibility-matrix-v1.md, and the useful first implementation slice is complete: /admin now routes broad admins to /admin/events, single-assignment event/station/check-in staff directly to the assigned workspace, and multi-assignment staff to a simple workspace chooser. July 17 decision: because SOTC has not requested special station/staff privilege distinctions and event admins are easy to create/manage, deeper role-specific tab hiding/read-locking is documented but intentionally deferred until a real operational need appears."
             },
             {
               id: "story-station-operational-control-visibility",

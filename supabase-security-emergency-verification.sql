@@ -155,3 +155,40 @@ where check_in_id is null
 group by event_id, credit_key
 order by rows_without_check_in desc;
 
+-- 8. Group-order anonymous write-access regression.
+-- Expected: zero rows. Any result here means the disabled group-order pilot has
+-- regained anonymous/public write access and must be treated as a security
+-- regression before Food/Cookie ordering is re-enabled.
+select
+  'unexpected_group_order_anon_write_grant' as issue,
+  grantee,
+  table_name,
+  privilege_type
+from information_schema.role_table_grants
+where table_schema = 'public'
+  and table_name = 'event_group_order_items'
+  and grantee in ('anon', 'public')
+  and privilege_type in ('INSERT', 'UPDATE', 'DELETE')
+order by grantee, privilege_type;
+
+-- 9. Group-order permissive policy regression.
+-- Expected: zero rows. Guest-owned ordering should return only through scoped
+-- RPCs after a secure rebuild, not broad table policies.
+select
+  'unexpected_group_order_permissive_policy' as issue,
+  schemaname,
+  tablename,
+  policyname,
+  roles,
+  cmd,
+  qual,
+  with_check
+from pg_policies
+where schemaname = 'public'
+  and tablename = 'event_group_order_items'
+  and (
+    roles && array['anon'::name, 'public'::name]
+    or qual = 'true'
+    or with_check = 'true'
+  )
+order by policyname;

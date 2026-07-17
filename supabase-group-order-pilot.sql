@@ -1,3 +1,20 @@
+-- SUPERSEDED / SECURITY-DISABLED PILOT.
+--
+-- Do not run this script as a supported production feature.
+-- It exists only as historical context for the dinner/group-order experiment.
+-- The old group-order pilot is disabled security debt until it is rebuilt with:
+-- - guest-session-owned order records
+-- - verified event and guest ownership
+-- - narrowly scoped guest/staff RPCs
+-- - station/event authorization for staff actions
+-- - server-side quantity and state validation
+-- - idempotency and audit logging
+-- - explicit draft/submitted/approved/fulfilled order states
+--
+-- Running this file may recreate event/content scaffolding from the old pilot.
+-- The table-level security section below intentionally revokes anon writes and
+-- keeps authenticated writes behind event-management RLS only.
+--
 -- qME group order pilot.
 -- Run after:
 -- - supabase-org-event-foundation.sql

@@ -4,6 +4,9 @@ Date: 2026-07-16
 
 This pass verifies Ahmed's findings against the repository and creates bounded emergency fixes. Live production status still requires running the Supabase verification script and applying the remediation/function SQL in Supabase.
 
+Detailed follow-up evidence for the remaining 22 findings is captured in
+`docs/security-review-ahmed-finding-evidence-2026-07-17.md`.
+
 ## Verification Plan
 
 1. Inspect current source SQL and app code for the five emergency findings.

@@ -233,6 +233,13 @@ export default function AdminEventDetail() {
   }, [event?.id, scheduleRefresh]);
 
   useEffect(() => {
+    if (!event) return;
+    if (!canManageEvent(currentAdmin, event) && activeTab !== 'operations') {
+      setActiveTab('operations');
+    }
+  }, [activeTab, currentAdmin, event]);
+
+  useEffect(() => {
     return () => {
       if (refreshTimerRef.current) window.clearTimeout(refreshTimerRef.current);
     };
@@ -385,6 +392,15 @@ export default function AdminEventDetail() {
   const standaloneQueues = queues.filter((queue) => !linkedQueueIds.has(queue.id));
   const visibleEces = eces.filter((ece) => ece.type !== 'check_in');
   const canManageThisEvent = canManageEvent(currentAdmin, event);
+  const eventTabs: Array<[AdminEventTab, string]> = [
+    ['operations', 'Operations'],
+    ...(canManageThisEvent
+      ? [
+          ['staff', 'Staff'],
+          ['setup', 'Setup'],
+        ] as Array<[AdminEventTab, string]>
+      : []),
+  ];
   const staffRolesThatRequireFeature: EventStaffRole[] = ['service_staff', 'station_account', 'service_provider'];
   const selectedRoleRequiresFeature = staffRolesThatRequireFeature.includes(staffRole);
   const eceById = new Map(eces.map((ece) => [ece.id, ece]));
@@ -430,16 +446,6 @@ export default function AdminEventDetail() {
           >
             ← Back
           </button>
-          {canManageThisEvent && (
-          <button
-            className="actionBtn actionBtn-danger"
-            disabled={resettingEventData}
-            style={{ margin: 0, width: 'auto', padding: '0.5rem 1.2rem', fontSize: 'clamp(0.75rem, 2vw, 0.85rem)' }}
-            onClick={handleResetEventTestData}
-          >
-            {resettingEventData ? 'Resetting...' : 'Reset Test Data'}
-          </button>
-          )}
         </div>
         <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginTop: '0.75rem' }}>
           <StatusPill label="Waiting for staff" value={checkInSummary.waitingForStaff} tone={checkInSummary.waitingForStaff > 0 ? 'attention' : 'default'} />
@@ -450,11 +456,7 @@ export default function AdminEventDetail() {
       {/* Queues section */}
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1rem 1.25rem' }}>
         <div className="admin-tabs" role="tablist" aria-label="Event admin sections">
-          {[
-            ['operations', 'Operations'],
-            ['staff', 'Staff'],
-            ['setup', 'Setup'],
-          ].map(([tab, label]) => (
+          {eventTabs.map(([tab, label]) => (
             <button
               key={tab}
               type="button"

@@ -7,6 +7,11 @@ import Header from '../../components/Header';
 import { getEvent, updateEvent } from '../../lib/eventService';
 import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
 import {
+  canManageEvent,
+  getCurrentAdminPrincipal,
+  type CurrentAdminPrincipal,
+} from '../../lib/adminPrincipalService';
+import {
   adminCompleteEventCheckIn,
   adminUpdateEventCheckInTicketType,
   listEventCheckIns,
@@ -43,6 +48,7 @@ export default function AdminEventCheckIns({
   const [photoCredits, setPhotoCredits] = useState<EventGuestCredit[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
   const [activeTab, setActiveTab] = useState<CheckInAdminTab>('live');
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsStatus, setSettingsStatus] = useState('');
@@ -50,12 +56,16 @@ export default function AdminEventCheckIns({
   const refresh = useCallback(async () => {
     if (!eventId) return;
     try {
-      const ev = await getEvent(eventId);
+      const [ev, admin] = await Promise.all([
+        getEvent(eventId),
+        getCurrentAdminPrincipal(),
+      ]);
       const [rows, credits] = await Promise.all([
         listEventCheckIns(ev.id, checkInCode),
         listGuestCreditsForEvent(ev.id, 'professional_headshot'),
       ]);
       setEvent(ev);
+      setCurrentAdmin(admin);
       setCheckIns(rows);
       setPhotoCredits(credits);
       setError('');
@@ -80,6 +90,13 @@ export default function AdminEventCheckIns({
     const interval = setInterval(refresh, 3000);
     return () => clearInterval(interval);
   }, [refresh]);
+
+  useEffect(() => {
+    if (!event) return;
+    if (!canManageEvent(currentAdmin, event) && activeTab === 'settings') {
+      setActiveTab('live');
+    }
+  }, [activeTab, currentAdmin, event]);
 
   async function checkInGuest(
     id: string,
@@ -173,6 +190,7 @@ export default function AdminEventCheckIns({
   const waiting = checkIns.filter((row) => row.status === 'waiting');
   const completed = checkIns.filter((row) => row.status === 'completed');
   const checkInConfig = useMemo(() => getEventCheckInConfig(event), [event]);
+  const canManageThisEvent = event ? canManageEvent(currentAdmin, event) : false;
   const eventLogoSrc = event?.slug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
     : event?.image_url || '/images/qmeFirstLogo.jpg';
@@ -220,13 +238,15 @@ export default function AdminEventCheckIns({
           >
             History
           </button>
-          <button
-            type="button"
-            className={`admin-tab ${activeTab === 'settings' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('settings')}
-          >
-            Settings
-          </button>
+          {canManageThisEvent && (
+            <button
+              type="button"
+              className={`admin-tab ${activeTab === 'settings' ? 'admin-tab-active' : ''}`}
+              onClick={() => setActiveTab('settings')}
+            >
+              Settings
+            </button>
+          )}
         </div>
 
         {activeTab === 'live' && (
@@ -335,7 +355,7 @@ export default function AdminEventCheckIns({
           </>
         )}
 
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && canManageThisEvent && (
           <div style={{ display: 'grid', gap: '1rem' }}>
             <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: '#fafafa' }}>
               <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Check-In Behavior</h2>

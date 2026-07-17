@@ -10,6 +10,7 @@ import {
   getCurrentAdminPrincipal,
   type CurrentAdminPrincipal,
 } from '../../lib/adminPrincipalService';
+import { createAdminUserWithAuth } from '../../lib/adminPrincipalAdminService';
 import { getEvent, resetEventTestData } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
@@ -28,6 +29,18 @@ import '../../styles/admin.css';
 
 function isGroupOrderEce(ece: Ece): boolean {
   return ece.metadata?.interaction_mode === 'group_order';
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function generateStaffPassword(): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+  const bytes = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(bytes, (byte) => alphabet[byte % alphabet.length]).join('');
 }
 
 type CheckInSummary = {
@@ -137,6 +150,8 @@ export default function AdminEventDetail() {
   const [loading, setLoading] = useState(true);
   const [staffEmail, setStaffEmail] = useState('');
   const [staffSaving, setStaffSaving] = useState(false);
+  const [createdStaffPassword, setCreatedStaffPassword] = useState<{ email: string; password: string } | null>(null);
+  const [passwordModal, setPasswordModal] = useState<{ email: string; password: string } | null>(null);
   const [resettingEventData, setResettingEventData] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminEventTab>('operations');
   const refreshTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
@@ -275,10 +290,24 @@ export default function AdminEventDetail() {
     }
     setStaffSaving(true);
     try {
-      const principal = await findAdminPrincipalByEmail(staffEmail);
+      const normalizedEmail = staffEmail.trim().toLowerCase();
+      let principal = await findAdminPrincipalByEmail(normalizedEmail);
+      let temporaryPassword = '';
       if (!principal) {
-        alert('No active admin principal was found for that email. Create/link the admin principal first, then add staff access.');
-        return;
+        temporaryPassword = generateStaffPassword();
+        const created = await createAdminUserWithAuth({
+          displayName: `Staff (${normalizedEmail})`,
+          email: normalizedEmail,
+          password: temporaryPassword,
+          principalType: 'person',
+          eventId: event.id,
+          metadata: {
+            onboarding_required: true,
+            temporary_password: temporaryPassword,
+            onboarding_source: 'event-staff-tab',
+          },
+        });
+        principal = created.principal;
       }
       const alreadyAssigned = eventStaff.some((member) =>
         member.assignment.principal_id === principal.id
@@ -299,6 +328,7 @@ export default function AdminEventDetail() {
         grantedByPrincipalId: currentAdmin.principal.id,
       });
       setStaffEmail('');
+      setCreatedStaffPassword(temporaryPassword ? { email: normalizedEmail, password: temporaryPassword } : null);
       setEventStaff(await listEventStaff(event.id));
     } catch (error) {
       console.error('Failed to add event staff', error);
@@ -478,10 +508,13 @@ export default function AdminEventDetail() {
           {canManageThisEvent && currentAdmin && (
             <form onSubmit={handleAddEventStaff} style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'flex-end', marginBottom: '1rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 6, color: '#2f3e4f', fontSize: '0.82rem', fontWeight: 800, flex: '1 1 210px' }}>
-                Admin Email
+                Staff Email
                 <input
                   value={staffEmail}
-                  onChange={(formEvent) => setStaffEmail(formEvent.target.value)}
+                  onChange={(formEvent) => {
+                    setStaffEmail(formEvent.target.value);
+                    setCreatedStaffPassword(null);
+                  }}
                   type="email"
                   placeholder="staff@example.com"
                   style={{ padding: '0.65rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: 8, fontSize: '0.95rem' }}
@@ -507,6 +540,12 @@ export default function AdminEventDetail() {
             </form>
           )}
 
+          {createdStaffPassword && (
+            <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', color: '#065f46', fontWeight: 800, lineHeight: 1.45 }}>
+              New staff login created for {createdStaffPassword.email}. Password: <span style={{ fontFamily: 'monospace' }}>{createdStaffPassword.password}</span>
+            </div>
+          )}
+
           {!currentAdmin && (
             <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', color: '#9a3412', fontWeight: 800, lineHeight: 1.45 }}>
               Sign in with named admin access to view or manage event staff.
@@ -521,6 +560,10 @@ export default function AdminEventDetail() {
 
           {eventStaff.map((member) => {
             const scopedEce = member.assignment.ece_id ? eceById.get(member.assignment.ece_id) : null;
+            const principalMetadata = asRecord(member.principal?.metadata);
+            const temporaryPassword = typeof principalMetadata.temporary_password === 'string'
+              ? principalMetadata.temporary_password
+              : '';
             return (
               <div key={member.assignment.id} style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '1rem', marginBottom: '0.75rem', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                 <div style={{ minWidth: 0, flex: 1 }}>
@@ -533,6 +576,17 @@ export default function AdminEventDetail() {
                   </div>
                 </div>
                 {canManageThisEvent && currentAdmin && (
+                  <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                  {temporaryPassword && member.principal?.email && (
+                    <button
+                      className="actionBtn actionBtn-secondary"
+                      type="button"
+                      style={{ margin: 0, width: 'auto', padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
+                      onClick={() => setPasswordModal({ email: member.principal?.email ?? '', password: temporaryPassword })}
+                    >
+                      Password
+                    </button>
+                  )}
                   <button
                     className="actionBtn actionBtn-danger"
                     type="button"
@@ -541,10 +595,33 @@ export default function AdminEventDetail() {
                   >
                     Remove
                   </button>
+                  </div>
                 )}
               </div>
             );
           })}
+
+          {passwordModal && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '1rem' }}>
+              <div style={{ width: '100%', maxWidth: 360, background: '#fff', borderRadius: 10, padding: '1rem', border: '1px solid #d1d5db', boxShadow: '0 20px 40px rgba(15, 23, 42, 0.25)' }}>
+                <h3 style={{ margin: '0 0 0.5rem', color: '#1f2d3d', fontSize: '1.1rem' }}>Staff Password</h3>
+                <p style={{ margin: '0 0 0.75rem', color: '#64748b', fontWeight: 700, lineHeight: 1.4 }}>
+                  Share this with {passwordModal.email}. This button disappears after they complete first login.
+                </p>
+                <div style={{ border: '1px solid #cbd5e1', borderRadius: 8, padding: '0.85rem', fontFamily: 'monospace', fontWeight: 900, background: '#f8fafc', color: '#1f2d3d', marginBottom: '0.85rem' }}>
+                  {passwordModal.password}
+                </div>
+                <button
+                  className="actionBtn actionBtn-primary"
+                  type="button"
+                  style={{ margin: 0 }}
+                  onClick={() => setPasswordModal(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         )}
 

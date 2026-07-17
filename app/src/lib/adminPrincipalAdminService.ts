@@ -68,6 +68,8 @@ export async function createAdminUserWithAuth(input: {
   password: string;
   phone?: string | null;
   principalType: AdminPrincipal['principal_type'];
+  eventId?: string | null;
+  metadata?: Record<string, unknown>;
 }): Promise<{ authUserId: string; principal: AdminPrincipal }> {
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
@@ -88,4 +90,30 @@ export async function createAdminUserWithAuth(input: {
     throw new Error(body.error || 'Could not create admin user.');
   }
   return body as { authUserId: string; principal: AdminPrincipal };
+}
+
+export async function completeOwnAdminProfile(input: {
+  firstName: string;
+  lastName: string;
+  phone?: string | null;
+}): Promise<AdminPrincipal> {
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw sessionError;
+  const accessToken = sessionData.session?.access_token;
+  if (!accessToken) throw new Error('No active admin session.');
+
+  const response = await fetch('/api/admin-complete-profile', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(input),
+  });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(body.error || 'Could not complete admin profile.');
+  }
+  return body.principal as AdminPrincipal;
 }

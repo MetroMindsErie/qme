@@ -63,6 +63,56 @@ async function isSuperadmin(config, principalId) {
   return rows.length > 0;
 }
 
+async function getEventById(config, eventId) {
+  if (!eventId) return null;
+  const response = await fetch(
+    `${config.url}/rest/v1/events?id=eq.${encodeURIComponent(eventId)}&select=id,organization_id`,
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        Accept: "application/json"
+      }
+    }
+  );
+  if (!response.ok) throw new Error(`Event lookup failed: ${response.status}`);
+  const rows = await response.json();
+  return rows[0] || null;
+}
+
+async function canManageEvent(config, principalId, event) {
+  if (!event) return false;
+
+  const assignmentResponse = await fetch(
+    `${config.url}/rest/v1/event_staff_assignments?principal_id=eq.${encodeURIComponent(principalId)}&event_id=eq.${encodeURIComponent(event.id)}&role=eq.event_admin&status=eq.active&select=id`,
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        Accept: "application/json"
+      }
+    }
+  );
+  if (!assignmentResponse.ok) throw new Error(`Event role lookup failed: ${assignmentResponse.status}`);
+  const assignments = await assignmentResponse.json();
+  if (assignments.length > 0) return true;
+
+  if (!event.organization_id) return false;
+  const membershipResponse = await fetch(
+    `${config.url}/rest/v1/organization_memberships?principal_id=eq.${encodeURIComponent(principalId)}&organization_id=eq.${encodeURIComponent(event.organization_id)}&role=eq.org_admin&status=eq.active&select=id`,
+    {
+      headers: {
+        apikey: config.serviceKey,
+        Authorization: `Bearer ${config.serviceKey}`,
+        Accept: "application/json"
+      }
+    }
+  );
+  if (!membershipResponse.ok) throw new Error(`Organization role lookup failed: ${membershipResponse.status}`);
+  const memberships = await membershipResponse.json();
+  return memberships.length > 0;
+}
+
 async function createAuthUser(config, input) {
   const response = await fetch(`${config.url}/auth/v1/admin/users`, {
     method: "POST",
@@ -132,6 +182,7 @@ async function saveAdminPrincipal(config, input, authUserId) {
       status: "active",
       metadata: {
         ...(existing?.metadata || {}),
+        ...(input.metadata || {}),
         source: "qme-admin-create-user",
         created_by_principal_id: input.createdByPrincipalId
       }
@@ -173,11 +224,6 @@ module.exports = async function handler(req, res) {
     }
 
     const callerPrincipal = await getAdminPrincipal(config, caller.id);
-    if (!callerPrincipal || !(await isSuperadmin(config, callerPrincipal.id))) {
-      res.status(403).json({ error: "Only qME superadmin can create admin users." });
-      return;
-    }
-
     const body = parseBody(req);
     const input = {
       email: String(body.email || "").trim().toLowerCase(),
@@ -185,8 +231,20 @@ module.exports = async function handler(req, res) {
       displayName: String(body.displayName || "").trim(),
       phone: String(body.phone || "").trim(),
       principalType: String(body.principalType || "person"),
-      createdByPrincipalId: callerPrincipal.id
+      eventId: String(body.eventId || "").trim(),
+      metadata: body.metadata && typeof body.metadata === "object" && !Array.isArray(body.metadata)
+        ? body.metadata
+        : {},
+      createdByPrincipalId: callerPrincipal?.id || null
     };
+
+    const callerIsSuperadmin = callerPrincipal ? await isSuperadmin(config, callerPrincipal.id) : false;
+    const event = input.eventId ? await getEventById(config, input.eventId) : null;
+    const callerCanManageEvent = callerPrincipal ? await canManageEvent(config, callerPrincipal.id, event) : false;
+    if (!callerPrincipal || (!callerIsSuperadmin && !callerCanManageEvent)) {
+      res.status(403).json({ error: "Only qME superadmin, organization admin, or event admin can create staff users." });
+      return;
+    }
 
     const allowedTypes = new Set(["person", "station", "service_provider", "support"]);
     if (!input.email || !input.password || !input.displayName || !allowedTypes.has(input.principalType)) {

@@ -220,6 +220,61 @@ begin
 end;
 $$;
 
+create or replace function public.create_needs_help_event_check_in_for_guest(
+  p_event_id uuid,
+  p_guest_token text,
+  p_first_name text,
+  p_last_name text,
+  p_code text default null,
+  p_email text default null,
+  p_phone text default null
+)
+returns public.event_check_ins
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  resolved_session_id uuid;
+  created_row public.event_check_ins;
+begin
+  resolved_session_id := public.ensure_guest_session(
+    p_event_id,
+    p_guest_token,
+    p_first_name,
+    p_last_name,
+    p_email,
+    p_phone
+  );
+
+  insert into public.event_check_ins (
+    event_id,
+    guest_session_id,
+    first_name,
+    last_name,
+    code,
+    status,
+    metadata
+  )
+  values (
+    p_event_id,
+    resolved_session_id,
+    trim(coalesce(p_first_name, '')),
+    trim(coalesce(p_last_name, '')),
+    nullif(trim(coalesce(p_code, '')), ''),
+    'waiting',
+    jsonb_build_object(
+      'source', 'guest_registration_not_found',
+      'needs_help', true,
+      'registration_match_status', 'needs_help'
+    )
+  )
+  returning * into created_row;
+
+  return created_row;
+end;
+$$;
+
 create or replace function public.admin_complete_event_check_in(
   p_check_in_id uuid,
   p_ticket_type text default null
@@ -301,6 +356,9 @@ grant execute on function public.create_event_check_in_for_guest(uuid, text, tex
 
 revoke all on function public.create_event_check_in_from_imported_registration_for_guest(uuid, text, uuid, text, text) from public;
 grant execute on function public.create_event_check_in_from_imported_registration_for_guest(uuid, text, uuid, text, text) to anon, authenticated;
+
+revoke all on function public.create_needs_help_event_check_in_for_guest(uuid, text, text, text, text, text, text) from public;
+grant execute on function public.create_needs_help_event_check_in_for_guest(uuid, text, text, text, text, text, text) to anon, authenticated;
 
 revoke all on function public.admin_complete_event_check_in(uuid, text) from public;
 revoke all on function public.admin_complete_event_check_in(uuid, text) from anon;

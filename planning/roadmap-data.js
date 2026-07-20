@@ -36,7 +36,8 @@ const QME_ROADMAP = {
         "story-role-aware-admin-landing",
         "story-station-operational-control-visibility",
         "story-queue-automation-observability",
-        "story-temp-password-first-login"
+        "story-temp-password-first-login",
+        "story-attendee-import"
       ]
     },
     {
@@ -64,7 +65,6 @@ const QME_ROADMAP = {
         "Expand SOTC from the first event model into registration, attendee import, networking, schedules, and event activities.",
       storyIds: [
         "story-sotc-qr-entry",
-        "story-attendee-import",
         "story-registration",
         "story-workshop-signups",
         "story-personal-agenda"
@@ -1716,18 +1716,21 @@ const QME_ROADMAP = {
             {
               id: "story-attendee-import",
               title: "Import or sync SOTC attendee list",
-              status: "deferred",
-              sprint: "future",
+              status: "current",
+              sprint: "now",
               summary:
-                "Bring attendee records from Evite/Eventbrite or another registration source into qME for event check-in and personalization.",
+                "Bring the received SOTC Eventbrite attendee records into qME for event check-in, Headshot entitlement, and later attendee lookup without making the import itself a live guest workflow yet.",
               acceptanceCriteria: [
-                "Admin can import an attendee list for the event.",
-                "Imported records can be matched to guests during QR/check-in.",
+                "Imported attendee records are stored separately from guest sessions/check-ins.",
+                "Headshot entitlement is derived from the imported Price Tier rather than guest-entered classification.",
+                "Reset Test Data clears rehearsal check-in/linkage state without deleting the imported attendee source list.",
+                "A dry-run import report identifies missing fields, unknown price tiers, and duplicates before live import.",
+                "Imported records can later be matched to guests during QR/check-in.",
                 "Future API sync with Evite/Eventbrite is noted separately from manual import.",
-                "Realtime updates are considered but not required for the first SOTC slice."
+                "Realtime updates are considered but not required for the July SOTC slice."
               ],
               notes:
-                "Deferred by 2026-06-11 PO review. For the first SOTC slice, qME should not import attendees; staff can keep marking attendance in Evite/external system."
+                "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. Next implementation step is the reviewed live import/app matching path; do not design duplicate-name or walk-in recovery beyond what the actual data requires."
             },
             {
               id: "story-passport-activity",
@@ -2177,14 +2180,14 @@ const QME_ROADMAP = {
         "The SOTC guest home should prioritize Full Event Schedule, Professional Headshots, Event Resources, Featured Speakers, Sponsors, and Food & Drinks, with Resume Reviews and Networking visible lower on the page.",
         "The Mixer Resources Canva page cannot be embedded reliably in qME because Canva refused iframe display during testing.",
         "External content should remain external unless recreating it natively in qME adds interaction, personalization, or operational support. Canva pages, PDFs, and Google Docs should usually stay as external links.",
-        "The project is now primarily waiting on customer content rather than software architecture: attendee data, speakers, sponsors, logos, links, and food information.",
+        "The project is now primarily waiting on customer content rather than software architecture: speakers, sponsors, logos, links, and food information remain customer-content dependencies. The attendee CSV has arrived and passed dry-run review.",
         "Scan-Code Adventure should not appear in the July guest-facing home, but can remain available as an internal/demo capability."
       ],
       decisions: [
         "Adopt the hybrid Headshot operating model: guest-confirmed completion via I've Been Called plus Station Supervisor/Admin Mark Served and Not Here recovery.",
         "Do not add photographer-specific controls unless later testing proves they are useful.",
         "Keep walk-up Venmo headshots outside qME for July.",
-        "Defer Eventbrite attendee import, attendee lookup, self-registration, duplicate handling, and walk-in recovery until the actual attendee data is received and reviewed.",
+        "Begin the bounded manual Eventbrite attendee import path now that the actual attendee CSV has been received and reviewed. Keep attendee lookup UX, duplicate-name handling, self-registration, and walk-in recovery scoped to evidence from the import.",
         "Use last year's speaker, sponsor, and food/drink information as temporary placeholder content until SOTC provides updated content.",
         "Update the SOTC schedule/floor assignments immediately using the Mixer Resources direction.",
         "Keep Mixer Resources as a direct external Canva link, while keeping Sticker Guide as a native qME pop-up.",
@@ -2192,8 +2195,8 @@ const QME_ROADMAP = {
         "Keep Resume Reviews and Networking visible as lower-priority guest-home cards."
       ],
       risks: [
-        "Eventbrite may include duplicate names or insufficient identifying fields.",
-        "Unknown Eventbrite data quality could change the self-check-in design.",
+        "The current Eventbrite CSV is clean, but late registrations or future exports may introduce duplicates or insufficient identifying fields.",
+        "The self-check-in design should still fail safely if a future attendee file is less clean than the current dry-run.",
         "Walk-ins may require a recovery workflow that is not yet designed.",
         "Placeholder speakers, sponsors, logos, links, and food information must be replaced before production use.",
         "Event-specific styling must feel like SOTC while remaining mobile-readable and not overly hard-coded."
@@ -2208,7 +2211,8 @@ const QME_ROADMAP = {
       nextFocus: [
         "Completed: SOTC guest-home information architecture, schedule/layout, event guide structure, Event Resources with external Mixer Resources link, temporary speaker/sponsor/food content, and removal of Scan-Code Adventure from the July guest experience while preserving it as a reusable/demo capability.",
         "Waiting on SOTC: Eventbrite attendee export, updated speaker list, updated sponsor list, updated sponsor logos, sponsor destination links, and updated food/drink information.",
-        "On hold until Eventbrite export is reviewed: attendee lookup, self-registration, duplicate-name handling, walk-in recovery, and registration UX based on imported attendees.",
+        "Received and dry-run reviewed: SOTC-Mixer-List.csv with 191 attendees, 147 Headshot-entitled records, no duplicate attendee numbers/emails/names, and no missing required fields.",
+        "Current import focus: create the live imported-registration foundation and then wire the narrow check-in matching/Headshot entitlement path. Keep duplicate-name handling, walk-in recovery, and broader registration UX limited to what the reviewed data requires.",
         "Current development focus: continue refining the Headshot operational workflow, rehearse the Station Supervisor operating model, finalize July in-app notification behavior, and continue operational readiness rather than adding platform features."
       ]
     },
@@ -2818,10 +2822,10 @@ const QME_ROADMAP = {
     },
     {
       id: "decision-sotc-attendee-import",
-      title: "No SOTC attendee import for first slice",
+      title: "Manual SOTC attendee import is allowed after dry-run review",
       status: "decided",
       prompt:
-        "Do not import Evite/Eventbrite attendees for the first SOTC slice. Guests scan QR and enter their name; staff can continue official attendance tracking in their existing external list/system."
+        "The earlier no-import decision held until actual Eventbrite data was available. As of 2026-07-20, the cleaned SOTC-Mixer-List.csv has passed dry-run review with 191 importable attendees and no duplicate or missing required fields. A bounded manual import is acceptable for SOTC, with imported records kept separate from guest sessions/check-ins, Headshot entitlement derived server-side from the source Price Tier, and Reset Test Data clearing rehearsal linkage without deleting the source attendee list. Future API sync remains deferred."
     },
     {
       id: "decision-sotc-photo-states",

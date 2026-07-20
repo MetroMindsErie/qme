@@ -5,10 +5,16 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
-import { checkInEventGuest, createEventCheckIn, getEventCheckIn } from '../../lib/checkInService';
+import {
+  checkInEventGuest,
+  createEventCheckIn,
+  createImportedRegistrationCheckInForGuest,
+  getEventCheckIn,
+  searchImportedRegistrationsForGuest,
+} from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
-import type { EventCheckIn, QEvent } from '../../types';
+import type { EventCheckIn, ImportedRegistrationSearchResult, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 
@@ -59,6 +65,10 @@ export default function GuestEventCheckIn({
   const [checkIn, setCheckIn] = useState<EventCheckIn | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [registrationQuery, setRegistrationQuery] = useState('');
+  const [registrationResults, setRegistrationResults] = useState<ImportedRegistrationSearchResult[]>([]);
+  const [registrationSearching, setRegistrationSearching] = useState(false);
+  const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
 
   const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
@@ -195,6 +205,77 @@ export default function GuestEventCheckIn({
     );
   }
 
+  async function handleRegistrationSearch(e: FormEvent) {
+    e.preventDefault();
+    if (!event) return;
+    const query = registrationQuery.trim();
+    setError('');
+    setRegistrationResults([]);
+    if (query.length < 2) {
+      setError('Type at least two letters of your name to search.');
+      return;
+    }
+    setRegistrationSearching(true);
+    try {
+      const results = await searchImportedRegistrationsForGuest(event.id, query);
+      setRegistrationResults(results);
+      if (results.length === 0) {
+        setError('No matching registration was found. Try your first or last name, or see the event team.');
+      }
+    } catch (err) {
+      console.error('Registration search failed', err);
+      setError('Registration search is not available right now. Please see the event team.');
+    } finally {
+      setRegistrationSearching(false);
+    }
+  }
+
+  async function claimImportedRegistration(result: ImportedRegistrationSearchResult) {
+    if (!event) return;
+    setSaving(true);
+    setError('');
+    try {
+      const trimmedPhone = phone.trim();
+      const normalizedPhone = normalizePhone(trimmedPhone);
+      if (trimmedPhone && !isValidPhone(trimmedPhone)) {
+        setError('Please enter a 10-digit U.S. phone number, an international number starting with +, or leave phone blank.');
+        return;
+      }
+      const row = await createImportedRegistrationCheckInForGuest({
+        eventId: event.id,
+        importedRegistrationId: result.id,
+        emailConfirmation: registrationEmailConfirmation[result.id] || null,
+        phone: normalizedPhone || null,
+      });
+      setFirstName(row.first_name);
+      setLastName(row.last_name);
+      localStorage.setItem(storageKey(event.id), JSON.stringify({
+        id: row.id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        phone: normalizedPhone,
+        importedRegistrationId: result.id,
+        ts: Date.now(),
+      }));
+      setCheckIn(row);
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Imported registration check-in failed', err);
+      const message = err && typeof err === 'object' && 'message' in err
+        ? String((err as { message?: unknown }).message || '')
+        : '';
+      if (message.toLowerCase().includes('email confirmation')) {
+        setError('Please confirm the email address used for this registration.');
+      } else if (message.toLowerCase().includes('already been checked in')) {
+        setError('This registration has already been checked in. Please see the event team if this is you.');
+      } else {
+        setError('Check-in could not be saved. Please see the event team.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const checkInConfig = getEventCheckInConfig(event);
   const isWaitingForHostCheckIn = submitted
     && checkInConfig.requireCompletedForParticipation
@@ -202,6 +283,7 @@ export default function GuestEventCheckIn({
   const eventLogoSrc = event.slug === 'sotc-test-check-in' || eventSlug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
+  const useImportedRegistrationLookup = !checkInCode && event.slug === 'sotc-test-check-in';
 
   if (!checkInConfig.enabled) {
     return (
@@ -285,6 +367,128 @@ export default function GuestEventCheckIn({
               </div>
             )}
           </>
+        ) : useImportedRegistrationLookup ? (
+          <div>
+            {error && (
+              <div style={{ background: '#FFEBEE', borderRadius: 8, padding: '0.75rem', marginBottom: '0.9rem', color: '#B71C1C', fontWeight: 700 }}>
+                {error}
+              </div>
+            )}
+            <form onSubmit={handleRegistrationSearch}>
+              <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+                Find your registration
+              </label>
+              <input
+                value={registrationQuery}
+                onChange={(e) => setRegistrationQuery(e.target.value)}
+                placeholder="Type your first or last name"
+                autoComplete="name"
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.5rem' }}
+              />
+              <button className="actionBtn actionBtn-primary" type="submit" style={{ margin: '0.5rem 0 1rem' }} disabled={registrationSearching}>
+                {registrationSearching ? 'Searching...' : 'Search'}
+              </button>
+            </form>
+
+            <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+              Phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span>
+            </label>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              inputMode="tel"
+              autoComplete="tel"
+              placeholder="216-555-0100"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
+            />
+            <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
+              Optional. Used only to help recover your check-in later.
+            </div>
+
+            {registrationResults.map((result) => (
+              <div
+                key={result.id}
+                style={{
+                  border: '1px solid #e0e0e0',
+                  borderRadius: 10,
+                  padding: '0.85rem',
+                  marginBottom: '0.75rem',
+                  background: result.already_checked_in ? '#f8fafc' : '#fff',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
+                  <div>
+                    <div style={{ color: '#223247', fontWeight: 900, fontSize: '1.05rem' }}>
+                      {result.first_name} {result.last_name}
+                    </div>
+                    {result.email_hint && (
+                      <div style={{ color: '#64748b', fontSize: '0.82rem', marginTop: 3 }}>
+                        Email hint: {result.email_hint}
+                      </div>
+                    )}
+                    <div style={{ color: result.headshot_entitled ? '#00a344' : '#64748b', fontSize: '0.78rem', fontWeight: 900, marginTop: 5 }}>
+                      {result.headshot_entitled ? 'Headshot included' : 'Event admission'}
+                    </div>
+                  </div>
+                  <button
+                    className={result.already_checked_in ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
+                    type="button"
+                    disabled={saving || result.already_checked_in}
+                    onClick={() => claimImportedRegistration(result)}
+                    style={{ margin: 0, width: 'auto', padding: '0.5rem 0.8rem', whiteSpace: 'nowrap' }}
+                  >
+                    {result.already_checked_in ? 'Checked In' : 'This is me'}
+                  </button>
+                </div>
+                {result.requires_email_confirmation && !result.already_checked_in && (
+                  <div style={{ marginTop: '0.75rem' }}>
+                    <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+                      Confirm your email
+                    </label>
+                    <input
+                      value={registrationEmailConfirmation[result.id] || ''}
+                      onChange={(e) => setRegistrationEmailConfirmation((current) => ({
+                        ...current,
+                        [result.id]: e.target.value,
+                      }))}
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder="name@example.com"
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem', borderRadius: 8, border: '1px solid #ddd' }}
+                    />
+                    <div style={{ color: '#777', fontSize: '0.78rem', lineHeight: 1.35, marginTop: 5 }}>
+                      More than one registration has this name, so we need the matching email.
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            <details style={{ marginTop: '1rem', color: '#666' }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Can&apos;t find your registration?</summary>
+              <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>First name</label>
+                <input
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.9rem' }}
+                />
+
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Last name</label>
+                <input
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
+                />
+
+                <button className="actionBtn actionBtn-primary" type="submit" style={{ margin: 0 }} disabled={saving}>
+                  {saving ? 'Submitting...' : 'Ask event team for help'}
+                </button>
+              </form>
+            </details>
+          </div>
         ) : (
           <form onSubmit={handleSubmit}>
             {error && (

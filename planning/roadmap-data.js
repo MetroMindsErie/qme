@@ -1719,18 +1719,21 @@ const QME_ROADMAP = {
               status: "current",
               sprint: "now",
               summary:
-                "Bring the received SOTC Eventbrite attendee records into qME for event check-in, Headshot entitlement, and later attendee lookup without making the import itself a live guest workflow yet.",
+                "Bring the received SOTC Eventbrite attendee records into qME for event check-in, Headshot entitlement, and narrow guest self check-in.",
               acceptanceCriteria: [
                 "Imported attendee records are stored separately from guest sessions/check-ins.",
                 "Headshot entitlement is derived from the imported Price Tier rather than guest-entered classification.",
                 "Reset Test Data clears rehearsal check-in/linkage state without deleting the imported attendee source list.",
                 "A dry-run import report identifies missing fields, unknown price tiers, and duplicates before live import.",
-                "Imported records can later be matched to guests during QR/check-in.",
+                "Imported records can be searched by guest name with limited, masked results.",
+                "Guests can claim a selected imported registration and complete event check-in from the authoritative imported record.",
+                "Duplicate-name claims require server-side email confirmation.",
+                "Headshot-entitled imported registrations receive one professional_headshot credit idempotently at check-in.",
                 "Future API sync with Evite/Eventbrite is noted separately from manual import.",
                 "Realtime updates are considered but not required for the July SOTC slice."
               ],
               notes:
-                "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. Next implementation step is the reviewed live import/app matching path; do not design duplicate-name or walk-in recovery beyond what the actual data requires."
+                "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. The live table was manually populated with 191 imported registrations. The next app/SQL slice adds scoped guest registration search and claim RPCs: guests search by name, see masked email hints, claim one imported record, complete check-in as general, and receive Headshot credit only when the imported Price Tier entitles them. Duplicate-name claims require exact email confirmation. Walk-in recovery, self-registration beyond the fallback helper form, and Eventbrite API sync remain deferred."
             },
             {
               id: "story-passport-activity",
@@ -2210,9 +2213,9 @@ const QME_ROADMAP = {
       ],
       nextFocus: [
         "Completed: SOTC guest-home information architecture, schedule/layout, event guide structure, Event Resources with external Mixer Resources link, temporary speaker/sponsor/food content, and removal of Scan-Code Adventure from the July guest experience while preserving it as a reusable/demo capability.",
-        "Waiting on SOTC: Eventbrite attendee export, updated speaker list, updated sponsor list, updated sponsor logos, sponsor destination links, and updated food/drink information.",
-        "Received and dry-run reviewed: SOTC-Mixer-List.csv with 191 attendees, 147 Headshot-entitled records, no duplicate attendee numbers/emails/names, and no missing required fields.",
-        "Current import focus: create the live imported-registration foundation and then wire the narrow check-in matching/Headshot entitlement path. Keep duplicate-name handling, walk-in recovery, and broader registration UX limited to what the reviewed data requires.",
+        "Waiting on SOTC: updated speaker list, updated sponsor list, updated sponsor logos, sponsor destination links, and updated food/drink information.",
+        "Completed/under validation: SOTC-Mixer-List.csv was dry-run reviewed with 191 attendees, 147 Headshot-entitled records, no duplicate attendee numbers/emails/names, and no missing required fields; the live imported-registration table has been populated with 191 records.",
+        "Current import focus: validate the narrow guest imported-registration search/claim path and Headshot entitlement grant. Keep duplicate-name handling, walk-in recovery, and broader registration UX limited to what the reviewed data requires.",
         "Current development focus: continue refining the Headshot operational workflow, rehearse the Station Supervisor operating model, finalize July in-app notification behavior, and continue operational readiness rather than adding platform features."
       ]
     },

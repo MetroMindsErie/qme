@@ -255,6 +255,16 @@ export type CreateEventCheckInInput = Pick<
   phone?: string | null;
 };
 
+export interface ImportedRegistrationSearchResult {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email_hint: string | null;
+  headshot_entitled: boolean;
+  already_checked_in: boolean;
+  requires_email_confirmation: boolean;
+}
+
 export type CreateEventGroupOrderItemInput = Pick<
   EventGroupOrderItem,
   'event_id' | 'check_in_id' | 'item_name' | 'quantity'

@@ -3,7 +3,7 @@
  */
 import { supabase } from './supabase';
 import { getGuestSessionToken } from './guestSessionService';
-import type { CreateEventCheckInInput, EventCheckIn } from '../types';
+import type { CreateEventCheckInInput, EventCheckIn, ImportedRegistrationSearchResult } from '../types';
 
 export async function createEventCheckIn(
   input: CreateEventCheckInInput
@@ -20,6 +20,38 @@ export async function createEventCheckIn(
   });
   if (!scopedError) return scopedData as EventCheckIn;
   throw scopedError;
+}
+
+export async function searchImportedRegistrationsForGuest(
+  eventId: string,
+  query: string,
+  limit = 8
+): Promise<ImportedRegistrationSearchResult[]> {
+  const { data, error } = await supabase.rpc('search_event_imported_registrations_for_guest', {
+    p_event_id: eventId,
+    p_guest_token: getGuestSessionToken(eventId),
+    p_query: query,
+    p_limit: limit,
+  });
+  if (error) throw error;
+  return (data ?? []) as ImportedRegistrationSearchResult[];
+}
+
+export async function createImportedRegistrationCheckInForGuest(input: {
+  eventId: string;
+  importedRegistrationId: string;
+  emailConfirmation?: string | null;
+  phone?: string | null;
+}): Promise<EventCheckIn> {
+  const { data, error } = await supabase.rpc('create_event_check_in_from_imported_registration_for_guest', {
+    p_event_id: input.eventId,
+    p_guest_token: getGuestSessionToken(input.eventId),
+    p_imported_registration_id: input.importedRegistrationId,
+    p_email_confirmation: input.emailConfirmation?.trim() || null,
+    p_phone: input.phone?.trim() || null,
+  });
+  if (error) throw error;
+  return data as EventCheckIn;
 }
 
 export async function listEventCheckIns(

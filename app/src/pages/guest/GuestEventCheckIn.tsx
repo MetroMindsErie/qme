@@ -191,22 +191,6 @@ export default function GuestEventCheckIn({
     };
   }, [event, submitted, storageKey]);
 
-  if (loading) {
-    return (
-      <div className="card">
-        <p style={{ textAlign: 'center', padding: '3rem' }}>Loading...</p>
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <div className="card">
-        <p style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Event not found.</p>
-      </div>
-    );
-  }
-
   const searchImportedRegistrations = useCallback(async (query: string, options?: { showShortQueryError?: boolean }) => {
     if (!event) return;
     const trimmedQuery = query.trim();
@@ -261,6 +245,22 @@ export default function GuestEventCheckIn({
     submitted,
     useImportedRegistrationLookup,
   ]);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <p style={{ textAlign: 'center', padding: '3rem' }}>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="card">
+        <p style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Event not found.</p>
+      </div>
+    );
+  }
 
   async function handleRegistrationSearch(e: FormEvent) {
     e.preventDefault();

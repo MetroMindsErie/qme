@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-07-16",
+    updated: "2026-07-20",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -30,9 +30,7 @@ const QME_ROADMAP = {
       goal:
         "Prepare qME for July SOTC operations by focusing on customer content, event operations, rehearsal, usability, and deployment readiness rather than new platform foundation.",
       storyIds: [
-        "story-security-emergency-remediation",
         "story-foundation-privileged-action-matrix",
-        "story-foundation-external-db-security-review",
         "story-foundation-role-permission-smoke-matrix",
         "story-foundation-jalani-admin-walkthrough",
         "story-role-aware-admin-landing",
@@ -705,7 +703,7 @@ const QME_ROADMAP = {
             {
               id: "story-foundation-external-db-security-review",
               title: "Re-engage computer engineering student for database/security review",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Ask the student reviewer to critique the implemented role/auth/RLS/RPC foundation rather than brainstorm an open-ended redesign.",
@@ -716,7 +714,7 @@ const QME_ROADMAP = {
                 "Follow-up work is bounded before SOTC Event Builder resumes."
               ],
               notes:
-                "The foundation is now concrete enough for useful external review. This should happen before broad platform expansion."
+                "Completed July 20 after Ahmed reviewed the security remediation report and confirmed qME is good for the July SOTC pilot, with remaining items safely deferrable. Future security reviews should continue the same evidence-based process: independent review, verification, risk classification, bounded remediation, regression testing, production validation, and documentation."
             },
             {
               id: "story-foundation-jalani-admin-walkthrough",
@@ -751,7 +749,7 @@ const QME_ROADMAP = {
                 "Verification SQL, remediation SQL, tests, manual deployment actions, and remaining risks are documented for Ahmed follow-up."
               ],
               notes:
-                "Added by the 2026-07-16 security review. This paused unrelated feature expansion until emergency findings were verified and closed. July 16 follow-up: smoke-test reset bug was fixed, then security work resumed by updating remediation/current SQL to revoke anonymous direct table grants from admin_principals, platform_roles, organization_memberships, event_staff_assignments, event_check_ins, tickets, event_guest_marks, event_guest_credits, and event_group_order_items while preserving authenticated RLS access and scoped anonymous guest RPCs. Live verification now shows sensitive table RLS enabled, no direct anon table grants on the reviewed sensitive tables, no permissive using-true policies on those tables, no guest-credit rows without check-in ownership, clean group-order data audit, legacy unscoped guest queue RPCs revoked, queue reset restricted to event-admin-or-above internally, and admin/staff RPC execute grants cleaned so anon is false and authenticated remains true with internal role checks. Functional smoke test after remediation verified guest check-in/Headshot self-service, superadmin check-in/photo-credit/queue operation, and Jalani event-admin reset. July 17 clarification: the prior group-order pilot is disabled security debt, not a partially supported feature. Keep existing data for audit, mark old pilot SQL as superseded/dangerous, add a regression check for permissive group-order writes, and do not re-enable ordering until guest-session-owned order records, scoped RPCs, station/event staff authorization, server-side quantity/state validation, idempotency, audit logging, and draft/submitted/approved/fulfilled order states exist. July 17 finding-by-finding evidence packet added in docs/security-review-ahmed-finding-evidence-2026-07-17.md. Final bounded pre-SOTC pass added repo fixes for the remaining immediate hardening items: revoked/replaced guest sessions no longer reactivate on retry, guest self-check-in ticket type is constrained to a nonprivileged allowlist and cannot overwrite authoritative classifications, and admin/staff principal lookup now uses exact normalized email equality with duplicate-match refusal instead of wildcard-sensitive ilike. Live Supabase still needs the bounded fixes/regression SQL run and smoke verification attached. Remaining documented hardening items include provider-level rate limiting, npm ci/build reproducibility after SOTC, canonical auth-user identity/multi-email modeling, proper staff invite/reset flow, station-role product finalization, and moving remaining setup/admin writes behind named audited RPCs."
+                "Added by the 2026-07-16 security review. This paused unrelated feature expansion until emergency findings were verified and closed. July 16 follow-up: smoke-test reset bug was fixed, then security work resumed by updating remediation/current SQL to revoke anonymous direct table grants from admin_principals, platform_roles, organization_memberships, event_staff_assignments, event_check_ins, tickets, event_guest_marks, event_guest_credits, and event_group_order_items while preserving authenticated RLS access and scoped anonymous guest RPCs. Live verification now shows sensitive table RLS enabled, no direct anon table grants on the reviewed sensitive tables, no permissive using-true policies on those tables, no guest-credit rows without check-in ownership, clean group-order data audit, legacy unscoped guest queue RPCs revoked, queue reset restricted to event-admin-or-above internally, and admin/staff RPC execute grants cleaned so anon is false and authenticated remains true with internal role checks. Functional smoke test after remediation verified guest check-in/Headshot self-service, superadmin check-in/photo-credit/queue operation, and Jalani event-admin reset. July 17 clarification: the prior group-order pilot is disabled security debt, not a partially supported feature. Keep existing data for audit, mark old pilot SQL as superseded/dangerous, add a regression check for permissive group-order writes, and do not re-enable ordering until guest-session-owned order records, scoped RPCs, station/event staff authorization, server-side quantity/state validation, idempotency, audit logging, and draft/submitted/approved/fulfilled order states exist. July 17 finding-by-finding evidence packet added in docs/security-review-ahmed-finding-evidence-2026-07-17.md. Final bounded pre-SOTC pass added repo fixes for the remaining immediate hardening items: revoked/replaced guest sessions no longer reactivate on retry, guest self-check-in ticket type is constrained to a nonprivileged allowlist and cannot overwrite authoritative classifications, and admin/staff principal lookup now uses exact normalized email equality with duplicate-match refusal instead of wildcard-sensitive ilike. July 20 closure: production regression SQL passed, live verification remained clean, guest/admin smoke testing passed, and Ahmed confirmed the remaining work can be deferred until after the SOTC pilot. Emergency remediation is closed. Remaining items are security maturity backlog, not emergency work: provider-level rate limiting, invite/password-reset workflow, additional audited administrative RPCs where appropriate, browser-storage improvements, mobile security enhancements, group-order secure redesign, additional security monitoring/auditing, npm ci/build reproducibility after SOTC, canonical auth-user identity/multi-email modeling, and station-role product finalization."
             },
             {
               id: "story-guest-session-recovery-code",
@@ -2069,6 +2067,51 @@ const QME_ROADMAP = {
     }
   ],
   productReviews: [
+    {
+      id: "review-security-review-closure-2026-07-20",
+      date: "2026-07-20",
+      trigger:
+        "Ahmed reviewed the remediation report and confirmed qME is good for the July 2026 SOTC pilot, with remaining work deferrable",
+      summary:
+        "The independent security review is complete for the July 2026 SOTC pilot. Emergency remediation, production verification, regression testing, and smoke testing are complete, and the independent reviewer confirmed that remaining work can move back into normal post-SOTC security maturity rather than emergency remediation.",
+      observations: [
+        "Independent security review completed.",
+        "Emergency remediation completed.",
+        "Production verification completed.",
+        "Security regression testing completed.",
+        "Independent reviewer confirmed the remaining work can be deferred until after the SOTC pilot.",
+        "Current platform foundation is considered suitable for continued feature development.",
+        "No remaining High/Critical exploit path has been identified before the July 2026 pilot.",
+        "Remaining items are security maturity work rather than emergency remediation.",
+        "The current security foundation is stable enough that continued feature development should not introduce architectural security debt, provided future work follows the established authorization and verification patterns."
+      ],
+      decisions: [
+        "Emergency security remediation is closed.",
+        "Resume normal product development.",
+        "Keep Security Hardening Sprint 2 on the roadmap after SOTC.",
+        "Continue treating security as an ongoing engineering practice rather than a one-time project.",
+        "Do not promote remaining maturity items back into emergency work unless a new High/Critical issue is identified."
+      ],
+      risks: [
+        "Provider-level rate limiting remains post-SOTC maturity work.",
+        "Invite/password-reset workflow remains post-SOTC maturity work.",
+        "Additional audited administrative RPCs remain appropriate where direct setup writes need tighter operational evidence.",
+        "Browser-storage and mobile security improvements remain post-SOTC maturity work.",
+        "Group-ordering remains blocked until a secure redesign exists.",
+        "Additional security monitoring and auditing remain normal hardening work."
+      ],
+      roadmapChanges: [
+        "Moved the project back from emergency security remediation into normal Operational Readiness.",
+        "Marked the external database/security review story complete.",
+        "Kept remaining security work in backlog as maturity hardening, not emergency remediation.",
+        "Preserved the security engineering workflow as a repeatable process: independent review, verification, risk classification, bounded remediation, regression testing, production validation, and documentation."
+      ],
+      nextFocus: [
+        "Focus development on SOTC operational readiness and product capabilities.",
+        "Continue feature work only through the established authorization and verification patterns.",
+        "Reopen emergency remediation only if a new High/Critical issue is identified."
+      ]
+    },
     {
       id: "review-security-ahmed-emergency-remediation-2026-07-16",
       date: "2026-07-16",

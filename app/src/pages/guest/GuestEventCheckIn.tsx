@@ -69,6 +69,8 @@ export default function GuestEventCheckIn({
   const [registrationResults, setRegistrationResults] = useState<ImportedRegistrationSearchResult[]>([]);
   const [registrationSearching, setRegistrationSearching] = useState(false);
   const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
+  const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
+  const useImportedRegistrationLookup = !checkInCode && event?.slug === 'sotc-test-check-in';
 
   const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
@@ -205,29 +207,64 @@ export default function GuestEventCheckIn({
     );
   }
 
-  async function handleRegistrationSearch(e: FormEvent) {
-    e.preventDefault();
+  const searchImportedRegistrations = useCallback(async (query: string, options?: { showShortQueryError?: boolean }) => {
     if (!event) return;
-    const query = registrationQuery.trim();
-    setError('');
-    setRegistrationResults([]);
-    if (query.length < 2) {
-      setError('Type at least two letters of your name to search.');
+    const trimmedQuery = query.trim();
+    setRegistrationHasSearched(true);
+    if (trimmedQuery.length < 2) {
+      setRegistrationResults([]);
+      if (options?.showShortQueryError) {
+        setError('Type at least two letters of your name to search.');
+      }
       return;
     }
+    setError('');
     setRegistrationSearching(true);
     try {
-      const results = await searchImportedRegistrationsForGuest(event.id, query);
+      const results = await searchImportedRegistrationsForGuest(event.id, trimmedQuery);
       setRegistrationResults(results);
       if (results.length === 0) {
         setError('No matching registration was found. Try your first or last name, or see the event team.');
       }
     } catch (err) {
       console.error('Registration search failed', err);
-      setError('Registration search is not available right now. Please see the event team.');
+      const message = err && typeof err === 'object' && 'message' in err
+        ? String((err as { message?: unknown }).message || '').toLowerCase()
+        : '';
+      if (message.includes('could not find the function') || message.includes('does not exist')) {
+        setError('Registration lookup is still being set up. Please see the event team.');
+      } else {
+        setError('Registration search is not available right now. Please see the event team.');
+      }
     } finally {
       setRegistrationSearching(false);
     }
+  }, [event]);
+
+  useEffect(() => {
+    if (!event || submitted || !useImportedRegistrationLookup) return;
+    const query = registrationQuery.trim();
+    if (query.length < 2) {
+      setRegistrationResults([]);
+      if (registrationHasSearched) setError('');
+      return;
+    }
+    const timeout = window.setTimeout(() => {
+      void searchImportedRegistrations(query);
+    }, 350);
+    return () => window.clearTimeout(timeout);
+  }, [
+    event,
+    registrationHasSearched,
+    registrationQuery,
+    searchImportedRegistrations,
+    submitted,
+    useImportedRegistrationLookup,
+  ]);
+
+  async function handleRegistrationSearch(e: FormEvent) {
+    e.preventDefault();
+    await searchImportedRegistrations(registrationQuery, { showShortQueryError: true });
   }
 
   async function claimImportedRegistration(result: ImportedRegistrationSearchResult) {
@@ -283,7 +320,6 @@ export default function GuestEventCheckIn({
   const eventLogoSrc = event.slug === 'sotc-test-check-in' || eventSlug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
-  const useImportedRegistrationLookup = !checkInCode && event.slug === 'sotc-test-check-in';
 
   if (!checkInConfig.enabled) {
     return (

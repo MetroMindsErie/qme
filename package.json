@@ -8,7 +8,8 @@
     "test": "npm --prefix app test",
     "mobile": "npm --prefix mobile start",
     "planning:seed": "node scripts/seed-planning-document.js",
-    "sotc:attendees:dry-run": "node scripts/sotc-attendee-import-dry-run.js"
+    "sotc:attendees:dry-run": "node scripts/sotc-attendee-import-dry-run.js",
+    "sotc:attendees:import-sql": "node scripts/sotc-attendee-import-sql.js"
   },
   "keywords": [],
   "author": "",

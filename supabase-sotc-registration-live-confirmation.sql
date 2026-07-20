@@ -351,6 +351,97 @@ begin
 end;
 $$;
 
+create or replace function public.admin_cancel_event_check_in(
+  p_check_in_id uuid
+)
+returns public.event_check_ins
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  check_in_row public.event_check_ins;
+  target_org_id uuid;
+  actor_id uuid;
+  unlinked_imported_registration_id uuid;
+  previous_status text;
+begin
+  select *
+    into check_in_row
+  from public.event_check_ins
+  where id = p_check_in_id;
+
+  if check_in_row.id is null then
+    raise exception 'check-in not found';
+  end if;
+
+  if check_in_row.status not in ('waiting', 'called') then
+    raise exception 'only live check-ins can be removed';
+  end if;
+
+  previous_status := check_in_row.status;
+
+  if not public.can_manage_event_guest_action(check_in_row.event_id) then
+    raise exception 'not allowed to remove this check-in';
+  end if;
+
+  select organization_id
+    into target_org_id
+  from public.events
+  where id = check_in_row.event_id;
+
+  update public.event_imported_registrations
+  set
+    linked_check_in_id = null,
+    linked_guest_session_id = null,
+    checked_in_at = null,
+    updated_at = now()
+  where linked_check_in_id = p_check_in_id
+    and event_id = check_in_row.event_id
+  returning id into unlinked_imported_registration_id;
+
+  update public.event_check_ins
+  set
+    status = 'cancelled',
+    metadata = coalesce(metadata, '{}'::jsonb) || jsonb_build_object(
+      'needs_help', false,
+      'cancelled_at', now(),
+      'cancelled_reason', 'staff_removed_from_live_check_in',
+      'imported_registration_unlinked', unlinked_imported_registration_id is not null
+    ),
+    updated_at = now()
+  where id = p_check_in_id
+  returning * into check_in_row;
+
+  actor_id := public.current_admin_principal_id();
+  if actor_id is not null then
+    insert into public.admin_audit_logs (
+      organization_id,
+      event_id,
+      actor_principal_id,
+      action,
+      target_type,
+      target_id,
+      metadata
+    )
+    values (
+      target_org_id,
+      check_in_row.event_id,
+      actor_id,
+      'event_check_in.cancel',
+      'event_check_in',
+      p_check_in_id::text,
+      jsonb_build_object(
+        'previous_status', previous_status,
+        'imported_registration_id', unlinked_imported_registration_id
+      )
+    );
+  end if;
+
+  return check_in_row;
+end;
+$$;
+
 revoke all on function public.create_event_check_in_for_guest(uuid, text, text, text, text, text, text, boolean) from public;
 grant execute on function public.create_event_check_in_for_guest(uuid, text, text, text, text, text, text, boolean) to anon, authenticated;
 
@@ -363,3 +454,7 @@ grant execute on function public.create_needs_help_event_check_in_for_guest(uuid
 revoke all on function public.admin_complete_event_check_in(uuid, text) from public;
 revoke all on function public.admin_complete_event_check_in(uuid, text) from anon;
 grant execute on function public.admin_complete_event_check_in(uuid, text) to authenticated;
+
+revoke all on function public.admin_cancel_event_check_in(uuid) from public;
+revoke all on function public.admin_cancel_event_check_in(uuid) from anon;
+grant execute on function public.admin_cancel_event_check_in(uuid) to authenticated;

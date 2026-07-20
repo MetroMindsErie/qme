@@ -12,6 +12,7 @@ import {
   type CurrentAdminPrincipal,
 } from '../../lib/adminPrincipalService';
 import {
+  adminCancelEventCheckIn,
   adminCompleteEventCheckIn,
   adminUpdateEventCheckInTicketType,
   listEventCheckIns,
@@ -25,7 +26,6 @@ import '../../styles/admin.css';
 interface AdminEventCheckInsProps {
   checkInCode?: string | null;
   title?: string;
-  completedLabel?: string;
 }
 
 type CheckInAdminTab = 'live' | 'history' | 'settings';
@@ -39,7 +39,6 @@ function asRecord(value: unknown): Record<string, unknown> {
 export default function AdminEventCheckIns({
   checkInCode = null,
   title = 'Event Check-In',
-  completedLabel = 'Checked In Today',
 }: AdminEventCheckInsProps) {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
@@ -112,6 +111,22 @@ export default function AdminEventCheckIns({
     } catch (e) {
       console.error('Failed to update check-in', e);
       alert('Could not update check-in.');
+    }
+  }
+
+  async function cancelCheckInGuest(row: EventCheckIn) {
+    const guestName = `${row.first_name} ${row.last_name}`.trim() || 'this guest';
+    const confirmed = window.confirm(
+      `Remove ${guestName} from live check-in? They will move to history as removed. If this was an imported registration match, the registration will be released so the right guest can claim it.`
+    );
+    if (!confirmed) return;
+
+    try {
+      await adminCancelEventCheckIn(row.id);
+      await refresh();
+    } catch (e) {
+      console.error('Failed to remove check-in', e);
+      alert('Could not remove this check-in.');
     }
   }
 
@@ -189,6 +204,7 @@ export default function AdminEventCheckIns({
 
   const waiting = checkIns.filter((row) => row.status === 'waiting');
   const completed = checkIns.filter((row) => row.status === 'completed');
+  const history = checkIns.filter((row) => row.status === 'completed' || row.status === 'cancelled');
   const checkInConfig = useMemo(() => getEventCheckInConfig(event), [event]);
   const canManageThisEvent = event ? canManageEvent(currentAdmin, event) : false;
   const eventLogoSrc = event?.slug === 'sotc-test-check-in'
@@ -320,6 +336,20 @@ export default function AdminEventCheckIns({
                           </button>
                         </>
                       )}
+                      <button
+                        className="actionBtn actionBtn-secondary"
+                        style={{
+                          margin: 0,
+                          width: 'auto',
+                          padding: '0.45rem 0.8rem',
+                          background: '#fff',
+                          border: '1px solid #fecaca',
+                          color: '#dc2626',
+                        }}
+                        onClick={() => cancelCheckInGuest(row)}
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -331,19 +361,20 @@ export default function AdminEventCheckIns({
         {activeTab === 'history' && (
           <>
             <h2 style={{ fontSize: '1rem', margin: '0 0 0.75rem', color: '#2f3e4f' }}>
-              {completedLabel} ({completed.length})
+              Check-In History ({history.length})
             </h2>
-            {completed.length === 0 && (
+            {history.length === 0 && (
               <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
-                No completed check-ins yet.
+                No check-in history yet.
               </p>
             )}
-            {completed.map((row) => {
+            {history.map((row) => {
+              const isCancelled = row.status === 'cancelled';
               const hasFlowersAccess = row.ticket_type === 'flowers';
               const photoCredit = photoCredits.find((credit) => credit.check_in_id === row.id);
               const hasPhotoCredit = Boolean(photoCredit && photoCredit.quantity > photoCredit.used_quantity);
               const hasUsedPhotoCredit = Boolean(photoCredit && photoCredit.quantity <= photoCredit.used_quantity);
-              const accessLabel = hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
+              const accessLabel = isCancelled ? 'REMOVED' : hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
 
               return (
                 <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.8rem 0', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
@@ -351,12 +382,12 @@ export default function AdminEventCheckIns({
                     <div style={{ fontWeight: 700, color: '#2f3e4f' }}>
                       {row.first_name} {row.last_name}
                     </div>
-                    <div style={{ color: hasFlowersAccess ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800, marginTop: 2 }}>
-                      {checkInCode || event?.slug !== 'peony-festival' ? 'CHECKED IN' : accessLabel}
+                    <div style={{ color: isCancelled ? '#dc2626' : hasFlowersAccess ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800, marginTop: 2 }}>
+                      {isCancelled ? accessLabel : checkInCode || event?.slug !== 'peony-festival' ? 'CHECKED IN' : accessLabel}
                     </div>
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {!checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (
+                    {!isCancelled && !checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (
                       <button
                         className="actionBtn actionBtn-primary"
                         style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}
@@ -365,7 +396,7 @@ export default function AdminEventCheckIns({
                         Upgrade Flowers
                       </button>
                     )}
-                    {event?.slug === 'sotc-test-check-in' && (
+                    {!isCancelled && event?.slug === 'sotc-test-check-in' && (
                       <button
                         className={hasPhotoCredit || hasUsedPhotoCredit ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
                         style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}

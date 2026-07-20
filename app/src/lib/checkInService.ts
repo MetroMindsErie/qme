@@ -118,6 +118,14 @@ export async function adminCompleteEventCheckIn(
   return data as EventCheckIn;
 }
 
+export async function adminCancelEventCheckIn(id: string): Promise<EventCheckIn> {
+  const { data, error } = await supabase.rpc('admin_cancel_event_check_in', {
+    p_check_in_id: id,
+  });
+  if (error) throw error;
+  return data as EventCheckIn;
+}
+
 export async function checkInEventGuest(
   id: string,
   ticketType: NonNullable<EventCheckIn['ticket_type']>,

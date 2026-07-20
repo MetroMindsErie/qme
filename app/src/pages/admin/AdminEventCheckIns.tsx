@@ -51,6 +51,7 @@ export default function AdminEventCheckIns({
   const [activeTab, setActiveTab] = useState<CheckInAdminTab>('live');
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsStatus, setSettingsStatus] = useState('');
+  const [removingCheckInIds, setRemovingCheckInIds] = useState<Set<string>>(new Set());
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
@@ -122,11 +123,21 @@ export default function AdminEventCheckIns({
     if (!confirmed) return;
 
     try {
-      await adminCancelEventCheckIn(row.id);
+      setRemovingCheckInIds((current) => new Set(current).add(row.id));
+      const removedRow = await adminCancelEventCheckIn(row.id);
+      if (removedRow.status !== 'cancelled') {
+        throw new Error(`Remove returned ${removedRow.status || 'unknown'} instead of cancelled.`);
+      }
       await refresh();
     } catch (e) {
       console.error('Failed to remove check-in', e);
       alert('Could not remove this check-in.');
+    } finally {
+      setRemovingCheckInIds((current) => {
+        const next = new Set(current);
+        next.delete(row.id);
+        return next;
+      });
     }
   }
 
@@ -288,6 +299,7 @@ export default function AdminEventCheckIns({
               const rowMetadata = asRecord(row.metadata);
               const needsHelp = rowMetadata.needs_help === true || rowMetadata.registration_match_status === 'needs_help';
               const isImportedMatch = Boolean(rowMetadata.imported_registration_id);
+              const isRemoving = removingCheckInIds.has(row.id);
 
               return (
                 <div
@@ -323,15 +335,15 @@ export default function AdminEventCheckIns({
                     </div>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                       {checkInCode || event?.slug !== 'peony-festival' ? (
-                        <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id)}>
+                        <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} disabled={isRemoving} onClick={() => checkInGuest(row.id)}>
                           {needsHelp ? 'Resolve & Check In' : 'Check In'}
                         </button>
                       ) : (
                         <>
-                          <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'general')}>
+                          <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} disabled={isRemoving} onClick={() => checkInGuest(row.id, 'general')}>
                             General
                           </button>
-                          <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'flowers')}>
+                          <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} disabled={isRemoving} onClick={() => checkInGuest(row.id, 'flowers')}>
                             Flowers
                           </button>
                         </>
@@ -346,9 +358,10 @@ export default function AdminEventCheckIns({
                           border: '1px solid #fecaca',
                           color: '#dc2626',
                         }}
+                        disabled={isRemoving}
                         onClick={() => cancelCheckInGuest(row)}
                       >
-                        Remove
+                        {isRemoving ? 'Removing...' : 'Remove'}
                       </button>
                     </div>
                   </div>

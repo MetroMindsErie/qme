@@ -599,7 +599,8 @@ export default function GuestEventDetail() {
   const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
   const checkInConfig = getEventCheckInConfig(event);
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
-  const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus);
+  const isEventCheckInRemoved = eventCheckInStatus === 'cancelled';
+  const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus && !isEventCheckInRemoved);
   const isWaitingForHostCheckIn = hasSubmittedEventCheckIn && !hasEventCheckIn;
   const homeEligibleEces = checkInConfig.enabled
     ? eces.filter((ece) => ece.type !== 'check_in')
@@ -678,10 +679,14 @@ export default function GuestEventDetail() {
             <div className="ed-activity-body">
               <div className="ed-activity-name-row">
                 <span className="ed-activity-name">{isPeonyEvent ? 'Check In at Mobile Bar' : 'Event Check-In'}</span>
-                <span className="ed-badge ed-badge-active">{isWaitingForHostCheckIn ? 'WAITING FOR STAFF' : 'START HERE'}</span>
+                <span className="ed-badge ed-badge-active">
+                  {isEventCheckInRemoved ? 'REMOVED' : isWaitingForHostCheckIn ? 'WAITING FOR STAFF' : 'START HERE'}
+                </span>
               </div>
               <div className="ed-activity-desc">
-                {isWaitingForHostCheckIn
+                {isEventCheckInRemoved
+                  ? 'Your check-in request was removed. Check in again or see the event team for help.'
+                  : isWaitingForHostCheckIn
                   ? 'Your name has been submitted. Please wait here until staff confirms your event check-in.'
                   : !isPeonyEvent
                   ? 'Enter your name when you arrive so the event team can confirm your check-in.'
@@ -692,7 +697,7 @@ export default function GuestEventDetail() {
             </div>
             <div className="ed-activity-right">
               <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
-                {isWaitingForHostCheckIn ? 'Check-In Status' : 'Check In'}
+                {isEventCheckInRemoved ? 'Check In Again' : isWaitingForHostCheckIn ? 'Check-In Status' : 'Check In'}
               </Link>
             </div>
           </div>

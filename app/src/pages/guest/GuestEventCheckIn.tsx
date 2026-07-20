@@ -314,10 +314,24 @@ export default function GuestEventCheckIn({
     }
   }
 
+  function resetCancelledCheckIn() {
+    if (!event) return;
+    try {
+      localStorage.removeItem(storageKey(event.id));
+    } catch {
+      /* continue with in-memory reset if browser storage is unavailable */
+    }
+    setSubmitted(false);
+    setCheckIn(null);
+    setError('');
+  }
+
   const checkInConfig = getEventCheckInConfig(event);
+  const isRemovedCheckIn = checkIn?.status === 'cancelled';
   const isWaitingForHostCheckIn = submitted
     && checkInConfig.requireCompletedForParticipation
-    && checkIn?.status !== 'completed';
+    && checkIn?.status !== 'completed'
+    && !isRemovedCheckIn;
   const eventLogoSrc = event.slug === 'sotc-test-check-in' || eventSlug === 'sotc-test-check-in'
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
@@ -369,20 +383,32 @@ export default function GuestEventCheckIn({
           <>
             <div
               style={{
-                background: isWaitingForHostCheckIn ? '#fffbeb' : '#E8F5E9',
-                border: `1px solid ${isWaitingForHostCheckIn ? '#fde68a' : '#c8e6c9'}`,
+                background: isRemovedCheckIn ? '#fff7ed' : isWaitingForHostCheckIn ? '#fffbeb' : '#E8F5E9',
+                border: `1px solid ${isRemovedCheckIn ? '#fdba74' : isWaitingForHostCheckIn ? '#fde68a' : '#c8e6c9'}`,
                 borderRadius: 10,
                 padding: '1rem',
                 margin: '1rem 0',
-                color: isWaitingForHostCheckIn ? '#92400e' : '#1B5E20',
+                color: isRemovedCheckIn ? '#9a3412' : isWaitingForHostCheckIn ? '#92400e' : '#1B5E20',
                 fontWeight: 700,
                 lineHeight: 1.45,
               }}
             >
-              {isWaitingForHostCheckIn
+              {isRemovedCheckIn
+                ? 'This check-in request was removed by the event team. Please check in again or see the event team for help.'
+                : isWaitingForHostCheckIn
                 ? `Thanks, ${firstName || 'guest'}. Your name has been submitted. Please wait for the host to officially check you in before using event features.`
                 : `Thanks, ${firstName || 'guest'}! ${confirmation}`}
             </div>
+            {isRemovedCheckIn && (
+              <button
+                className="actionBtn actionBtn-primary"
+                type="button"
+                style={{ margin: '0.5rem 0 1rem' }}
+                onClick={resetCancelledCheckIn}
+              >
+                Check In Again
+              </button>
+            )}
             {!checkInCode && checkIn?.ticket_type === 'flowers' && (
               <div style={{ background: '#F0EEFF', borderRadius: 12, padding: '1rem', margin: '1rem 0', color: '#2f275f', textAlign: 'center' }}>
                 <div style={{ fontSize: '0.8rem', fontWeight: 900, letterSpacing: 1, textTransform: 'uppercase' }}>

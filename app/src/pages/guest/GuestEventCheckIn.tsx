@@ -444,6 +444,7 @@ export default function GuestEventCheckIn({
             {registrationResults.map((result) => (
               <div
                 key={result.id}
+                className="registration-result-card"
                 style={{
                   border: '1px solid #e0e0e0',
                   borderRadius: 10,
@@ -452,7 +453,7 @@ export default function GuestEventCheckIn({
                   background: result.already_checked_in ? '#f8fafc' : '#fff',
                 }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <div className="registration-result-row">
                   <div>
                     <div style={{ color: '#223247', fontWeight: 900, fontSize: '1.05rem' }}>
                       {result.first_name} {result.last_name}
@@ -471,7 +472,7 @@ export default function GuestEventCheckIn({
                     type="button"
                     disabled={saving || result.already_checked_in}
                     onClick={() => claimImportedRegistration(result)}
-                    style={{ margin: 0, width: 'auto', padding: '0.5rem 0.8rem', whiteSpace: 'nowrap' }}
+                    style={{ margin: 0 }}
                   >
                     {result.already_checked_in ? 'Checked In' : 'This is me'}
                   </button>

@@ -131,7 +131,8 @@ export default function AdminEventCheckIns({
       await refresh();
     } catch (e) {
       console.error('Failed to remove check-in', e);
-      alert('Could not remove this check-in.');
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      alert(`Could not remove this check-in. ${message}`);
     } finally {
       setRemovingCheckInIds((current) => {
         const next = new Set(current);

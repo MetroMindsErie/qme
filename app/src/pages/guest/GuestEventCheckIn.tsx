@@ -146,6 +146,7 @@ export default function GuestEventCheckIn({
         code: checkInCode,
         email: trimmedEmail || null,
         phone: normalizedPhone || null,
+        needsHelp: useImportedRegistrationLookup,
       });
       const row = shouldAutoComplete
         ? await checkInEventGuest(created.id, 'general', event.id)

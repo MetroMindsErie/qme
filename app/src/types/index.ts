@@ -227,6 +227,7 @@ export interface EventCheckIn {
   code: string | null;
   ticket_type: 'general' | 'flowers' | null;
   status: 'waiting' | 'called' | 'completed' | 'cancelled';
+  metadata?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -253,6 +254,7 @@ export type CreateEventCheckInInput = Pick<
   code?: string | null;
   email?: string | null;
   phone?: string | null;
+  needsHelp?: boolean;
 };
 
 export interface ImportedRegistrationSearchResult {

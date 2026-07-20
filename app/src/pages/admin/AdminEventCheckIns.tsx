@@ -268,36 +268,63 @@ export default function AdminEventCheckIns({
               </p>
             )}
 
-            {waiting.map((row) => (
-              <div key={row.id} style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '1rem', marginBottom: '0.75rem', background: '#fafafa' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
-                  <div>
-                    <div style={{ fontWeight: 800, color: '#2f3e4f', fontSize: '1.05rem' }}>
-                      {row.first_name} {row.last_name}
+            {waiting.map((row) => {
+              const rowMetadata = asRecord(row.metadata);
+              const needsHelp = rowMetadata.needs_help === true || rowMetadata.registration_match_status === 'needs_help';
+              const isImportedMatch = Boolean(rowMetadata.imported_registration_id);
+
+              return (
+                <div
+                  key={row.id}
+                  style={{
+                    border: `1px solid ${needsHelp ? '#fed7aa' : '#e0e0e0'}`,
+                    borderRadius: 10,
+                    padding: '1rem',
+                    marginBottom: '0.75rem',
+                    background: needsHelp ? '#fff7ed' : '#fafafa',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontWeight: 800, color: '#2f3e4f', fontSize: '1.05rem' }}>
+                        {row.first_name} {row.last_name}
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: 6 }}>
+                        <span style={{ fontSize: '0.75rem', color: '#8B5A00', fontWeight: 900, textTransform: 'uppercase' }}>
+                          Waiting for staff
+                        </span>
+                        {needsHelp && (
+                          <span style={{ background: '#ffedd5', border: '1px solid #fdba74', borderRadius: 999, color: '#9a3412', fontSize: '0.7rem', fontWeight: 900, padding: '0.1rem 0.4rem', textTransform: 'uppercase' }}>
+                            Needs help
+                          </span>
+                        )}
+                        {isImportedMatch && !needsHelp && (
+                          <span style={{ background: '#ecfdf3', border: '1px solid #bbf7d0', borderRadius: 999, color: '#047857', fontSize: '0.7rem', fontWeight: 900, padding: '0.1rem 0.4rem', textTransform: 'uppercase' }}>
+                            Matched
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div style={{ fontSize: '0.8rem', color: '#8B5A00', fontWeight: 800, textTransform: 'uppercase', marginTop: 4 }}>
-                      Waiting for staff
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                      {checkInCode || event?.slug !== 'peony-festival' ? (
+                        <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id)}>
+                          {needsHelp ? 'Resolve & Check In' : 'Check In'}
+                        </button>
+                      ) : (
+                        <>
+                          <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'general')}>
+                            General
+                          </button>
+                          <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'flowers')}>
+                            Flowers
+                          </button>
+                        </>
+                      )}
                     </div>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    {checkInCode || event?.slug !== 'peony-festival' ? (
-                      <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id)}>
-                        Check In
-                      </button>
-                    ) : (
-                      <>
-                        <button className="actionBtn actionBtn-secondary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'general')}>
-                          General
-                        </button>
-                        <button className="actionBtn actionBtn-primary" style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }} onClick={() => checkInGuest(row.id, 'flowers')}>
-                          Flowers
-                        </button>
-                      </>
-                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
 

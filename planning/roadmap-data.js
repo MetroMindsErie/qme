@@ -1135,36 +1135,33 @@ const QME_ROADMAP = {
               status: "done",
               sprint: "now",
               summary:
-                "Model the free student headshot line and paid/approved professional access.",
+                "Model the Headshot Photographer queue using imported-registration entitlement and staff-confirmed event check-in.",
               acceptanceCriteria: [
                 "Headshot experience has a queue.",
-                "Students can join for free.",
-                "Professionals can join only when marked as professional-with-photo or equivalent access.",
+                "Checked-in guests can join only when the imported registration or staff grant provides an unused professional_headshot credit.",
+                "Student/Professional values from the attendee file remain source metadata and do not drive queue authorization directly.",
                 "Headshot queue copy follows the same clear state model as the pilot queue: Waiting, Almost Ready, I'm Nearby, Your Turn, Completed.",
                 "Copy is tested with at least one student/contact for comprehension."
               ],
               notes:
-                "This extends the Bouquet Bar access pattern into guest tags/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity. Messaging pass completed on 2026-06-26: Headshot Photographer runtime copy now uses Waiting, Almost Ready, I'm Nearby, Your Turn, and Completed language, with photo-specific wording only around the actual photographer step. SQL seed copy was updated to match."
+                "This extends the Bouquet Bar access pattern into guest credits/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity. Messaging pass completed on 2026-06-26: Headshot Photographer runtime copy now uses Waiting, Almost Ready, I'm Nearby, Your Turn, and Completed language, with photo-specific wording only around the actual photographer step. July attendee-import update retired the Student/Professional operational authorization model; the active SOTC gate is checked-in status plus Headshot entitlement/unused credit."
             },
             {
               id: "story-headshot-tags",
-              title: "Add guest tags for headshot eligibility",
-              status: "ready",
-              sprint: "soon",
+              title: "Retire Student/Professional headshot tag authorization",
+              status: "done",
+              sprint: "completed",
               summary:
-                "Use SOTC-specific guest/photo states such as student-photo-eligible, student-photo-used, professional-general, professional-photo-eligible, and professional-photo-used.",
+                "Do not use Student/Professional photo states as the active qME authorization model for SOTC Headshots.",
               acceptanceCriteria: [
-                "Admin can assign or update guest tags.",
-                "Queue access can read guest tags.",
-                "Recoverable photo benefits require email or mobile number before the benefit is granted.",
-                "If staff selects Student or Professional + Photo and no recovery contact exists, the guest is placed into a Needs More Info state automatically rather than relying on staff judgment.",
-                "Needs More Info returns the guest to the check-in screen with previous information retained, a clear explanation, and email-or-phone collection.",
-                "Staff sees Waiting for recovery contact while contact information is missing and Ready to Check In after the guest resubmits; staff still completes check-in manually.",
-                "Photo completion can update tag/state.",
-                "A separate profession/networking tag placeholder is supported for later colored-nametag or networking use."
+                "SOTC operational authorization uses registered/imported-or-manual, pending staff confirmation or checked in, Headshot entitled or not, and Headshot credit unused or used.",
+                "Student/Professional values may remain imported source metadata for reporting or nametag context.",
+                "Student/Professional values do not grant queue access directly.",
+                "Headshot completion consumes/completes the professional_headshot credit/ticket path rather than updating a student/professional photo tag.",
+                "Future configurable registration outcomes can revisit broader grant-policy modeling after SOTC."
               ],
               notes:
-                "2026-06-11 PO review: photo access is marked at registration/check-in, not imported. Professional-general is a distinct state from professional-photo-eligible. 2026-07-01 architecture review clarified that guest participation remains accountless by default, but recoverable assets such as complimentary or purchased professional headshots require recoverable contact information before the asset is granted. This is recoverability, not authentication."
+                "Supersedes the 2026-06-11/2026-07-01 Student/Professional photo-state direction after the actual attendee import was implemented. For current SOTC operations, imported entitlement and staff-granted credits are authoritative; Student/Professional remains source metadata, not the active authorization model."
             },
             {
               id: "story-photographer-console",
@@ -2665,9 +2662,9 @@ const QME_ROADMAP = {
     {
       id: "inbox-headshot-tags",
       title: "Headshot tags from user notes",
-      disposition: "promote",
+      disposition: "superseded",
       summary:
-        "Student, professional, student-took-photo, professional-with-photo, professional-took-photo. Professional can add photo access before or during event; admin can change state.",
+        "Historical pre-import direction: Student, professional, student-took-photo, professional-with-photo, professional-took-photo. Superseded for SOTC by imported-registration entitlement and professional_headshot credits; Student/Professional may remain source metadata only.",
       linkedStoryIds: ["story-headshot-tags", "story-guest-condition-engine"]
     },
     {
@@ -2836,10 +2833,10 @@ const QME_ROADMAP = {
     },
     {
       id: "decision-sotc-photo-states",
-      title: "SOTC headshot states",
+      title: "SOTC Headshot authorization model",
       status: "decided",
       prompt:
-        "Use SOTC-specific states: student-photo-eligible, student-photo-used, professional-general, professional-photo-eligible, professional-photo-used. Leave room for a second profession/networking tag."
+        "Retire the Student/Professional photo-state model as active qME authorization. For current SOTC operations qME needs: registered/imported or manual fallback; pending staff confirmation or checked in; Headshot entitled or not; Headshot credit unused or used. Student/Professional values from the imported attendee file may remain source metadata for reporting or nametag context, but they do not directly authorize Headshot queue access."
     },
     {
       id: "decision-sotc-day-one-queues",

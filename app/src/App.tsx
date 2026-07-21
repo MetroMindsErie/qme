@@ -21,14 +21,16 @@ import GuestEventDetail from './pages/guest/GuestEventDetail';
 import GuestEventCheckIn from './pages/guest/GuestEventCheckIn';
 import GuestGroupOrder from './pages/guest/GuestGroupOrder';
 import GuestQueueTicket from './pages/guest/GuestQueueTicket';
+import GuestEventList from './pages/guest/GuestEventList';
 import KioskDisplay from './pages/demo/KioskDisplay';
 
 import './styles/shared.css';
 
-// Demo constants — all guest routes funnel through these
+// Public route aliases: keep demo links stable while root becomes the platform portal.
 const DEMO_EVENT = 'peony-festival';
+const SOTC_PUBLIC_EVENT = 'sotc-test-check-in';
 
-// Guard: only allow the demo event slug, else redirect to /demo
+// Event routes render any event slug resolved by Supabase.
 function EventPage() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
   if (!eventSlug) return <Navigate to="/demo" replace />;
@@ -45,6 +47,10 @@ function EventGroupOrderPage() {
   const { eventSlug } = useParams<{ eventSlug: string }>();
   if (!eventSlug) return <Navigate to="/demo" replace />;
   return <GuestGroupOrder />;
+}
+
+function SotcRockHallPage() {
+  return <GuestEventDetail eventSlugOverride={SOTC_PUBLIC_EVENT} />;
 }
 
 // Skip the queue landing page — go directly to ticket claim
@@ -74,9 +80,11 @@ function App() {
     <BrowserRouter>
       <Routes>
         {/* ===== Demo entry points ===== */}
-        {/* /demo and / both land on the I-Pitch event */}
+        {/* /demo preserves the Peony demo; / is the qME event portal. */}
         <Route path="/demo" element={<Navigate to={`/events/${DEMO_EVENT}`} replace />} />
-        <Route path="/" element={<Navigate to="/demo" replace />} />
+        <Route path="/" element={<GuestEventList />} />
+        <Route path="/sotc/rockhall" element={<SotcRockHallPage />} />
+        <Route path="/events/sotc-rock-hall" element={<SotcRockHallPage />} />
 
         {/* ===== Kiosk tablet display ===== */}
         <Route path="/kiosk/:eventSlug/:queueSlug" element={<KioskDisplay />} />
@@ -112,8 +120,8 @@ function App() {
         <Route path="/admin/events/:eventId/queues/:queueId" element={<AdminPage><AdminQueueDashboard /></AdminPage>} />
         <Route path="/admin/events/:eventId/queues/:queueId/edit" element={<AdminPage><AdminQueueForm /></AdminPage>} />
 
-        {/* Everything else → /demo */}
-        <Route path="*" element={<Navigate to="/demo" replace />} />
+        {/* Everything else returns to the platform event portal. */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );

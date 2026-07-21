@@ -36,6 +36,7 @@ const QME_ROADMAP = {
         "story-role-aware-admin-landing",
         "story-station-operational-control-visibility",
         "story-queue-automation-observability",
+        "story-qme-root-landing-event-directory",
         "story-temp-password-first-login"
       ]
     },
@@ -1471,6 +1472,27 @@ const QME_ROADMAP = {
                 "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaved mostly like an event-level overview. July 8 Alpha 2 review shifted this from permission checks to workspace visibility. July 16 update: target role/workspace/control boundaries are documented in docs/station-role-visibility-matrix-v1.md, and the useful first implementation slice is complete: /admin now routes broad admins to /admin/events, single-assignment event/station/check-in staff directly to the assigned workspace, and multi-assignment staff to a simple workspace chooser. July 17 update: event detail Staff/Setup tabs, event check-in Settings, and queue/station Settings are gated to event-admin-and-up so lower-role operators stay in live operations/history surfaces; the Staff tab assignment form now creates only limited Staff access instead of exposing event-admin/station-provider role choices. Staff onboarding now supports creating a new limited staff login from the event Staff tab with generated temporary password display, then requiring the staff person to enter first and/or last name plus optional phone on first login; existing qME accounts are reused for additional event staff assignments; duplicate event assignment attempts warn the admin; the staff list can be searched by name/email; and a pilot Reset Password action keeps a generated temporary password visible until the staff person signs in again without wiping their existing profile. This remains a pilot credential flow and should be replaced with proper invite/reset-password handling later. July 17 decision: because SOTC has not requested special station/staff privilege distinctions and event admins are easy to create/manage, deeper role-specific tab hiding/read-locking is documented but intentionally deferred until a real operational need appears. July 17 SOTC pilot policy: assigned check-in staff may grant Headshot photo credit because Tanya previously said this was acceptable for the operating model; revisit after SOTC before making this a platform default."
             },
             {
+              id: "story-qme-root-landing-event-directory",
+              title: "Create qME root landing page and public event directory",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Replace the Peony-specific root route with a lightweight qME platform landing page that introduces qME, lists public events in useful date order, and provides a clear organizer/admin sign-in path.",
+              acceptanceCriteria: [
+                "The root route at qme.lol / www.qme.lol shows a qME platform landing page instead of redirecting to the Peony Festival.",
+                "The page is guest-first and functions primarily as an event portal, not a SaaS marketing site.",
+                "Guests can see active/upcoming public events and open the correct event route.",
+                "Organizer / Staff Sign In is clearly visible but visually secondary to joining an event.",
+                "Direct event URLs for Peony, SOTC, and future events continue to work.",
+                "The public SOTC route /sotc/rockhall is supported while preserving the currently tested SOTC event slug.",
+                "Public events are sorted with upcoming/current events before older past events.",
+                "Private, internal, rehearsal, and test events do not appear unless explicitly allowed for public directory display.",
+                "The implementation uses existing event records first rather than adding a separate marketing CMS."
+              ],
+              notes:
+                "Added after qme.lol and www.qme.lol were connected in Vercel and exposed that the platform root still opened the Walnut Ridge Farm Peony Festival. The first implementation uses a conservative allow-list/metadata filter so active internal events are not automatically exposed. Future cleanup should add an explicit public-directory/event-visibility field in event setup."
+            },
+            {
               id: "story-station-operational-control-visibility",
               title: "Make station operational controls visible and understandable",
               status: "current",
@@ -2074,6 +2096,55 @@ const QME_ROADMAP = {
     }
   ],
   productReviews: [
+    {
+      id: "review-qme-root-landing-event-directory-2026-07-21",
+      date: "2026-07-21",
+      trigger:
+        "The custom qME domain was connected to Vercel, revealing that the root domain still opened directly into the Walnut Ridge Farm Peony Festival event.",
+      summary:
+        "qME now needs a platform-level root destination. The root domain should introduce qME lightly, help guests find the event they are attending, and give organizers/staff a clear sign-in path without becoming a full SaaS marketing site.",
+      observations: [
+        "qME now supports more than one organization and event.",
+        "The Peony Festival is no longer an appropriate platform-level root destination.",
+        "Guests need a simple way to find the event they are attending.",
+        "Organizers and staff need a visible path to sign in and manage events.",
+        "The root page should explain qME without becoming a large marketing site.",
+        "Direct event URLs should remain the primary destinations used in QR codes, emails, and signage.",
+        "The event directory should prioritize events closest to the current date.",
+        "Past events may remain accessible, but should not dominate the primary event list.",
+        "Private or internal demo events should not automatically appear in the public directory."
+      ],
+      decisions: [
+        "qme.lol becomes the qME platform landing page.",
+        "Individual events remain accessible through event-specific public slugs.",
+        "The first public SOTC route should use /sotc/rockhall while preserving the tested SOTC event route.",
+        "Peony remains directly accessible through its existing event route and /demo redirect.",
+        "The homepage is guest-first.",
+        "Organizer/Admin Sign In is clearly visible but visually secondary to joining an event.",
+        "Public events are sorted by relevance to the current date.",
+        "The page initially uses existing event records rather than a separate marketing CMS.",
+        "Only events explicitly intended for public directory display should appear."
+      ],
+      risks: [
+        "Automatically listing every active event could expose test, rehearsal, private, or internal events.",
+        "Sorting only by absolute date distance could cause a recently completed event to appear above an upcoming event.",
+        "Event records may not yet have all the fields needed for an attractive public card.",
+        "Changing the root route could accidentally break direct Peony guest links if route behavior is not separated carefully.",
+        "Organizer Sign In must not expose unauthorized administrative content.",
+        "Event directory date logic must account for multi-day events and events without reliable dates."
+      ],
+      roadmapChanges: [
+        "Added story-qme-root-landing-event-directory to current Operational Readiness.",
+        "Moved the root route away from the Peony demo destination.",
+        "Kept /demo and direct event routes available.",
+        "Added /sotc/rockhall as the clean public SOTC route bridge."
+      ],
+      nextFocus: [
+        "Verify qme.lol and www.qme.lol load the root event portal after deployment.",
+        "Confirm the public event directory shows only intended events.",
+        "Add explicit event visibility controls after SOTC if the allow-list/metadata bridge becomes limiting."
+      ]
+    },
     {
       id: "review-sotc-imported-registration-model-2026-07-20",
       date: "2026-07-20",

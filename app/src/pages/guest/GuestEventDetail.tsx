@@ -409,8 +409,9 @@ const PEONY_ACTIVITIES: StaticActivity[] = [
 
 // ────────────────────────────────────────────────────────────────────────────
 
-export default function GuestEventDetail() {
-  const { eventSlug } = useParams<{ eventSlug: string }>();
+export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverride?: string } = {}) {
+  const { eventSlug: routeEventSlug } = useParams<{ eventSlug: string }>();
+  const eventSlug = eventSlugOverride || routeEventSlug;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const freshReset = searchParams.get('fresh') === '1';

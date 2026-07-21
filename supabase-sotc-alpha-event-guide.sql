@@ -155,14 +155,14 @@ cross join (
     (
       'Food & Drinks',
       'food-drinks-guide',
-      'Hors d''oeuvres and the mocktail/cocktail bar are on Level 1.',
+      'On Level 1.',
       '/images/sotc-food-drinks.png',
       'resource',
       jsonb_build_object(
         'home_section', 'food_drinks',
         'home_section_title', 'Food & Drinks',
         'home_section_order', 60,
-        'home_items_limit', 9,
+        'home_items_limit', 8,
         'home_items', jsonb_build_array(
           jsonb_build_object('title', 'Prosciutto, Whipped Goat Cheese on Tomato Jam Toast', 'meta', 'VG'),
           jsonb_build_object('title', 'Potato & Cheese Pierogi', 'meta', 'V'),
@@ -170,7 +170,8 @@ cross join (
           jsonb_build_object('title', 'Veggie Samosa', 'meta', 'V'),
           jsonb_build_object('title', 'Bacon Wrapped Brisket with Peach BBQ Sauce', 'meta', 'GF'),
           jsonb_build_object('title', 'Mini Chicken and Waffle'),
-          jsonb_build_object('title', 'Mocktail/Cocktail Bar', 'note', 'Credit card only')
+          jsonb_build_object('title', 'Mocktail/Cocktail Bar', 'note', 'Credit card only'),
+          jsonb_build_object('title', 'V - Vegetarian, VG - Vegan, GF - Gluten Free')
         )
       )
     ),

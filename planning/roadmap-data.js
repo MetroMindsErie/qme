@@ -63,8 +63,6 @@ const QME_ROADMAP = {
       goal:
         "Expand SOTC from the first event model into registration, attendee import, networking, schedules, and event activities.",
       storyIds: [
-        "story-sotc-qr-entry",
-        "story-registration",
         "story-workshop-signups",
         "story-personal-agenda"
       ]
@@ -1681,36 +1679,40 @@ const QME_ROADMAP = {
             {
               id: "story-registration",
               title: "Registration experience",
-              status: "ready",
-              sprint: "soon",
+              status: "done",
+              sprint: "completed",
               summary:
-                "Represent the 5:30-7:30 level 1 registration area and connect QR/name entry to an admin check-in console.",
+                "Represent the 5:30-7:30 level 1 registration area and connect QR/name entry to imported-attendee lookup, staff confirmation, and the admin check-in console.",
               acceptanceCriteria: [
                 "Registration appears as an event experience.",
-                "Check-in can kick off the passport activity.",
+                "Guest-facing check-in starts from the Event Check-In card.",
                 "Guest-facing copy explains what to do next.",
-                "Registration admin view can show guest names as they enter/check in.",
-                "Registration admin can mark the guest with the right tag/status, including photo access.",
-                "SOTC staff can continue using their own external list/system for official attendance tracking."
+                "Guests search and claim an imported registration, or submit a manual Needs Help fallback if they cannot find themselves.",
+                "Registration admin view shows pending guests as they enter/check in.",
+                "Staff confirm the guest after giving the name tag/sticker, then the guest can use gated event features.",
+                "Headshot access is derived from the imported attendee entitlement rather than arbitrary guest-entered or staff-entered classification.",
+                "SOTC staff can still use their external materials/name-tag process while qME manages the guest digital flow."
               ],
               notes:
-                "2026-06-11 PO review: do not import attendees for the first slice. Simulate a guest walking up, scanning QR, and entering their name. Staff see the guest in qME, mark the right tag, find the name tag/materials, and call the guest name."
+                "Superseded by story-attendee-import after the actual SOTC attendee file arrived. The 2026-06-11 no-import assumption was historically correct for the first alpha slice, but the implemented July SOTC path now uses imported Eventbrite registrations, masked guest search/claim, Needs Help fallback, staff confirmation, and server-derived Headshot entitlement."
             },
             {
               id: "story-sotc-qr-entry",
               title: "SOTC QR entry and guest lookup",
-              status: "ready",
-              sprint: "soon",
+              status: "done",
+              sprint: "completed",
               summary:
-                "Let guests scan a QR code at entry and enter their name so registration staff can handle check-in and tags from an admin console.",
+                "Let guests scan a QR code at entry, search the imported SOTC attendee list, and enter the staff-confirmed check-in flow.",
               acceptanceCriteria: [
                 "Guest can scan QR to enter the SOTC event experience.",
-                "Guest can enter their name without relying on an imported attendee list.",
-                "Guest can provide missing phone or email details.",
-                "Guests who do not want digital entry can still go to the desk."
+                "Guest can search imported registrations by name with masked email hints.",
+                "Guest can claim their imported registration or use the Needs Help fallback.",
+                "Guest can provide optional phone details for check-in recovery.",
+                "Guests who do not want digital entry or cannot find themselves can still go to the desk.",
+                "Staff confirmation remains required before event features are available."
               ],
               notes:
-                "2026-06-11 PO review: no attendee import for first slice. Signage and pre-event emails should explain the QR flow."
+                "Superseded by story-attendee-import after the actual SOTC attendee file arrived. The older acceptance criterion about not relying on an imported attendee list is no longer the SOTC July implementation; the current flow uses imported registration search plus manual fallback for unresolved guests."
             },
             {
               id: "story-attendee-import",

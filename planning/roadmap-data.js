@@ -36,8 +36,7 @@ const QME_ROADMAP = {
         "story-role-aware-admin-landing",
         "story-station-operational-control-visibility",
         "story-queue-automation-observability",
-        "story-temp-password-first-login",
-        "story-attendee-import"
+        "story-temp-password-first-login"
       ]
     },
     {
@@ -1716,8 +1715,8 @@ const QME_ROADMAP = {
             {
               id: "story-attendee-import",
               title: "Import or sync SOTC attendee list",
-              status: "current",
-              sprint: "now",
+              status: "done",
+              sprint: "completed",
               summary:
                 "Bring the received SOTC Eventbrite attendee records into qME for event check-in, Headshot entitlement, and narrow guest self check-in.",
               acceptanceCriteria: [

@@ -122,14 +122,16 @@ cross join (
         'home_section_title', 'Featured Speakers',
         'home_section_order', 40,
         'home_items_layout', 'media_rows',
-        'home_items_limit', 6,
+        'home_items_limit', 8,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', '5 Networks that turn College Connections into Career Gold', 'meta', '7:00-7:20 PM / Garage 1', 'note', 'Megan Vogias, Evlogimenos', 'image_url', '/images/speaker-megan-vogias-temp.svg'),
-          jsonb_build_object('title', 'Personal Branding', 'meta', '7:00-7:20 PM / Garage 2', 'note', 'Alex Michaels, Prelude2Cinema Inc.', 'image_url', '/images/speaker-alex-michaels-temp.svg'),
-          jsonb_build_object('title', 'Career Tips with McMaster Carr', 'meta', '7:20-7:40 PM / Garage 1', 'note', 'Representative from McMaster Carr', 'image_url', '/images/speaker-mcmaster-temp.svg'),
-          jsonb_build_object('title', 'Preparing for Law School and the Legal Field', 'meta', '7:20-7:40 PM / Garage 2', 'note', 'Adam Joines, United States Attorney''s Office', 'image_url', '/images/speaker-adam-joines-temp.svg'),
-          jsonb_build_object('title', 'How to decide if grad school is the right move for you', 'meta', '7:40-8:00 PM / Garage 1', 'note', 'Marleni Chavana, UB Greensfelder LLP', 'image_url', '/images/speaker-marleni-chavana-temp.svg'),
-          jsonb_build_object('title', 'Planning to buy your first house!', 'meta', '7:40-8:00 PM / Garage 2', 'note', 'Heather Weddle, American Pacific Mortgage', 'image_url', '/images/speaker-heather-weddle-temp.svg')
+          jsonb_build_object('title', 'Say It So It Sticks: The Art of Effective Communication', 'meta', '7:00-7:20 PM / Garage 1', 'note', 'Brian Widman, Rockwell Automation', 'image_url', '/images/speaker-brian-widman.jpeg'),
+          jsonb_build_object('title', 'Building Confidence from the Inside Out: Self-Care and Self-Advocacy for Interns', 'meta', '7:00-7:20 PM / Garage 2', 'note', 'Hayley McQuate, Project Manager', 'image_url', '/images/speaker-hayley-mcquate.png'),
+          jsonb_build_object('title', 'Expungement/Sealing', 'meta', '7:20-7:40 PM / Garage 1', 'note', 'Robert Botnick, The Botnick Law Firm', 'image_url', '/images/speaker-robert-botnick.jpeg'),
+          jsonb_build_object('title', 'The Art of Getting Noticed', 'meta', '7:20-7:40 PM / Garage 2', 'note', 'Leigh Brooklyn, Artist', 'image_url', '/images/speaker-leigh-brooklyn.jpeg'),
+          jsonb_build_object('title', 'Why it''s important to fight minor traffic citations', 'meta', '7:40-8:00 PM / Garage 1', 'note', 'Robert Botnick, The Botnick Law Firm', 'image_url', '/images/speaker-robert-botnick.jpeg'),
+          jsonb_build_object('title', 'Let''s Take Leadership and Team Development Outside!', 'meta', '7:40-8:00 PM / Garage 2', 'note', 'Roseanne Deucher, All Forward', 'image_url', '/images/speaker-roseanne-deucher.jpeg'),
+          jsonb_build_object('title', 'Leaping to Top Institutions in the NE Ohio area (& Making Your Own Path)', 'meta', '8:00-8:20 PM / Garage 1', 'note', 'Lana Radl, Entrepreneur', 'image_url', '/images/speaker-lana-radl.jpeg'),
+          jsonb_build_object('title', 'Networking Squared', 'meta', '8:00-8:20 PM / Garage 2', 'note', 'Megan Vogias, Director of Marketing and Communications', 'image_url', '/images/speaker-megan-vogias.png')
         )
       )
     ),

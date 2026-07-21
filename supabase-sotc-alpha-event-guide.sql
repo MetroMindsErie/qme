@@ -279,7 +279,7 @@ join public.expies on expies.organization_id = organizations.id
     'food-drinks-guide',
     'resources-guide'
   )
-where events.slug = 'sotc-test-check-in'
+where events.slug in ('sotc-rockhall', 'sotc-rock-hall', 'sotc-test-check-in')
   and not exists (
     select 1
     from public.eces existing
@@ -310,7 +310,7 @@ from public.events
 join public.organizations on organizations.id = events.organization_id
 join public.expies on expies.organization_id = organizations.id
 where eces.event_id = events.id
-  and events.slug = 'sotc-test-check-in'
+  and events.slug in ('sotc-rockhall', 'sotc-rock-hall', 'sotc-test-check-in')
   and expies.slug = eces.slug
   and eces.slug in (
     'tonights-schedule-guide',
@@ -333,7 +333,7 @@ set
   )
 from public.events
 where eces.event_id = events.id
-  and events.slug = 'sotc-test-check-in'
+  and events.slug in ('sotc-rockhall', 'sotc-rock-hall', 'sotc-test-check-in')
   and eces.slug = 'headshot-photo-station';
 
 update public.eces
@@ -348,5 +348,5 @@ set
   )
 from public.events
 where eces.event_id = events.id
-  and events.slug = 'sotc-test-check-in'
+  and events.slug in ('sotc-rockhall', 'sotc-rock-hall', 'sotc-test-check-in')
   and eces.slug = 'scan-code-adventure';

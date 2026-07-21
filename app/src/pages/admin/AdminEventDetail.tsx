@@ -393,14 +393,14 @@ export default function AdminEventDetail() {
   async function handleResetEventTestData() {
     if (!event || resettingEventData) return;
     const confirmation = window.prompt(
-      `Reset all test guest data for "${event.name}"?\n\nThis removes check-ins, queue tickets, guest sessions, guest marks/completions, credits, designations, and group order submissions. Event setup, features, queues, and staff access will stay.\n\nType RESET to continue.`
+      `Reset all test guest data for "${event.name}"?\n\nThis removes check-ins, queue tickets, guest sessions, guest marks/completions, credits, designations, and group order submissions. Event setup, features, queues, and staff access will stay.\n\nType the secret reset password to continue.`
     );
     if (confirmation === null) {
       alert('Reset canceled. No test data was changed.');
       return;
     }
-    if (confirmation.trim().toUpperCase() !== 'RESET') {
-      alert('Reset was not run. Type RESET to confirm.');
+    if (confirmation.trim().toUpperCase() !== 'SOTCRST') {
+      alert('Reset was not run. Type the secret reset password to confirm.');
       return;
     }
 

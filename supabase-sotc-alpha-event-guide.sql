@@ -144,13 +144,12 @@ cross join (
         'home_section_title', 'Sponsors',
         'home_section_order', 50,
         'home_items_layout', 'media_rows',
-        'home_items_limit', 5,
+        'home_items_limit', 4,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Sherwin-Williams', 'image_url', '/images/sherwin-williams.png', 'image_variant', 'wide'),
-          jsonb_build_object('title', 'MetroHealth', 'image_url', '/images/MetroHealth.png', 'image_variant', 'wide'),
-          jsonb_build_object('title', 'McMaster-Carr', 'image_url', '/images/mcmaster-carr.png', 'image_variant', 'wide'),
-          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner', 'image_url', '/images/rock&roll-hall-of-fame.png', 'image_variant', 'wide'),
-          jsonb_build_object('title', 'Summer on the Cuyahoga', 'note', 'Event host')
+          jsonb_build_object('title', 'Sherwin-Williams', 'image_url', '/images/sotc-sponsor-sherwin-williams.jpg', 'image_variant', 'wide', 'url', 'https://careers.sherwin-williams.com/us/en/home.html'),
+          jsonb_build_object('title', 'MetroHealth', 'image_url', '/images/sotc-sponsor-metrohealth.jpg', 'image_variant', 'wide', 'url', 'https://careers.metrohealth.org/career-areas/nursing?utm_campaign=lnp_20126&utm_source=google&utm_medium=sem&utm_term=paid&gad_source=1&gad_campaignid=23575351321&gbraid=0AAAABCfg4mgEsQxtDSKIRMx93kr0ITc0S&gclid=Cj0KCQjwjvfSBhDpARIsAEiOpSvnu1gWNSiCzEJ7-i7R240A_b4I27UUVVCxsvOweYpyY4T_FppnJLYaAkENEALw_wcB'),
+          jsonb_build_object('title', 'Rock & Roll Hall of Fame', 'note', 'Venue partner', 'image_url', '/images/sotc-sponsor-rockhall.jpg', 'image_variant', 'wide', 'url', 'https://rockhall.com/'),
+          jsonb_build_object('title', 'The Botnick Law Firm, LLC', 'image_url', '/images/sotc-sponsor-botnick-law.jpg', 'image_variant', 'wide', 'url', 'https://www.botnicklawfirm.com/')
         )
       )
     ),

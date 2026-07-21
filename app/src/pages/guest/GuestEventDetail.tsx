@@ -918,11 +918,55 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                     {homeItems.map((item, index) => {
                       const opensDetails = item.details.length > 0 && item.detailsMode === 'modal';
                       const opensModal = opensDetails;
+                      const itemBody = (
+                        <>
+                          {item.imageUrl && (
+                            <img
+                              src={item.imageUrl}
+                              alt={item.title || item.meta || 'Sponsor'}
+                              className={`ed-home-item-logo ${item.imageVariant === 'wide' ? 'ed-home-item-logo-wide' : ''}`}
+                            />
+                          )}
+                          <span className="ed-home-item-copy">
+                            {item.title && (
+                              <span className={`ed-home-item-title ${opensModal || item.url ? 'ed-home-item-link' : ''}`}>
+                                {item.title}
+                              </span>
+                            )}
+                            {item.meta && <span className="ed-home-item-meta">{item.meta}</span>}
+                            {item.note && <span className="ed-home-item-note">{item.note}</span>}
+                            {item.details.length > 0 && !opensDetails && (
+                              <span className="ed-home-item-details">
+                                {item.details.map((detail, detailIndex) => (
+                                  <span className="ed-home-item-detail-row" key={`${detail.label}-${detailIndex}`}>
+                                    <span className="ed-home-item-detail-label">{detail.label}</span>
+                                    {detail.value && <span className="ed-home-item-detail-value">{detail.value}</span>}
+                                  </span>
+                                ))}
+                              </span>
+                            )}
+                          </span>
+                        </>
+                      );
                       const openDetail = (e: MouseEvent | KeyboardEvent) => {
                         if (!opensModal) return;
                         e.stopPropagation();
                         setActiveHomeItem(item);
                       };
+
+                      if (item.url) {
+                        return (
+                          <a
+                            className="ed-home-item ed-home-item-clickable ed-home-item-block-link"
+                            href={item.url}
+                            key={`${item.title}-${index}`}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            {itemBody}
+                          </a>
+                        );
+                      }
 
                       return (
                       <div
@@ -933,42 +977,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                         onClick={opensModal ? openDetail : undefined}
                         onKeyDown={opensModal ? (e) => { if (e.key === 'Enter' || e.key === ' ') openDetail(e); } : undefined}
                       >
-                        {item.imageUrl && (
-                          <img
-                            src={item.imageUrl}
-                            alt={item.title || item.meta || 'Sponsor'}
-                            className={`ed-home-item-logo ${item.imageVariant === 'wide' ? 'ed-home-item-logo-wide' : ''}`}
-                          />
-                        )}
-                        <span className="ed-home-item-copy">
-                          {item.title && item.url ? (
-                            <a
-                              href={item.url}
-                              className="ed-home-item-title ed-home-item-link"
-                              target="_blank"
-                              rel="noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              {item.title}
-                            </a>
-                          ) : item.title && (
-                            <span className={`ed-home-item-title ${opensModal ? 'ed-home-item-link' : ''}`}>
-                              {item.title}
-                            </span>
-                          )}
-                          {item.meta && <span className="ed-home-item-meta">{item.meta}</span>}
-                          {item.note && <span className="ed-home-item-note">{item.note}</span>}
-                          {item.details.length > 0 && !opensDetails && (
-                            <span className="ed-home-item-details">
-                              {item.details.map((detail, detailIndex) => (
-                                <span className="ed-home-item-detail-row" key={`${detail.label}-${detailIndex}`}>
-                                  <span className="ed-home-item-detail-label">{detail.label}</span>
-                                  {detail.value && <span className="ed-home-item-detail-value">{detail.value}</span>}
-                                </span>
-                              ))}
-                            </span>
-                          )}
-                        </span>
+                        {itemBody}
                       </div>
                       );
                     })}

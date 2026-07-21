@@ -414,6 +414,10 @@
   cursor: pointer;
 }
 
+.ed-home-item-block-link {
+  text-decoration: none;
+}
+
 .ed-home-item-logo {
   width: 34px;
   height: 34px;

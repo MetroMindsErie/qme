@@ -171,7 +171,7 @@ cross join (
           jsonb_build_object('title', 'Bacon Wrapped Brisket with Peach BBQ Sauce', 'meta', 'GF'),
           jsonb_build_object('title', 'Mini Chicken and Waffle'),
           jsonb_build_object('title', 'Mocktail/Cocktail Bar', 'note', 'Credit card only'),
-          jsonb_build_object('title', 'V - Vegetarian, VG - Vegan, GF - Gluten Free')
+          jsonb_build_object('title', 'V - Vegetarian, GF - Gluten Free')
         )
       )
     ),

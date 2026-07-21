@@ -2075,6 +2075,46 @@ const QME_ROADMAP = {
   ],
   productReviews: [
     {
+      id: "review-sotc-imported-registration-model-2026-07-20",
+      date: "2026-07-20",
+      trigger:
+        "Actual SOTC Eventbrite attendee data was received, cleaned, imported, and tested through the guest/staff check-in workflow",
+      summary:
+        "The SOTC registration model materially changed from a no-import alpha check-in simulation to an operational imported-registration workflow. Real attendee data supported a clean manual CSV import, guest self-search/claim, staff confirmation, Needs Help fallback, Remove/reclaim recovery, and Headshot entitlement from imported Price Tier rather than guest-entered classification.",
+      observations: [
+        "Real attendee data supported a clean imported-registration workflow.",
+        "All 191 attendee rows imported without duplicate attendee numbers, duplicate emails, duplicate names, missing required fields, or unknown price-tier problems.",
+        "Physical name-tag/sticker handoff remains the authoritative staff confirmation point.",
+        "Imported Price Tier, not guest classification, controls Headshot entitlement.",
+        "Needs Help and Remove/reclaim keep registration exceptions visible and recoverable.",
+        "Student/Professional values may remain imported source metadata, but they are not the active qME authorization model for SOTC Headshots."
+      ],
+      decisions: [
+        "Imported registration, guest session, and event check-in remain separate concepts.",
+        "Guest claim creates pending operational work, not completed admission.",
+        "Staff completion unlocks event participation.",
+        "Headshot entitlement is derived server-side from imported attendee data or explicit staff grant, then represented as professional_headshot credit state.",
+        "Eventbrite API synchronization remains deferred.",
+        "Manual CSV import is sufficient for the SOTC pilot."
+      ],
+      risks: [
+        "Eventbrite API sync remains post-pilot work.",
+        "Registration UX around duplicate names, no-match guests, and recovery contact should be rehearsed with staff before the event.",
+        "Future generalized registration outcomes should not be designed until post-SOTC evidence is reviewed."
+      ],
+      roadmapChanges: [
+        "Marked story-attendee-import done/completed.",
+        "Marked the older story-registration and story-sotc-qr-entry assumptions done/superseded by the imported-registration path.",
+        "Retired the Student/Professional photo-state authorization model in favor of registered/check-in/Headshot entitlement/credit state.",
+        "Kept Eventbrite API synchronization deferred."
+      ],
+      nextFocus: [
+        "Rehearse registration desk operations with imported search, name-tag/sticker handoff, Needs Help, Remove/reclaim, and Headshot entitlement.",
+        "Confirm event staff understand that guest claim is pending until staff completes check-in.",
+        "Continue SOTC operational readiness rather than rebuilding the import path before July 22."
+      ]
+    },
+    {
       id: "review-security-review-closure-2026-07-20",
       date: "2026-07-20",
       trigger:

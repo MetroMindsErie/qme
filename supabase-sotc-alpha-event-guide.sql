@@ -31,14 +31,14 @@ from public.organizations
 cross join (
   values
     (
-      'Full Event Schedule',
+      'Tonight''s Schedule',
       'tonights-schedule-guide',
       'Use this quick schedule to orient yourself during the mixer.',
       '/images/sotc-logo.png',
       'session',
       jsonb_build_object(
         'home_section', 'schedule',
-        'home_section_title', 'Full Event Schedule',
+        'home_section_title', 'Event Schedule',
         'home_section_order', 10,
         'home_items_limit', 6,
         'home_items', jsonb_build_array(
@@ -46,17 +46,16 @@ cross join (
             'title', '5:30-7:30 PM',
             'details', jsonb_build_array(
               jsonb_build_object('label', 'Registration', 'value', 'Level 1'),
-              jsonb_build_object('label', 'Sponsors', 'value', 'Level 0'),
+              jsonb_build_object('label', 'Sponsors / Resume + LinkedIn reviews', 'value', 'Level 0'),
               jsonb_build_object('label', 'Professional headshots', 'value', 'Level 3')
             )
           ),
           jsonb_build_object(
             'title', '5:30-8:30 PM',
             'details', jsonb_build_array(
-              jsonb_build_object('label', 'Resume + LinkedIn reviews', 'value', 'Level 0'),
-              jsonb_build_object('label', 'Networking, hors d''oeuvres, mocktail and cocktail bar', 'value', 'Level 1')
-            ),
-            'note', 'Card only bar; access to lower level gallery'
+              jsonb_build_object('label', 'Access to lower level gallery', 'value', 'Level 0'),
+              jsonb_build_object('label', 'Networking, hors d''oeuvres, mocktail and cocktail bar (card only)', 'value', 'Level 1')
+            )
           ),
           jsonb_build_object(
             'title', '6:15-6:45 PM',

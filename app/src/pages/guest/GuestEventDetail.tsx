@@ -791,7 +791,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
 
           {/* Dynamic event eCes from DB */}
           {eceSections.map((section) => (
-            <div key={section.key} className="ed-home-section">
+            <div key={section.key} className={`ed-home-section ed-home-section-${section.key}`}>
               {section.title && (
                 <div className="ed-home-section-title">{section.title}</div>
               )}

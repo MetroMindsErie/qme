@@ -483,6 +483,34 @@
   color: #657080;
   font-weight: 700;
   text-align: right;
+  flex-shrink: 0;
+}
+
+.ed-home-section-schedule .ed-home-item {
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.ed-home-section-schedule .ed-home-item-copy {
+  display: grid;
+  grid-template-columns: minmax(78px, max-content) minmax(0, 1fr);
+  column-gap: 12px;
+  width: 100%;
+}
+
+.ed-home-section-schedule .ed-home-item-title {
+  grid-row: 1 / span 3;
+  white-space: nowrap;
+}
+
+.ed-home-section-schedule .ed-home-item-details,
+.ed-home-section-schedule .ed-home-item-note {
+  grid-column: 2;
+  margin-top: 0;
+}
+
+.ed-home-section-schedule .ed-home-item-detail-row {
+  gap: 10px;
 }
 
 .ed-detail-overlay {

@@ -673,7 +673,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
         <div className="ed-activity-list">
 
           {/* Arrival check-in */}
-          {checkInConfig.enabled && !hasEventCheckIn && (
+          {checkInConfig.enabled && (!hasEventCheckIn || hasSubmittedEventCheckIn) && (
           <div className="ed-activity-card ed-card-clickable">
             <div className="ed-check-icon" aria-hidden="true">
               <span style={{ fontSize: '1.1rem' }}>✓</span>
@@ -682,12 +682,14 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               <div className="ed-activity-name-row">
                 <span className="ed-activity-name">{isPeonyEvent ? 'Check In at Mobile Bar' : 'Event Check-In'}</span>
                 <span className="ed-badge ed-badge-active">
-                  {isEventCheckInRemoved ? 'REMOVED' : isWaitingForHostCheckIn ? 'WAITING FOR STAFF' : 'START HERE'}
+                  {isEventCheckInRemoved ? 'REMOVED' : hasEventCheckIn ? 'CHECKED IN' : isWaitingForHostCheckIn ? 'WAITING FOR STAFF' : 'START HERE'}
                 </span>
               </div>
               <div className="ed-activity-desc">
                 {isEventCheckInRemoved
                   ? 'Your check-in request was removed. Check in again or see the event team for help.'
+                  : hasEventCheckIn
+                  ? 'You are checked in. Pick up your name tag at registration, then use qMe for the schedule, resources, and headshots.'
                   : isWaitingForHostCheckIn
                   ? 'Your name has been submitted. Please wait here until staff confirms your event check-in.'
                   : !isPeonyEvent
@@ -699,7 +701,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             </div>
             <div className="ed-activity-right">
               <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
-                {isEventCheckInRemoved ? 'Check In Again' : isWaitingForHostCheckIn ? 'Check-In Status' : 'Check In'}
+                {isEventCheckInRemoved ? 'Check In Again' : hasEventCheckIn ? 'Checked In' : isWaitingForHostCheckIn ? 'Check-In Status' : 'Check In'}
               </Link>
             </div>
           </div>

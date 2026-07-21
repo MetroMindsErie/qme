@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-07-20",
+    updated: "2026-07-21",
     immediateGoal:
       "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
     eventAnchor: {
@@ -1485,12 +1485,14 @@ const QME_ROADMAP = {
                 "Organizer / Staff Sign In is clearly visible but visually secondary to joining an event.",
                 "Direct event URLs for Peony, SOTC, and future events continue to work.",
                 "The public SOTC route /sotc/rockhall is supported while preserving the currently tested SOTC event slug.",
+                "The canonical SOTC guest URL is /events/sotc-rockhall, derived from the event slug.",
+                "A printable SOTC entry sign page gives guests a QR code and short instructions for self check-in, event details, and the Headshot digital queue.",
                 "Public events are sorted with upcoming/current events before older past events.",
                 "Private, internal, rehearsal, and test events do not appear unless explicitly allowed for public directory display.",
                 "The implementation uses existing event records first rather than adding a separate marketing CMS."
               ],
               notes:
-                "Added after qme.lol and www.qme.lol were connected in Vercel and exposed that the platform root still opened the Walnut Ridge Farm Peony Festival. The first implementation uses a conservative allow-list/metadata filter so active internal events are not automatically exposed. Future cleanup should add an explicit public-directory/event-visibility field in event setup."
+                "Added after qme.lol and www.qme.lol were connected in Vercel and exposed that the platform root still opened the Walnut Ridge Farm Peony Festival. The first implementation uses a conservative allow-list/metadata filter so active internal events are not automatically exposed. July 21 update: SOTC direct routing now treats /events/sotc-rockhall as the canonical guest URL from the event slug, keeps legacy SOTC aliases working, and adds a printable /events/sotc-rockhall/sign QR entry page for the registration entrance. Future cleanup should add an explicit public-directory/event-visibility field in event setup and consider organization/event slug nesting such as /org-slug/event-slug."
             },
             {
               id: "story-station-operational-control-visibility",
@@ -1746,17 +1748,19 @@ const QME_ROADMAP = {
                 "Reset Test Data clears rehearsal check-in/linkage state without deleting the imported attendee source list.",
                 "A dry-run import report identifies missing fields, unknown price tiers, and duplicates before live import.",
                 "Imported records can be searched by guest name with limited, masked results.",
-                "Guests can claim a selected imported registration and appear in Live Check-In for staff confirmation.",
+                "Guests can claim a selected imported registration and self check in immediately.",
                 "Guests who cannot find their registration can submit a manual fallback that appears in the same Live Check-In list with a Needs Help marker.",
-                "Staff completion, after giving the name tag/sticker, moves the guest to History and stamps the imported registration check-in time when applicable.",
+                "Matched imported-registration self check-in stamps the imported registration check-in time and unlocks event participation.",
+                "After self check-in, guest messaging directs the guest to the registration desk for the physical name tag/sticker handoff.",
+                "Needs Help/manual fallback rows remain pending operational work until staff resolves or removes them.",
                 "Staff can remove an unresolved Live Check-In row; removed rows move to History and imported-registration claims are released for the correct guest to reclaim.",
                 "Duplicate-name claims require server-side email confirmation.",
-                "Headshot-entitled imported registrations receive one professional_headshot credit idempotently from the authoritative import, but event participation remains gated until staff completes check-in.",
+                "Headshot-entitled imported registrations receive one professional_headshot credit idempotently from the authoritative import.",
                 "Future API sync with Evite/Eventbrite is noted separately from manual import.",
                 "Realtime updates are considered but not required for the July SOTC slice."
               ],
               notes:
-                "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. The live table was manually populated with 191 imported registrations. App/SQL slice added scoped guest registration search and claim RPCs: guests search by name, see masked email hints, claim one imported record, and are created as pending Live Check-In rows until staff gives the name tag/sticker and confirms them. Manual fallback rows are marked Needs Help in the same admin list rather than sent to a separate hidden queue. Duplicate-name claims require exact email confirmation. Headshot credit is granted only from imported Headshot entitlement, while event participation remains gated by staff completion. Follow-up recovery slice added an audited staff Remove action for Live Check-In rows; imported matches are unlinked so a mistaken claim can be reclaimed, removed rows remain in History, and the guest-facing event/check-in screens now show a removed state with a Check In Again path instead of leaving the guest stuck in Waiting for Staff. Eventbrite API sync remains deferred."
+                "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. The live table was manually populated with 191 imported registrations. App/SQL slice added scoped guest registration search and claim RPCs: guests search by name, see masked email hints, claim one imported record, and are created as check-in rows from the authoritative import. July 21 Tanya direction removed the extra staff-confirmation gate for matched imported registrations: successful imported claims now self check in immediately, unlock event participation, stamp checked_in_at, and direct the guest to the registration desk for the physical name tag/sticker. Manual fallback rows remain Needs Help in the same admin list rather than sent to a separate hidden queue. Duplicate-name claims require exact email confirmation. Headshot credit is granted only from imported Headshot entitlement. Follow-up recovery slice added an audited staff Remove action for Live Check-In rows; imported matches are unlinked so a mistaken claim can be reclaimed, removed rows remain in History, and the guest-facing event/check-in screens show a removed state with a Check In Again path. Eventbrite API sync remains deferred."
             },
             {
               id: "story-passport-activity",
@@ -2151,26 +2155,27 @@ const QME_ROADMAP = {
       trigger:
         "Actual SOTC Eventbrite attendee data was received, cleaned, imported, and tested through the guest/staff check-in workflow",
       summary:
-        "The SOTC registration model materially changed from a no-import alpha check-in simulation to an operational imported-registration workflow. Real attendee data supported a clean manual CSV import, guest self-search/claim, staff confirmation, Needs Help fallback, Remove/reclaim recovery, and Headshot entitlement from imported Price Tier rather than guest-entered classification.",
+        "The SOTC registration model materially changed from a no-import alpha check-in simulation to an operational imported-registration workflow. Real attendee data supported a clean manual CSV import, guest self-search/claim, immediate self check-in for matched imports, Needs Help fallback, Remove/reclaim recovery, and Headshot entitlement from imported Price Tier rather than guest-entered classification.",
       observations: [
         "Real attendee data supported a clean imported-registration workflow.",
         "All 191 attendee rows imported without duplicate attendee numbers, duplicate emails, duplicate names, missing required fields, or unknown price-tier problems.",
-        "Physical name-tag/sticker handoff remains the authoritative staff confirmation point.",
+        "Physical name-tag/sticker handoff remains an important registration desk step, but it is no longer the qMe participation gate for matched imported registrations.",
         "Imported Price Tier, not guest classification, controls Headshot entitlement.",
         "Needs Help and Remove/reclaim keep registration exceptions visible and recoverable.",
         "Student/Professional values may remain imported source metadata, but they are not the active qME authorization model for SOTC Headshots."
       ],
       decisions: [
         "Imported registration, guest session, and event check-in remain separate concepts.",
-        "Guest claim creates pending operational work, not completed admission.",
-        "Staff completion unlocks event participation.",
+        "Matched imported-registration claim creates a completed qMe event check-in and unlocks event participation.",
+        "Guests who cannot find themselves create pending operational work with a Needs Help marker.",
+        "After self check-in, qMe directs guests to the registration desk to pick up their name tag/sticker.",
         "Headshot entitlement is derived server-side from imported attendee data or explicit staff grant, then represented as professional_headshot credit state.",
         "Eventbrite API synchronization remains deferred.",
         "Manual CSV import is sufficient for the SOTC pilot."
       ],
       risks: [
         "Eventbrite API sync remains post-pilot work.",
-        "Registration UX around duplicate names, no-match guests, and recovery contact should be rehearsed with staff before the event.",
+        "Registration UX around duplicate names, no-match guests, recovery contact, and the physical name-tag handoff should be rehearsed with staff before the event.",
         "Future generalized registration outcomes should not be designed until post-SOTC evidence is reviewed."
       ],
       roadmapChanges: [
@@ -2180,8 +2185,8 @@ const QME_ROADMAP = {
         "Kept Eventbrite API synchronization deferred."
       ],
       nextFocus: [
-        "Rehearse registration desk operations with imported search, name-tag/sticker handoff, Needs Help, Remove/reclaim, and Headshot entitlement.",
-        "Confirm event staff understand that guest claim is pending until staff completes check-in.",
+        "Rehearse registration desk operations with imported search, self check-in, name-tag/sticker handoff, Needs Help, Remove/reclaim, and Headshot entitlement.",
+        "Confirm event staff understand that matched imported guests are checked in by qMe immediately, while Needs Help guests still require staff resolution.",
         "Continue SOTC operational readiness rather than rebuilding the import path before July 22."
       ]
     },

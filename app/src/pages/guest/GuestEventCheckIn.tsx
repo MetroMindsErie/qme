@@ -72,6 +72,12 @@ export default function GuestEventCheckIn({
   const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
   const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
   const useImportedRegistrationLookup = !checkInCode && isSotcEventSlug(event?.slug);
+  const pageIntro = useImportedRegistrationLookup
+    ? 'Find your registration to self check in. After checking in, stop at the registration desk to pick up your name tag.'
+    : intro;
+  const completedConfirmation = useImportedRegistrationLookup
+    ? 'You are checked in. Please stop at the registration desk to pick up your name tag. If your registration includes a headshot, join the Headshot Photographer queue when you are ready.'
+    : confirmation;
 
   const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
@@ -377,7 +383,7 @@ export default function GuestEventCheckIn({
           {title}
         </h1>
         <p style={{ color: '#666', lineHeight: 1.5, marginTop: 0 }}>
-          {intro}
+          {pageIntro}
         </p>
 
         {submitted ? (
@@ -398,7 +404,7 @@ export default function GuestEventCheckIn({
                 ? 'This check-in request was removed by the event team. Please check in again or see the event team for help.'
                 : isWaitingForHostCheckIn
                 ? `Thanks, ${firstName || 'guest'}. Your name has been submitted. Please wait for the host to officially check you in before using event features.`
-                : `Thanks, ${firstName || 'guest'}! ${confirmation}`}
+                : `Thanks, ${firstName || 'guest'}! ${completedConfirmation}`}
             </div>
             {isRemovedCheckIn && (
               <button

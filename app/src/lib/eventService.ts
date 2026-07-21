@@ -2,6 +2,7 @@
  * eventService.ts — CRUD operations for events.
  */
 import { supabase } from './supabase';
+import { isSotcEventSlug, SOTC_PUBLIC_EVENT_SLUG } from './sotc';
 import type { QEvent, CreateEventInput, UpdateEventInput } from '../types';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -77,6 +78,22 @@ export async function getEvent(id: string): Promise<QEvent> {
 }
 
 export async function getEventBySlug(slug: string): Promise<QEvent> {
+  if (isSotcEventSlug(slug)) {
+    const aliases = [SOTC_PUBLIC_EVENT_SLUG, 'sotc-rock-hall', 'sotc-test-check-in'];
+    const { data, error } = await supabase
+      .from('events')
+      .select('*')
+      .in('slug', aliases);
+    if (error) throw error;
+    const events = (data ?? []) as QEvent[];
+    const exact = events.find((event) => event.slug === slug);
+    const canonical = events.find((event) => event.slug === SOTC_PUBLIC_EVENT_SLUG);
+    const previousPublic = events.find((event) => event.slug === 'sotc-rock-hall');
+    const pilot = events.find((event) => event.slug === 'sotc-test-check-in');
+    const resolved = exact ?? canonical ?? previousPublic ?? pilot ?? events[0];
+    if (resolved) return resolved;
+  }
+
   const { data, error } = await supabase
     .from('events')
     .select('*')

@@ -22,6 +22,7 @@ import GuestEventCheckIn from './pages/guest/GuestEventCheckIn';
 import GuestGroupOrder from './pages/guest/GuestGroupOrder';
 import GuestQueueTicket from './pages/guest/GuestQueueTicket';
 import GuestEventList from './pages/guest/GuestEventList';
+import SotcEntrySign from './pages/guest/SotcEntrySign';
 import KioskDisplay from './pages/demo/KioskDisplay';
 import { SOTC_PUBLIC_EVENT_SLUG } from './lib/sotc';
 
@@ -83,8 +84,10 @@ function App() {
         {/* /demo preserves the Peony demo; / is the qME event portal. */}
         <Route path="/demo" element={<Navigate to={`/events/${DEMO_EVENT}`} replace />} />
         <Route path="/" element={<GuestEventList />} />
+        <Route path="/sotc/rockhall/sign" element={<SotcEntrySign />} />
         <Route path="/sotc/rockhall" element={<SotcRockHallPage />} />
         <Route path="/sotc/:sotcSlug" element={<SotcRockHallPage />} />
+        <Route path="/events/sotc-rockhall/sign" element={<SotcEntrySign />} />
         <Route path="/events/sotc-rockhall" element={<SotcRockHallPage />} />
         <Route path="/events/sotc-rock-hall" element={<SotcRockHallPage />} />
 

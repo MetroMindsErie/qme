@@ -157,14 +157,15 @@ begin
     registration_row.last_name,
     null,
     'general',
-    'waiting',
+    'completed',
     jsonb_build_object(
       'source', 'imported_registration_claim',
       'needs_help', false,
       'registration_match_status', 'matched',
       'imported_registration_id', registration_row.id,
       'import_source', registration_row.import_source,
-      'headshot_entitled', registration_row.headshot_entitled
+      'headshot_entitled', registration_row.headshot_entitled,
+      'guest_self_checked_in_at', now()
     )
   )
   returning * into check_in_row;
@@ -173,6 +174,7 @@ begin
   set
     linked_check_in_id = check_in_row.id,
     linked_guest_session_id = session_id,
+    checked_in_at = coalesce(checked_in_at, now()),
     updated_at = now()
   where id = registration_row.id;
 

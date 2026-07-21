@@ -120,7 +120,7 @@ export default function GuestEventList() {
       <section className="qme-home-card" aria-labelledby="qme-home-title">
         <header className="qme-home-header">
           <div>
-            <div className="qme-home-wordmark">qME</div>
+            <div className="qme-home-wordmark">qMe</div>
             <p className="qme-home-kicker">Event companion</p>
           </div>
           <Link to="/admin" className="qme-home-admin-link">

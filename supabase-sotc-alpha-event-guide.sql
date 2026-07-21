@@ -40,6 +40,7 @@ cross join (
         'home_section', 'schedule',
         'home_section_title', 'Event Schedule',
         'home_section_order', 10,
+        'home_hide_card_header', true,
         'home_items_limit', 6,
         'home_items', jsonb_build_array(
           jsonb_build_object(
@@ -162,6 +163,7 @@ cross join (
         'home_section', 'food_drinks',
         'home_section_title', 'Food & Drinks',
         'home_section_order', 60,
+        'home_hide_card_header', true,
         'home_items_limit', 8,
         'home_items', jsonb_build_array(
           jsonb_build_object('title', 'Prosciutto, Whipped Goat Cheese on Tomato Jam Toast'),

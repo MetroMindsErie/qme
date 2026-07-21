@@ -164,7 +164,7 @@ cross join (
         'home_section_order', 60,
         'home_items_limit', 8,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Prosciutto, Whipped Goat Cheese on Tomato Jam Toast', 'meta', 'VG'),
+          jsonb_build_object('title', 'Prosciutto, Whipped Goat Cheese on Tomato Jam Toast'),
           jsonb_build_object('title', 'Potato & Cheese Pierogi', 'meta', 'V'),
           jsonb_build_object('title', 'Pork Egg Roll'),
           jsonb_build_object('title', 'Veggie Samosa', 'meta', 'V'),

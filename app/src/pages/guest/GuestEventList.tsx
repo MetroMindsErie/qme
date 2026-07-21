@@ -1,5 +1,5 @@
 /**
- * qME root landing page: public event directory, not a single-event demo.
+ * qMe root landing page: public event directory, not a single-event demo.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -47,6 +47,15 @@ function getEventPath(event: QEvent): string {
   return PUBLIC_PATHS[event.slug] || `/events/${event.slug}`;
 }
 
+function isSotcEvent(event: QEvent): boolean {
+  return event.slug === 'sotc-rock-hall' || event.slug === 'sotc-test-check-in';
+}
+
+function getEventImageSrc(event: QEvent): string {
+  if (isSotcEvent(event)) return '/images/sotc-logo.png';
+  return event.image_url || '';
+}
+
 function getEventStatus(event: QEvent): 'upcoming' | 'today' | 'past' | 'date-pending' {
   if (!event.event_date) return 'date-pending';
 
@@ -85,6 +94,17 @@ function getBadgeLabel(event: QEvent): string {
   if (status === 'upcoming') return 'Upcoming';
   if (status === 'past') return 'Past';
   return 'Date pending';
+}
+
+function EventDirectoryImage({ event }: { event: QEvent }) {
+  const [failed, setFailed] = useState(false);
+  const src = failed ? '' : getEventImageSrc(event);
+
+  if (!src) {
+    return <span>{event.name.slice(0, 1).toUpperCase()}</span>;
+  }
+
+  return <img src={src} alt="" onError={() => setFailed(true)} />;
 }
 
 export default function GuestEventList() {
@@ -132,7 +152,7 @@ export default function GuestEventList() {
           <p className="qme-home-eyebrow">Find your event</p>
           <h1 id="qme-home-title">Check in, see what is happening, and follow event experiences from your phone.</h1>
           <p>
-            qME helps guests use the right event link without turning the platform homepage into a single demo event.
+            qMe helps guests use the right event link without turning the platform homepage into a single demo event.
           </p>
         </section>
 
@@ -155,11 +175,7 @@ export default function GuestEventList() {
             {events.map((event) => (
               <Link key={event.id} to={getEventPath(event)} className="qme-event-card">
                 <div className="qme-event-image">
-                  {event.image_url ? (
-                    <img src={event.image_url} alt="" />
-                  ) : (
-                    <span>{event.name.slice(0, 1).toUpperCase()}</span>
-                  )}
+                  <EventDirectoryImage event={event} />
                 </div>
                 <div className="qme-event-copy">
                   <div className="qme-event-title-row">

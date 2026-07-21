@@ -166,14 +166,12 @@ cross join (
         'home_section_order', 60,
         'home_items_limit', 9,
         'home_items', jsonb_build_array(
-          jsonb_build_object('title', 'Bacon Wrapped Brisket with Peach BBQ', 'meta', 'GF'),
-          jsonb_build_object('title', 'Garden Fresh Vegetables with Ranch Dip'),
-          jsonb_build_object('title', 'Garlic Parmesan Potato Croquette', 'meta', 'VG'),
-          jsonb_build_object('title', 'Heirloom Tomato Bruschetta', 'meta', 'VG'),
-          jsonb_build_object('title', 'Marinated Cucumber with Edamame Hummus', 'meta', 'VG/GF'),
-          jsonb_build_object('title', 'Mini Chicken Meatballs with Mongolian BBQ'),
-          jsonb_build_object('title', 'Raspberry and Brie Puff Pastry', 'meta', 'V'),
-          jsonb_build_object('title', 'Traditional House Made Hummus with Naan'),
+          jsonb_build_object('title', 'Prosciutto, Whipped Goat Cheese on Tomato Jam Toast', 'meta', 'VG'),
+          jsonb_build_object('title', 'Potato & Cheese Pierogi', 'meta', 'V'),
+          jsonb_build_object('title', 'Pork Egg Roll'),
+          jsonb_build_object('title', 'Veggie Samosa', 'meta', 'V'),
+          jsonb_build_object('title', 'Bacon Wrapped Brisket with Peach BBQ Sauce', 'meta', 'GF'),
+          jsonb_build_object('title', 'Mini Chicken and Waffle'),
           jsonb_build_object('title', 'Mocktail/Cocktail Bar', 'note', 'Credit card only')
         )
       )

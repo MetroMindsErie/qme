@@ -152,7 +152,7 @@ export default function GuestEventList() {
           <p className="qme-home-eyebrow">Find your event</p>
           <h1 id="qme-home-title">Check in, see what is happening, and follow event experiences from your phone.</h1>
           <p>
-            qMe helps guests use the right event link without turning the platform homepage into a single demo event.
+            Enjoy the event while qMe keeps your place for special experiences.
           </p>
         </section>
 

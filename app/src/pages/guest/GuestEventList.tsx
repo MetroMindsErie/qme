@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listEvents } from '../../lib/eventService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { QEvent } from '../../types';
 import '../../styles/shared.css';
@@ -50,7 +51,7 @@ function getEventPath(event: QEvent): string {
 }
 
 function isSotcEvent(event: QEvent): boolean {
-  return event.slug === 'sotc-rockhall' || event.slug === 'sotc-rock-hall' || event.slug === 'sotc-test-check-in';
+  return isSotcEventSlug(event.slug);
 }
 
 function getEventImageSrc(event: QEvent): string {

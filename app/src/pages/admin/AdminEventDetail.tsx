@@ -22,6 +22,7 @@ import {
 } from '../../lib/eventStaffService';
 import { findAdminPrincipalByEmail } from '../../lib/organizationStaffService';
 import { getQueueStageSummary, listQueuesForEvent, deleteQueue, listQueuePilotTickets, onQueueTicketsChange } from '../../lib/queueService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { Ece, EventCheckIn, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
@@ -477,7 +478,7 @@ export default function AdminEventDetail() {
   return (
     <div className="card card-scrollable admin-event-detail-card" style={{ minHeight: '600px', maxHeight: '90vh' }}>
       <Header
-        logoSrc={event.slug === 'sotc-test-check-in' ? '/images/sotc-logo.png' : event.image_url || '/images/qmeFirstLogo.jpg'}
+        logoSrc={isSotcEventSlug(event.slug) ? '/images/sotc-logo.png' : event.image_url || '/images/qmeFirstLogo.jpg'}
         titleLine1="ADMIN"
         titleLine2="EVENT"
       />

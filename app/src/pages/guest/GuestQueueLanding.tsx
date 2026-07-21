@@ -11,6 +11,7 @@ import { getStoredQueueTicket, clearQueueTicket } from '../../hooks/useQueueTick
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { getQueueBySlug, leaveQueue, restoreTicketForQueue } from '../../lib/queueService';
@@ -183,7 +184,7 @@ export default function GuestQueueLanding() {
   const needsHeadshotCredit = isHeadshotQueue && !hasUsableStoredTicket && headshotCreditStatus !== 'available';
   const joinPaused = !hasStoredTicket && (queue.join_status ?? 'open') !== 'open';
   const hasAnyEventCheckIn = bouquetAccess !== 'none';
-  const eventLogoSrc = event.slug === 'sotc-test-check-in'
+  const eventLogoSrc = isSotcEventSlug(event.slug)
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
   const queueImageSrc = queue.slug === 'scan-code-adventure'

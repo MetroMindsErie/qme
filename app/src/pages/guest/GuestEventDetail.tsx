@@ -11,6 +11,7 @@ import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import { formatTime } from '../../lib/utils';
 import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
@@ -627,7 +628,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
           <div className="ed-header-top">
             <div className="ed-header-left">
               <img
-                src={event.slug === 'sotc-test-check-in' ? '/images/sotc-logo.png' : event.image_url || '/images/icorps.png'}
+                src={isSotcEventSlug(event.slug) ? '/images/sotc-logo.png' : event.image_url || '/images/icorps.png'}
                 alt={event.name}
                 className="ed-logo"
               />

@@ -5,6 +5,7 @@ import { createEce, getEce, updateEce } from '../../lib/eceService';
 import { getEvent } from '../../lib/eventService';
 import { listExpiesForOrganization } from '../../lib/expieService';
 import { createQueue, listQueuesForEvent } from '../../lib/queueService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import { slugify } from '../../lib/utils';
 import type { CreateEceInput, Expie, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
@@ -207,7 +208,7 @@ export default function AdminEceForm() {
     width: '100%',
     boxSizing: 'border-box',
   };
-  const eventLogoSrc = event?.slug === 'sotc-test-check-in'
+  const eventLogoSrc = isSotcEventSlug(event?.slug)
     ? '/images/sotc-logo.png'
     : event?.image_url || '/images/qmeFirstLogo.jpg';
 

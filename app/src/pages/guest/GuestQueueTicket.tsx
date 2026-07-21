@@ -18,6 +18,7 @@ import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import {
   applyQueuePilotFlow,
   confirmTicketNearby,
@@ -260,7 +261,7 @@ export default function GuestQueueTicketPage() {
   const headshotCompletionInFlightRef = useRef(false);
 
   const checkInConfig = getEventCheckInConfig(event);
-  const isPilotQueue = event?.slug === 'sotc-test-check-in';
+  const isPilotQueue = isSotcEventSlug(event?.slug);
   const hasRequiredEventCheckIn = !checkInConfig.requireCompletedForParticipation || bouquetAccess !== 'none';
   const pilotStage = pilotTicket?.stage ?? 'waiting';
   const pilotCompletionMode = getPilotCompletionMode(linkedEce, queue?.slug);

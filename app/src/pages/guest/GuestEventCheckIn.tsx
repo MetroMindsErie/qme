@@ -14,6 +14,7 @@ import {
 } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import type { EventCheckIn, ImportedRegistrationSearchResult, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
@@ -70,7 +71,7 @@ export default function GuestEventCheckIn({
   const [registrationSearching, setRegistrationSearching] = useState(false);
   const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
   const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
-  const useImportedRegistrationLookup = !checkInCode && event?.slug === 'sotc-test-check-in';
+  const useImportedRegistrationLookup = !checkInCode && isSotcEventSlug(event?.slug);
 
   const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
@@ -332,7 +333,7 @@ export default function GuestEventCheckIn({
     && checkInConfig.requireCompletedForParticipation
     && checkIn?.status !== 'completed'
     && !isRemovedCheckIn;
-  const eventLogoSrc = event.slug === 'sotc-test-check-in' || eventSlug === 'sotc-test-check-in'
+  const eventLogoSrc = isSotcEventSlug(event.slug) || isSotcEventSlug(eventSlug)
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
 

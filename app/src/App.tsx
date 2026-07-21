@@ -23,12 +23,12 @@ import GuestGroupOrder from './pages/guest/GuestGroupOrder';
 import GuestQueueTicket from './pages/guest/GuestQueueTicket';
 import GuestEventList from './pages/guest/GuestEventList';
 import KioskDisplay from './pages/demo/KioskDisplay';
+import { SOTC_PUBLIC_EVENT_SLUG } from './lib/sotc';
 
 import './styles/shared.css';
 
 // Public route aliases: keep demo links stable while root becomes the platform portal.
 const DEMO_EVENT = 'peony-festival';
-const SOTC_PUBLIC_EVENT = 'sotc-test-check-in';
 
 // Event routes render any event slug resolved by Supabase.
 function EventPage() {
@@ -50,7 +50,7 @@ function EventGroupOrderPage() {
 }
 
 function SotcRockHallPage() {
-  return <GuestEventDetail eventSlugOverride={SOTC_PUBLIC_EVENT} />;
+  return <GuestEventDetail eventSlugOverride={SOTC_PUBLIC_EVENT_SLUG} />;
 }
 
 // Skip the queue landing page — go directly to ticket claim

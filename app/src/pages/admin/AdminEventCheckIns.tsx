@@ -19,6 +19,7 @@ import {
   onEventCheckInsChange,
 } from '../../lib/checkInService';
 import { adminGrantGuestCreditForCheckIn, listGuestCreditsForEvent } from '../../lib/guestCreditService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import type { EventCheckIn, EventGuestCredit, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
@@ -219,7 +220,7 @@ export default function AdminEventCheckIns({
   const history = checkIns.filter((row) => row.status === 'completed' || row.status === 'cancelled');
   const checkInConfig = useMemo(() => getEventCheckInConfig(event), [event]);
   const canManageThisEvent = event ? canManageEvent(currentAdmin, event) : false;
-  const eventLogoSrc = event?.slug === 'sotc-test-check-in'
+  const eventLogoSrc = isSotcEventSlug(event?.slug)
     ? '/images/sotc-logo.png'
     : event?.image_url || '/images/qmeFirstLogo.jpg';
 
@@ -410,7 +411,7 @@ export default function AdminEventCheckIns({
                         Upgrade Flowers
                       </button>
                     )}
-                    {!isCancelled && event?.slug === 'sotc-test-check-in' && (
+                    {!isCancelled && isSotcEventSlug(event?.slug) && (
                       <button
                         className={hasPhotoCredit || hasUsedPhotoCredit ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
                         style={{ margin: 0, width: 'auto', padding: '0.4rem 0.7rem', fontSize: '0.78rem' }}

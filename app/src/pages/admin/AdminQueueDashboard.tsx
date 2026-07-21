@@ -24,6 +24,7 @@ import {
   updateQueue,
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
+import { isSotcEventSlug } from '../../lib/sotc';
 import {
   canAccessEvent,
   canManageEvent,
@@ -138,7 +139,7 @@ export default function AdminQueueDashboard() {
   }, [nowServing]);
 
   const isBouquetQueue = queue?.slug === 'wrapped-bouquets';
-  const isPilotQueue = Boolean(event?.slug === 'sotc-test-check-in' && queue);
+  const isPilotQueue = Boolean(isSotcEventSlug(event?.slug) && queue);
   const pilotCompletionMode = getPilotCompletionMode(linkedEce, queue?.slug);
   const stationCode = '4729';
   const stationUrl = event && queue

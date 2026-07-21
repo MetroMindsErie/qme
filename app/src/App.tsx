@@ -84,6 +84,8 @@ function App() {
         <Route path="/demo" element={<Navigate to={`/events/${DEMO_EVENT}`} replace />} />
         <Route path="/" element={<GuestEventList />} />
         <Route path="/sotc/rockhall" element={<SotcRockHallPage />} />
+        <Route path="/sotc/:sotcSlug" element={<SotcRockHallPage />} />
+        <Route path="/events/sotc-rockhall" element={<SotcRockHallPage />} />
         <Route path="/events/sotc-rock-hall" element={<SotcRockHallPage />} />
 
         {/* ===== Kiosk tablet display ===== */}

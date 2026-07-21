@@ -25,6 +25,15 @@ function asRecord(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function normalizeTimeZone(value: string | null | undefined): string {
+  const normalized = (value || '').trim().toUpperCase();
+  if (normalized === 'EST' || normalized === 'EDT') return 'ET';
+  if (normalized === 'CST' || normalized === 'CDT') return 'CT';
+  if (normalized === 'MST' || normalized === 'MDT') return 'MT';
+  if (normalized === 'PST' || normalized === 'PDT') return 'PT';
+  return normalized || 'ET';
+}
+
 export default function AdminEventForm() {
   const navigate = useNavigate();
   const { eventId } = useParams<{ eventId: string }>();
@@ -42,7 +51,7 @@ export default function AdminEventForm() {
     event_date: null,
     start_time: null,
     end_time: null,
-    timezone: 'EST',
+    timezone: 'ET',
     status: 'draft',
     metadata: {
       check_in: {
@@ -86,7 +95,7 @@ export default function AdminEventForm() {
             event_date: ev.event_date,
             start_time: ev.start_time,
             end_time: ev.end_time,
-            timezone: ev.timezone,
+            timezone: normalizeTimeZone(ev.timezone),
             status: ev.status,
             metadata: ev.metadata ?? {},
           });
@@ -249,7 +258,7 @@ export default function AdminEventForm() {
     event_date: form.event_date ?? null,
     start_time: form.start_time ?? null,
     end_time: form.end_time ?? null,
-    timezone: form.timezone,
+    timezone: normalizeTimeZone(form.timezone),
     status: form.status ?? 'draft',
     created_at: '',
     updated_at: '',
@@ -356,10 +365,10 @@ export default function AdminEventForm() {
               value={form.timezone}
               onChange={(e) => handleChange('timezone', e.target.value)}
             >
-              <option value="EST">EST</option>
-              <option value="CST">CST</option>
-              <option value="MST">MST</option>
-              <option value="PST">PST</option>
+              <option value="ET">ET</option>
+              <option value="CT">CT</option>
+              <option value="MT">MT</option>
+              <option value="PT">PT</option>
               <option value="UTC">UTC</option>
             </select>
           </div>

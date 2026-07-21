@@ -10,11 +10,13 @@ import '../../styles/shared.css';
 
 const PUBLIC_EVENT_SLUGS = new Set([
   'peony-festival',
+  'sotc-rockhall',
   'sotc-rock-hall',
   'sotc-test-check-in',
 ]);
 
 const PUBLIC_PATHS: Record<string, string> = {
+  'sotc-rockhall': '/sotc/rockhall',
   'sotc-rock-hall': '/sotc/rockhall',
   'sotc-test-check-in': '/sotc/rockhall',
 };
@@ -48,7 +50,7 @@ function getEventPath(event: QEvent): string {
 }
 
 function isSotcEvent(event: QEvent): boolean {
-  return event.slug === 'sotc-rock-hall' || event.slug === 'sotc-test-check-in';
+  return event.slug === 'sotc-rockhall' || event.slug === 'sotc-rock-hall' || event.slug === 'sotc-test-check-in';
 }
 
 function getEventImageSrc(event: QEvent): string {

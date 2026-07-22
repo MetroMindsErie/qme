@@ -433,6 +433,47 @@
   width: 62px;
 }
 
+.ed-activity-card-logo-links {
+  cursor: default;
+}
+
+.ed-activity-card-logo-links .ed-activity-body {
+  width: 100%;
+}
+
+.ed-activity-card-logo-links .ed-home-items {
+  gap: 10px;
+  margin-top: 9px;
+}
+
+.ed-home-item-logo-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 62px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.ed-home-item-logo-link:hover,
+.ed-home-item-logo-link:focus {
+  border-color: var(--qme-purple);
+  box-shadow: 0 8px 18px rgba(38, 54, 74, 0.10);
+  transform: translateY(-1px);
+}
+
+.ed-home-item-sponsor-logo {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  max-height: 58px;
+  object-fit: contain;
+}
+
 .ed-home-item-copy {
   display: flex;
   flex-direction: column;

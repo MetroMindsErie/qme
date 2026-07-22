@@ -816,6 +816,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             const homeIconVariant = getEceHomeIconVariant(exp);
             const homeItemsLayout = getEceHomeItemsLayout(exp);
             const homeItems = getEceHomeItems(exp);
+            const hasLogoLinks = homeItemsLayout === 'logo_links';
             const statusLine = linkedQueue ? queueCardStatusLine({
               hasTicket,
               stage: linkedQueue._myStage,
@@ -845,8 +846,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               ? 'ed-card-joined'
               : '';
             const homeItemImageCount = homeItems.filter((item) => item.imageUrl).length;
-            const hasMediaRows = homeItemsLayout === 'media_rows' || homeItemImageCount > 1;
-            const cardClass = `ed-activity-card ed-activity-card-info ${hasMediaRows ? 'ed-activity-card-media-rows' : ''} ${canAct ? 'ed-card-clickable' : ''} ${cardStateClass}`;
+            const hasMediaRows = hasLogoLinks || homeItemsLayout === 'media_rows' || homeItemImageCount > 1;
+            const cardClass = `ed-activity-card ed-activity-card-info ${hasMediaRows ? 'ed-activity-card-media-rows' : ''} ${hasLogoLinks ? 'ed-activity-card-logo-links' : ''} ${canAct ? 'ed-card-clickable' : ''} ${cardStateClass}`;
             const handleEceOpen = () => {
               if (hasTicket && viewHref) {
                 navigate(viewHref);
@@ -960,13 +961,21 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                       if (item.url) {
                         return (
                           <a
-                            className="ed-home-item ed-home-item-clickable ed-home-item-block-link"
+                            className={`ed-home-item ed-home-item-clickable ed-home-item-block-link ${hasLogoLinks ? 'ed-home-item-logo-link' : ''}`}
                             href={item.url}
                             key={`${item.title}-${index}`}
                             target="_blank"
                             rel="noreferrer"
+                            aria-label={item.title ? `Open ${item.title}` : 'Open sponsor'}
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            {itemBody}
+                            {hasLogoLinks && item.imageUrl ? (
+                              <img
+                                src={item.imageUrl}
+                                alt={item.title || 'Sponsor'}
+                                className="ed-home-item-sponsor-logo"
+                              />
+                            ) : itemBody}
                           </a>
                         );
                       }

@@ -145,7 +145,7 @@ cross join (
         'home_section', 'sponsors',
         'home_section_title', 'Sponsors',
         'home_section_order', 50,
-        'home_items_layout', 'media_rows',
+        'home_items_layout', 'logo_links',
         'home_items_limit', 4,
         'home_items', jsonb_build_array(
           jsonb_build_object('title', 'Sherwin-Williams', 'image_url', '/images/sotc-sponsor-sherwin-williams.jpg', 'image_variant', 'wide', 'url', 'https://careers.sherwin-williams.com/us/en/home.html'),

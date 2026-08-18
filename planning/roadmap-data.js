@@ -483,7 +483,7 @@ const QME_ROADMAP = {
             {
               id: "story-dist-images-lock",
               title: "Track recurring app/dist/images build lock",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Normal npm run build can fail when Windows/Dropbox locks generated app/dist/images, even though TypeScript and Vite bundling pass.",
@@ -493,7 +493,7 @@ const QME_ROADMAP = {
                 "Decide whether to move generated build output away from Dropbox or change local cleanup workflow."
               ],
               notes:
-                "Observed multiple times: app compiles and bundles successfully, but Vite cannot remove app/dist/images."
+                "Completed 2026-08-18: added npm run build:verify:local, which runs TypeScript and Vite with output directed to the system temp folder so local verification does not depend on clearing Dropbox-managed app/dist/images. Production build behavior is unchanged."
             },
             {
               id: "story-sandbox-spawn-hiccup",

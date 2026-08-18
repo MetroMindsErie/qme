@@ -29,3 +29,4 @@ Updated: 2026-06-11
 - Generalize special access from `flowers` into a broader guest access/tag model after the foundation is in place.
 - Model SOTC photo access separately from Peony bouquet access. SOTC will need state changes such as eligible, used, student-used, or professional-used rather than a simple bouquet upgrade.
 - Keep documenting local Windows/Dropbox build-folder locks separately from app compile failures.
+- Use `npm run build:verify:local` when local Windows/Dropbox file locks prevent Vite from clearing `app/dist`. This runs TypeScript and writes the Vite verification build to the system temp folder instead of the synced workspace.

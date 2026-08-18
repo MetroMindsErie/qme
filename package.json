@@ -5,6 +5,7 @@
   "scripts": {
     "start": "npm --prefix app run dev",
     "build": "npm --prefix app run build",
+    "build:verify:local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-app-build.ps1",
     "test": "npm --prefix app test",
     "mobile": "npm --prefix mobile start",
     "planning:seed": "node scripts/seed-planning-document.js",

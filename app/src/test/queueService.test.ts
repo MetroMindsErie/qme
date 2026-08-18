@@ -157,14 +157,15 @@ describe('queueService', () => {
       expect(mockRpc).not.toHaveBeenCalled();
     });
 
-    it('calls rpc("next_ticket_for_queue") with queue id and guest token', async () => {
+    it('calls rpc("next_ticket_for_queue") with queue id, guest token, and check-in id', async () => {
       mockRpc
         .mockResolvedValueOnce({ data: { id: 7, ticket_number: 7 }, error: null })
         .mockResolvedValueOnce({ data: null, error: null });
-      const result = await nextTicketForQueue('q1', 'e1');
+      const result = await nextTicketForQueue('q1', 'e1', 'check-in-1');
       expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', {
         p_queue_id: 'q1',
         p_guest_token: expect.any(String),
+        p_check_in_id: 'check-in-1',
       });
       expect(mockRpc).toHaveBeenNthCalledWith(2, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
       expect(result).toEqual({ id: 7, ticketNumber: 7 });
@@ -190,6 +191,7 @@ describe('queueService', () => {
       expect(mockRpc).toHaveBeenNthCalledWith(1, 'next_ticket_for_queue', {
         p_queue_id: 'q1',
         p_guest_token: expect.any(String),
+        p_check_in_id: null,
       });
       expect(mockRpc).toHaveBeenCalledTimes(1);
     });

@@ -38,6 +38,9 @@ alter table public.event_check_ins
 alter table public.tickets
   add column if not exists guest_session_id uuid references public.guest_sessions(id) on delete set null;
 
+alter table public.tickets
+  add column if not exists check_in_id uuid references public.event_check_ins(id) on delete set null;
+
 create index if not exists event_check_ins_guest_session_idx
   on public.event_check_ins(guest_session_id)
   where guest_session_id is not null;
@@ -45,6 +48,10 @@ create index if not exists event_check_ins_guest_session_idx
 create index if not exists tickets_guest_session_idx
   on public.tickets(guest_session_id)
   where guest_session_id is not null;
+
+create index if not exists tickets_check_in_id_idx
+  on public.tickets(check_in_id)
+  where check_in_id is not null;
 
 grant select, insert, update on public.guest_sessions to anon, authenticated;
 
@@ -172,9 +179,12 @@ begin
 end;
 $$;
 
+drop function if exists public.next_ticket_for_queue(uuid, text);
+
 create or replace function public.next_ticket_for_queue(
   p_queue_id uuid,
-  p_guest_token text
+  p_guest_token text,
+  p_check_in_id uuid default null
 )
 returns jsonb
 language plpgsql
@@ -185,8 +195,45 @@ declare
   resolved_ticket jsonb;
   resolved_ticket_id bigint;
   resolved_session_id uuid;
+  resolved_event_id uuid;
+  check_in_event_id uuid;
+  check_in_session_id uuid;
+  check_in_status text;
+  existing_check_in_id uuid;
 begin
-  resolved_session_id := public.ensure_guest_session_for_queue(p_queue_id, p_guest_token);
+  select event_id into resolved_event_id
+  from public.queues
+  where id = p_queue_id;
+
+  if resolved_event_id is null then
+    raise exception 'queue not found';
+  end if;
+
+  resolved_session_id := public.ensure_guest_session(resolved_event_id, p_guest_token);
+
+  if p_check_in_id is not null then
+    select event_id, guest_session_id, status
+      into check_in_event_id, check_in_session_id, check_in_status
+    from public.event_check_ins
+    where id = p_check_in_id;
+
+    if check_in_event_id is null then
+      raise exception 'check-in not found';
+    end if;
+
+    if check_in_event_id <> resolved_event_id then
+      raise exception 'check-in belongs to a different event';
+    end if;
+
+    if check_in_session_id is null or check_in_session_id <> resolved_session_id then
+      raise exception 'check-in belongs to a different guest session';
+    end if;
+
+    if check_in_status <> 'completed' then
+      raise exception 'check-in must be completed before joining this queue';
+    end if;
+  end if;
+
   resolved_ticket := to_jsonb(public.next_ticket_for_queue(p_queue_id));
   if jsonb_typeof(resolved_ticket) = 'number' then
     resolved_ticket_id := (resolved_ticket #>> '{}')::bigint;
@@ -197,11 +244,28 @@ begin
     );
   end if;
 
+  if resolved_ticket_id is null then
+    raise exception 'ticket could not be resolved';
+  end if;
+
+  select check_in_id into existing_check_in_id
+  from public.tickets
+  where id = resolved_ticket_id
+    and queue_id = p_queue_id;
+
+  if p_check_in_id is not null
+    and existing_check_in_id is not null
+    and existing_check_in_id <> p_check_in_id then
+    raise exception 'ticket belongs to a different check-in';
+  end if;
+
   update public.tickets
-  set guest_session_id = resolved_session_id
+  set
+    guest_session_id = coalesce(guest_session_id, resolved_session_id),
+    check_in_id = coalesce(check_in_id, p_check_in_id)
   where id = resolved_ticket_id
     and queue_id = p_queue_id
-    and guest_session_id is null;
+    and (guest_session_id is null or guest_session_id = resolved_session_id);
 
   return resolved_ticket;
 end;
@@ -332,8 +396,16 @@ grant execute on function public.ensure_guest_session(uuid, text, text, text, te
 revoke all on function public.ensure_guest_session_for_queue(uuid, text) from public;
 grant execute on function public.ensure_guest_session_for_queue(uuid, text) to anon, authenticated;
 
-revoke all on function public.next_ticket_for_queue(uuid, text) from public;
-grant execute on function public.next_ticket_for_queue(uuid, text) to anon, authenticated;
+do $$
+begin
+  if to_regprocedure('public.next_ticket_for_queue(uuid, text)') is not null then
+    revoke all on function public.next_ticket_for_queue(uuid, text) from public, anon, authenticated;
+  end if;
+end;
+$$;
+
+revoke all on function public.next_ticket_for_queue(uuid, text, uuid) from public;
+grant execute on function public.next_ticket_for_queue(uuid, text, uuid) to anon, authenticated;
 
 revoke all on function public.restore_ticket_for_queue(bigint, uuid, text) from public;
 grant execute on function public.restore_ticket_for_queue(bigint, uuid, text) to anon, authenticated;

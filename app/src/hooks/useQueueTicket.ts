@@ -52,7 +52,11 @@ export function getActiveQueueIds(): string[] {
  * Queue-scoped ticket hook.
  * Returns both ticketId (for API) and ticketNumber (for display).
  */
-export function useQueueTicket(queueId: string | undefined, eventId?: string | null) {
+export function useQueueTicket(
+  queueId: string | undefined,
+  eventId?: string | null,
+  eventCheckInId?: string | null
+) {
   const [ticketId, setTicketId] = useState<number | null>(null);
   const [ticketNumber, setTicketNumber] = useState<number | null>(null);
   const [hasCheckedIn, setHasCheckedIn] = useState(false);
@@ -132,7 +136,7 @@ export function useQueueTicket(queueId: string | undefined, eventId?: string | n
       }
 
       // Claim new
-      const result = await nextTicketForQueue(queueId, eventId);
+      const result = await nextTicketForQueue(queueId, eventId, eventCheckInId);
       setTicketId(result.id);
       setTicketNumber(result.ticketNumber);
       storeTicket(queueId, result.id, result.ticketNumber);
@@ -143,7 +147,7 @@ export function useQueueTicket(queueId: string | undefined, eventId?: string | n
     } finally {
       claimBusyRef.current = false;
     }
-  }, [queueId, eventId, ticketId]);
+  }, [queueId, eventId, eventCheckInId, ticketId]);
 
   const checkIn = useCallback(async () => {
     if (!ticketId || !queueId || !eventId || hasCheckedIn) return;

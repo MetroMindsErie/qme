@@ -11,6 +11,8 @@ with function_checks(signature, expected_anon, expected_authenticated) as (
   values
     ('public.grant_qme_superadmin(uuid,text,text)', false, false),
     ('public.next_ticket_for_queue(uuid)', false, false),
+    ('public.next_ticket_for_queue(uuid,text)', false, false),
+    ('public.next_ticket_for_queue(uuid,text,uuid)', true, true),
     ('public.restore_ticket_for_queue(bigint,uuid)', false, false),
     ('public.check_in_ticket(bigint)', false, false),
     ('public.leave_queue(bigint,text)', false, false),

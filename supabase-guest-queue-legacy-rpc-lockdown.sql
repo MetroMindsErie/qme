@@ -11,6 +11,10 @@ begin
     revoke all on function public.next_ticket_for_queue(uuid) from public, anon, authenticated;
   end if;
 
+  if to_regprocedure('public.next_ticket_for_queue(uuid, text)') is not null then
+    revoke all on function public.next_ticket_for_queue(uuid, text) from public, anon, authenticated;
+  end if;
+
   if to_regprocedure('public.restore_ticket_for_queue(bigint, uuid)') is not null then
     revoke all on function public.restore_ticket_for_queue(bigint, uuid) from public, anon, authenticated;
   end if;
@@ -33,6 +37,7 @@ select
 from (
   values
     ('public.next_ticket_for_queue(uuid)'),
+    ('public.next_ticket_for_queue(uuid, text)'),
     ('public.restore_ticket_for_queue(bigint, uuid)'),
     ('public.check_in_ticket(bigint)'),
     ('public.leave_queue(bigint, text)')

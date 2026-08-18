@@ -242,7 +242,7 @@ export default function GuestQueueTicketPage() {
   }, [eventSlug, queueSlug]);
 
   const { nowServing } = useQueueMetric(queue?.id);
-  const { ticketId, ticketNumber, hasCheckedIn, claimTicket, checkIn, leave } = useQueueTicket(queue?.id, event?.id);
+  const { ticketId, ticketNumber, hasCheckedIn, claimTicket, checkIn, leave } = useQueueTicket(queue?.id, event?.id, eventCheckInId);
 
   const [note1, setNote1]             = useState('');
   const [showCheckIn, setShowCheckIn] = useState(false);
@@ -330,6 +330,7 @@ export default function GuestQueueTicketPage() {
     if (!hasStoredTicket && !hasJoinIntent) return;
     if (queue.slug === 'wrapped-bouquets' && bouquetAccess !== 'flowers') return;
     if (queue.slug === 'headshot-photo-station' && headshotCreditStatus !== 'available') return;
+    if (queue.slug === 'headshot-photo-station' && !eventCheckInId) return;
     if (!hasRequiredEventCheckIn) return;
     if ((queue.join_status ?? 'open') !== 'open') return;
     if (isPilotQueue && !guestNameSaved) return;
@@ -340,7 +341,7 @@ export default function GuestQueueTicketPage() {
       setSearchParams(nextParams, { replace: true });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [queue, bouquetAccess, headshotCreditStatus, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved, searchParams, setSearchParams]);
+  }, [queue, bouquetAccess, headshotCreditStatus, eventCheckInId, hasRequiredEventCheckIn, isPilotQueue, guestNameSaved, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!isPilotQueue || !ticketId || didSyncGuestNameRef.current) return;

@@ -140,13 +140,15 @@ function requireGuestQueueScope(
 
 export async function nextTicketForQueue(
   queueId: string,
-  eventId?: string | null
+  eventId?: string | null,
+  checkInId?: string | null
 ): Promise<{ id: number; ticketNumber: number }> {
   requireGuestQueueScope(queueId, eventId);
 
   const { data, error } = await supabase.rpc('next_ticket_for_queue', {
     p_queue_id: queueId,
     p_guest_token: getGuestTokenForQueue(queueId, eventId),
+    p_check_in_id: checkInId ?? null,
   });
   if (error) {
     throw error;

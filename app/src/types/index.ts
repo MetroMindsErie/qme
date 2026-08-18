@@ -53,6 +53,7 @@ export interface Ticket {
   id: number;
   queue_id: string | null;
   guest_session_id?: string | null;
+  check_in_id?: string | null;
   ticket_number?: number | null;
   first_name?: string;
   last_name?: string;

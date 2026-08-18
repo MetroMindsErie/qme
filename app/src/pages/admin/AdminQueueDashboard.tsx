@@ -313,6 +313,7 @@ export default function AdminQueueDashboard() {
           eventId: event.id,
           ticketId,
           markKey: getPilotMarkKey(linkedEce, queue?.slug),
+          checkInId: selectedTicket?.check_in_id ?? null,
           consumeCreditKey: queue?.slug === 'headshot-photo-station' ? 'professional_headshot' : undefined,
           creditGuestName: guestName,
           source: 'admin',
@@ -779,6 +780,7 @@ export default function AdminQueueDashboard() {
                 {completedTickets.map((ticket) => {
                   const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
                   const serviceStartedTime = formatServiceStartTime(serviceStartedMarks[ticket.id]?.created_at);
+                  const completedTime = formatServiceStartTime(ticket.completed_at);
                   return (
                     <div
                       key={ticket.id}
@@ -795,7 +797,7 @@ export default function AdminQueueDashboard() {
                     >
                       <span style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</span>
                       <span style={{ color: stageColor.completed, fontSize: '0.76rem', fontWeight: 900, textTransform: 'uppercase' }}>
-                        Completed{serviceStartedTime ? ` · Called ${serviceStartedTime}` : ''}
+                        Completed{serviceStartedTime ? ` - Called ${serviceStartedTime}` : completedTime ? ` - Served ${completedTime}` : ''}
                       </span>
                     </div>
                   );

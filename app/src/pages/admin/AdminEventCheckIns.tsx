@@ -211,7 +211,6 @@ export default function AdminEventCheckIns({
       { header: 'headshot_credit_used_quantity', value: (row) => photoCredits.find((item) => item.check_in_id === row.id)?.used_quantity ?? '' },
       { header: 'created_at', value: (row) => formatCsvTimestamp(row.created_at) },
       { header: 'updated_at', value: (row) => formatCsvTimestamp(row.updated_at) },
-      { header: 'metadata_json', value: (row) => row.metadata ?? {} },
     ], checkIns);
   }
 
@@ -320,19 +319,6 @@ export default function AdminEventCheckIns({
             </button>
           )}
         </div>
-
-        {canManageThisEvent && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 0.9rem' }}>
-            <button
-              type="button"
-              className="actionBtn actionBtn-secondary"
-              style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }}
-              onClick={exportCheckInsCsv}
-            >
-              Export CSV
-            </button>
-          </div>
-        )}
 
         {activeTab === 'live' && (
           <>
@@ -486,6 +472,16 @@ export default function AdminEventCheckIns({
 
         {activeTab === 'settings' && canManageThisEvent && (
           <div style={{ display: 'grid', gap: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="actionBtn actionBtn-secondary"
+                style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }}
+                onClick={exportCheckInsCsv}
+              >
+                Export Check-Ins
+              </button>
+            </div>
             <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: '#fafafa' }}>
               <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Check-In Behavior</h2>
               <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>

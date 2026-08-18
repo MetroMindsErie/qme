@@ -31,13 +31,12 @@ Columns:
 - `headshot_credit_used_quantity`
 - `created_at`
 - `updated_at`
-- `metadata_json`
 
 Notes:
 
 - `status` distinguishes waiting, completed, and removed/cancelled check-ins.
 - `headshot_credit_status` is blank when no credit exists, `available` when the Headshot credit remains unused, and `used` after the Headshot queue consumes it.
-- `metadata_json` is included so imported-registration context and pilot exception details are preserved without adding a custom report field for every pilot detail.
+- Raw metadata is intentionally excluded from the default operational export. Add a separate audit export later if deeper metadata inspection is needed.
 
 ## Queue Activity Export
 

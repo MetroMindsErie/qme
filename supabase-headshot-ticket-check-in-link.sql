@@ -116,7 +116,7 @@ with unique_completed_check_ins as (
     event_id,
     lower(trim(first_name)) as normalized_first_name,
     lower(trim(last_name)) as normalized_last_name,
-    min(id) as check_in_id
+    (array_agg(id))[1] as check_in_id
   from public.event_check_ins
   where status = 'completed'
     and nullif(trim(first_name), '') is not null

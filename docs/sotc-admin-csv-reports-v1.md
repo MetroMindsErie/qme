@@ -64,12 +64,12 @@ Columns:
 - `completed_at`
 - `left_at`
 - `left_reason`
-- `mark_metadata_json`
 
 Notes:
 
 - `service_started_at` is populated when the queue records a durable service-start marker, such as the Headshot `headshot_service_started` marker.
 - Admin-served completion and guest-confirmed completion both remain visible through `completed_at`.
+- Raw mark metadata is intentionally excluded from the default queue export. Add a separate audit export later if deeper metadata inspection is needed.
 - This report intentionally exports operational state and timestamps, not analytics summaries.
 
 ## Deferred

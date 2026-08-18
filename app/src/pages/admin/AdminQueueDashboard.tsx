@@ -506,7 +506,6 @@ export default function AdminQueueDashboard() {
         { header: 'completed_at', value: (ticket) => formatCsvTimestamp(ticket.completed_at) },
         { header: 'left_at', value: (ticket) => formatCsvTimestamp(ticket.left_at) },
         { header: 'left_reason', value: (ticket) => ticket.left_reason ?? '' },
-        { header: 'mark_metadata_json', value: (ticket) => serviceStartedMarks[ticket.id]?.metadata ?? {} },
       ], pilotTickets);
     };
 
@@ -535,21 +534,18 @@ export default function AdminQueueDashboard() {
             ))}
           </div>
 
-          {canManageThisEvent && (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 0.9rem' }}>
+          {activeQueueTab === 'settings' && canManageThisEvent && (
+          <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f8fafc' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.8rem' }}>
               <button
                 type="button"
                 className="actionBtn actionBtn-secondary"
                 style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }}
                 onClick={exportQueueActivityCsv}
               >
-                Export CSV
+                Export Queue Activity
               </button>
             </div>
-          )}
-
-          {activeQueueTab === 'settings' && canManageThisEvent && (
-          <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f8fafc' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
                 Join Status

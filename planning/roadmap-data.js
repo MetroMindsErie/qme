@@ -208,7 +208,7 @@ const QME_ROADMAP = {
                 "The report shape is documented before expanding to more advanced analytics."
               ],
               notes:
-                "Completed 2026-08-18: added admin-only CSV exports to Event Check-In and queue admin screens. Attendance/check-in export lives on the admin-only Settings tab, is labeled Export Check-Ins, and includes guest status, imported-registration markers, Needs Help metadata, and Headshot credit status without raw metadata JSON. Queue activity export includes queue stage/status timestamps plus Headshot service-start markers where present. Report shapes are documented in docs/sotc-admin-csv-reports-v1.md. Deeper report views can follow once the first export format proves useful."
+                "Completed 2026-08-18: added admin-only CSV exports to Event Check-In and queue admin screens. Attendance/check-in export lives on the admin-only Settings tab, is labeled Export Check-Ins, and includes guest status, imported-registration markers, Needs Help metadata, and Headshot credit status without raw metadata JSON. Queue activity export lives on the admin-only queue Settings tab, is labeled Export Queue Activity, and includes queue stage/status timestamps plus Headshot service-start markers where present without raw metadata JSON. Report shapes are documented in docs/sotc-admin-csv-reports-v1.md. Deeper report views can follow once the first export format proves useful."
             }
           ]
         },

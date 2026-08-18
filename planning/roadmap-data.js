@@ -196,7 +196,7 @@ const QME_ROADMAP = {
             {
               id: "story-sotc-admin-csv-exports",
               title: "Add admin CSV exports for attendance and Headshot activity",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Give event admins a straightforward way to download CSV reports from the admin console, starting with attendance/check-in and Headshot activity.",
@@ -208,7 +208,7 @@ const QME_ROADMAP = {
                 "The report shape is documented before expanding to more advanced analytics."
               ],
               notes:
-                "User preference for Sprint 3: CSV is enough for now and should be usable from admin views whenever needed. Deeper report views can follow once the first export format proves useful."
+                "Completed 2026-08-18: added admin-only CSV exports to Event Check-In and queue admin screens. Attendance/check-in export includes guest status, imported-registration markers, Needs Help metadata, and Headshot credit status. Queue activity export includes queue stage/status timestamps plus Headshot service-start markers where present. Report shapes are documented in docs/sotc-admin-csv-reports-v1.md. Deeper report views can follow once the first export format proves useful."
             }
           ]
         },

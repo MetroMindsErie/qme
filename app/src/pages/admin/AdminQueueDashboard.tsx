@@ -9,6 +9,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import Header from '../../components/Header';
 import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
+import { downloadCsv, formatCsvTimestamp, safeCsvFilename } from '../../lib/csvExport';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import {
   adminApplyQueuePilotFlow,
@@ -482,6 +483,32 @@ export default function AdminQueueDashboard() {
       cancelled: '#991b1b',
       left: '#6b7280',
     };
+    const exportQueueActivityCsv = () => {
+      const filename = `${safeCsvFilename(`${event.slug}-${queue.slug}-activity`)}-${new Date().toISOString().slice(0, 10)}.csv`;
+      downloadCsv(filename, [
+        { header: 'event_name', value: () => event.name },
+        { header: 'event_slug', value: () => event.slug },
+        { header: 'queue_name', value: () => queue.name },
+        { header: 'queue_slug', value: () => queue.slug },
+        { header: 'ticket_id', value: (ticket) => ticket.id },
+        { header: 'ticket_number', value: (ticket) => ticket.ticket_number ?? '' },
+        { header: 'first_name', value: (ticket) => ticket.first_name ?? '' },
+        { header: 'last_name', value: (ticket) => ticket.last_name ?? '' },
+        { header: 'stage', value: (ticket) => ticket.stage ?? 'waiting' },
+        { header: 'status', value: (ticket) => ticket.status },
+        { header: 'nearby_confirmed', value: (ticket) => isNearbyConfirmed(ticket) ? 'yes' : 'no' },
+        { header: 'service_started_at', value: (ticket) => formatCsvTimestamp(serviceStartedMarks[ticket.id]?.created_at) },
+        { header: 'service_started_source', value: (ticket) => serviceStartedMarks[ticket.id]?.source ?? '' },
+        { header: 'joined_at', value: (ticket) => formatCsvTimestamp(ticket.created_at) },
+        { header: 'stage_updated_at', value: (ticket) => formatCsvTimestamp(ticket.stage_updated_at) },
+        { header: 'nearby_confirmed_at', value: (ticket) => formatCsvTimestamp(ticket.nearby_confirmed_at) },
+        { header: 'released_at', value: (ticket) => formatCsvTimestamp(ticket.released_at) },
+        { header: 'completed_at', value: (ticket) => formatCsvTimestamp(ticket.completed_at) },
+        { header: 'left_at', value: (ticket) => formatCsvTimestamp(ticket.left_at) },
+        { header: 'left_reason', value: (ticket) => ticket.left_reason ?? '' },
+        { header: 'mark_metadata_json', value: (ticket) => serviceStartedMarks[ticket.id]?.metadata ?? {} },
+      ], pilotTickets);
+    };
 
     return (
       <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -507,6 +534,19 @@ export default function AdminQueueDashboard() {
               </button>
             ))}
           </div>
+
+          {canManageThisEvent && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 0.9rem' }}>
+              <button
+                type="button"
+                className="actionBtn actionBtn-secondary"
+                style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }}
+                onClick={exportQueueActivityCsv}
+              >
+                Export CSV
+              </button>
+            </div>
+          )}
 
           {activeQueueTab === 'settings' && canManageThisEvent && (
           <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f8fafc' }}>

@@ -6,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { getEvent, updateEvent } from '../../lib/eventService';
 import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
+import { downloadCsv, formatCsvTimestamp, safeCsvFilename } from '../../lib/csvExport';
 import {
   canManageEvent,
   getCurrentAdminPrincipal,
@@ -35,6 +36,15 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
     : {};
+}
+
+function asCsvString(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  return String(value);
+}
+
+function checkInField(row: EventCheckIn, key: string): unknown {
+  return (row as unknown as Record<string, unknown>)[key];
 }
 
 export default function AdminEventCheckIns({
@@ -172,6 +182,39 @@ export default function AdminEventCheckIns({
     }
   }
 
+  function exportCheckInsCsv() {
+    if (!event) return;
+    const filename = `${safeCsvFilename(event.slug || event.name)}-check-ins-${new Date().toISOString().slice(0, 10)}.csv`;
+    downloadCsv(filename, [
+      { header: 'event_name', value: () => event.name },
+      { header: 'event_slug', value: () => event.slug },
+      { header: 'check_in_id', value: (row) => row.id },
+      { header: 'first_name', value: (row) => row.first_name },
+      { header: 'last_name', value: (row) => row.last_name },
+      { header: 'status', value: (row) => row.status },
+      { header: 'ticket_type', value: (row) => row.ticket_type ?? '' },
+      { header: 'email', value: (row) => asCsvString(checkInField(row, 'email')) },
+      { header: 'phone', value: (row) => asCsvString(checkInField(row, 'phone')) },
+      { header: 'imported_registration_id', value: (row) => asCsvString(asRecord(row.metadata).imported_registration_id) },
+      { header: 'registration_match_status', value: (row) => asCsvString(asRecord(row.metadata).registration_match_status) },
+      { header: 'needs_help', value: (row) => asRecord(row.metadata).needs_help === true ? 'yes' : 'no' },
+      {
+        header: 'headshot_credit_status',
+        value: (row) => {
+          const credit = photoCredits.find((item) => item.check_in_id === row.id);
+          if (!credit) return '';
+          if (credit.used_quantity >= credit.quantity) return 'used';
+          return 'available';
+        },
+      },
+      { header: 'headshot_credit_quantity', value: (row) => photoCredits.find((item) => item.check_in_id === row.id)?.quantity ?? '' },
+      { header: 'headshot_credit_used_quantity', value: (row) => photoCredits.find((item) => item.check_in_id === row.id)?.used_quantity ?? '' },
+      { header: 'created_at', value: (row) => formatCsvTimestamp(row.created_at) },
+      { header: 'updated_at', value: (row) => formatCsvTimestamp(row.updated_at) },
+      { header: 'metadata_json', value: (row) => row.metadata ?? {} },
+    ], checkIns);
+  }
+
   async function updateCheckInSettings(
     patch: Partial<{
       completionMode: EventCheckInCompletionMode;
@@ -277,6 +320,19 @@ export default function AdminEventCheckIns({
             </button>
           )}
         </div>
+
+        {canManageThisEvent && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 0.9rem' }}>
+            <button
+              type="button"
+              className="actionBtn actionBtn-secondary"
+              style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }}
+              onClick={exportCheckInsCsv}
+            >
+              Export CSV
+            </button>
+          </div>
+        )}
 
         {activeTab === 'live' && (
           <>

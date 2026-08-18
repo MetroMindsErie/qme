@@ -2,9 +2,9 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-07-21",
+    updated: "2026-08-18",
     immediateGoal:
-      "Use the Summer on the Cuyahoga Rock Hall event as the anchor for moving qME from a single demo event toward a multi-organization event platform.",
+      "Use the July 22 SOTC Rock Hall production event as the evidence base for Sprint 3: operational hardening, recovery, reporting, archive/baseline setup, and selective product discovery before adding broad new platform features.",
     eventAnchor: {
       organization: "Summer on the Cuyahoga",
       event: "SOTC Rock Hall Mixer",
@@ -26,25 +26,27 @@ const QME_ROADMAP = {
   sprints: [
     {
       id: "now",
-      title: "Operational Readiness",
+      title: "Sprint 3: Post-SOTC Operational Hardening",
       goal:
-        "Prepare qME for July SOTC operations by focusing on customer content, event operations, rehearsal, usability, and deployment readiness rather than new platform foundation.",
+        "Turn the July 22 SOTC production learning into a more reliable operating system: preserve production evidence, create an internal full-data baseline, improve guest recovery, add admin CSV exports, evaluate SMS costs/compliance, and make operator controls more visible without starting broad new platform expansion.",
       storyIds: [
-        "story-foundation-privileged-action-matrix",
-        "story-foundation-role-permission-smoke-matrix",
-        "story-foundation-jalani-admin-walkthrough",
-        "story-role-aware-admin-landing",
-        "story-station-operational-control-visibility",
+        "story-sotc-production-archive-and-baselines",
+        "story-sotc-admin-csv-exports",
+        "story-guest-session-persistence-diagnostics",
+        "story-already-checked-in-recovery",
+        "story-storage-health-recovery-contact-prompt",
+        "story-sms-cost-compliance-feasibility",
+        "story-admin-guest-search-state-reconciliation",
+        "story-authorized-queue-state-overrides",
         "story-queue-automation-observability",
-        "story-qme-root-landing-event-directory",
-        "story-temp-password-first-login"
+        "story-station-operational-control-visibility"
       ]
     },
     {
       id: "next",
-      title: "Next: SOTC Event Builder / Program Readiness",
+      title: "Next: Experience Type Review and Configuration",
       goal:
-        "After Operational Readiness, deepen the Rock Hall mixer model with experiences, queues, access rules, public resources, and managed media.",
+        "After Sprint 3 hardening, review concrete experience types and decide which configuration deserves productization, starting with Check-In, Headshots, Food & Beverage, Resume Reviews, and lightweight event content.",
       storyIds: [
         "story-remove-hardcoded-demo-assumptions",
         "story-experience-model",
@@ -162,6 +164,172 @@ const QME_ROADMAP = {
     }
   ],
   epics: [
+    {
+      id: "epic-post-sotc-sprint-3",
+      title: "Post-SOTC Sprint 3 Operational Hardening",
+      summary:
+        "Use July 22 Rock Hall production evidence to harden qMe operations before expanding the platform: archive what happened, preserve a full-data working baseline, improve guest recovery, add admin exports, make queue behavior explainable, and evaluate SMS without turning it on prematurely.",
+      status: "current",
+      themes: [
+        {
+          id: "theme-sotc-post-production-data",
+          title: "Archive, Baseline, and Reports",
+          status: "current",
+          stories: [
+            {
+              id: "story-sotc-production-archive-and-baselines",
+              title: "Archive SOTC production event and create working baselines",
+              status: "done",
+              sprint: "now",
+              summary:
+                "Separate the July 22 SOTC production record from future testing by preserving an archive snapshot and treating the existing SOTC event as the internal full-data working baseline that can be reset or overwritten during Sprint 3 testing.",
+              acceptanceCriteria: [
+                "The July 22 SOTC production event and activity are preserved in an archive snapshot for review.",
+                "The existing SOTC event remains the internal full-data working baseline with the same event structure, real check-ins, queue history, names, contact fields, and activity patterns from the production run.",
+                "The internal baseline can be used for testing recovery, queue behavior, reporting, and admin workflows while the archive snapshot preserves the production record.",
+                "Future public demo data is tracked separately and may later use sanitized fake names, emails, phones, and activity while preserving realistic event shape.",
+                "Reset/clone behavior is documented so testing does not accidentally overwrite the production archive."
+              ],
+              notes:
+                "Completed 2026-08-18: live Supabase now has a production archive snapshot and an internal full-data baseline snapshot for sotc-rockhall, both preserving 132 check-ins, 96 queue tickets, and 250 imported registrations. Post-SOTC direction: preserve the July 22 record in an archive snapshot and keep the existing sotc-rockhall event as the full-data internal working baseline for ongoing testing. Sprint 3 first slice added event_data_snapshots plus optional archive-lock functions/triggers and a runbook in docs/sotc-production-archive-baseline-v1.md. Archive-locking and a separate relational working event clone are deferred unless needed. A sanitized public demo clone is a useful later story, but not required before the next Sprint 3 block."
+            },
+            {
+              id: "story-sotc-admin-csv-exports",
+              title: "Add admin CSV exports for attendance and Headshot activity",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Give event admins a straightforward way to download CSV reports from the admin console, starting with attendance/check-in and Headshot activity.",
+              acceptanceCriteria: [
+                "Event Admin or higher can export attendance/check-in CSV for an event.",
+                "Event Admin or higher can export Headshot activity CSV including relevant timestamps and final status.",
+                "Station staff do not see admin-only export controls unless their role is later expanded.",
+                "Exports work from the admin console without requiring manual SQL.",
+                "The report shape is documented before expanding to more advanced analytics."
+              ],
+              notes:
+                "User preference for Sprint 3: CSV is enough for now and should be usable from admin views whenever needed. Deeper report views can follow once the first export format proves useful."
+            }
+          ]
+        },
+        {
+          id: "theme-guest-session-recovery",
+          title: "Guest Session Recovery",
+          status: "current",
+          stories: [
+            {
+              id: "story-guest-session-persistence-diagnostics",
+              title: "Diagnose guest session persistence from repeat QR scans",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Determine why some Rock Hall guests used the same phone/default QR flow but qMe later did not recognize their browser session, even though server-side check-in state still existed.",
+              acceptanceCriteria: [
+                "Test repeat QR scans on the same phone/browser after refresh, tab close, browser close, and reopening from the camera QR flow.",
+                "Test private browsing, blocked cookies/storage, iOS Safari behavior, Chrome behavior, and low-storage or cleared-site-data cases where practical.",
+                "Document whether the failure is localStorage, cookies, sessionStorage, browser choice, QR app behavior, or another state restoration issue.",
+                "Identify which failures can be prevented and which require recovery UX.",
+                "Do not assume storage can be made perfect; use findings to design recovery."
+              ],
+              notes:
+                "Rock Hall evidence suggests guests often scanned the QR code on the same phone and default browser, checked in, joined a queue, then later qMe did not reconnect them. They could find themselves again and see 'already checked in', which means server-side state existed but the browser-side session pointer was missing or unavailable."
+            },
+            {
+              id: "story-already-checked-in-recovery",
+              title: "Recover an already checked-in guest from registration search",
+              status: "current",
+              sprint: "now",
+              summary:
+                "When qMe does not recognize the browser but the guest finds their imported registration again, let them safely reconnect to their existing event participation instead of creating a duplicate or reaching a dead end.",
+              acceptanceCriteria: [
+                "Guest search can identify a previously claimed/checked-in imported registration.",
+                "The guest sees a clear recovery path such as Reconnect to My Event instead of only an already-checked-in dead end.",
+                "Recovery lightly verifies identity using available non-sensitive hints or recovery contact where available.",
+                "Successful recovery restores the guest's event check-in and active queue state without duplicating check-ins, tickets, marks, or credits.",
+                "Recovery failures route the guest to the event team without exposing other attendee data."
+              ],
+              notes:
+                "This is the product fix for lost browser recognition. It should reconnect to server-side truth rather than relying on perfect local browser storage."
+            },
+            {
+              id: "story-storage-health-recovery-contact-prompt",
+              title: "Prompt for recovery contact when browser storage looks risky",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Add a lightweight diagnostic and prompt so qMe can warn guests when browser storage may not persist and ask for optional phone or email to help recovery.",
+              acceptanceCriteria: [
+                "Guest flow can test whether required browser storage appears writable/readable.",
+                "If storage looks risky, qMe clearly asks the guest to add a recovery phone or email.",
+                "Phone/email remains optional unless a future event configuration requires it.",
+                "Prompt copy explains recovery value without implying full account creation.",
+                "The design accounts for domestic 10-digit phone numbers and international/WhatsApp-style numbers without overblocking legitimate guests."
+              ],
+              notes:
+                "This supports the Rock Hall lesson without making check-in feel heavy. Future event types may choose stronger identity or host-assisted check-in."
+            }
+          ]
+        },
+        {
+          id: "theme-recall-and-operator-controls",
+          title: "Recall and Operator Controls",
+          status: "current",
+          stories: [
+            {
+              id: "story-sms-cost-compliance-feasibility",
+              title: "Evaluate SMS recall costs, compliance, and go/no-go",
+              status: "discovery",
+              sprint: "now",
+              summary:
+                "Use the existing Twilio direction/account readiness to understand what SMS would cost and require before qMe promises phone buzzing or text recall at a live event.",
+              acceptanceCriteria: [
+                "Confirm provider/account status, sending number readiness, and whether A2P 10DLC or other approval is required.",
+                "Estimate monthly and per-message costs for likely event volumes.",
+                "Draft consent, STOP/HELP, and event-use language before any live SMS opt-in.",
+                "Document secure server-side trigger architecture with duplicate prevention and delivery logging.",
+                "Make a go/no-go recommendation before enabling SMS for production event operations."
+              ],
+              notes:
+                "User likely has Twilio signed up and ready from July 20, but SMS should be investigated in Sprint 3 rather than treated as off-limits or silently enabled. In-app remains the reliable fallback until SMS compliance/costs are clear."
+            },
+            {
+              id: "story-admin-guest-search-state-reconciliation",
+              title: "Improve admin guest search, status, timing, and history visibility",
+              status: "current",
+              sprint: "now",
+              summary:
+                "Help operators understand a guest's real current state across check-in, queue, credit, recovery, and history records so correct queue behavior does not look broken.",
+              acceptanceCriteria: [
+                "Admin can search by guest name, email, phone where available, ticket number, and relevant event/check-in status.",
+                "Admin can see current queue state, timing, cooldown, previous Not Here/Return to Waiting actions, and completion history for a guest.",
+                "Admin can distinguish active participation from archived/history records.",
+                "Search helps resolve duplicate-looking or already-checked-in cases without exposing unnecessary data to station staff.",
+                "Visibility is role-aware and separates event-admin views from limited station-staff views."
+              ],
+              notes:
+                "Post-SOTC lesson: the queue engine was often correct, but operators needed better observability. This also supports session recovery, support at the registration desk, and post-event reporting."
+            },
+            {
+              id: "story-authorized-queue-state-overrides",
+              title: "Add authorized queue state override controls",
+              status: "ready",
+              sprint: "now",
+              summary:
+                "Give Event Admin or approved station authority careful manual controls to move a guest between valid queue states when operations require an exception.",
+              acceptanceCriteria: [
+                "Authorized operators can move a guest from Waiting to Gathering, Waiting to Nearby, Gathering to Your Turn, Nearby to Your Turn, Your Turn to Waiting/Not Here, and other valid recovery paths as product rules allow.",
+                "Overrides clearly explain when they exceed normal automation, targets, cooldowns, or queue max settings.",
+                "Overrides require confirmation for disruptive actions.",
+                "Every override records who performed it, when, from-state, to-state, reason where available, and affected ticket/check-in.",
+                "Station staff visibility/editability is role-aware; Event Admin or higher can perform broader event-level overrides."
+              ],
+              notes:
+                "This is broader than 'let this person go next'. It is a controlled manual state-management tool for live operations. Product direction allows authorized override to exceed automation max settings, but the UI must make that explicit and auditable."
+            }
+          ]
+        }
+      ]
+    },
     {
       id: "epic-stabilization",
       title: "Cleanup and Stabilization Before Multi-Org",
@@ -2101,6 +2269,57 @@ const QME_ROADMAP = {
   ],
   productReviews: [
     {
+      id: "review-post-sotc-sprint-3-rebaseline-2026-08-18",
+      date: "2026-08-18",
+      trigger:
+        "The July 22 SOTC Rock Hall event completed and produced enough production evidence to rebaseline qMe from pre-event operational readiness into post-event operational hardening.",
+      summary:
+        "qMe successfully moved beyond a single demo and proved meaningful event value at SOTC: guests could check in, use digital Headshot queues, and interact with event guide content. The next phase should not be broad platform expansion. Sprint 3 should preserve production evidence, create a reusable full-data internal baseline, improve recovery when browser recognition is lost, add admin CSV exports, evaluate SMS recall responsibly, and give operators clearer search, state, and override tools.",
+      observations: [
+        "SOTC Rock Hall was qMe's first substantial production event and should now be treated as the evidence base for Sprint 3.",
+        "The strongest Headshot insight remains that qMe can free guests from standing in a physical line while still moving them toward the service at the right time.",
+        "The next problem is reliable recall and recovery: guests should not have to stare at the app, and qMe must reconnect them to existing participation if browser storage/session recognition is lost.",
+        "A guest seeing 'already checked in' after searching again means server-side state existed; the missing piece was recovery from a lost browser-side session pointer.",
+        "The July production record should be preserved separately from internal testing.",
+        "An internal full-data working baseline is valuable for realistic testing because it preserves real queue lengths, check-in history, timing patterns, and operational edge cases.",
+        "A sanitized public demo clone is useful later, but is not the first Sprint 3 block.",
+        "CSV reporting is enough for the next reporting step and should be available from admin views, not station-staff-only views.",
+        "SMS should be investigated in Sprint 3 for cost, compliance, consent, duplicate prevention, and secure triggering, but should not be promised until the go/no-go evidence is clear.",
+        "On My Way remains an important queue commitment concept: it means the guest is responding and heading over, but only I'm Nearby makes the guest callable.",
+        "Check-In should not be overgeneralized yet; SOTC and upcoming customer conversations should teach what a configurable Check-In Experience Type needs to support."
+      ],
+      decisions: [
+        "Move current development back into normal Sprint 3 product work, not emergency security remediation.",
+        "Frame Sprint 3 as Post-SOTC Operational Hardening.",
+        "Create a SOTC production archive snapshot for review.",
+        "Keep the existing SOTC event as the internal full-data working baseline for ongoing testing, preserving the real dataset as-is for internal use.",
+        "Track a future sanitized public demo clone separately instead of doing it as the first block.",
+        "Start reports with admin-only CSV exports for attendance/check-in and Headshot activity.",
+        "Prioritize guest session persistence diagnostics and already-checked-in recovery before broad new feature work.",
+        "Evaluate SMS feasibility and cost in Sprint 3 without enabling broad SMS delivery by default.",
+        "Treat authorized queue state override as controlled state management, not only a go-next shortcut.",
+        "Keep Host Console as a later product-board item rather than a Sprint 3 build requirement."
+      ],
+      risks: [
+        "Production archive and internal baseline handling must avoid accidental mutation of the July 22 record.",
+        "Keeping real names/contact data in the internal baseline is useful but requires treating it as private internal test data.",
+        "Browser storage behavior may vary by device, browser, QR scanner, private mode, and user settings; recovery UX is still needed even after diagnostics.",
+        "SMS may carry fixed monthly/provider costs and compliance requirements that make it inappropriate to turn on casually.",
+        "Admin override tools can confuse queue fairness if they do not clearly show when they bypass automation or exceed max settings."
+      ],
+      roadmapChanges: [
+        "Renamed the current sprint to Sprint 3: Post-SOTC Operational Hardening.",
+        "Added a new Sprint 3 epic with stories for production archive/full-data baseline, admin CSV exports, guest-session persistence diagnostics, already-checked-in recovery, storage-health/recovery-contact prompt, SMS feasibility, admin search/state reconciliation, and authorized queue state overrides.",
+        "Kept existing queue automation observability and station operational control visibility in the current sprint because they remain relevant after SOTC.",
+        "Moved the next sprint framing toward experience-type review and configuration rather than more pre-event readiness."
+      ],
+      nextFocus: [
+        "Start with the SOTC archive/full-data baseline block or the admin CSV reports block.",
+        "Keep implementation one block at a time.",
+        "Do not add broad new platform features until Sprint 3 recovery, reporting, and operator trust items are clearer."
+      ]
+    },
+    {
       id: "review-qme-root-landing-event-directory-2026-07-21",
       date: "2026-07-21",
       trigger:
@@ -2835,6 +3054,34 @@ const QME_ROADMAP = {
     }
   ],
   decisions: [
+    {
+      id: "decision-sotc-production-archive-and-internal-baseline",
+      title: "SOTC production archive and internal full-data baseline",
+      status: "decided",
+      prompt:
+        "Preserve the July 22 SOTC production event/data as an archive snapshot for review. Keep the existing sotc-rockhall event as the internal full-data working baseline for realistic Sprint 3 testing, with real event structure, names, contact fields, check-ins, queues, and activity as-is. Archive-locking or a separate relational clone can be added later if needed. Track a public sanitized demo clone as future work, not the first Sprint 3 block."
+    },
+    {
+      id: "decision-session-recovery-from-server-truth",
+      title: "Guest recovery should reconnect to server-side truth",
+      status: "decided",
+      prompt:
+        "If qMe does not recognize the browser after a guest reopens or rescans the QR code, the guest should be able to recover by finding their registration again and reconnecting to the existing event check-in/queue state. The product fix is not to assume browser storage can be made perfect; recovery must use verified server-side participation without creating duplicates."
+    },
+    {
+      id: "decision-sms-feasibility-before-sms-promise",
+      title: "SMS requires cost and compliance feasibility before product promise",
+      status: "decided",
+      prompt:
+        "SMS may become an important recall channel, and the existing Twilio direction should be evaluated in Sprint 3. Do not promise or broadly enable SMS until provider setup, sender registration, monthly/per-message cost, consent/STOP/HELP language, secure server-side triggering, delivery logging, and duplicate prevention are understood."
+    },
+    {
+      id: "decision-authorized-queue-state-override",
+      title: "Queue override is authorized state management",
+      status: "decided",
+      prompt:
+        "Operational override is broader than letting a guest go next. Event Admin or approved station authority may need to move guests between valid states such as Waiting, Gathering, Nearby, Your Turn, Not Here, and recovery paths. Overrides may exceed normal automation settings when explicitly authorized, but must be visible, confirmed where disruptive, and auditable."
+    },
     {
       id: "decision-guest-admin-context-separation",
       title: "Guest participation is separate from admin/staff operations",

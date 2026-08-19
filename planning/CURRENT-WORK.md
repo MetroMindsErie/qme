@@ -13,6 +13,7 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - **Live verification after deployment still fails:** with Admin showing ticket #133 as `Stage: Gathering / State: On My Way`, the recovered guest queue page still renders `Waiting`. The prior fix therefore did not resolve the authoritative current-state path used by the live guest UI.
 - This is now a persistent end-to-end guest state defect, not merely an On My Way label problem and not merely a stale localStorage ticket-id problem.
 - Root cause found in the guest ticket page: server-session-only recovery was skipped unless the browser already had a stored ticket id or `join=1`. That allowed the pilot ticket page to render its default Waiting state with `pilotTicket = null`.
+- Additional likely root cause found in SQL/RPC recovery: `get_active_queue_ticket_for_guest` only finds tickets by `tickets.guest_session_id`, but recovered check-ins can own existing queue tickets through `tickets.check_in_id` while `tickets.guest_session_id` is not attached yet.
 - Server-side ticket state must remain authoritative for guest queue and Event Home surfaces.
 
 ## Implementation Status
@@ -25,13 +26,15 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - `AGENTS.md` and shared handoff docs are committed on `main`.
 - New local fix: `useQueueTicket` now exposes server-only recovery that adopts an existing authoritative ticket without creating a duplicate.
 - New local fix: `GuestQueueTicket` runs server-session recovery for pilot queue ticket pages before join/credit/name gates, so a recovered guest page can set `ticketId`, poll the server ticket, and render the current Stage/State.
+- New SQL patch drafted in `supabase-guest-ticket-checkin-recovery-fix.sql`: guest ticket RPCs accept recovered check-in ownership and backfill `tickets.guest_session_id` when safe.
 
 ## SQL / Deployment State
 
-- No new SQL is currently known to be required for this defect.
+- SQL patch is now required for the live failure path.
 - Production is serving the validated deployed bundle containing the authoritative-ticket recovery path.
 - The defect reproduced against the deployed production build, so the next work is code/data-path diagnosis rather than deployment verification.
 - New fix committed/pushed as `f819563` and production is serving the matching bundle `/assets/index-CyKXMH7N.js`.
+- SQL patch has not been applied to live Supabase from Codex because no SQL execution tool/connection is available in this environment.
 
 ## Current Acceptance-Test Position
 
@@ -50,6 +53,7 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - New local validation passed: `npx tsc -b`.
 - New local validation passed: `npx vitest run src/test/useQueueTicket.test.ts src/test/queueService.test.ts` with 50 passing tests.
 - New local validation passed: `npx vite build` after one retry due to a transient local `dist/images` lock. Vite reported the existing large chunk warning.
+- SQL syntax has not been live-applied or regression-tested.
 
 ## Next Action
 
@@ -57,4 +61,4 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - Trace the actual production data returned to the guest after recovery: current guest session -> authoritative ticket lookup/RPC/query -> returned ticket row/fields -> polling/refetch behavior -> Stage/State derivation -> guest render.
 - Verify whether the guest is receiving the correct ticket but stale stage data, the wrong ticket/row, or a cached/local state object overriding the fetched server row.
 - Fix the shared underlying defect rather than adding another display-specific condition.
-- Retest Chiderah / ticket #133 in the recovered guest browser session against production bundle `/assets/index-CyKXMH7N.js`.
+- Apply `supabase-guest-ticket-checkin-recovery-fix.sql` to live Supabase, then retest Chiderah / ticket #133 in the recovered guest browser session.

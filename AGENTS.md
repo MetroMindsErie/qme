@@ -8,13 +8,16 @@
 
 ## Operating Style
 
-- **Default execution mode for Steve is silent.** Do not send routine progress narration such as “I’m checking…”, “Ran commands…”, “I found…”, or “Next I’ll…”.
+- **Default execution mode for Steve is silent.** After the Product Owner says to read the MD files and proceed, do not acknowledge the instruction, announce that files are being read, narrate the plan, report commands, or provide intermediate status. Read the files and work.
+- Do not send routine progress narration such as “I’m checking…”, “Ran commands…”, “I found…”, “I’m going to…”, “Next I’ll…”, or equivalent running commentary.
+- **Silence means no user-visible message while routine work is still possible.** Tool activity, investigation, coding, testing, rebasing, commits, pushes, and routine deployment checks do not require narration.
 - Work without user-visible narration unless one of these is true:
   - a consequential unresolved product, security, or architecture decision requires Product Owner judgment;
   - a tool, credential, access, or environment blocker prevents safe continuation;
   - a material security risk is discovered; or
   - the coherent work slice is complete and Steve is giving the final implementation/validation summary.
-- When a stop is required, send one concise decision/blocker packet with the issue, options, recommendation, and why Product Owner input is needed.
+- When a stop is required, send one concise decision/blocker packet with the issue, options, recommendation, and why Product Owner input is needed. Do not precede it with investigation narration.
+- At completion, send one concise result summary: what changed, validation result, deployment state if relevant, and the exact next human action if one exists.
 - Stay on the current defect or slice unless the Product Owner redirects the work.
 - Prefer the smallest safe change that preserves existing product behavior.
 - Use targeted investigation and targeted validation while implementing. Run full TypeScript/Vite validation only after the coherent fix is complete unless a full build is specifically needed earlier.
@@ -32,7 +35,7 @@
 
 ## Stop vs. Continue
 
-- Continue through normal implementation uncertainty, test failures, local debugging, helper/refactor choices, encoding cleanup, reuse across related surfaces, and equivalent technical implementation choices when intended product behavior is clear.
+- Continue through normal implementation uncertainty, test failures, local debugging, helper/refactor choices, encoding cleanup, reuse across related surfaces, equivalent technical implementation choices, git/rebase work, and routine deployment verification when intended product behavior is clear.
 - Continue when a defect exposes the same product invariant across multiple related surfaces; fix the invariant reusably rather than treating each symptom as a separate project.
 - Stop only for consequential unresolved product, security, or architecture decisions, missing credentials/access that block the slice, material security risk, or conflicting acceptance criteria.
 - When stopping, provide options, a recommendation, and why Product Owner input is needed.
@@ -51,4 +54,5 @@
 - Record only meaningful implementation findings, current slice/status, code/SQL/deployment state, validation, current acceptance-test position, unresolved blockers/decisions, and the next action.
 - Do not use `CURRENT-WORK.md` as a development diary, command log, or transcript.
 - Update it at meaningful checkpoints and when the slice status materially changes.
+- When Billy records a Product Owner acceptance/closure decision in `CURRENT-WORK.md`, Steve may apply that decision mechanically to `planning/roadmap-data.js` without reopening the product decision.
 - When a slice is complete, move durable product outcomes into the roadmap/product documentation as appropriate and reset `CURRENT-WORK.md` for the next slice rather than letting it grow indefinitely.

@@ -7,7 +7,12 @@ import { renderHook, act } from '@testing-library/react';
 vi.mock('../lib/queueService', () => ({
   nextTicketForQueue: vi.fn(),
   peekTicketForQueue: vi.fn(),
-  restoreTicketForQueue: vi.fn(),
+  getAuthoritativeQueueTicketForGuest: vi.fn(),
+  isAdoptableQueueTicket: vi.fn((ticket) => {
+    if (!ticket) return false;
+    const stage = ticket.stage ?? 'waiting';
+    return !['cancelled', 'left'].includes(stage) && ticket.status !== 'left';
+  }),
   checkInTicket: vi.fn(),
   leaveQueue: vi.fn(),
 }));
@@ -21,13 +26,13 @@ import {
 } from '../hooks/useQueueTicket';
 import {
   nextTicketForQueue,
-  restoreTicketForQueue,
+  getAuthoritativeQueueTicketForGuest,
   checkInTicket,
   leaveQueue,
 } from '../lib/queueService';
 
 const mockNextTicket = vi.mocked(nextTicketForQueue);
-const mockRestore = vi.mocked(restoreTicketForQueue);
+const mockGetAuthoritativeTicket = vi.mocked(getAuthoritativeQueueTicketForGuest);
 const mockCheckIn = vi.mocked(checkInTicket);
 const mockLeave = vi.mocked(leaveQueue);
 
@@ -36,7 +41,7 @@ describe('useQueueTicket', () => {
     vi.clearAllMocks();
     localStorage.clear();
     mockNextTicket.mockResolvedValue({ id: 10, ticketNumber: 10 });
-    mockRestore.mockResolvedValue({ id: 10, ticketNumber: 10 });
+    mockGetAuthoritativeTicket.mockResolvedValue(null);
     mockCheckIn.mockResolvedValue(undefined as never);
     mockLeave.mockResolvedValue(undefined as never);
   });
@@ -74,7 +79,7 @@ describe('useQueueTicket', () => {
       await result.current.claimTicket();
     });
 
-    expect(mockNextTicket).toHaveBeenCalledWith('q1', 'e1');
+    expect(mockNextTicket).toHaveBeenCalledWith('q1', 'e1', undefined);
     expect(result.current.ticketId).toBe(20);
     expect(result.current.ticketNumber).toBe(20);
     expect(localStorage.getItem('qme:ticket:q1')).toBe('20');
@@ -83,15 +88,50 @@ describe('useQueueTicket', () => {
 
   it('claimTicket restores existing ticket', async () => {
     localStorage.setItem('qme:ticket:q1', '15');
-    mockRestore.mockResolvedValue({ id: 15, ticketNumber: 15 });
+    mockGetAuthoritativeTicket.mockResolvedValue({
+      id: 15,
+      queue_id: 'q1',
+      ticket_number: 15,
+      stage: 'waiting',
+      status: 'waiting',
+      created_at: '',
+      checked_in_at: null,
+      left_reason: null,
+      left_at: null,
+    });
     const { result } = renderHook(() => useQueueTicket('q1', 'e1'));
 
     await act(async () => {
       await result.current.claimTicket();
     });
 
-    expect(mockRestore).toHaveBeenCalledWith(15, 'q1', 'e1');
+    expect(mockGetAuthoritativeTicket).toHaveBeenCalledWith('q1', 'e1', 15);
     expect(result.current.ticketId).toBe(15);
+  });
+
+  it('recoverExistingTicket adopts a server ticket without creating a new one', async () => {
+    mockGetAuthoritativeTicket.mockResolvedValue({
+      id: 133,
+      queue_id: 'q1',
+      ticket_number: 133,
+      stage: 'released',
+      status: 'waiting',
+      created_at: '',
+      checked_in_at: null,
+      left_reason: null,
+      left_at: null,
+    });
+    const { result } = renderHook(() => useQueueTicket('q1', 'e1'));
+
+    await act(async () => {
+      await result.current.recoverExistingTicket();
+    });
+
+    expect(mockGetAuthoritativeTicket).toHaveBeenCalledWith('q1', 'e1', undefined);
+    expect(mockNextTicket).not.toHaveBeenCalled();
+    expect(result.current.ticketId).toBe(133);
+    expect(result.current.ticketNumber).toBe(133);
+    expect(localStorage.getItem('qme:ticket:q1')).toBe('133');
   });
 
   it('does not claim until event scope is available', async () => {

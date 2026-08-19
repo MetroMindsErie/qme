@@ -101,6 +101,30 @@ export function useQueueTicket(
     }
   }, [queueId]);
 
+  const recoverExistingTicket = useCallback(async (
+    storedTicketId?: number | null
+  ): Promise<number | null> => {
+    if (!queueId || !eventId) return ticketId;
+    try {
+      const ticket = await getAuthoritativeQueueTicketForGuest(queueId, eventId, storedTicketId);
+      if (!isAdoptableQueueTicket(ticket)) return null;
+      const recoveredNumber = ticket.ticket_number ?? ticket.id;
+      storeQueueTicket(queueId, ticket.id, recoveredNumber);
+      setTicketId(ticket.id);
+      setTicketNumber(recoveredNumber);
+      setHasCheckedIn(localStorage.getItem(checkedInKey(queueId, ticket.id)) === '1');
+      return ticket.id;
+    } catch {
+      if (storedTicketId) {
+        clearQueueTicket(queueId);
+        setTicketId(null);
+        setTicketNumber(null);
+        setHasCheckedIn(false);
+      }
+      return null;
+    }
+  }, [queueId, eventId, ticketId]);
+
   // Claim or adopt a ticket for this queue
   const claimTicket = useCallback(async (): Promise<number | null> => {
     if (!queueId || !eventId || claimBusyRef.current) return ticketId;
@@ -112,21 +136,7 @@ export function useQueueTicket(
         const id = Number(existing);
         setTicketId(id);
         setTicketNumber(Number(localStorage.getItem(localNumKey(queueId))) || id);
-        try {
-          const ticket = await getAuthoritativeQueueTicketForGuest(queueId, eventId, id);
-          if (!isAdoptableQueueTicket(ticket)) throw new Error('No active queue ticket for guest.');
-          const ticketNumber = ticket.ticket_number ?? ticket.id;
-          setTicketId(ticket.id);
-          setTicketNumber(ticketNumber);
-          storeQueueTicket(queueId, ticket.id, ticketNumber);
-          return ticket.id;
-        } catch {
-          clearQueueTicket(queueId);
-          setTicketId(null);
-          setTicketNumber(null);
-          setHasCheckedIn(false);
-          return null;
-        }
+        return recoverExistingTicket(id);
       }
 
       // Short race guard
@@ -140,15 +150,8 @@ export function useQueueTicket(
       }
 
       try {
-        const recoveredTicket = await getAuthoritativeQueueTicketForGuest(queueId, eventId);
-        if (isAdoptableQueueTicket(recoveredTicket)) {
-          const recoveredNumber = recoveredTicket.ticket_number ?? recoveredTicket.id;
-          storeQueueTicket(queueId, recoveredTicket.id, recoveredNumber);
-          setTicketId(recoveredTicket.id);
-          setTicketNumber(recoveredNumber);
-          setHasCheckedIn(localStorage.getItem(checkedInKey(queueId, recoveredTicket.id)) === '1');
-          return recoveredTicket.id;
-        }
+        const recoveredTicketId = await recoverExistingTicket();
+        if (recoveredTicketId) return recoveredTicketId;
       } catch {
         /* No server-side ticket to adopt; continue with a new ticket claim. */
       }
@@ -165,7 +168,7 @@ export function useQueueTicket(
     } finally {
       claimBusyRef.current = false;
     }
-  }, [queueId, eventId, eventCheckInId, ticketId]);
+  }, [queueId, eventId, eventCheckInId, ticketId, recoverExistingTicket]);
 
   const checkIn = useCallback(async () => {
     if (!ticketId || !queueId || !eventId || hasCheckedIn) return;
@@ -233,6 +236,7 @@ export function useQueueTicket(
     hasCheckedIn,
     lastIssued,
     claimTicket,
+    recoverExistingTicket,
     checkIn,
     leave,
     refreshLastIssued,

@@ -53,6 +53,7 @@ type StepState = 'done' | 'active' | 'pending';
 type BouquetAccess = 'none' | 'checked-in' | 'general' | 'flowers';
 type CreditStatus = 'none' | 'available' | 'used';
 type PilotCompletionMode = 'guest_code' | 'staff_served';
+type PilotDisplayState = NonNullable<Ticket['stage']> | 'on_my_way' | 'nearby';
 type PilotStageCopy = {
   title?: string;
   detail?: string;
@@ -79,6 +80,23 @@ function isMissingTicketError(error: unknown): boolean {
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function ticketHasCurrentOnMyWay(ticket: Ticket | null | undefined): boolean {
+  if (!ticket) return false;
+  if ((ticket.stage ?? 'waiting') !== 'standby' || !ticket.on_my_way_at || ticket.nearby_confirmed_at) return false;
+  if (!ticket.stage_updated_at) return true;
+  const onMyWayTime = Date.parse(ticket.on_my_way_at);
+  const stageUpdatedTime = Date.parse(ticket.stage_updated_at);
+  if (Number.isNaN(onMyWayTime) || Number.isNaN(stageUpdatedTime)) return true;
+  return onMyWayTime >= stageUpdatedTime;
+}
+
+function getPilotDisplayState(ticket: Ticket | null | undefined): PilotDisplayState {
+  const stage = ticket?.stage ?? 'waiting';
+  if (stage === 'standby' && ticket?.nearby_confirmed_at) return 'nearby';
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'on_my_way';
+  return stage;
 }
 
 function hydrateTemplate(
@@ -1120,11 +1138,13 @@ export default function GuestQueueTicketPage() {
     const metadataCopy = getPilotStageCopy(linkedEce, pilotStage, copyVars);
     const hasNearbyField = pilotTicket ? Object.prototype.hasOwnProperty.call(pilotTicket, 'nearby_confirmed_at') : false;
     const nearbyConfirmed = Boolean(pilotTicket?.nearby_confirmed_at);
-    const guestDisplayStage = pilotStage === 'standby' && nearbyConfirmed ? 'nearby' : pilotStage;
+    const guestDisplayState = getPilotDisplayState(pilotTicket);
     const needsNearbyConfirmation = pilotStage === 'standby' && hasNearbyField && !nearbyConfirmed;
     const defaultInstruction = pilotStage === 'standby'
       ? nearbyConfirmed
         ? "You're marked nearby. Keep this page open."
+        : guestDisplayState === 'on_my_way'
+        ? "When you get to the station, tap I'm Nearby."
         : "When you get nearby, tap I'm Nearby."
       : linkedEce?.description || queue.description || 'Keep this page open for the next step.';
     const instructionText = pilotStage === 'standby'
@@ -1140,6 +1160,10 @@ export default function GuestQueueTicketPage() {
         detail: nearbyConfirmed
           ? "You're nearby. Keep this page open."
           : "Come nearby. When you get here, tap I'm Nearby.",
+      },
+      on_my_way: {
+        title: 'On My Way',
+        detail: "qMe knows you're on your way. When you get to the station, tap I'm Nearby.",
       },
       nearby: {
         title: 'Nearby',
@@ -1164,7 +1188,7 @@ export default function GuestQueueTicketPage() {
         detail: 'You are no longer active in this queue.',
       },
     };
-    const defaultStatus = statusCopy[guestDisplayStage] ?? statusCopy.waiting;
+    const defaultStatus = statusCopy[guestDisplayState] ?? statusCopy.waiting;
     const status = {
       title: pilotStage === 'standby' ? defaultStatus.title : metadataCopy.title ?? defaultStatus.title,
       detail: pilotStage === 'standby' && nearbyConfirmed
@@ -1176,22 +1200,24 @@ export default function GuestQueueTicketPage() {
     const statusTheme: Record<string, { border: string; background: string; title: string; label: string }> = {
       waiting: { border: '#7c3aed', background: '#f5f3ff', title: '#4c1d95', label: '#6d28d9' },
       standby: { border: '#eab308', background: '#fefce8', title: '#854d0e', label: '#a16207' },
+      on_my_way: { border: '#0d9488', background: '#f0fdfa', title: '#115e59', label: '#0f766e' },
       nearby: { border: '#2563eb', background: '#eff6ff', title: '#1e3a8a', label: '#2563eb' },
       released: { border: '#f97316', background: '#fff7ed', title: '#9a3412', label: '#c2410c' },
       completed: { border: '#15803d', background: '#ecfdf5', title: '#14532d', label: '#15803d' },
       cancelled: { border: '#991b1b', background: '#fef2f2', title: '#7f1d1d', label: '#991b1b' },
       left: { border: '#6b7280', background: '#f8fafc', title: '#374151', label: '#6b7280' },
     };
-    const theme = statusTheme[guestDisplayStage] ?? statusTheme.waiting;
+    const theme = statusTheme[guestDisplayState] ?? statusTheme.waiting;
     const statusSteps = [
       { key: 'waiting', label: 'Waiting' },
       { key: 'standby', label: 'Gathering' },
+      { key: 'on_my_way', label: 'On My Way' },
       { key: 'nearby', label: 'Nearby' },
       { key: 'released', label: 'Your Turn' },
     ];
     const statusStepIndex = pilotStage === 'completed'
       ? statusSteps.length - 1
-      : Math.max(0, statusSteps.findIndex((step) => step.key === guestDisplayStage));
+      : Math.max(0, statusSteps.findIndex((step) => step.key === guestDisplayState));
     const showLocation = pilotStage === 'standby' || pilotStage === 'released' || pilotStage === 'completed';
     const showInstruction = pilotStage === 'standby' && !nearbyConfirmed;
     const isGuestCodeTurn = pilotStage === 'released' && pilotCompletionMode === 'guest_code';

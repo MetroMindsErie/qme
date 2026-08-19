@@ -37,6 +37,7 @@ import '../../styles/eventDetail.css';
 interface QueueWithMeta extends Queue {
   _myTicket?: string;
   _myStage?: Ticket['stage'];
+  _myStateLabel?: string;
   _nowServing?: number;
   _waitingCount?: number;
 }
@@ -219,16 +220,34 @@ function queueStageStatus(stage?: Ticket['stage']): string {
   }
 }
 
+function ticketHasCurrentOnMyWay(ticket: Ticket | null | undefined): boolean {
+  if (!ticket) return false;
+  if ((ticket.stage ?? 'waiting') !== 'standby' || !ticket.on_my_way_at || ticket.nearby_confirmed_at) return false;
+  if (!ticket.stage_updated_at) return true;
+  const onMyWayTime = Date.parse(ticket.on_my_way_at);
+  const stageUpdatedTime = Date.parse(ticket.stage_updated_at);
+  if (Number.isNaN(onMyWayTime) || Number.isNaN(stageUpdatedTime)) return true;
+  return onMyWayTime >= stageUpdatedTime;
+}
+
+function queueTicketStateStatus(ticket: Ticket | null | undefined): string {
+  const stage = ticket?.stage ?? 'waiting';
+  if (stage === 'standby' && ticket?.nearby_confirmed_at) return 'Nearby';
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'On My Way';
+  return queueStageStatus(stage);
+}
+
 function queueCardStatusLine(options: {
   hasTicket: boolean;
   stage?: Ticket['stage'];
+  stateLabel?: string;
   creditUsed: boolean;
   participationLocked: boolean;
   creditLocked: boolean;
   joinPaused: boolean;
 }): string {
   if (options.creditUsed || options.stage === 'completed') return 'Completed';
-  if (options.hasTicket) return `inQ · ${queueStageStatus(options.stage)}`;
+  if (options.hasTicket) return `inQ - ${options.stateLabel ?? queueStageStatus(options.stage)}`;
   if (options.participationLocked) return 'Check-in required';
   if (options.creditLocked) return 'Photo credit required';
   if (options.joinPaused) return 'Paused';
@@ -512,6 +531,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             const storedTicketId = getStoredQueueTicket(q.id);
             let ticket = getStoredQueueTicketNumber(q.id);
             let ticketStage: Ticket['stage'];
+            let ticketStateLabel: string | undefined;
             let tickets: Ticket[] = [];
             let didLoadTickets = false;
             try {
@@ -529,6 +549,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 } else {
                   ticket = String(ticketRow.ticket_number ?? ticketRow.id);
                   ticketStage = ticketRow.stage;
+                  ticketStateLabel = queueTicketStateStatus(ticketRow);
                   localStorage.setItem(`qme:ticket:${q.id}`, String(ticketRow.id));
                   localStorage.setItem(`qme:ticketNum:${q.id}`, String(ticketRow.ticket_number ?? ticketRow.id));
                 }
@@ -542,6 +563,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                   } else {
                     ticket = String(restored.ticketNumber);
                     ticketStage = ticketRow.stage;
+                    ticketStateLabel = queueTicketStateStatus(ticketRow);
                     localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
                     localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
                   }
@@ -557,6 +579,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 if (isAdoptableQueueTicket(recoveredTicket)) {
                   ticket = String(recoveredTicket.ticket_number ?? recoveredTicket.id);
                   ticketStage = recoveredTicket.stage;
+                  ticketStateLabel = queueTicketStateStatus(recoveredTicket);
                   storeQueueTicket(q.id, recoveredTicket.id, recoveredTicket.ticket_number ?? recoveredTicket.id);
                 }
               } catch {
@@ -578,7 +601,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 waitingCount = Math.max(0, Number(ticket || 0) - ns + 1);
               }
             }
-            return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _nowServing: ns, _waitingCount: waitingCount };
+            return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _myStateLabel: ticketStateLabel, _nowServing: ns, _waitingCount: waitingCount };
           })
       );
       const nextQueues = enriched.filter((q) => {
@@ -747,6 +770,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             const statusLine = queueCardStatusLine({
               hasTicket,
               stage: q._myStage,
+              stateLabel: q._myStateLabel,
               creditUsed,
               participationLocked,
               creditLocked,
@@ -846,6 +870,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             const statusLine = linkedQueue ? queueCardStatusLine({
               hasTicket,
               stage: linkedQueue._myStage,
+              stateLabel: linkedQueue._myStateLabel,
               creditUsed,
               participationLocked,
               creditLocked,
@@ -912,7 +937,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               <div className={`ed-activity-icon-wrap ${homeIconVariant === 'wide' ? 'ed-activity-icon-wrap-wide' : ''}`} style={{ background: '#E8F5E9' }}>
                 {exp.image_url || exp.slug === 'scan-code-adventure' || exp.slug === 'headshot-photo-station'
                   ? <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.slug === 'headshot-photo-station' ? '/images/headshot-photo-station.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
-                  : <span style={{ fontSize: '1.1rem' }}>âœ¨</span>}
+                  : <span style={{ fontSize: '1.1rem' }}>*</span>}
               </div>
               )}
               <div className="ed-activity-body">

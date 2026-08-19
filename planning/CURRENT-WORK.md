@@ -14,6 +14,7 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - This is now a persistent end-to-end guest state defect, not merely an On My Way label problem and not merely a stale localStorage ticket-id problem.
 - Root cause found in the guest ticket page: server-session-only recovery was skipped unless the browser already had a stored ticket id or `join=1`. That allowed the pilot ticket page to render its default Waiting state with `pilotTicket = null`.
 - Additional likely root cause found in SQL/RPC recovery: `get_active_queue_ticket_for_guest` only finds tickets by `tickets.guest_session_id`, but recovered check-ins can own existing queue tickets through `tickets.check_in_id` while `tickets.guest_session_id` is not attached yet.
+- Admin CSV for ticket #133 confirms the operational state is `raw_ticket_stage = released` / `workflow_stage = Your Turn`, while legacy `status = waiting` and `nearby_confirmed = yes` are raw fields, not guest display state. The same row has blank check-in fields, confirming ticket #133 is not linked to Chiderah's event check-in.
 - Server-side ticket state must remain authoritative for guest queue and Event Home surfaces.
 
 ## Implementation Status
@@ -61,4 +62,4 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - Trace the actual production data returned to the guest after recovery: current guest session -> authoritative ticket lookup/RPC/query -> returned ticket row/fields -> polling/refetch behavior -> Stage/State derivation -> guest render.
 - Verify whether the guest is receiving the correct ticket but stale stage data, the wrong ticket/row, or a cached/local state object overriding the fetched server row.
 - Fix the shared underlying defect rather than adding another display-specific condition.
-- Apply `supabase-guest-ticket-checkin-recovery-fix.sql` to live Supabase, then retest Chiderah / ticket #133 in the recovered guest browser session.
+- Apply the latest `supabase-guest-ticket-checkin-recovery-fix.sql` from commit `28a7241` to live Supabase, then retest Chiderah / ticket #133 in the recovered guest browser session.

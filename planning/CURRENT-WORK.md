@@ -19,13 +19,13 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - Updated the recovered guest queue polling path to recover through the shared authoritative lookup if direct ticket fetch fails.
 - Updated Event Home queue card enrichment to use the shared authoritative lookup for stored ticket recovery.
 - App fix committed and pushed to `main` as `dde88b2`.
-- `AGENTS.md` and `planning/CURRENT-WORK.md` remain local/uncommitted pending review.
+- `AGENTS.md` and `planning/CURRENT-WORK.md` committed and pushed to `main` as `ae3a624`.
 
 ## SQL / Deployment State
 
 - No SQL changes in this slice.
 - App fix pushed to `main`; deployment should proceed through the normal git-triggered hosting path.
-- Documentation files were not included in the deployment commit.
+- Documentation files were pushed in a separate docs commit.
 
 ## Current Acceptance-Test Position
 
@@ -42,7 +42,8 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - `npx tsc -b` passed.
 - `npx vitest run src/test/queueService.test.ts` passed after re-running outside the sandbox because Node hit `EPERM` resolving `C:\Users\ebcoo`.
 - `npx vite build` passed. Vite reported the existing large chunk warning.
+- Production `https://www.qme.lol` is serving `/assets/index-CiKo40Gx.js`, the built asset from the validated app fix.
 
 ## Next Action
 
-- Verify the live recovered guest page for Chiderah / ticket #133 after hosting finishes deploying commit `dde88b2`.
+- In the recovered guest browser session, refresh Chiderah / ticket #133 and confirm it renders the server ticket state rather than Waiting.

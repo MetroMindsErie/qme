@@ -65,6 +65,7 @@ export interface Ticket {
   left_at: string | null;
   stage_updated_at?: string;
   gathering_snoozed_at?: string | null;
+  on_my_way_at?: string | null;
   nearby_confirmed_at?: string | null;
   released_at?: string | null;
   completed_at?: string | null;
@@ -263,6 +264,7 @@ export interface ImportedRegistrationSearchResult {
   first_name: string;
   last_name: string;
   email_hint: string | null;
+  ticket_hint?: string | null;
   headshot_entitled: boolean;
   already_checked_in: boolean;
   requires_email_confirmation: boolean;

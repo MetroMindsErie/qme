@@ -18,11 +18,13 @@ import {
   listEventGuestMarksForTickets,
   listQueuePilotTickets,
   markReleasedTicketNotHere,
+  overrideQueueTicketState,
   releaseQueueTicket,
   returnGatheringTicketToWaiting,
   resetQueueTickets,
   getQueueBySlug,
   updateQueue,
+  type QueueOverrideTarget,
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
 import { isSotcEventSlug } from '../../lib/sotc';
@@ -64,6 +66,15 @@ function isNearbyConfirmed(ticket: Ticket) {
   return !hasNearbyConfirmationField(ticket) || Boolean(ticket.nearby_confirmed_at);
 }
 
+function ticketHasCurrentOnMyWay(ticket: Ticket) {
+  if ((ticket.stage ?? 'waiting') !== 'standby' || !ticket.on_my_way_at || ticket.nearby_confirmed_at) return false;
+  if (!ticket.stage_updated_at) return true;
+  const onMyWayTime = Date.parse(ticket.on_my_way_at);
+  const stageUpdatedTime = Date.parse(ticket.stage_updated_at);
+  if (!Number.isFinite(onMyWayTime) || !Number.isFinite(stageUpdatedTime)) return false;
+  return onMyWayTime >= stageUpdatedTime;
+}
+
 function ticketQueuePosition(ticket: Ticket) {
   return ticket.ticket_number ?? ticket.id;
 }
@@ -80,18 +91,93 @@ function formatServiceStartTime(value?: string | null) {
   return parsed.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
+function formatQueueTime(value?: string | null) {
+  if (!value) return '';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '';
+  return parsed.toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}
+
+function getCheckInContact(checkIn?: EventCheckIn) {
+  const metadata = asRecord(checkIn?.metadata);
+  return {
+    email: asString(metadata.email) ?? asString(metadata.guest_email) ?? '',
+    phone: asString(metadata.phone) ?? asString(metadata.guest_phone) ?? '',
+  };
+}
+
+function getTicketProductState(ticket: Ticket) {
+  const stage = ticket.stage ?? 'waiting';
+  if (stage === 'released') return 'your_turn';
+  if (stage === 'standby' && isNearbyConfirmed(ticket)) return 'nearby';
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'on_my_way';
+  if (stage === 'standby') return 'gathering';
+  return stage;
+}
+
+function getTicketWorkflowStage(ticket: Ticket) {
+  const stage = ticket.stage ?? 'waiting';
+  if (stage === 'standby') return 'gathering';
+  if (stage === 'released') return 'your_turn';
+  return stage;
+}
+
+function formatQueueLabel(value: string) {
+  const labels: Record<string, string> = {
+    waiting: 'Waiting',
+    gathering: 'Gathering',
+    on_my_way: 'On My Way',
+    nearby: 'Nearby',
+    your_turn: 'Your Turn',
+    completed: 'Completed',
+    cancelled: 'Cancelled',
+    left: 'Left',
+  };
+  return labels[value] ?? value;
+}
+
+function getTicketProductStateLabel(ticket: Ticket) {
+  return formatQueueLabel(getTicketProductState(ticket));
+}
+
+function getTicketWorkflowStageLabel(ticket: Ticket) {
+  return formatQueueLabel(getTicketWorkflowStage(ticket));
+}
+
+function getCooldownRemainingSeconds(ticket: Ticket, cooldownSeconds: number) {
+  if ((ticket.stage ?? 'waiting') !== 'waiting' || !ticket.gathering_snoozed_at || cooldownSeconds <= 0) return 0;
+  const snoozedAt = Date.parse(ticket.gathering_snoozed_at);
+  if (!Number.isFinite(snoozedAt)) return 0;
+  const elapsedSeconds = Math.floor((Date.now() - snoozedAt) / 1000);
+  return Math.max(0, cooldownSeconds - elapsedSeconds);
+}
+
+function getTicketConditionLabel(ticket: Ticket, cooldownSeconds: number) {
+  if ((ticket.stage ?? 'waiting') === 'standby' && isNearbyConfirmed(ticket)) return 'Nearby';
+  if ((ticket.stage ?? 'waiting') === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'On My Way';
+  const cooldownRemaining = getCooldownRemainingSeconds(ticket, cooldownSeconds);
+  if (cooldownRemaining > 0) return `Cooling Down (${cooldownRemaining}s)`;
+  return '';
+}
+
 function ticketStageSortRank(ticket: Ticket) {
   const stage = ticket.stage ?? 'waiting';
   if (stage === 'standby' && isNearbyConfirmed(ticket)) return 1;
-  if (stage === 'standby') return 2;
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 2;
+  if (stage === 'standby') return 3;
   const rank: Record<string, number> = {
     released: 0,
-    waiting: 3,
-    completed: 4,
-    cancelled: 5,
-    left: 6,
+    waiting: 4,
+    completed: 5,
+    cancelled: 6,
+    left: 7,
   };
-  return rank[stage] ?? 7;
+  return rank[stage] ?? 8;
 }
 
 function getPilotCompletionMode(ece: Ece | null, queueSlug?: string): PilotCompletionMode {
@@ -120,11 +206,16 @@ export default function AdminQueueDashboard() {
   const metricQueueId = queue?.id ?? (queueId && UUID_RE.test(queueId) ? queueId : undefined);
   const { nowServing, setNowServing } = useQueueMetric(metricQueueId);
   const [flowersCheckIns, setFlowersCheckIns] = useState<EventCheckIn[]>([]);
+  const [eventCheckIns, setEventCheckIns] = useState<EventCheckIn[]>([]);
   const [pilotTickets, setPilotTickets] = useState<Ticket[]>([]);
   const [serviceStartedMarks, setServiceStartedMarks] = useState<Record<number, EventGuestMark>>({});
   const [savingControls, setSavingControls] = useState(false);
   const [controlSaveStatus, setControlSaveStatus] = useState('');
   const [activeQueueTab, setActiveQueueTab] = useState<AdminQueueTab>('live');
+  const [queueSearch, setQueueSearch] = useState('');
+  const [overrideBusyTicketId, setOverrideBusyTicketId] = useState<number | null>(null);
+  const [overrideTargetByTicketId, setOverrideTargetByTicketId] = useState<Record<number, QueueOverrideTarget | ''>>({});
+  const [overrideReasonByTicketId, setOverrideReasonByTicketId] = useState<Record<number, string>>({});
   const [currentAdmin, setCurrentAdmin] = useState<CurrentAdminPrincipal | null>(null);
   const [accessDenied, setAccessDenied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -219,11 +310,18 @@ export default function AdminQueueDashboard() {
   const refreshPilotTickets = useCallback(async () => {
     if (!queue?.id || !isPilotQueue) {
       setPilotTickets([]);
+      setEventCheckIns([]);
       return;
     }
     try {
       const rows = await listQueuePilotTickets(queue.id);
       setPilotTickets((current) => hasSameShape(current, rows) ? current : rows);
+      if (event?.id) {
+        const checkIns = await listEventCheckIns(event.id, null);
+        setEventCheckIns((current) => hasSameShape(current, checkIns) ? current : checkIns);
+      } else {
+        setEventCheckIns([]);
+      }
       if (event?.id && queue.slug === 'headshot-photo-station') {
         const marks = await listEventGuestMarksForTickets(
           event.id,
@@ -372,6 +470,40 @@ export default function AdminQueueDashboard() {
     }
   }
 
+  async function overridePilotTicketState(ticket: Ticket, targetState: QueueOverrideTarget) {
+    const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
+    const targetLabels: Record<QueueOverrideTarget, string> = {
+      waiting: 'Waiting',
+      gathering: 'Gathering',
+      on_my_way: 'On My Way',
+      nearby: 'Nearby',
+      your_turn: 'Your Turn',
+    };
+    const extraWarning = targetState === 'on_my_way'
+      ? ' On My Way records that they are heading over, but they still cannot be called until they are Nearby.'
+      : '';
+    const confirmed = confirm(
+      `Move ${guestName} to ${targetLabels[targetState]}? This bypasses normal queue automation and will be recorded.${extraWarning}`
+    );
+    if (!confirmed) return;
+    setOverrideBusyTicketId(ticket.id);
+    try {
+      await overrideQueueTicketState({
+        ticketId: ticket.id,
+        targetState,
+        reason: overrideReasonByTicketId[ticket.id],
+      });
+      setOverrideTargetByTicketId((current) => ({ ...current, [ticket.id]: '' }));
+      setOverrideReasonByTicketId((current) => ({ ...current, [ticket.id]: '' }));
+      await refreshPilotTickets();
+    } catch (e) {
+      console.error('Failed to override guest queue state', e);
+      alert('Could not move this guest. The override was not saved.');
+    } finally {
+      setOverrideBusyTicketId(null);
+    }
+  }
+
   const applyAutoPilotPass = useCallback(async (quiet = false) => {
     if (!queue) return;
     if (autoFlowInFlightRef.current) return;
@@ -408,7 +540,7 @@ export default function AdminQueueDashboard() {
   if (loading) {
     return (
       <div className="card">
-        <p style={{ textAlign: 'center', padding: '3rem' }}>Loading…</p>
+        <p style={{ textAlign: 'center', padding: '3rem' }}>Loading...</p>
       </div>
     );
   }
@@ -462,8 +594,40 @@ export default function AdminQueueDashboard() {
     const notHereCooldownSeconds = queue.not_here_cooldown_seconds ?? 300;
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
+    const onMyWayCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticketHasCurrentOnMyWay(ticket)).length;
+    const checkInById = eventCheckIns.reduce<Record<string, EventCheckIn>>((acc, checkIn) => {
+      acc[checkIn.id] = checkIn;
+      return acc;
+    }, {});
+    const searchText = queueSearch.trim().toLowerCase();
+    const ticketMatchesSearch = (ticket: Ticket) => {
+      if (!searchText) return true;
+      const checkIn = ticket.check_in_id ? checkInById[ticket.check_in_id] : undefined;
+      const contact = getCheckInContact(checkIn);
+      return [
+        ticket.id,
+        ticket.ticket_number,
+        ticket.first_name,
+        ticket.last_name,
+        `${ticket.first_name ?? ''} ${ticket.last_name ?? ''}`,
+        ticket.stage,
+        ticket.status,
+        getTicketWorkflowStage(ticket),
+        getTicketWorkflowStageLabel(ticket),
+        getTicketProductState(ticket),
+        getTicketProductStateLabel(ticket),
+        getTicketConditionLabel(ticket, notHereCooldownSeconds),
+        checkIn?.first_name,
+        checkIn?.last_name,
+        checkIn?.status,
+        checkIn?.ticket_type,
+        contact.email,
+        contact.phone,
+      ].some((value) => String(value ?? '').toLowerCase().includes(searchText));
+    };
     const displayTickets = [...pilotTickets]
       .filter((ticket) => !isInactiveQueueTicket(ticket) && (ticket.stage ?? 'waiting') !== 'completed')
+      .filter(ticketMatchesSearch)
       .sort((a, b) => {
       const byStage = ticketStageSortRank(a) - ticketStageSortRank(b);
       if (byStage !== 0) return byStage;
@@ -471,6 +635,7 @@ export default function AdminQueueDashboard() {
     });
     const completedTickets = [...pilotTickets]
       .filter((ticket) => ticket.stage === 'completed')
+      .filter(ticketMatchesSearch)
       .sort((a, b) => {
         const byCompletedTime = ticketCompletedTime(a) - ticketCompletedTime(b);
         if (byCompletedTime !== 0) return byCompletedTime;
@@ -495,13 +660,20 @@ export default function AdminQueueDashboard() {
         { header: 'ticket_number', value: (ticket) => ticket.ticket_number ?? '' },
         { header: 'first_name', value: (ticket) => ticket.first_name ?? '' },
         { header: 'last_name', value: (ticket) => ticket.last_name ?? '' },
-        { header: 'stage', value: (ticket) => ticket.stage ?? 'waiting' },
+        { header: 'check_in_status', value: (ticket) => ticket.check_in_id ? checkInById[ticket.check_in_id]?.status ?? '' : '' },
+        { header: 'check_in_ticket_type', value: (ticket) => ticket.check_in_id ? checkInById[ticket.check_in_id]?.ticket_type ?? '' : '' },
+        { header: 'contact_email', value: (ticket) => ticket.check_in_id ? getCheckInContact(checkInById[ticket.check_in_id]).email : '' },
+        { header: 'contact_phone', value: (ticket) => ticket.check_in_id ? getCheckInContact(checkInById[ticket.check_in_id]).phone : '' },
+        { header: 'raw_ticket_stage', value: (ticket) => ticket.stage ?? 'waiting' },
+        { header: 'workflow_stage', value: (ticket) => getTicketWorkflowStageLabel(ticket) },
+        { header: 'workflow_state', value: (ticket) => getTicketConditionLabel(ticket, notHereCooldownSeconds) },
         { header: 'status', value: (ticket) => ticket.status },
         { header: 'nearby_confirmed', value: (ticket) => isNearbyConfirmed(ticket) ? 'yes' : 'no' },
         { header: 'service_started_at', value: (ticket) => formatCsvTimestamp(serviceStartedMarks[ticket.id]?.created_at) },
         { header: 'service_started_source', value: (ticket) => serviceStartedMarks[ticket.id]?.source ?? '' },
         { header: 'joined_at', value: (ticket) => formatCsvTimestamp(ticket.created_at) },
         { header: 'stage_updated_at', value: (ticket) => formatCsvTimestamp(ticket.stage_updated_at) },
+        { header: 'on_my_way_at', value: (ticket) => formatCsvTimestamp(ticket.on_my_way_at) },
         { header: 'nearby_confirmed_at', value: (ticket) => formatCsvTimestamp(ticket.nearby_confirmed_at) },
         { header: 'released_at', value: (ticket) => formatCsvTimestamp(ticket.released_at) },
         { header: 'completed_at', value: (ticket) => formatCsvTimestamp(ticket.completed_at) },
@@ -534,6 +706,27 @@ export default function AdminQueueDashboard() {
               </button>
             ))}
           </div>
+
+          {activeQueueTab !== 'settings' && (
+            <div style={{ margin: '0 0 0.85rem' }}>
+              <label style={{ display: 'block', fontWeight: 900, color: '#24364a', marginBottom: '0.3rem' }}>
+                Find Guest
+              </label>
+              <input
+                type="search"
+                value={queueSearch}
+                onChange={(event) => setQueueSearch(event.target.value)}
+                placeholder="Search name, ticket #, status, email, or phone"
+                style={{
+                  width: '100%',
+                  padding: '0.65rem 0.75rem',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: 8,
+                  fontWeight: 700,
+                }}
+              />
+            </div>
+          )}
 
           {activeQueueTab === 'settings' && canManageThisEvent && (
           <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.85rem', marginBottom: '1rem', background: '#f8fafc' }}>
@@ -607,7 +800,7 @@ export default function AdminQueueDashboard() {
               )}
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/Nearby guests and can overflow up to {gatheringMax} when earlier Gathering guests do not tap I'm Nearby after {staleAfterSeconds} seconds. Guests marked Not Here wait {notHereCooldownSeconds} seconds before they can be invited again. Only Nearby guests are released.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/On My Way/Nearby guests and can overflow up to {gatheringMax} when earlier Gathering guests do not tap I'm Nearby after {staleAfterSeconds} seconds. Guests marked Not Here wait {notHereCooldownSeconds} seconds before they can be invited again. Only Nearby guests are released.
             </div>
           </div>
           )}
@@ -643,12 +836,19 @@ export default function AdminQueueDashboard() {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.5rem', marginBottom: '1rem' }}>
-            {['waiting', 'standby', 'released', 'completed'].map((stage) => (
+            {([
+              ['waiting', 'Waiting'],
+              ['standby', 'Gathering'],
+              ['released', 'Your Turn'],
+              ['completed', 'Completed'],
+            ] as Array<[string, string]>).map(([stage, label]) => (
               <div key={stage} style={{ border: '1px solid #e5e7eb', borderRadius: 8, padding: '0.65rem', textAlign: 'center' }}>
                 <div style={{ fontSize: '1.2rem', fontWeight: 900, color: stageColor[stage] }}>{counts[stage] ?? 0}</div>
-                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 800, color: '#6b7280' }}>{stage}</div>
+                <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 800, color: '#6b7280' }}>{label}</div>
                 {stage === 'standby' && (
-                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', marginTop: 2 }}>{nearbyConfirmedCount} nearby</div>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', marginTop: 2 }}>
+                    {nearbyConfirmedCount} nearby{onMyWayCount ? ` - ${onMyWayCount} on my way` : ''}
+                  </div>
                 )}
               </div>
             ))}
@@ -656,22 +856,43 @@ export default function AdminQueueDashboard() {
 
           {displayTickets.length === 0 ? (
             <p style={{ color: '#999', textAlign: 'center', padding: '2rem 0' }}>
-              {pilotTickets.length === 0 ? 'No guests have joined this queue yet.' : 'No active guests in this queue.'}
+              {searchText
+                ? 'No active guests match this search.'
+                : pilotTickets.length === 0
+                ? 'No guests have joined this queue yet.'
+                : 'No active guests in this queue.'}
             </p>
           ) : (
             displayTickets.map((ticket) => {
               const stage = ticket.stage ?? 'waiting';
               const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
+              const checkIn = ticket.check_in_id ? checkInById[ticket.check_in_id] : undefined;
+              const contact = getCheckInContact(checkIn);
+              const productState = getTicketProductState(ticket);
+              const productStateLabel = getTicketProductStateLabel(ticket);
+              const workflowStageLabel = getTicketWorkflowStageLabel(ticket);
+              const conditionLabel = getTicketConditionLabel(ticket, notHereCooldownSeconds);
               const isDone = ['completed', 'cancelled', 'left'].includes(stage);
               const nearbyConfirmed = isNearbyConfirmed(ticket);
+              const onMyWay = ticketHasCurrentOnMyWay(ticket);
               const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
               const adminServesDirectly = pilotCompletionMode === 'staff_served' && canReleaseTicket;
               const canReturnToWaiting = stage === 'standby' && !nearbyConfirmed;
               const canClickToServe = pilotCompletionMode === 'staff_served' && stage === 'released' && !isDone;
               const serviceStartedMark = serviceStartedMarks[ticket.id];
               const serviceStartedTime = formatServiceStartTime(serviceStartedMark?.created_at);
+              const currentOverrideTarget = overrideTargetByTicketId[ticket.id] ?? '';
+              const overrideOptions: Array<[QueueOverrideTarget, string]> = [
+                ['waiting', 'Return to Waiting'],
+                ['gathering', 'Invite to Gathering'],
+                ['on_my_way', 'Mark On My Way'],
+                ['nearby', 'Mark Nearby'],
+                ['your_turn', 'Make Your Turn'],
+              ].filter(([target]) => target !== productState) as Array<[QueueOverrideTarget, string]>;
               const statusHint = stage === 'waiting'
-                ? 'Waiting for flow'
+                ? conditionLabel || 'Waiting for flow'
+                : stage === 'standby' && onMyWay
+                ? 'On My Way - not callable until Nearby'
                 : stage === 'standby' && !nearbyConfirmed
                 ? 'Waiting for nearby'
                 : stage === 'standby' && nearbyConfirmed && !canReleaseMore
@@ -722,8 +943,25 @@ export default function AdminQueueDashboard() {
                   <div>
                     <div style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</div>
                     <div style={{ color: stageColor[stage], fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', marginTop: 3 }}>
-                      {stage}{stage === 'standby' && nearbyConfirmed ? ' - nearby' : ''}
+                      {productStateLabel}
                     </div>
+                    <div style={{ color: '#334155', fontSize: '0.74rem', fontWeight: 900, marginTop: 4 }}>
+                      Stage: {workflowStageLabel}{conditionLabel ? ` - State: ${conditionLabel}` : ''}
+                    </div>
+                    <div style={{ color: '#64748b', fontSize: '0.74rem', fontWeight: 800, marginTop: 5, lineHeight: 1.35 }}>
+                      Joined {formatQueueTime(ticket.created_at) || 'unknown'}
+                      {ticket.stage_updated_at ? ` - Stage updated ${formatQueueTime(ticket.stage_updated_at)}` : ''}
+                      {onMyWay ? ` - On My Way ${formatQueueTime(ticket.on_my_way_at)}` : ''}
+                      {ticket.nearby_confirmed_at ? ` - Nearby ${formatQueueTime(ticket.nearby_confirmed_at)}` : ''}
+                      {ticket.released_at ? ` - Your Turn ${formatQueueTime(ticket.released_at)}` : ''}
+                    </div>
+                    {(checkIn || contact.email || contact.phone) && (
+                      <div style={{ color: '#94a3b8', fontSize: '0.72rem', fontWeight: 700, marginTop: 3, lineHeight: 1.35 }}>
+                        {checkIn?.status ? `Check-in ${checkIn.status}` : ''}
+                        {contact.email ? ` - ${contact.email}` : ''}
+                        {contact.phone ? ` - ${contact.phone}` : ''}
+                      </div>
+                    )}
                     {canClickToServe && (
                       <div style={{ color: '#166534', fontSize: '0.78rem', fontWeight: 900, marginTop: 5 }}>
                         Click name when guest steps up
@@ -758,6 +996,51 @@ export default function AdminQueueDashboard() {
                     {stage === 'released' && !isDone && (
                       <button className="actionBtn actionBtn-secondary admin-pilot-guest-btn" onClick={() => markPilotTicketNotHere(ticket.id)}>Not here</button>
                     )}
+                    {!isDone && canManageThisEvent && (
+                      <details style={{ width: '100%', marginTop: '0.45rem' }}>
+                        <summary style={{ cursor: 'pointer', color: '#5b4fce', fontWeight: 900, fontSize: '0.78rem' }}>
+                          Override state
+                        </summary>
+                        <div style={{ marginTop: '0.5rem', display: 'grid', gridTemplateColumns: 'minmax(120px, 1fr) minmax(130px, 1.4fr) auto', gap: '0.45rem', alignItems: 'center' }}>
+                          <select
+                            value={currentOverrideTarget}
+                            onChange={(event) => setOverrideTargetByTicketId((current) => ({
+                              ...current,
+                              [ticket.id]: event.target.value as QueueOverrideTarget | '',
+                            }))}
+                            disabled={overrideBusyTicketId === ticket.id}
+                            style={{ padding: '0.45rem', borderRadius: 8, border: '1px solid #cbd5e1', fontWeight: 800 }}
+                          >
+                            <option value="">Move to...</option>
+                            {overrideOptions.map(([target, label]) => (
+                              <option key={target} value={target}>{label}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            value={overrideReasonByTicketId[ticket.id] ?? ''}
+                            onChange={(event) => setOverrideReasonByTicketId((current) => ({
+                              ...current,
+                              [ticket.id]: event.target.value,
+                            }))}
+                            placeholder="Reason"
+                            disabled={overrideBusyTicketId === ticket.id}
+                            style={{ padding: '0.45rem', borderRadius: 8, border: '1px solid #cbd5e1', fontWeight: 700 }}
+                          />
+                          <button
+                            type="button"
+                            className="actionBtn actionBtn-secondary admin-pilot-guest-btn"
+                            disabled={!currentOverrideTarget || overrideBusyTicketId === ticket.id}
+                            onClick={() => currentOverrideTarget && overridePilotTicketState(ticket, currentOverrideTarget)}
+                          >
+                            {overrideBusyTicketId === ticket.id ? 'Moving...' : 'Move'}
+                          </button>
+                        </div>
+                        <div style={{ color: '#92400e', fontSize: '0.7rem', fontWeight: 800, lineHeight: 1.25, marginTop: '0.35rem' }}>
+                          Manual override may bypass normal targets, cooldowns, and queue max settings. On My Way is not callable; Nearby is callable. This action will be recorded.
+                        </div>
+                      </details>
+                    )}
                   </div>
                 </div>
               );
@@ -769,11 +1052,11 @@ export default function AdminQueueDashboard() {
           {activeQueueTab === 'history' && (
             <div style={{ border: '1px solid #d1d5db', borderRadius: 10, padding: '0.75rem 0.85rem', background: '#f8fafc' }}>
               <h2 style={{ fontSize: '1.05rem', margin: '0 0 0.75rem', fontWeight: 900, color: '#24364a' }}>
-                Completed guests ({completedTickets.length})
+                Completed guests ({completedTickets.length}{searchText ? ` of ${pilotTickets.filter((ticket) => ticket.stage === 'completed').length}` : ''})
               </h2>
               {completedTickets.length === 0 ? (
                 <p style={{ color: '#999', textAlign: 'center', padding: '1.5rem 0', margin: 0 }}>
-                  No completed guests yet.
+                  {searchText ? 'No completed guests match this search.' : 'No completed guests yet.'}
                 </p>
               ) : (
               <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
@@ -793,12 +1076,19 @@ export default function AdminQueueDashboard() {
                         justifyContent: 'space-between',
                         gap: '0.75rem',
                         alignItems: 'baseline',
+                        flexWrap: 'wrap',
                       }}
                     >
-                      <span style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</span>
-                      <span style={{ color: stageColor.completed, fontSize: '0.76rem', fontWeight: 900, textTransform: 'uppercase' }}>
+                      <div>
+                        <div style={{ fontWeight: 900, color: '#24364a' }}>#{ticket.ticket_number ?? ticket.id} {guestName}</div>
+                        <div style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 800, marginTop: 3 }}>
+                          Joined {formatQueueTime(ticket.created_at) || 'unknown'}
+                          {ticket.completed_at ? ` - Completed ${formatQueueTime(ticket.completed_at)}` : ''}
+                        </div>
+                      </div>
+                      <div style={{ color: stageColor.completed, fontSize: '0.76rem', fontWeight: 900, textTransform: 'uppercase' }}>
                         Completed{serviceStartedTime ? ` - Called ${serviceStartedTime}` : completedTime ? ` - Served ${completedTime}` : ''}
-                      </span>
+                      </div>
                     </div>
                   );
                 })}

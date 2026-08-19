@@ -2,7 +2,7 @@ const QME_ROADMAP = {
   meta: {
     product: "qME",
     workspace: "Product roadmap and sprint planning",
-    updated: "2026-08-18",
+    updated: "2026-08-19",
     immediateGoal:
       "Use the July 22 SOTC Rock Hall production event as the evidence base for Sprint 3: operational hardening, recovery, reporting, archive/baseline setup, and selective product discovery before adding broad new platform features.",
     eventAnchor: {
@@ -191,7 +191,7 @@ const QME_ROADMAP = {
                 "Reset/clone behavior is documented so testing does not accidentally overwrite the production archive."
               ],
               notes:
-                "Completed 2026-08-18: live Supabase now has a production archive snapshot and an internal full-data baseline snapshot for sotc-rockhall, both preserving 132 check-ins, 96 queue tickets, and 250 imported registrations. Post-SOTC direction: preserve the July 22 record in an archive snapshot and keep the existing sotc-rockhall event as the full-data internal working baseline for ongoing testing. Sprint 3 first slice added event_data_snapshots plus optional archive-lock functions/triggers and a runbook in docs/sotc-production-archive-baseline-v1.md. Archive-locking and a separate relational working event clone are deferred unless needed. A sanitized public demo clone is a useful later story, but not required before the next Sprint 3 block."
+                "Completed 2026-08-18: live Supabase now has a production archive snapshot and an internal full-data baseline snapshot for sotc-rockhall, both preserving 132 check-ins, 96 queue tickets, and 250 imported registrations. Post-SOTC direction: preserve the July 22 record in an archive snapshot and keep the existing sotc-rockhall event as the full-data internal working baseline for ongoing testing. Sprint 3 first slice added event_data_snapshots plus optional archive-lock functions/triggers and a runbook in docs/sotc-production-archive-baseline-v1.md. Archive-locking and a separate relational working event clone are deferred unless needed. A sanitized public demo clone is a useful later story, but not required before the next Sprint 3 block. Updated 2026-08-19: after the Headshot ticket/check-in linkage and credit-used reconciliation fix, live Supabase received corrected snapshots `sotc-rockhall-production-2026-07-22-corrected-headshot-credit-v1` and `sotc-rockhall-internal-full-data-baseline-v2-headshot-credit-corrected`, each verifying 132 check-ins, 96 queue tickets, and 105 guest-credit rows. The original snapshots remain preserved as historical evidence."
             },
             {
               id: "story-sotc-admin-csv-exports",
@@ -208,7 +208,7 @@ const QME_ROADMAP = {
                 "The report shape is documented before expanding to more advanced analytics."
               ],
               notes:
-                "Completed 2026-08-18: added admin-only CSV exports to Event Check-In and queue admin screens. Attendance/check-in export lives on the admin-only Settings tab, is labeled Export Check-Ins, and includes guest status, imported-registration markers, Needs Help metadata, and Headshot credit status without raw metadata JSON. Queue activity export lives on the admin-only queue Settings tab, is labeled Export Queue Activity, and includes queue stage/status timestamps plus Headshot service-start markers where present without raw metadata JSON. Report shapes are documented in docs/sotc-admin-csv-reports-v1.md. Deeper report views can follow once the first export format proves useful."
+                "Completed 2026-08-18: added admin-only CSV exports to Event Check-In and queue admin screens. Attendance/check-in export lives on the admin-only Settings tab, is labeled Export Check-Ins, and includes guest status, imported-registration markers, Needs Help metadata, and Headshot credit status without raw metadata JSON. Queue activity export lives on the admin-only queue Settings tab, is labeled Export Queue Activity, and includes queue stage/status timestamps plus Headshot service-start markers where present without raw metadata JSON. Report shapes are documented in docs/sotc-admin-csv-reports-v1.md. Updated 2026-08-19: fixed the Headshot completion reporting gap by linking queue tickets to event check-ins on join, passing the check-in through admin Mark Served, backfilling historical completed Headshot tickets where the name match was unique, and reconciling professional_headshot used quantities. Re-exported attendance and Headshot activity CSVs were verified against the corrected data. Deeper report views can follow once the first export format proves useful."
             }
           ]
         },
@@ -243,13 +243,17 @@ const QME_ROADMAP = {
                 "When qMe does not recognize the browser but the guest finds their imported registration again, let them safely reconnect to their existing event participation instead of creating a duplicate or reaching a dead end.",
               acceptanceCriteria: [
                 "Guest search can identify a previously claimed/checked-in imported registration.",
+                "Search results use whatever useful identifying source fields are available for that event and display them in appropriately masked form where needed, such as email, mobile number, company/organization, or other mapped registration hints; recovery does not assume every event has the same fields.",
                 "The guest sees a clear recovery path such as Reconnect to My Event instead of only an already-checked-in dead end.",
-                "Recovery lightly verifies identity using available non-sensitive hints or recovery contact where available.",
-                "Successful recovery restores the guest's event check-in and active queue state without duplicating check-ins, tickets, marks, or credits.",
-                "Recovery failures route the guest to the event team without exposing other attendee data."
+                "For the current slice, selecting the correct known registration using available masked identifying hints is sufficient lightweight recovery; SMS/email one-time-code verification is not a dependency while SMS feasibility is still under investigation.",
+                "Successful recovery reconnects the current browser/session to the existing server-side event participation and preserves the existing check-in, queue tickets, Stage/State, credits, marks, and completion history rather than recreating them.",
+                "Recovery never creates duplicate check-ins, queue tickets, guest credits, or completion marks.",
+                "Completed experiences remain completed and active experiences resume from their existing server-side state.",
+                "Ambiguous, duplicate-name, or unverifiable recovery routes the guest to event staff without exposing unnecessary attendee data.",
+                "Removed/released registrations continue through the existing re-check-in/recovery behavior rather than silently reconnecting."
               ],
               notes:
-                "This is the product fix for lost browser recognition. It should reconnect to server-side truth rather than relying on perfect local browser storage."
+                "This is the product fix for lost browser recognition. It should reconnect to server-side truth rather than relying on perfect local browser storage. Check-In Mode governs initial event admission; recovery restores participation that already exists and should not unnecessarily send an already checked-in guest back through Registration staff. Stronger verification such as SMS OTP can later layer onto the same recovery flow without redesigning it. Implementation added locally on 2026-08-19 with a bounded reconnect RPC and guest UI branch; pending live SQL application, deployment, and person-by-person SOTC recovery testing before marking complete."
             },
             {
               id: "story-storage-health-recovery-contact-prompt",
@@ -298,33 +302,41 @@ const QME_ROADMAP = {
               status: "current",
               sprint: "now",
               summary:
-                "Help operators understand a guest's real current state across check-in, queue, credit, recovery, and history records so correct queue behavior does not look broken.",
+                "Help operators quickly understand who a guest is, where they are in the queue workflow, their readiness condition, their queue position and surrounding queue context, how long they have been there, and what meaningful actions happened previously.",
               acceptanceCriteria: [
-                "Admin can search by guest name, email, phone where available, ticket number, and relevant event/check-in status.",
-                "Admin can see current queue state, timing, cooldown, previous Not Here/Return to Waiting actions, and completion history for a guest.",
+                "Admin can search by guest name, email, phone where available, ticket number, and relevant event/check-in status; name remains the primary live-operations use case.",
+                "Admin sees product-facing Stage and State separately: Stage describes workflow position (Waiting, Gathering, Your Turn, Completed) while State describes a meaningful condition within that stage (for example Cooling Down, On My Way, or Nearby).",
+                "Admin can see queue order/position where meaningful, active guests ahead, total active queue size, and relevant Gathering/Nearby/Your Turn counts; internal ticket IDs are never presented as queue position.",
+                "When readiness, cooldown, stale guests, or authorized overrides can change actual service order, the UI distinguishes queue order from operational readiness rather than presenting false precision.",
+                "Admin can see useful elapsed/current timing such as time in Gathering, time Nearby, and cooldown remaining where the underlying data supports it.",
+                "Admin can see chronological operational history where it is actually persisted, including join, Gathering, On My Way, Nearby, Your Turn/release, service start, completion, Not Here, Return to Waiting/cooldown, and authorized admin overrides; the UI does not fabricate missing history.",
                 "Admin can distinguish active participation from archived/history records.",
                 "Search helps resolve duplicate-looking or already-checked-in cases without exposing unnecessary data to station staff.",
                 "Visibility is role-aware and separates event-admin views from limited station-staff views."
               ],
               notes:
-                "Post-SOTC lesson: the queue engine was often correct, but operators needed better observability. This also supports session recovery, support at the registration desk, and post-event reporting."
+                "Post-SOTC lesson: operators need to understand both queue order and readiness, not merely a technical ticket stage. Product refinement on 2026-08-19 established Stage / State / Timestamps-History: Stage is where the guest is in the workflow; State is additional current condition that affects treatment; timestamps/history record what happened and when. For the current managed queue, conceptual stages are Waiting -> Gathering -> Your Turn -> Completed. Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. Nearby remains a derived operational State for Sprint 3, using the existing tested queue representation (for example standby + nearby_confirmed_at) while the admin UI and CSV present Stage and State separately. On My Way is also a real Gathering State and should receive the smallest safe additive durable marker, preferably a nullable timestamp such as on_my_way_at, rather than being omitted because the older schema did not persist it. Do not turn this into a broad queue-schema migration. Clean visible encoding artifacts such as a broken middle-dot character in the timing/status UI while implementing the visibility story."
             },
             {
               id: "story-authorized-queue-state-overrides",
               title: "Add authorized queue state override controls",
-              status: "ready",
+              status: "current",
               sprint: "now",
               summary:
-                "Give Event Admin or approved station authority careful manual controls to move a guest between valid queue states when operations require an exception.",
+                "Give Event Admin or approved station authority operational controls to reconcile qME with physical event reality while preserving normal automation as the default.",
               acceptanceCriteria: [
-                "Authorized operators can move a guest from Waiting to Gathering, Waiting to Nearby, Gathering to Your Turn, Nearby to Your Turn, Your Turn to Waiting/Not Here, and other valid recovery paths as product rules allow.",
-                "Overrides clearly explain when they exceed normal automation, targets, cooldowns, or queue max settings.",
-                "Overrides require confirmation for disruptive actions.",
-                "Every override records who performed it, when, from-state, to-state, reason where available, and affected ticket/check-in.",
+                "Admin actions use operational language and map to Stage + State semantics rather than exposing raw database mutations: Move/Invite to Gathering, Mark On My Way, Mark Nearby, Make Your Turn, Return to Waiting, and Mark Not Here where appropriate.",
+                "Normal automatic progression to Your Turn requires Stage = Gathering and State = Nearby; On My Way indicates commitment/response but does not make the guest callable.",
+                "Authorized operators may record commitment/readiness on a guest's behalf when the guest cannot interact with qME, such as a dead phone, accessibility need, or direct call to the station; history records whether the update came from guest, admin/staff, or system where practical.",
+                "Authorized operators can intentionally move a Waiting guest directly to Your Turn when live operations justify it, including open service capacity and a physically present guest, even when that guest is far back in normal queue order.",
+                "When an action changes normal queue order or bypasses a normal transition guard, qME clearly discloses what is happening and requests confirmation for disruptive actions without portraying legitimate live-event management as an error.",
+                "Configured Gathering Target/Max and similar limits govern automation, not absolute human authority; an authorized override may temporarily exceed a configured limit without changing the configured value, with a clear warning.",
+                "Every override records actor, timestamp, prior Stage/State, resulting Stage/State, reason where available, affected ticket/check-in, and whether normal automation/transition rules were bypassed.",
+                "The resulting override is visible in the guest's operational history.",
                 "Station staff visibility/editability is role-aware; Event Admin or higher can perform broader event-level overrides."
               ],
               notes:
-                "This is broader than 'let this person go next'. It is a controlled manual state-management tool for live operations. Product direction allows authorized override to exceed automation max settings, but the UI must make that explicit and auditable."
+                "This is broader than 'let this person go next' but includes that normal operational need. Product refinement on 2026-08-19 distinguishes Stage from State: Waiting/Gathering/Your Turn/Completed are workflow stages; Cooling Down, On My Way, and Nearby are conditions within stages. Existing production fields may derive these semantics during Sprint 3; do not require a broad schema migration merely to rename the tested state machine. Product Owner authorization: On My Way must not be dropped from live behavior solely because the old schema lacks a field. Add the smallest safe durable persistence needed to support it, preferably a nullable on_my_way_at timestamp/marker, provided this does not restructure the existing queue stage machine. Derive Gathering / On My Way when that marker is present and nearby_confirmed_at is not; Nearby remains the stronger Gathering State and makes the guest callable. If even this additive persistence creates broader migration/risk, stop for product review before implementation. A future guest self-Standby capability may let a Waiting guest declare physical availability to fill otherwise unused capacity without changing normal queue order; for now the admin override provides the manual operational behavior."
             }
           ]
         }
@@ -1931,6 +1943,45 @@ const QME_ROADMAP = {
                 "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. The live table was manually populated with 191 imported registrations. App/SQL slice added scoped guest registration search and claim RPCs: guests search by name, see masked email hints, claim one imported record, and are created as check-in rows from the authoritative import. July 21 Tanya direction removed the extra staff-confirmation gate for matched imported registrations: successful imported claims now self check in immediately, unlock event participation, stamp checked_in_at, and direct the guest to the registration desk for the physical name tag/sticker. Manual fallback rows remain Needs Help in the same admin list rather than sent to a separate hidden queue. Duplicate-name claims require exact email confirmation. Headshot credit is granted only from imported Headshot entitlement. Follow-up recovery slice added an audited staff Remove action for Live Check-In rows; imported matches are unlinked so a mistaken claim can be reclaimed, removed rows remain in History, and the guest-facing event/check-in screens show a removed state with a Check In Again path. Eventbrite API sync remains deferred."
             },
             {
+              id: "story-registration-import-tool",
+              title: "Build superadmin registration import and field-mapping tool",
+              status: "ready",
+              sprint: "next",
+              summary:
+                "Let qME Superadmin upload the organizer's existing electronic attendee export, have qME inspect the file and suggest field mappings, preview the result, and add only registrations qME has not previously imported.",
+              acceptanceCriteria: [
+                "The first version is visible and usable only by qME Superadmin.",
+                "Superadmin can upload a common attendee export such as CSV without first reshaping it into a qME-specific template.",
+                "qME proposes mappings for useful normalized fields such as first name, last name or full name, email, mobile, company/organization, registration type, and stable external registration id where available.",
+                "Superadmin can review and correct proposed mappings before committing the import.",
+                "Import preview shows total source rows, already-known registrations, new registrations, ambiguous/problem rows, and the fields qME intends to map.",
+                "All source fields are preserved with the imported source record even when qME does not yet have a normalized use for them.",
+                "Repeated full-file imports are additive and non-destructive: existing source registrations are recognized and left intact while only previously unseen registrations are added.",
+                "Existing qME participation accumulated after registration is never wiped or recreated by a later source-file import.",
+                "Changed values on an already-known source registration are surfaced for review rather than silently overwriting qME-owned participation or profile state.",
+                "Import records preserve source/provenance information sufficient to support later provider synchronization."
+              ],
+              notes:
+                "Near-term direction from 2026-08-19 discovery. The organizer should be able to give qME the electronic export they already have rather than learning CSV preparation. File import is a legitimate general capability, not merely a temporary Eventbrite workaround. Direct provider integration can later automate ongoing ingestion and late-registration discovery using the same source-registration model."
+            },
+            {
+              id: "story-registration-late-arrival-walk-in-policy",
+              title: "Define configurable late-registration and walk-in policy",
+              status: "discovery",
+              sprint: "future",
+              summary:
+                "Define how each event handles a person who arrives but is not yet known to qME, whether because they registered after the last import, were invited late, or are a true walk-in.",
+              acceptanceCriteria: [
+                "Explore event-configurable policies including closed list, staff-approved addition, and open/self-registration.",
+                "Treat a qME-created walk-in registration as another registration source rather than an error condition.",
+                "Clarify what minimum identity/contact fields are required for each policy.",
+                "Clarify how late external registrations are added without disturbing existing qME participation.",
+                "Keep provider/API integration separate from the exception policy because even synchronized events may still have true walk-ins."
+              ],
+              notes:
+                "A later full registration export should normally discover and add only new source registrations. Integration reduces late-registration exceptions but does not eliminate the need for an event-specific not-found/walk-in policy."
+            },
+            {
               id: "story-passport-activity",
               title: "Passport activity",
               status: "ready",
@@ -2928,6 +2979,51 @@ const QME_ROADMAP = {
   ],
   inbox: [
     {
+      id: "inbox-guest-event-home-evolving-information-architecture",
+      title: "Evolve guest Event Home beyond indefinite long scroll",
+      disposition: "future",
+      summary:
+        "As Event Home gains event information, active experiences, personal status, voting, networking, resources, and other guest functions, evolve the guest information architecture rather than allowing one increasingly long scrolling page. Do not prescribe tabs or another navigation pattern yet; let the structure emerge from real guest needs and Experience Types.",
+      linkedStoryIds: ["story-sotc-pre-alpha-event-guide", "story-personal-agenda"],
+      createdAt: "2026-08-19T00:00:00.000Z"
+    },
+    {
+      id: "inbox-bubbles-physical-networking-orchestration",
+      title: "Bubbles - opt-in physical networking orchestration",
+      disposition: "future",
+      summary:
+        "Far-future networking concept: people exist in overlapping bubbles such as university, class/year, local alumni community, employer, industry, neighborhood, friends, parents, interests, and the temporary population of a particular event. Some bubbles come from registration/source data, some may be inferred, some explicitly chosen, and some may exist only for the event. qME could use permitted registration/profile attributes, optional guest-supplied information, and event context to form temporary pair or small-group connection bubbles. Rather than behaving like a dating-app directory, participants opt in and receive a shared highly visible identifier such as a giant number on the phone: Find #27. Guests physically look around the room, hold up phones, find the matching person/group, then optionally confirm they found each other and reveal why qME connected them or receive an icebreaker. Group variants could form temporary physical bubbles and direct them to a venue area. Known-to-qME, allowed-for-matching, and allowed-to-reveal are separate permissions; data-derived membership never automatically authorizes disclosure. Progressive profile/consent may later let guests choose which company, university, role, or interest information can be used. The first experiment should test the physical interaction before intelligent matching: randomly pair willing participants, show matching giant numbers, ask them to find one another, and observe whether the interaction creates movement, laughter, easy stranger approaches, and useful connection. Only after proving the Experience should qME invest in deciding who should match with whom. This is consistent with qME orchestrating physical event flow: Headshots orchestrates return to service, future food flow may orchestrate release, and Bubbles could orchestrate a reason to connect.",
+      linkedStoryIds: ["story-networking-matching", "story-survey-icons"],
+      createdAt: "2026-08-19T00:00:00.000Z"
+    },
+    {
+      id: "inbox-post-ipitch-provisional-patent-review",
+      title: "Post-I-Pitch provisional patent review",
+      disposition: "future",
+      summary:
+        "After the September 3 I-Pitch event, review the January 2026 provisional patent against what qME has learned and demonstrated through Peony, SOTC, I-Pitch, and intervening product discovery. Separate original concepts reinforced in practice, original concepts that evolved, new concepts derived from event operations, speculative/future concepts such as Bubbles, and ideas that proved unimportant. Patentability/claim strategy and prior-art analysis remain attorney work; the product task is to preserve dated learning and identify what the invention appears to have become through practice.",
+      linkedStoryIds: [],
+      createdAt: "2026-08-19T00:00:00.000Z"
+    },
+    {
+      id: "inbox-guest-self-standby-open-capacity",
+      title: "Guest self-Standby for open service capacity",
+      disposition: "future",
+      summary:
+        "Allow a guest who is still back in the normal Waiting order to declare that they are physically nearby and willing to fill otherwise unused service capacity. Standby should not jump normally ready/callable guests or change the guest's normal queue order; it creates an additional availability signal that qME may use only when normal callable capacity is empty. Host Console or another physical-presence interaction may later strengthen the signal.",
+      linkedStoryIds: ["story-authorized-queue-state-overrides", "story-location-beacons"],
+      createdAt: "2026-08-19T00:00:00.000Z"
+    },
+    {
+      id: "inbox-intelligent-queue-readiness-management",
+      title: "Intelligent queue readiness management",
+      disposition: "future",
+      summary:
+        "Move beyond managing only raw Gathering counts toward managing expected near-term service readiness. Future logic can use Stage/State, elapsed time, Nearby and On My Way response, stale/unresponsive Gathering guests, current service cadence, Not Here behavior, standby availability, and later location signals to decide when additional guests should be recalled. Start with transparent deterministic scoring/rules; consider AI/ML only after enough production data exists. Operators should be able to see why qME invited additional guests.",
+      linkedStoryIds: ["story-queue-automation-observability", "story-stale-queue-blocker-recovery", "story-queue-rule-configuration"],
+      createdAt: "2026-08-19T00:00:00.000Z"
+    },
+    {
       id: "inbox-cookie-event-product-experiment",
       title: "Cookie event as tiny product experiment",
       disposition: "future",
@@ -3020,10 +3116,10 @@ const QME_ROADMAP = {
     },
     {
       id: "inbox-guest-intentions",
-      title: "Guest keeps announcing intentions",
+      title: "Guest intentions - bottled future concept",
       disposition: "future",
       summary:
-        "Use guest conditions and needs to drive actions generally. Guest tells the system what they want to do.",
+        "Future concept only: qME may let guests express what they want, need, are interested in, or are willing to do during an event through explicit actions or lightweight prompts. Intentions may be momentary, Experience-specific, or event-long and could eventually support networking, standby/open capacity, food timing, recommendations, activities, or other event orchestration. Do not build a generalized intentions engine until concrete Experience Types demonstrate what needs to be common.",
       linkedStoryIds: ["story-guest-intentions"]
     },
     {
@@ -3112,10 +3208,10 @@ const QME_ROADMAP = {
     },
     {
       id: "decision-queue-commitment-model",
-      title: "Queue commitment model",
+      title: "Queue Stage, State, and history model",
       status: "decided",
       prompt:
-        "Queue progression is Waiting, Gathering, optional On My Way, I'm Nearby, Your Turn, Done. On My Way extends guest grace time but does not make the guest callable. Only I'm Nearby allows progression to Your Turn. Return to Waiting requires a later I'm Nearby confirmation. Future tuning should consider separate stale timers for Gathering, On My Way, and I'm Nearby."
+        "Distinguish Stage, State, and timestamps/history. Stage answers where the guest is in the workflow: Waiting -> Gathering -> Your Turn -> Completed. State answers what additional current condition affects treatment inside that stage: Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. On My Way indicates response/commitment but does not make the guest callable. Nearby is the stronger Gathering State and normal progression to Your Turn requires Gathering + Nearby. Timestamps/history record meaningful actions and transitions such as joined, Gathering, On My Way, Nearby, release, service start, completion, Not Here, Return to Waiting/cooldown, and admin override. During Sprint 3, Nearby may remain derived from the tested underlying representation while the product UI/CSV exposes Stage and State separately. On My Way must receive the smallest safe additive durable marker needed for current behavior (preferably a nullable timestamp) rather than being omitted because legacy storage did not include it. Broader schema normalization remains a separate deliberate structural pass."
     },
     {
       id: "decision-live-event-controls",
@@ -3186,6 +3282,13 @@ const QME_ROADMAP = {
       status: "decided",
       prompt:
         "Use sotc-rock-hall for the public event slug. Keep SOTCRH as internal shorthand only."
+    },
+    {
+      id: "decision-registration-import-additive-nondestructive",
+      title: "Registration imports are additive and non-destructive",
+      status: "decided",
+      prompt:
+        "External registration systems provide source registration facts; qME owns the evolving event participation built on top of them. Repeated full-file imports should identify registrations qME already knows and add only previously unseen source registrations. Never wipe, recreate, or silently overwrite existing qME sessions, check-ins, queues, credits, voting, profile additions, history, or other participation because a newer source export was uploaded. Preserve the full imported source record and provenance; changed source values on existing registrations require explicit future synchronization policy rather than automatic overwrite."
     },
     {
       id: "decision-sotc-attendee-import",

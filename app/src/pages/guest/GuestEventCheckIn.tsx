@@ -10,6 +10,7 @@ import {
   createEventCheckIn,
   createImportedRegistrationCheckInForGuest,
   getEventCheckIn,
+  reconnectImportedRegistrationCheckInForGuest,
   searchImportedRegistrationsForGuest,
 } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
@@ -286,12 +287,15 @@ export default function GuestEventCheckIn({
         setError('Please enter a 10-digit U.S. phone number, an international number starting with +, or leave phone blank.');
         return;
       }
-      const row = await createImportedRegistrationCheckInForGuest({
+      const input = {
         eventId: event.id,
         importedRegistrationId: result.id,
         emailConfirmation: registrationEmailConfirmation[result.id] || null,
         phone: normalizedPhone || null,
-      });
+      };
+      const row = result.already_checked_in
+        ? await reconnectImportedRegistrationCheckInForGuest(input)
+        : await createImportedRegistrationCheckInForGuest(input);
       setFirstName(row.first_name);
       setLastName(row.last_name);
       localStorage.setItem(storageKey(event.id), JSON.stringify({
@@ -300,6 +304,7 @@ export default function GuestEventCheckIn({
         lastName: row.last_name,
         phone: normalizedPhone,
         importedRegistrationId: result.id,
+        recovered: result.already_checked_in,
         ts: Date.now(),
       }));
       setCheckIn(row);
@@ -312,7 +317,9 @@ export default function GuestEventCheckIn({
       if (message.toLowerCase().includes('email confirmation')) {
         setError('Please confirm the email address used for this registration.');
       } else if (message.toLowerCase().includes('already been checked in')) {
-        setError('This registration has already been checked in. Please see the event team if this is you.');
+        setError('This registration is already checked in. Use Reconnect to My Event if this is you, or see the event team.');
+      } else if (message.toLowerCase().includes('removed')) {
+        setError('This check-in was removed by the event team. Please check in again or see the event team.');
       } else {
         setError('Check-in could not be saved. Please see the event team.');
       }
@@ -497,6 +504,11 @@ export default function GuestEventCheckIn({
                         Email hint: {result.email_hint}
                       </div>
                     )}
+                    {result.ticket_hint && (
+                      <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: 3 }}>
+                        Registration: {result.ticket_hint}
+                      </div>
+                    )}
                     <div style={{ color: result.headshot_entitled ? '#00a344' : '#64748b', fontSize: '0.78rem', fontWeight: 900, marginTop: 5 }}>
                       {result.headshot_entitled ? 'Headshot included' : 'Event admission'}
                     </div>
@@ -504,14 +516,14 @@ export default function GuestEventCheckIn({
                   <button
                     className={result.already_checked_in ? 'actionBtn actionBtn-secondary' : 'actionBtn actionBtn-primary'}
                     type="button"
-                    disabled={saving || result.already_checked_in}
+                    disabled={saving}
                     onClick={() => claimImportedRegistration(result)}
                     style={{ margin: 0 }}
                   >
-                    {result.already_checked_in ? 'Checked In' : 'This is me'}
+                    {result.already_checked_in ? 'Reconnect to My Event' : 'This is me'}
                   </button>
                 </div>
-                {result.requires_email_confirmation && !result.already_checked_in && (
+                {result.requires_email_confirmation && (
                   <div style={{ marginTop: '0.75rem' }}>
                     <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
                       Confirm your email

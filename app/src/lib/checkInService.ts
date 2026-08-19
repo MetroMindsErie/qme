@@ -72,6 +72,23 @@ export async function createImportedRegistrationCheckInForGuest(input: {
   return data as EventCheckIn;
 }
 
+export async function reconnectImportedRegistrationCheckInForGuest(input: {
+  eventId: string;
+  importedRegistrationId: string;
+  emailConfirmation?: string | null;
+  phone?: string | null;
+}): Promise<EventCheckIn> {
+  const { data, error } = await supabase.rpc('reconnect_event_check_in_from_imported_registration_for_guest', {
+    p_event_id: input.eventId,
+    p_guest_token: getGuestSessionToken(input.eventId),
+    p_imported_registration_id: input.importedRegistrationId,
+    p_email_confirmation: input.emailConfirmation?.trim() || null,
+    p_phone: input.phone?.trim() || null,
+  });
+  if (error) throw error;
+  return data as EventCheckIn;
+}
+
 export async function listEventCheckIns(
   eventId: string,
   code?: string | null

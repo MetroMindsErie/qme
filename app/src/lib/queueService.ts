@@ -382,6 +382,22 @@ export async function returnGatheringTicketToWaiting(ticketId: number): Promise<
   return data as Ticket;
 }
 
+export type QueueOverrideTarget = 'waiting' | 'gathering' | 'on_my_way' | 'nearby' | 'your_turn';
+
+export async function overrideQueueTicketState(input: {
+  ticketId: number;
+  targetState: QueueOverrideTarget;
+  reason?: string;
+}): Promise<Ticket> {
+  const { data, error } = await supabase.rpc('admin_override_queue_ticket_state', {
+    p_ticket_id: input.ticketId,
+    p_target_state: input.targetState,
+    p_reason: input.reason?.trim() || null,
+  });
+  if (error) throw error;
+  return data as Ticket;
+}
+
 function ticketIsNearbyConfirmed(ticket: Ticket) {
   return !Object.prototype.hasOwnProperty.call(ticket, 'nearby_confirmed_at') || Boolean(ticket.nearby_confirmed_at);
 }

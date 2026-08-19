@@ -31,7 +31,7 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - No new SQL is currently known to be required for this defect.
 - Production is serving the validated deployed bundle containing the authoritative-ticket recovery path.
 - The defect reproduced against the deployed production build, so the next work is code/data-path diagnosis rather than deployment verification.
-- New fix is local only and not deployed.
+- New fix committed/pushed as `f819563` and production is serving the matching bundle `/assets/index-CyKXMH7N.js`.
 
 ## Current Acceptance-Test Position
 
@@ -57,4 +57,4 @@ Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
 - Trace the actual production data returned to the guest after recovery: current guest session -> authoritative ticket lookup/RPC/query -> returned ticket row/fields -> polling/refetch behavior -> Stage/State derivation -> guest render.
 - Verify whether the guest is receiving the correct ticket but stale stage data, the wrong ticket/row, or a cached/local state object overriding the fetched server row.
 - Fix the shared underlying defect rather than adding another display-specific condition.
-- Commit and deploy the new validated recovery-before-join-gates fix when explicitly instructed, then retest Chiderah / ticket #133 in the recovered guest browser session.
+- Retest Chiderah / ticket #133 in the recovered guest browser session against production bundle `/assets/index-CyKXMH7N.js`.

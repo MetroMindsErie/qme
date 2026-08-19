@@ -232,12 +232,12 @@ const QME_ROADMAP = {
                 "Do not assume storage can be made perfect; use findings to design recovery."
               ],
               notes:
-                "Rock Hall evidence suggests guests often scanned the QR code on the same phone and default browser, checked in, joined a queue, then later qMe did not reconnect them. They could find themselves again and see 'already checked in', which means server-side state existed but the browser-side session pointer was missing or unavailable."
+                "Rock Hall evidence suggests guests often scanned the QR code on the same phone and default browser, checked in, joined a queue, then later qMe did not reconnect them. They could find themselves again and see 'already checked in', which means server-side state existed but the browser-side session pointer was missing or unavailable. 2026-08-19 live acceptance confirmed that deliberately clearing cookies/site storage destroys the browser guest identity and returns the guest to Check-In; this is an expected recovery-entry condition, not something qME can fully prevent in-browser. Recovery now provides the path back to existing server-side participation. Keep this story current for broader repeat-QR/browser/private-mode/iOS/Chrome/storage-condition diagnostics."
             },
             {
               id: "story-already-checked-in-recovery",
               title: "Recover an already checked-in guest from registration search",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "When qMe does not recognize the browser but the guest finds their imported registration again, let them safely reconnect to their existing event participation instead of creating a duplicate or reaching a dead end.",
@@ -253,7 +253,7 @@ const QME_ROADMAP = {
                 "Removed/released registrations continue through the existing re-check-in/recovery behavior rather than silently reconnecting."
               ],
               notes:
-                "This is the product fix for lost browser recognition. It should reconnect to server-side truth rather than relying on perfect local browser storage. Check-In Mode governs initial event admission; recovery restores participation that already exists and should not unnecessarily send an already checked-in guest back through Registration staff. Stronger verification such as SMS OTP can later layer onto the same recovery flow without redesigning it. Implementation added locally on 2026-08-19 with a bounded reconnect RPC and guest UI branch. First live recovery test exposed a queue rediscovery bug: after reconnecting an existing guest check-in, the guest Event Home still offered Join for an existing Headshot ticket because local queue-ticket storage was empty. Follow-up fix adds a guest-safe active queue-ticket lookup and adopts existing server-owned tickets on Event Home, queue landing, and direct ticket-join paths before creating any new ticket. Pending live SQL application, deployment, and person-by-person SOTC recovery testing before marking complete."
+                "This is the product fix for lost browser recognition. It reconnects to server-side truth rather than relying on perfect local browser storage. Check-In Mode governs initial event admission; recovery restores participation that already exists and should not unnecessarily send an already checked-in guest back through Registration staff. Stronger verification such as SMS OTP can later layer onto the same recovery flow without redesigning it. Completed 2026-08-19 after multi-round live SOTC acceptance with real baseline guests including Chiderah Emeakoroha, Charlie Haslett, and Madeline Vlaeminck. Recovery now reconnects the current browser/session to existing check-ins, queue tickets, Stage/State, credits, marks, and completion history without duplicate participation. The key implementation lesson was that browser/localStorage is only a recovery hint; existing server-side participation must be rediscovered/adopted from authoritative ticket and check-in truth."
             },
             {
               id: "story-storage-health-recovery-contact-prompt",
@@ -299,7 +299,7 @@ const QME_ROADMAP = {
             {
               id: "story-admin-guest-search-state-reconciliation",
               title: "Improve admin guest search, status, timing, and history visibility",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Help operators quickly understand who a guest is, where they are in the queue workflow, their readiness condition, their queue position and surrounding queue context, how long they have been there, and what meaningful actions happened previously.",
@@ -315,12 +315,12 @@ const QME_ROADMAP = {
                 "Visibility is role-aware and separates event-admin views from limited station-staff views."
               ],
               notes:
-                "Post-SOTC lesson: operators need to understand both queue order and readiness, not merely a technical ticket stage. Product refinement on 2026-08-19 established Stage / State / Timestamps-History: Stage is where the guest is in the workflow; State is additional current condition that affects treatment; timestamps/history record what happened and when. For the current managed queue, conceptual stages are Waiting -> Gathering -> Your Turn -> Completed. Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. Nearby remains a derived operational State for Sprint 3, using the existing tested queue representation (for example standby + nearby_confirmed_at) while the admin UI and CSV present Stage and State separately. On My Way is also a real Gathering State and should receive the smallest safe additive durable marker, preferably a nullable timestamp such as on_my_way_at, rather than being omitted because the older schema did not persist it. Do not turn this into a broad queue-schema migration. Clean visible encoding artifacts such as a broken middle-dot character in the timing/status UI while implementing the visibility story."
+                "Post-SOTC lesson: operators need to understand both queue order and readiness, not merely a technical ticket stage. Product refinement on 2026-08-19 established Stage / State / Timestamps-History: Stage is where the guest is in the workflow; State is additional current condition that affects treatment; timestamps/history record what happened and when. For the current managed queue, conceptual stages are Waiting -> Gathering -> Your Turn -> Completed. Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. Completed 2026-08-19 after live SOTC acceptance confirmed admin search/state visibility, CSV/export semantics, timing/status visibility, queue context, and guest/admin reconciliation across Waiting, Gathering, On My Way, Nearby, Your Turn, Return to Waiting/cooldown, and Completed. Admin and guest surfaces now derive from the same authoritative server-side ticket truth."
             },
             {
               id: "story-authorized-queue-state-overrides",
               title: "Add authorized queue state override controls",
-              status: "current",
+              status: "done",
               sprint: "now",
               summary:
                 "Give Event Admin or approved station authority operational controls to reconcile qME with physical event reality while preserving normal automation as the default.",
@@ -336,7 +336,7 @@ const QME_ROADMAP = {
                 "Station staff visibility/editability is role-aware; Event Admin or higher can perform broader event-level overrides."
               ],
               notes:
-                "This is broader than 'let this person go next' but includes that normal operational need. Product refinement on 2026-08-19 distinguishes Stage from State: Waiting/Gathering/Your Turn/Completed are workflow stages; Cooling Down, On My Way, and Nearby are conditions within stages. Existing production fields may derive these semantics during Sprint 3; do not require a broad schema migration merely to rename the tested state machine. Product Owner authorization: On My Way must not be dropped from live behavior solely because the old schema lacks a field. Add the smallest safe durable persistence needed to support it, preferably a nullable on_my_way_at timestamp/marker, provided this does not restructure the existing queue stage machine. Derive Gathering / On My Way when that marker is present and nearby_confirmed_at is not; Nearby remains the stronger Gathering State and makes the guest callable. If even this additive persistence creates broader migration/risk, stop for product review before implementation. A future guest self-Standby capability may let a Waiting guest declare physical availability to fill otherwise unused capacity without changing normal queue order; for now the admin override provides the manual operational behavior."
+                "This is broader than 'let this person go next' but includes that normal operational need. Product refinement on 2026-08-19 distinguishes Stage from State: Waiting/Gathering/Your Turn/Completed are workflow stages; Cooling Down, On My Way, and Nearby are conditions within stages. Completed 2026-08-19 after Product Owner exercised authorized forward/backward operational transitions with real SOTC records, including On My Way, Nearby, Your Turn, Return to Waiting/cooldown, Not Here-related paths, and completion. On My Way is persisted as a real Gathering State marker; Nearby remains the stronger Gathering State and makes the guest callable. Overrides are accepted for live operational reconciliation while automation remains the default."
             }
           ]
         }

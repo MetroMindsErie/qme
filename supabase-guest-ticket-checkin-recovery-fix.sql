@@ -19,6 +19,7 @@ declare
   resolved_session_id uuid;
   queue_event_id uuid;
   ticket_row public.tickets;
+  matching_check_in_id uuid;
 begin
   if p_event_id is null or p_queue_id is null then
     raise exception 'Event and queue are required.';
@@ -54,6 +55,27 @@ begin
           and eci.event_id = p_event_id
           and eci.guest_session_id = resolved_session_id
       )
+      or exists (
+        select 1
+        from public.event_check_ins eci
+        where eci.guest_session_id = resolved_session_id
+          and eci.event_id = p_event_id
+          and eci.status = 'completed'
+          and t.check_in_id is null
+          and lower(trim(coalesce(t.first_name, ''))) = lower(trim(coalesce(eci.first_name, '')))
+          and lower(trim(coalesce(t.last_name, ''))) = lower(trim(coalesce(eci.last_name, '')))
+          and not exists (
+            select 1
+            from public.tickets duplicate_ticket
+            where duplicate_ticket.queue_id = p_queue_id
+              and duplicate_ticket.id <> t.id
+              and duplicate_ticket.check_in_id is null
+              and coalesce(duplicate_ticket.status, 'active') <> 'left'
+              and coalesce(duplicate_ticket.stage, 'waiting') not in ('cancelled', 'left')
+              and lower(trim(coalesce(duplicate_ticket.first_name, ''))) = lower(trim(coalesce(t.first_name, '')))
+              and lower(trim(coalesce(duplicate_ticket.last_name, ''))) = lower(trim(coalesce(t.last_name, '')))
+          )
+      )
     )
   order by
     case coalesce(t.stage, 'waiting')
@@ -67,7 +89,28 @@ begin
     t.id desc
   limit 1;
 
-  if ticket_row.id is not null and ticket_row.guest_session_id is null then
+  if ticket_row.id is not null and ticket_row.check_in_id is null then
+    select eci.id
+      into matching_check_in_id
+    from public.event_check_ins eci
+    where eci.event_id = p_event_id
+      and eci.guest_session_id = resolved_session_id
+      and eci.status = 'completed'
+      and lower(trim(coalesce(ticket_row.first_name, ''))) = lower(trim(coalesce(eci.first_name, '')))
+      and lower(trim(coalesce(ticket_row.last_name, ''))) = lower(trim(coalesce(eci.last_name, '')))
+    order by eci.updated_at desc, eci.created_at desc
+    limit 1;
+  end if;
+
+  if ticket_row.id is not null and matching_check_in_id is not null then
+    update public.tickets
+    set
+      guest_session_id = resolved_session_id,
+      check_in_id = matching_check_in_id
+    where id = ticket_row.id
+      and check_in_id is null
+    returning * into ticket_row;
+  elsif ticket_row.id is not null and ticket_row.guest_session_id is null then
     update public.tickets
     set guest_session_id = resolved_session_id
     where id = ticket_row.id

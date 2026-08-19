@@ -5,7 +5,16 @@
 import { useEffect, useState, useCallback, type KeyboardEvent, type MouseEvent } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { getEventBySlug } from '../../lib/eventService';
-import { getActiveTicketCountForQueue, listQueuePilotTickets, listQueuesForEvent, getNowServing, restoreTicketForQueue, getQueueTicket } from '../../lib/queueService';
+import {
+  getActiveQueueTicketForGuest,
+  getActiveTicketCountForQueue,
+  getNowServing,
+  getQueueTicket,
+  isAdoptableQueueTicket,
+  listQueuePilotTickets,
+  listQueuesForEvent,
+  restoreTicketForQueue,
+} from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
@@ -13,7 +22,12 @@ import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { isSotcEventSlug } from '../../lib/sotc';
 import { formatTime } from '../../lib/utils';
-import { getStoredQueueTicket, getStoredQueueTicketNumber, clearQueueTicket } from '../../hooks/useQueueTicket';
+import {
+  clearQueueTicket,
+  getStoredQueueTicket,
+  getStoredQueueTicketNumber,
+  storeQueueTicket,
+} from '../../hooks/useQueueTicket';
 import MenuModal, { type MenuConfig } from '../../components/MenuModal';
 import type { Ece, EventCheckIn, QEvent, Queue, Ticket } from '../../types';
 import '../../styles/shared.css';
@@ -535,6 +549,18 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                   clearQueueTicket(q.id);
                   ticket = '';
                 }
+              }
+            }
+            if (!ticket) {
+              try {
+                const recoveredTicket = await getActiveQueueTicketForGuest(q.id, ev.id);
+                if (isAdoptableQueueTicket(recoveredTicket)) {
+                  ticket = String(recoveredTicket.ticket_number ?? recoveredTicket.id);
+                  ticketStage = recoveredTicket.stage;
+                  storeQueueTicket(q.id, recoveredTicket.id, recoveredTicket.ticket_number ?? recoveredTicket.id);
+                }
+              } catch {
+                /* No recovered ticket for this guest/session on this queue. */
               }
             }
             let ns = q.now_serving;

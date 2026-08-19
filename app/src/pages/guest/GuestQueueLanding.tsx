@@ -7,14 +7,20 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import DisplayField from '../../components/DisplayField';
 import { useQueueMetric } from '../../hooks/useQueueMetric';
-import { getStoredQueueTicket, clearQueueTicket } from '../../hooks/useQueueTicket';
+import { getStoredQueueTicket, clearQueueTicket, storeQueueTicket } from '../../hooks/useQueueTicket';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import { isSotcEventSlug } from '../../lib/sotc';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
-import { getQueueBySlug, leaveQueue, restoreTicketForQueue } from '../../lib/queueService';
+import {
+  getActiveQueueTicketForGuest,
+  getQueueBySlug,
+  isAdoptableQueueTicket,
+  leaveQueue,
+  restoreTicketForQueue,
+} from '../../lib/queueService';
 import { formatDate, formatTime } from '../../lib/utils';
 import type { QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
@@ -111,6 +117,24 @@ export default function GuestQueueLanding() {
     updateUI();
   }, [updateUI]);
 
+  const adoptRecoveredTicket = useCallback(async () => {
+    if (!queue || !event?.id) return false;
+    if (getStoredQueueTicket(queue.id)) return true;
+    try {
+      const recoveredTicket = await getActiveQueueTicketForGuest(queue.id, event.id);
+      if (!isAdoptableQueueTicket(recoveredTicket)) return false;
+      storeQueueTicket(queue.id, recoveredTicket.id, recoveredTicket.ticket_number ?? recoveredTicket.id);
+      updateUI();
+      return true;
+    } catch {
+      return false;
+    }
+  }, [queue, event?.id, updateUI]);
+
+  useEffect(() => {
+    void adoptRecoveredTicket();
+  }, [adoptRecoveredTicket]);
+
   useEffect(() => {
     if (!queue || !event?.id) return;
     const storedTicketId = getStoredQueueTicket(queue.id);
@@ -135,10 +159,11 @@ export default function GuestQueueLanding() {
   }, [updateUI]);
 
   // Handlers
-  function handleJoin() {
+  async function handleJoin() {
     if (!queue || !eventSlug || !queueSlug) return;
+    const didAdoptTicket = await adoptRecoveredTicket();
     const t = getStoredQueueTicket(queue.id);
-    if (t) {
+    if (t || didAdoptTicket) {
       navigate(`/events/${eventSlug}/q/${queueSlug}/ticket?resume=1`);
     } else {
       navigate(`/events/${eventSlug}/q/${queueSlug}/ticket?join=1`);

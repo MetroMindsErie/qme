@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
+  getActiveQueueTicketForGuest,
+  isAdoptableQueueTicket,
   nextTicketForQueue,
   peekTicketForQueue,
   restoreTicketForQueue,
@@ -33,6 +35,12 @@ export function clearQueueTicket(queueId: string) {
   if (ticketStr) {
     try { localStorage.removeItem(checkedInKey(queueId, Number(ticketStr))); } catch { /* */ }
   }
+}
+
+export function storeQueueTicket(queueId: string, ticketId: number, ticketNumber?: number | null) {
+  const safeTicketNumber = ticketNumber ?? ticketId;
+  try { localStorage.setItem(localKey(queueId), String(ticketId)); } catch { /* */ }
+  try { localStorage.setItem(localNumKey(queueId), String(safeTicketNumber)); } catch { /* */ }
 }
 
 /** Returns all queue IDs the guest currently has tickets for */
@@ -94,12 +102,6 @@ export function useQueueTicket(
     }
   }, [queueId]);
 
-  // Helper: store ticket info
-  function storeTicket(qId: string, id: number, num: number) {
-    try { localStorage.setItem(localKey(qId), String(id)); } catch { /* */ }
-    try { localStorage.setItem(localNumKey(qId), String(num)); } catch { /* */ }
-  }
-
   // Claim or adopt a ticket for this queue
   const claimTicket = useCallback(async (): Promise<number | null> => {
     if (!queueId || !eventId || claimBusyRef.current) return ticketId;
@@ -114,7 +116,7 @@ export function useQueueTicket(
         try {
           const result = await restoreTicketForQueue(id, queueId, eventId);
           setTicketNumber(result.ticketNumber);
-          storeTicket(queueId, result.id, result.ticketNumber);
+          storeQueueTicket(queueId, result.id, result.ticketNumber);
         } catch {
           clearQueueTicket(queueId);
           setTicketId(null);
@@ -135,11 +137,25 @@ export function useQueueTicket(
         return id;
       }
 
+      try {
+        const recoveredTicket = await getActiveQueueTicketForGuest(queueId, eventId);
+        if (isAdoptableQueueTicket(recoveredTicket)) {
+          const recoveredNumber = recoveredTicket.ticket_number ?? recoveredTicket.id;
+          storeQueueTicket(queueId, recoveredTicket.id, recoveredNumber);
+          setTicketId(recoveredTicket.id);
+          setTicketNumber(recoveredNumber);
+          setHasCheckedIn(localStorage.getItem(checkedInKey(queueId, recoveredTicket.id)) === '1');
+          return recoveredTicket.id;
+        }
+      } catch {
+        /* No server-side ticket to adopt; continue with a new ticket claim. */
+      }
+
       // Claim new
       const result = await nextTicketForQueue(queueId, eventId, eventCheckInId);
       setTicketId(result.id);
       setTicketNumber(result.ticketNumber);
-      storeTicket(queueId, result.id, result.ticketNumber);
+      storeQueueTicket(queueId, result.id, result.ticketNumber);
       return result.id;
     } catch (e) {
       console.error('ticket claim failed', e);

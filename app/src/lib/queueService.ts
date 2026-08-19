@@ -313,6 +313,27 @@ export async function getQueueTicket(
   return data as Ticket;
 }
 
+export async function getActiveQueueTicketForGuest(
+  queueId: string,
+  eventId?: string | null
+): Promise<Ticket | null> {
+  requireGuestQueueScope(queueId, eventId);
+
+  const { data, error } = await supabase.rpc('get_active_queue_ticket_for_guest', {
+    p_event_id: eventId,
+    p_queue_id: queueId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
+  if (error) throw error;
+  return data ? data as Ticket : null;
+}
+
+export function isAdoptableQueueTicket(ticket: Ticket | null | undefined): ticket is Ticket {
+  if (!ticket) return false;
+  const stage = ticket.stage ?? 'waiting';
+  return !['cancelled', 'left'].includes(stage) && ticket.status !== 'left';
+}
+
 export async function updateTicketStage(
   ticketId: number,
   stage: NonNullable<Ticket['stage']>

@@ -1,10 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  getActiveQueueTicketForGuest,
+  getAuthoritativeQueueTicketForGuest,
   isAdoptableQueueTicket,
   nextTicketForQueue,
   peekTicketForQueue,
-  restoreTicketForQueue,
   checkInTicket as apiCheckIn,
   leaveQueue as apiLeave,
 } from '../lib/queueService';
@@ -114,9 +113,13 @@ export function useQueueTicket(
         setTicketId(id);
         setTicketNumber(Number(localStorage.getItem(localNumKey(queueId))) || id);
         try {
-          const result = await restoreTicketForQueue(id, queueId, eventId);
-          setTicketNumber(result.ticketNumber);
-          storeQueueTicket(queueId, result.id, result.ticketNumber);
+          const ticket = await getAuthoritativeQueueTicketForGuest(queueId, eventId, id);
+          if (!isAdoptableQueueTicket(ticket)) throw new Error('No active queue ticket for guest.');
+          const ticketNumber = ticket.ticket_number ?? ticket.id;
+          setTicketId(ticket.id);
+          setTicketNumber(ticketNumber);
+          storeQueueTicket(queueId, ticket.id, ticketNumber);
+          return ticket.id;
         } catch {
           clearQueueTicket(queueId);
           setTicketId(null);
@@ -124,7 +127,6 @@ export function useQueueTicket(
           setHasCheckedIn(false);
           return null;
         }
-        return id;
       }
 
       // Short race guard
@@ -138,7 +140,7 @@ export function useQueueTicket(
       }
 
       try {
-        const recoveredTicket = await getActiveQueueTicketForGuest(queueId, eventId);
+        const recoveredTicket = await getAuthoritativeQueueTicketForGuest(queueId, eventId);
         if (isAdoptableQueueTicket(recoveredTicket)) {
           const recoveredNumber = recoveredTicket.ticket_number ?? recoveredTicket.id;
           storeQueueTicket(queueId, recoveredTicket.id, recoveredNumber);

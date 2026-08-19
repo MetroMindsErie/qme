@@ -23,6 +23,7 @@ import {
   applyQueuePilotFlow,
   confirmTicketNearby,
   completeQueueTicketAction,
+  getAuthoritativeQueueTicketForGuest,
   getQueueBySlug,
   getQueueServiceMarkForGuest,
   getQueueTicket,
@@ -386,7 +387,16 @@ export default function GuestQueueTicketPage() {
     let stopped = false;
     async function refreshTicket() {
       try {
-        const row = await getQueueTicket(activeTicketId, queueId, event?.id);
+        let row: Ticket;
+        try {
+          row = await getQueueTicket(activeTicketId, queueId, event?.id);
+        } catch {
+          const recovered = await getAuthoritativeQueueTicketForGuest(queueId, event?.id, activeTicketId);
+          if (!recovered) throw new Error('No active queue ticket for guest.');
+          row = recovered;
+          localStorage.setItem(`qme:ticket:${queueId}`, String(row.id));
+          localStorage.setItem(`qme:ticketNum:${queueId}`, String(row.ticket_number ?? row.id));
+        }
         if (['cancelled', 'left'].includes(row.stage ?? 'waiting')) {
           clearNotHereNotice(row.id);
           clearQueueTicket(queueId);

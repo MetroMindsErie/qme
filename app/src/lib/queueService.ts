@@ -328,6 +328,22 @@ export async function getActiveQueueTicketForGuest(
   return data ? data as Ticket : null;
 }
 
+export async function getAuthoritativeQueueTicketForGuest(
+  queueId: string,
+  eventId?: string | null,
+  storedTicketId?: number | null
+): Promise<Ticket | null> {
+  requireGuestQueueScope(queueId, eventId);
+
+  const activeTicket = await getActiveQueueTicketForGuest(queueId, eventId);
+  if (isAdoptableQueueTicket(activeTicket)) return activeTicket;
+
+  if (!storedTicketId || storedTicketId <= 0) return null;
+
+  const restored = await restoreTicketForQueue(storedTicketId, queueId, eventId);
+  return getQueueTicket(restored.id, queueId, eventId);
+}
+
 export function isAdoptableQueueTicket(ticket: Ticket | null | undefined): ticket is Ticket {
   if (!ticket) return false;
   const stage = ticket.stage ?? 'waiting';

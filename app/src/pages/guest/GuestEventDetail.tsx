@@ -7,13 +7,12 @@ import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { getEventBySlug } from '../../lib/eventService';
 import {
   getActiveQueueTicketForGuest,
+  getAuthoritativeQueueTicketForGuest,
   getActiveTicketCountForQueue,
   getNowServing,
-  getQueueTicket,
   isAdoptableQueueTicket,
   listQueuePilotTickets,
   listQueuesForEvent,
-  restoreTicketForQueue,
 } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
@@ -542,8 +541,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             }
             if (storedTicketId) {
               try {
-                const ticketRow = await getQueueTicket(Number(storedTicketId), q.id, ev.id);
-                if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting') || ticketRow.status === 'left') {
+                const ticketRow = await getAuthoritativeQueueTicketForGuest(q.id, ev.id, Number(storedTicketId));
+                if (!ticketRow || ['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting') || ticketRow.status === 'left') {
                   clearQueueTicket(q.id);
                   ticket = '';
                 } else {
@@ -554,23 +553,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                   localStorage.setItem(`qme:ticketNum:${q.id}`, String(ticketRow.ticket_number ?? ticketRow.id));
                 }
               } catch {
-                try {
-                  const restored = await restoreTicketForQueue(Number(storedTicketId), q.id, ev.id);
-                  const ticketRow = await getQueueTicket(restored.id, q.id, ev.id);
-                  if (['cancelled', 'left'].includes(ticketRow.stage ?? 'waiting') || ticketRow.status === 'left') {
-                    clearQueueTicket(q.id);
-                    ticket = '';
-                  } else {
-                    ticket = String(restored.ticketNumber);
-                    ticketStage = ticketRow.stage;
-                    ticketStateLabel = queueTicketStateStatus(ticketRow);
-                    localStorage.setItem(`qme:ticket:${q.id}`, String(restored.id));
-                    localStorage.setItem(`qme:ticketNum:${q.id}`, String(restored.ticketNumber));
-                  }
-                } catch {
-                  clearQueueTicket(q.id);
-                  ticket = '';
-                }
+                clearQueueTicket(q.id);
+                ticket = '';
               }
             }
             if (!ticket) {

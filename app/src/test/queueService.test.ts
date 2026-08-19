@@ -30,6 +30,7 @@ import {
   nextTicketForQueue,
   peekTicketForQueue,
   restoreTicketForQueue,
+  getAuthoritativeQueueTicketForGuest,
   checkInTicket,
   leaveQueue,
   getAdminSnapshotForQueue,
@@ -240,6 +241,44 @@ describe('queueService', () => {
       mockRpc.mockResolvedValueOnce({ data: 5, error: null });
       const result = await restoreTicketForQueue(5, 'q1', 'e1');
       expect(result).toEqual({ id: 5, ticketNumber: 5 });
+    });
+  });
+
+  describe('getAuthoritativeQueueTicketForGuest', () => {
+    it('uses the active server ticket before a stored browser ticket id', async () => {
+      const activeTicket = { id: 133, queue_id: 'q1', ticket_number: 133, stage: 'released', status: 'waiting' };
+      mockRpc.mockResolvedValueOnce({ data: activeTicket, error: null });
+
+      const result = await getAuthoritativeQueueTicketForGuest('q1', 'e1', 42);
+
+      expect(result).toEqual(activeTicket);
+      expect(mockRpc).toHaveBeenCalledTimes(1);
+      expect(mockRpc).toHaveBeenCalledWith('get_active_queue_ticket_for_guest', {
+        p_event_id: 'e1',
+        p_queue_id: 'q1',
+        p_guest_token: expect.any(String),
+      });
+    });
+
+    it('restores a stored ticket id when no active server ticket is found', async () => {
+      const restoredTicket = { id: 133, queue_id: 'q1', ticket_number: 133, stage: 'standby', status: 'waiting' };
+      mockRpc
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: { id: 133, ticket_number: 133 }, error: null })
+        .mockResolvedValueOnce({ data: restoredTicket, error: null });
+
+      const result = await getAuthoritativeQueueTicketForGuest('q1', 'e1', 133);
+
+      expect(result).toEqual(restoredTicket);
+      expect(mockRpc).toHaveBeenNthCalledWith(2, 'restore_ticket_for_queue', {
+        p_ticket_id: 133,
+        p_queue_id: 'q1',
+        p_guest_token: expect.any(String),
+      });
+      expect(mockRpc).toHaveBeenNthCalledWith(3, 'get_ticket_for_guest', {
+        p_ticket_id: 133,
+        p_guest_token: expect.any(String),
+      });
     });
   });
 

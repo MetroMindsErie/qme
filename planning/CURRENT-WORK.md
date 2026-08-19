@@ -2,64 +2,83 @@
 
 ## Current Slice
 
-Acceptance testing is stopped on Chiderah Emeakoroha / ticket #133.
+Sprint 3 live acceptance testing for guest recovery plus queue Stage/State visibility and authorized overrides has reached a Product Owner acceptance checkpoint.
 
-## Meaningful Findings
+## Live Acceptance Outcome — 2026-08-19
 
-- Admin/server transitions correctly moved the existing ticket through Gathering, Gathering / On My Way, Return to Waiting / cooldown, Gathering / On My Way again, Gathering / Nearby, and Your Turn.
-- The Admin Queue reflected those transitions correctly.
-- The recovered guest queue page remained Waiting through all Stage/State changes, including when Admin showed Your Turn.
-- A shared authoritative guest-ticket lookup fix was implemented, validated, pushed, and deployed.
-- **Live verification after deployment still fails:** with Admin showing ticket #133 as `Stage: Gathering / State: On My Way`, the recovered guest queue page still renders `Waiting`. The prior fix therefore did not resolve the authoritative current-state path used by the live guest UI.
-- This is now a persistent end-to-end guest state defect, not merely an On My Way label problem and not merely a stale localStorage ticket-id problem.
-- Root cause found in the guest ticket page: server-session-only recovery was skipped unless the browser already had a stored ticket id or `join=1`. That allowed the pilot ticket page to render its default Waiting state with `pilotTicket = null`.
-- Additional likely root cause found in SQL/RPC recovery: `get_active_queue_ticket_for_guest` only finds tickets by `tickets.guest_session_id`, but recovered check-ins can own existing queue tickets through `tickets.check_in_id` while `tickets.guest_session_id` is not attached yet.
-- Admin CSV for ticket #133 confirms the operational state is `raw_ticket_stage = released` / `workflow_stage = Your Turn`, while legacy `status = waiting` and `nearby_confirmed = yes` are raw fields, not guest display state. The same row has blank check-in fields, confirming ticket #133 is not linked to Chiderah's event check-in.
-- Server-side ticket state must remain authoritative for guest queue and Event Home surfaces.
+- After several rounds of fixes, live guest and admin behavior is now synchronized from server-side ticket truth.
+- Product Owner tested multiple real SOTC baseline guests, including Chiderah Emeakoroha, Charlie Haslett, and Madeline Vlaeminck.
+- Testing deliberately moved queue Stage/State forward and backward through Waiting, Gathering, On My Way, Nearby, Your Turn, Return to Waiting/cooldown, and completion paths.
+- Guest views were closed/reopened and refreshed during testing; current participation and Stage/State were rediscovered correctly from server truth after the final fixes.
+- Charlie was used for additional lifecycle testing; when Charlie moved from Nearby to Your Turn, Madeline was used to isolate and verify the Nearby state independently.
+- Madeline successfully provided a clean Nearby-state verification.
+- Chiderah was ultimately completed during the test sequence.
+- Product Owner reports extensive combinations are now working and considers the Stage/State/admin-override/recovery behavior accepted for this slice.
 
-## Implementation Status
+## Browser Persistence Finding
 
-- Shared authoritative guest ticket lookup checks the active server ticket for the guest session before using a stored browser ticket id as a recovery hint.
-- Guest ticket recovery stores/uses the authoritative server ticket id/number after lookup.
-- Recovered guest queue polling can recover through the shared authoritative lookup if direct ticket fetch fails.
-- Event Home queue card enrichment uses the shared authoritative lookup for stored ticket recovery.
-- App fix committed/pushed as `dde88b2` and is live in production.
-- `AGENTS.md` and shared handoff docs are committed on `main`.
-- New local fix: `useQueueTicket` now exposes server-only recovery that adopts an existing authoritative ticket without creating a duplicate.
-- New local fix: `GuestQueueTicket` runs server-session recovery for pilot queue ticket pages before join/credit/name gates, so a recovered guest page can set `ticketId`, poll the server ticket, and render the current Stage/State.
-- New SQL patch drafted in `supabase-guest-ticket-checkin-recovery-fix.sql`: guest ticket RPCs accept recovered check-in ownership and backfill `tickets.guest_session_id` when safe.
+- Deliberately clearing browser cookies/site storage destroys the browser's guest identity and the open guest tab returns to Check-In.
+- This is now treated as an expected recovery-entry condition rather than a requirement that qME preserve identity after the browser deliberately destroys its own identifier.
+- The important product behavior is that the guest can find the known registration again and reconnect to the existing server-side participation without duplicate check-ins, tickets, credits, marks, or completion history.
+- Ordinary refresh, close/reopen, and recovered-session behavior was exercised successfully after the final server-truth fixes.
+- Broader browser/platform persistence diagnostics remain useful discovery; do not claim every browser/private-mode/storage edge case in the diagnostic story has been exhaustively tested.
 
-## SQL / Deployment State
+## Product Owner Roadmap Closure Decisions
 
-- SQL patch is now required for the live failure path.
-- Production is serving the validated deployed bundle containing the authoritative-ticket recovery path.
-- The defect reproduced against the deployed production build, so the next work is code/data-path diagnosis rather than deployment verification.
-- New fix committed/pushed as `f819563` and production is serving the matching bundle `/assets/index-CyKXMH7N.js`.
-- SQL patch has not been applied to live Supabase from Codex because no SQL execution tool/connection is available in this environment.
+Billy records the following Product Owner decisions for `planning/roadmap-data.js`:
 
-## Current Acceptance-Test Position
+1. **Mark `story-already-checked-in-recovery` = done.**
+   - Live recovery is working against real SOTC baseline records.
+   - Existing participation is rediscovered from server truth rather than recreated.
+   - Queue participation/Stage/State survives recovery and no duplicate Join path should be offered for an existing ticket.
+   - Add concise completion notes reflecting the multi-round live acceptance and the server-truth lesson.
 
-- **Failed live verification:** Admin = Gathering / On My Way; recovered guest page = Waiting after refresh.
-- Earlier live testing also showed the recovered guest page remaining Waiting while Admin moved the same ticket through Nearby and Your Turn.
-- Do not continue the acceptance matrix until the guest page renders the actual current server Stage/State for ticket #133.
+2. **Mark `story-admin-guest-search-state-reconciliation` = done.**
+   - Admin Stage and State are separated and operationally understandable.
+   - On My Way and Nearby behavior, timing/status visibility, queue context, and live state reconciliation were exercised during acceptance testing.
+   - Add concise completion notes from the 2026-08-19 live test.
 
-## Blockers / Decisions
+3. **Mark `story-authorized-queue-state-overrides` = done.**
+   - Product Owner exercised forward/backward operational transitions with real SOTC records, including On My Way, Nearby, Your Turn, Return to Waiting/cooldown, and completion-related paths.
+   - Guest/admin views ultimately stayed synchronized from authoritative server state.
+   - Add concise completion notes from the 2026-08-19 live test.
 
-- No Product Owner decision is currently required. Intended behavior is already clear: guest and admin must reflect the same authoritative server-side ticket Stage/State.
+4. **Keep `story-guest-session-persistence-diagnostics` = current, not done.**
+   - We have a strong concrete finding: clearing cookies/site storage destroys browser identity and returns the tab to Check-In, while recovery now provides the correct way back to existing server participation.
+   - However, the story's acceptance criteria also call for broader repeat-QR/browser/private-mode/iOS/Chrome/storage-condition diagnostics. Those have not all been exhaustively completed in this acceptance session.
+   - Update the story notes with the confirmed cookie/site-storage finding and successful recovery behavior, but do not close it yet.
+
+Do not close `story-storage-health-recovery-contact-prompt`; it was not the subject of this acceptance pass.
+
+## Durable Product / Architecture Findings
+
+- Server-side participation is authoritative; browser/local storage is a recovery hint/cache, not the source of current queue participation, Stage, or State.
+- Guest and Admin must derive the current queue condition from the same authoritative server ticket truth.
+- Recovery is restoration of existing participation, not a second check-in.
+- If browser identity is deliberately destroyed, returning to Check-In is acceptable provided the guest can rediscover the known registration and reconnect safely.
+- Stage and State remain distinct product concepts: Waiting/Gathering/Your Turn/Completed describe workflow position; conditions such as Cooling Down, On My Way, and Nearby refine treatment inside a Stage.
+
+## Implementation / SQL / Deployment State
+
+- The multi-round guest recovery and server-truth fixes have been applied and tested live by the Product Owner.
+- Required recovery/queue SQL patches were applied during the debugging sequence before final live acceptance.
+- Production deployment was exercised repeatedly during the repair cycle; Product Owner reports the final behavior is working.
+- Steve should reconcile the exact final commit/deployment identifiers from git/history when updating roadmap implementation notes; do not reopen accepted product behavior merely to reconstruct the chronology.
 
 ## Validation
 
-- Prior implementation validation passed: `npx tsc -b`, queue service tests, and Vite build.
-- Prior production bundle verification passed, but live acceptance still fails, so local/unit validation is insufficient for this path.
-- New local validation passed: `npx tsc -b`.
-- New local validation passed: `npx vitest run src/test/useQueueTicket.test.ts src/test/queueService.test.ts` with 50 passing tests.
-- New local validation passed: `npx vite build` after one retry due to a transient local `dist/images` lock. Vite reported the existing large chunk warning.
-- SQL syntax has not been live-applied or regression-tested.
+- Steve's targeted queue/recovery tests and TypeScript/Vite builds passed during the repair cycle.
+- More importantly, Product Owner performed extensive live production acceptance against real SOTC baseline records after the final fixes.
+- Live acceptance now supersedes the earlier failed Chiderah verification recorded in previous versions of this file.
 
 ## Next Action
 
-- Steve: read `AGENTS.md` and this file, then diagnose the live end-to-end guest state path for ticket #133 without routine narration.
-- Trace the actual production data returned to the guest after recovery: current guest session -> authoritative ticket lookup/RPC/query -> returned ticket row/fields -> polling/refetch behavior -> Stage/State derivation -> guest render.
-- Verify whether the guest is receiving the correct ticket but stale stage data, the wrong ticket/row, or a cached/local state object overriding the fetched server row.
-- Fix the shared underlying defect rather than adding another display-specific condition.
-- Apply the latest `supabase-guest-ticket-checkin-recovery-fix.sql` from commit `28a7241` to live Supabase, then retest Chiderah / ticket #133 in the recovered guest browser session.
+Steve: read `AGENTS.md` and this file, then work silently.
+
+1. Mechanically apply the Product Owner roadmap closure decisions above to `planning/roadmap-data.js` and add concise 2026-08-19 completion/finding notes. Do not redesign or reopen the accepted stories.
+2. Keep `story-guest-session-persistence-diagnostics` current and add the confirmed cookie/site-storage finding plus the role of recovery.
+3. Keep `story-storage-health-recovery-contact-prompt` open/current.
+4. Reconcile this handoff with the final git/deployment state and then reset `planning/CURRENT-WORK.md` to the next active slice rather than preserving the debugging diary.
+5. Do not begin implementation of another product story unless the roadmap clearly identifies the next already-authorized work; if the next step requires Product Owner prioritization, stop with one concise decision packet.
+
+No routine narration or acknowledgement is needed. Read the files and proceed.

@@ -1,0 +1,69 @@
+name: Sync Planning Roadmap
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "planning/roadmap/**"
+      - "scripts/build-roadmap-data.js"
+      - "scripts/seed-planning-document.js"
+      - "package.json"
+      - ".github/workflows/sync-planning-roadmap.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-planning-roadmap
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify required secrets
+        shell: bash
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Missing required GitHub Actions secrets: SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY" >&2
+            exit 1
+          fi
+
+      - name: Validate roadmap
+        run: npm run planning:validate
+
+      - name: Generate compatibility roadmap artifact
+        run: npm run planning:build
+
+      - name: Seed live planning document
+        run: node scripts/seed-planning-document.js
+
+      - name: Commit generated roadmap artifact when changed
+        shell: bash
+        run: |
+          if git diff --quiet -- planning/roadmap-data.js; then
+            echo "planning/roadmap-data.js already matches canonical roadmap source."
+            exit 0
+          fi
+
+          git config user.name "qME Planning Sync"
+          git config user.email "actions@users.noreply.github.com"
+          git add planning/roadmap-data.js
+          git commit -m "chore: regenerate planning roadmap artifact [skip ci]"
+          git push

@@ -45,7 +45,6 @@ Steve is explicitly authorized to implement the bounded roadmap modularization d
 - generate the existing aggregate `planning/roadmap-data.js` deterministically for compatibility;
 - add build/validation tooling and package scripts;
 - make `planning:seed` build/validate first or otherwise prevent stale aggregate data from being seeded;
-- mechanically apply the three Product Owner roadmap decisions above during migration;
 - run the existing authorized Planning seed after validation;
 - verify the live Planning UI reflects the updated roadmap;
 - update this handoff when complete.
@@ -64,8 +63,9 @@ Do not redesign the Planning product, roadmap schema, or UI. Do not start any un
 
 ## Next Action
 
-Slice execution is complete in this environment:
-- `planning:build`, `planning:validate`, and `planning:seed` scripts are in place with compatibility-preserving roadmap generation.
+Architecture correction completed in this environment:
+- Product-owner content is now fully authored only in canonical `planning/roadmap/*.js` modules.
+- `scripts/build-roadmap-data.js` now only assembles, validates, and generates the compatibility artifact (no product-specific mutations).
 - `planning/roadmap/*` is the authoritative modular source; `planning/roadmap-data.js` is generated from it.
 - `npm run planning:validate` and `npm run planning:seed` are currently blocked in this terminal environment because Node cannot start script-based execution due:
   - `Error: EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`

@@ -7,6 +7,7 @@ const FALLBACK_ROADMAP_PATH = path.join(
   "../planning/roadmap-data.js"
 );
 const ROADMAP_MODULE_DIR = path.join(__dirname, "../planning/roadmap");
+const STORY_EDITS_PATH = path.join(ROADMAP_MODULE_DIR, "story-edits.js");
 const OUTPUT_PATH = FALLBACK_ROADMAP_PATH;
 
 const REQUIRED_MODULE_PATHS = {
@@ -63,6 +64,13 @@ function loadRoadmapFromModules() {
   return roadmap;
 }
 
+function loadStoryEdits() {
+  if (!fs.existsSync(STORY_EDITS_PATH)) {
+    return { patches: {}, additions: [], sprintMembership: [] };
+  }
+  return require(STORY_EDITS_PATH);
+}
+
 function writeModuleFile(filePath, value) {
   const payload = `module.exports = ${JSON.stringify(value, null, 2)};\n`;
   fs.writeFileSync(filePath, payload, "utf8");
@@ -73,6 +81,78 @@ function writeRoadmapModules(roadmap) {
     const modulePath = path.join(ROADMAP_MODULE_DIR, fileName);
     writeModuleFile(modulePath, roadmap[key]);
   }
+}
+
+function findStoryLocation(roadmap, storyId) {
+  for (const epic of roadmap.epics || []) {
+    for (const theme of epic.themes || []) {
+      for (const story of theme.stories || []) {
+        if (story.id === storyId) {
+          return { epic, theme, story };
+        }
+      }
+    }
+  }
+  return null;
+}
+
+function applyStoryEdits(roadmap, edits = {}) {
+  const errors = [];
+  const patches = edits.patches || {};
+  const additions = edits.additions || [];
+  const sprintMembership = edits.sprintMembership || [];
+
+  for (const [storyId, patch] of Object.entries(patches)) {
+    const location = findStoryLocation(roadmap, storyId);
+    if (!location) {
+      errors.push(`Story edit patch target not found: ${storyId}`);
+      continue;
+    }
+    if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+      errors.push(`Story edit patch must be an object: ${storyId}`);
+      continue;
+    }
+    Object.assign(location.story, patch);
+  }
+
+  for (const addition of additions) {
+    const { epicId, themeId, story } = addition || {};
+    if (!epicId || !themeId || !story?.id) {
+      errors.push("Story addition requires epicId, themeId, and story.id");
+      continue;
+    }
+    if (findStoryLocation(roadmap, story.id)) {
+      errors.push(`Story addition duplicates existing story ID: ${story.id}`);
+      continue;
+    }
+    const epic = (roadmap.epics || []).find((item) => item.id === epicId);
+    const theme = epic?.themes?.find((item) => item.id === themeId);
+    if (!theme) {
+      errors.push(`Story addition target not found: ${epicId}/${themeId}`);
+      continue;
+    }
+    theme.stories = theme.stories || [];
+    theme.stories.push(story);
+  }
+
+  for (const membership of sprintMembership) {
+    const { sprintId, add = [], remove = [] } = membership || {};
+    const sprint = (roadmap.sprints || []).find((item) => item.id === sprintId);
+    if (!sprint) {
+      errors.push(`Sprint membership target not found: ${sprintId}`);
+      continue;
+    }
+    sprint.storyIds = sprint.storyIds || [];
+    const removeSet = new Set(remove);
+    sprint.storyIds = sprint.storyIds.filter((storyId) => !removeSet.has(storyId));
+    for (const storyId of add) {
+      if (!sprint.storyIds.includes(storyId)) {
+        sprint.storyIds.push(storyId);
+      }
+    }
+  }
+
+  return errors;
 }
 
 function collectStoryMap(roadmap) {
@@ -177,8 +257,9 @@ function buildRoadmap(options = {}) {
   }
 
   roadmap = loadRoadmapFromModules();
+  const editErrors = applyStoryEdits(roadmap, loadStoryEdits());
+  const errors = [...editErrors, ...validateRoadmap(roadmap)];
 
-  const errors = validateRoadmap(roadmap);
   if (errors.length > 0 && options.throwOnInvalid) {
     const message = errors.map((error) => ` - ${error}`).join("\n");
     throw new Error(`Roadmap validation failed:\n${message}`);
@@ -212,6 +293,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  applyStoryEdits,
   buildRoadmap,
   parseLegacyRoadmap,
   validateRoadmap,

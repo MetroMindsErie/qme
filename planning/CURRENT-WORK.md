@@ -2,80 +2,34 @@
 
 ## Current Slice
 
-Roadmap-source maintainability is now the active technical slice. Billy/Product Owner has decided to modularize the roadmap source so routine product-roadmap edits no longer require Steve to mechanically edit the large monolithic `planning/roadmap-data.js`.
+Inspection-only gap review for Sprint 3 story `story-explain-queue-automation-blockers` — **Explain queue automation blockers to operators**.
 
-Read `AGENTS.md` and `planning/ROADMAP-MODULARIZATION.md` as the authoritative instructions for this slice.
+Read `AGENTS.md` first. This slice is investigation only. Do not implement, change roadmap product content/status, deploy, or seed Planning.
 
-## Why This Slice Is Authorized
+## Product Intent
 
-- Billy owns roadmap refinement, prioritization, acceptance/closure, and normal roadmap content edits.
-- The current `planning/roadmap-data.js` is too large for Billy's GitHub editing path to safely fetch/replace without truncation risk.
-- This has created an unnecessary Billy -> Steve handoff for simple roadmap changes.
-- GitHub roadmap source and the live Supabase `qme-roadmap` Planning document can also diverge until `npm run planning:seed` is run.
-- Product Owner has authorized a bounded technical refactor to make the roadmap modular and the build/seed workflow reliable while preserving the current Planning schema/UI.
+When queue automation does not move a guest, operators should be able to understand why rather than infer whether qME is stuck. The story remains `current` while this gap review is performed.
 
-## Product Decisions Already Made
+## Acceptance Criteria To Audit
 
-The following decisions are explicit and do not require further Product Owner discussion during this slice:
+1. Queue admin surfaces show when a guest is Cooling Down and, where practical, the remaining time.
+2. Queue admin surfaces explain when Gathering is full.
+3. Queue admin surfaces explain when Auto Flow is paused or manual.
+4. Queue admin surfaces explain when a guest is waiting for a required credit or eligibility condition.
+5. Apply Flow feedback reports when no movement happened and why.
+6. Not Here recovery follows the policy: cooldown, return to active Waiting, then normal progression by original queue order with no extra punishment.
 
-1. `story-guest-session-persistence-diagnostics` is **done**.
-   - Normal iPhone Safari persistence passed refresh, tab close/reopen, full browser close/reopen, and repeat QR entry.
-   - Safari Private Browsing behaved ephemerally as expected; recovery worked within the private session and was required again in a new private session.
-   - Safari Block All Cookies made guest identity unusable and prevented Reconnect from sticking until normal storage was restored.
-   - The exact Rock Hall cause remains unknown, but Product Owner has decided not to spend additional Sprint 3 effort exhaustively chasing browser/device permutations because the practical recovery path is now working.
+## Known Context
 
-2. Create a **deferred/future** follow-up story for browser persistence edge cases and degraded-storage UX. Full content requirements are in `planning/ROADMAP-MODULARIZATION.md`.
+Recent Sprint 3 work added/accepted Stage + State visibility, admin guest search/status/timing/history, authorized queue-state overrides, and server-truth reconciliation between admin and guest surfaces. Product Owner suspects much of this blocker-explanation story may already be satisfied. Do not assume that means every criterion passes; inspect current code/behavior against the six criteria.
 
-3. Keep `story-storage-health-recovery-contact-prompt` open, but refine its framing to distinguish browser/session viability from recovery identity/contact. Do not implement that story in this slice.
+## Required Output
 
-## Existing Technical Facts
+For each acceptance criterion, report exactly one of:
+- **Satisfied** — identify the current implementation/surface and concise evidence.
+- **Partial** — identify what exists and the specific missing behavior.
+- **Missing** — identify the actual gap.
 
-- Root `package.json` now includes:
-  - `planning:build` -> `node scripts/build-roadmap-data.js`
-  - `planning:validate` -> `node scripts/build-roadmap-data.js --validate`
-  - `planning:seed` -> `node scripts/build-roadmap-data.js && node scripts/seed-planning-document.js`
-- `scripts/seed-planning-document.js` currently requires `../planning/roadmap-data.js` and upserts the full roadmap object into Supabase `planning_documents` id `qme-roadmap`.
-- The existing Planning UI and roadmap schema should remain functionally unchanged.
+Then provide one concise recommended smallest implementation slice, if any, needed to close the story.
 
-## Implementation Scope
-
-Steve is explicitly authorized to implement the bounded roadmap modularization described in `planning/ROADMAP-MODULARIZATION.md`, including:
-
-- split authoritative roadmap content into smaller Product Owner-editable source modules;
-- generate the existing aggregate `planning/roadmap-data.js` deterministically for compatibility;
-- add build/validation tooling and package scripts;
-- make `planning:seed` build/validate first or otherwise prevent stale aggregate data from being seeded;
-- run the existing authorized Planning seed after validation;
-- verify the live Planning UI reflects the updated roadmap;
-- update this handoff when complete.
-
-Do not redesign the Planning product, roadmap schema, or UI. Do not start any unrelated Sprint 3 story.
-
-## Validation / Acceptance
-
-- Generated aggregate must be functionally equivalent to the current roadmap before the explicitly delegated Product Owner content changes.
-- Existing Planning UI must still work.
-- No story IDs/order/content may be silently lost during migration.
-- Build/validation should detect obvious structural failures such as duplicate story IDs or broken sprint story references where feasible.
-- Live Planning should show `story-guest-session-persistence-diagnostics` as **done** after synchronization.
-- The deferred browser persistence/degraded-storage story should be visible in the appropriate future/deferred area.
-- `story-storage-health-recovery-contact-prompt` remains open with refined framing, not implemented.
-
-## Next Action
-
-Validator correction completed in this environment:
-- `scripts/build-roadmap-data.js` still validates structure and references, but no longer treats intentional cross-sprint story references as invalid.
-- `storyId` duplication is now only flagged when duplicated within the same sprint list (same `storyIds` array), preserving pre-existing roadmap semantics.
-- `planning/roadmap/*` remains authoritative; `planning/roadmap-data.js` is generated from it.
-- `npm run planning:validate` and `npm run planning:seed` are still blocked in this terminal environment because Node cannot start script-based execution due:
-  - `Error: EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`
-
-Next step in a normal local environment:
-1. `npm run planning:validate`
-2. `npm run planning:seed`
-3. Verify `/planning` reflects:
-   - `story-guest-session-persistence-diagnostics` as **done**
-   - `story-browser-persistence-edge-cases-degraded-storage` present in the future area
-   - refined framing visible on `story-storage-health-recovery-contact-prompt`
-
-Stop only for a genuine architecture/security/product boundary defined in `AGENTS.md` or the design document. Otherwise complete the coherent slice, validate it, synchronize Planning, verify the live result, update `CURRENT-WORK.md`, and return one concise completion summary.
+Do not code. Do not make Product Owner decisions. Do not broaden scope. Do not narrate routine investigation. Return one concise final gap report when inspection is complete.

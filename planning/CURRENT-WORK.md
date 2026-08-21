@@ -2,88 +2,65 @@
 
 ## Current Slice
 
-Sprint 3 guest-session persistence diagnostics are active. Recovery, queue Stage/State visibility, and authorized overrides are already accepted/closed. Current work is product/browser discovery, not implementation.
+Roadmap-source maintainability is now the active technical slice. Billy/Product Owner has decided to modularize the roadmap source so routine product-roadmap edits no longer require Steve to mechanically edit the large monolithic `planning/roadmap-data.js`.
 
-## Product Outcome Already Accepted
+Read `AGENTS.md` and `planning/ROADMAP-MODULARIZATION.md` as the authoritative instructions for this slice.
 
-- `story-already-checked-in-recovery` = done.
-- `story-admin-guest-search-state-reconciliation` = done.
-- `story-authorized-queue-state-overrides` = done.
-- `story-guest-session-persistence-diagnostics` remains current.
-- `story-storage-health-recovery-contact-prompt` remains current/open and should be refined only after persistence findings are sufficiently understood.
+## Why This Slice Is Authorized
 
-## Live Persistence Testing — Hannah Oswick
+- Billy owns roadmap refinement, prioritization, acceptance/closure, and normal roadmap content edits.
+- The current `planning/roadmap-data.js` is too large for Billy's GitHub editing path to safely fetch/replace without truncation risk.
+- This has created an unnecessary Billy -> Steve handoff for simple roadmap changes.
+- GitHub roadmap source and the live Supabase `qme-roadmap` Planning document can also diverge until `npm run planning:seed` is run.
+- Product Owner has authorized a bounded technical refactor to make the roadmap modular and the build/seed workflow reliable while preserving the current Planning schema/UI.
 
-### Normal iPhone Safari
+## Product Decisions Already Made
 
-- Normal page refresh retained Hannah's recognized guest identity.
-- Closing the qME tab and reopening the event retained Hannah's identity.
-- Fully closing Safari and reopening retained Hannah's identity.
-- Closing Safari and later scanning the SOTC QR reopened the same Safari context and retained Hannah's identity.
-- These results suggest ordinary Safari persistence and repeat QR entry work under the tested normal configuration.
+The following decisions are explicit and do not require further Product Owner discussion during this slice:
 
-### Safari Private Browsing
+1. `story-guest-session-persistence-diagnostics` is **done**.
+   - Normal iPhone Safari persistence passed refresh, tab close/reopen, full browser close/reopen, and repeat QR entry.
+   - Safari Private Browsing behaved ephemerally as expected; recovery worked within the private session and was required again in a new private session.
+   - Safari Block All Cookies made guest identity unusable and prevented Reconnect from sticking until normal storage was restored.
+   - The exact Rock Hall cause remains unknown, but Product Owner has decided not to spend additional Sprint 3 effort exhaustively chasing browser/device permutations because the practical recovery path is now working.
 
-- A fresh Private Browsing context started at Check-In and did not recognize Hannah, as expected for an ephemeral/private storage context.
-- Hannah could find the existing registration and successfully use Reconnect to My Event within that private session.
-- After closing the private session and opening a new Private Browsing session, Hannah was no longer recognized and qME returned to Check-In.
-- Treat this as expected private/ephemeral-browser behavior requiring recovery, not evidence that normal Safari persistence is broken.
+2. Create a **deferred/future** follow-up story for browser persistence edge cases and degraded-storage UX. Full content requirements are in `planning/ROADMAP-MODULARIZATION.md`.
 
-### Safari Block All Cookies
+3. Keep `story-storage-health-recovery-contact-prompt` open, but refine its framing to distinguish browser/session viability from recovery identity/contact. Do not implement that story in this slice.
 
-- Starting from a recognized Hannah session, turning **Block All Cookies ON** caused the existing qME browser context to lose usable guest identity and return to Check-In.
-- While Block All Cookies remained ON, the event view also degraded to the Check-In-only experience; closing Safari and rescanning the SOTC QR reopened the same tab/context but still showed Check-In-only.
-- With Block All Cookies ON, qME could still find Hannah's existing registration and offer **Reconnect to My Event**, but selecting Reconnect appeared to reload and could not establish a usable recovered guest session.
-- After turning Block All Cookies OFF, fully closing Safari, and rescanning the QR, the broader SOTC event companion content returned, but Hannah was still unidentified and remained in Check-In.
-- With Block All Cookies OFF again, Hannah successfully used Reconnect to My Event and existing participation was restored.
+## Existing Technical Facts
 
-## Important Unresolved Question
+- Root `package.json` currently defines `planning:seed` as `node scripts/seed-planning-document.js`.
+- `scripts/seed-planning-document.js` currently requires `../planning/roadmap-data.js` and upserts the full roadmap object into Supabase `planning_documents` id `qme-roadmap`.
+- The existing Planning UI and roadmap schema should remain functionally unchanged.
 
-The Block All Cookies test reproduces loss of guest identity, but it is **more severe than the original Rock Hall reports** because qME cannot establish/persist the recovered guest session while all cookies/storage are blocked.
+## Implementation Scope
 
-The Rock Hall pattern we are still trying to explain is subtler:
+Steve is explicitly authorized to implement the bounded roadmap modularization described in `planning/ROADMAP-MODULARIZATION.md`, including:
 
-> Guest successfully checks in and uses qME during a normal-looking session, but later returns/rescans and qME no longer recognizes that browser.
+- split authoritative roadmap content into smaller Product Owner-editable source modules;
+- generate the existing aggregate `planning/roadmap-data.js` deterministically for compatibility;
+- add build/validation tooling and package scripts;
+- make `planning:seed` build/validate first or otherwise prevent stale aggregate data from being seeded;
+- mechanically apply the three Product Owner roadmap decisions above during migration;
+- run the existing authorized Planning seed after validation;
+- verify the live Planning UI reflects the updated roadmap;
+- update this handoff when complete.
 
-We have **not yet identified which actual browser setting, privacy configuration, storage eviction behavior, extension/content blocker, QR/browser context, or other mechanism would allow the session to work initially but fail to persist later.** Do not claim Block All Cookies explains what happened at Rock Hall.
+Do not redesign the Planning product, roadmap schema, or UI. Do not start any unrelated Sprint 3 story.
 
-Private Browsing is one known mechanism that permits a usable session and later discards it, but we do not know whether affected Rock Hall guests were using Private Browsing.
+## Validation / Acceptance
 
-## External Browser Research Context
-
-- Apple documents Private Browsing as an ephemeral/private context; browser state is not intended to persist like normal browsing.
-- Apple warns that blocking all cookies can prevent sign-in and site functionality, consistent with the Hannah reconnect failure while Block All Cookies was enabled.
-- WebKit has documented privacy/storage policies and historical storage-lifetime behavior that make browser persistence a real product dependency, but no current evidence yet identifies the exact Rock Hall mechanism.
-
-## Roadmap Refinement Decision — Billy / Product Owner
-
-`story-guest-session-persistence-diagnostics` stays **current**. Refine its product intent around the remaining question rather than mechanically exhausting every browser permutation.
-
-The story should preserve these accepted findings:
-
-1. Normal iPhone Safari persistence passed refresh, tab close/reopen, full Safari close/reopen, and repeat QR entry in the tested configuration.
-2. Private Browsing is intentionally ephemeral; recovery works within a private session, but a new private session requires recovery again.
-3. Block All Cookies can make qME lose guest identity and prevents successful recovery from sticking while the restriction remains enabled; recovery succeeds again after normal storage is restored.
-4. These findings prove browser storage availability materially affects qME identity persistence, but **do not yet explain the original SOTC pattern of a session that worked and later disappeared under apparently normal use.**
-5. Remaining diagnostic work should focus specifically on plausible conditions that allow initial use but later discard/evict qME identity, rather than repeating already-understood destructive-storage tests.
-
-Refine the story's acceptance focus to:
-
-- identify/test a small number of plausible iPhone/Safari conditions that can support an initial qME session but later lose first-party browser identity;
-- distinguish expected ephemeral/privacy behavior from a qME defect;
-- document what qME can detect/prevent versus what must be handled through recovery UX;
-- stop once the remaining SOTC pattern is reasonably explained or evidence shows it cannot be reproduced reliably; exhaustive browser permutation testing is not required.
-
-`story-storage-health-recovery-contact-prompt` should remain open. The Block All Cookies test gives it a concrete future failure case: qME should eventually avoid a silent reconnect/reload loop when required browser storage is unavailable. Do not implement that story yet while persistence discovery is still active.
-
-## Code / SQL / Deployment State
-
-- No new application code or SQL is requested from this diagnostic checkpoint.
-- Accepted recovery and queue fixes remain deployed and live-tested.
-- Planning synchronization for the previously closed stories was completed before this diagnostic session.
+- Generated aggregate must be functionally equivalent to the current roadmap before the explicitly delegated Product Owner content changes.
+- Existing Planning UI must still work.
+- No story IDs/order/content may be silently lost during migration.
+- Build/validation should detect obvious structural failures such as duplicate story IDs or broken sprint story references where feasible.
+- Live Planning should show `story-guest-session-persistence-diagnostics` as **done** after synchronization.
+- The deferred browser persistence/degraded-storage story should be visible in the appropriate future/deferred area.
+- `story-storage-health-recovery-contact-prompt` remains open with refined framing, not implemented.
 
 ## Next Action
 
-Billy/Product Owner should continue the persistence investigation before handing implementation work to Steve.
+Steve: pull latest `main`, then read `AGENTS.md`, this file, and `planning/ROADMAP-MODULARIZATION.md` and proceed silently with this authorized slice.
 
-Steve should not begin implementation from this file. If Steve is later asked to proceed, the first delegated task may be a mechanical roadmap synchronization of Billy's persistence-story refinement, followed by stop/no implementation unless Billy explicitly authorizes a technical story.
+Stop only for a genuine architecture/security/product boundary defined in `AGENTS.md` or the design document. Otherwise complete the coherent slice, validate it, synchronize Planning, verify the live result, update `CURRENT-WORK.md`, and return one concise completion summary.

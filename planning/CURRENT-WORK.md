@@ -2,64 +2,76 @@
 
 ## Current Slice
 
-Inspection/design verification for Sprint 3 story `story-explain-queue-automation-blockers` — **Explain queue automation blockers to operators**.
+Implement the effective-Gathering capacity correction for Sprint 3 story `story-explain-queue-automation-blockers` — **Explain queue automation blockers to operators**.
 
-Read `AGENTS.md` first. Do not implement yet. The prior gap review exposed a more fundamental queue-flow policy issue that must be verified against current implementation before coding blocker messages.
+Read `AGENTS.md` first. Product behavior below is resolved and implementation is authorized. Keep the slice bounded to queue-flow capacity semantics and directly necessary operator feedback; do not broaden into unrelated queue redesign.
 
-## Product Decision / Working Flow Model
+## Product Decision
 
 Core principle: **silent invitations must not starve the service line.** qME should keep the service supplied with meaningfully engaged guests rather than treating every ticket whose Stage is Gathering as equivalent operational capacity.
 
-### Gathering Target
+### Effective Gathering
 
-`Gathering Target` should represent the desired number of meaningfully engaged guests feeding the service.
+Count toward effective Gathering capacity/Target and Max only while operationally active:
+- `Gathering` + `Nearby` — callable readiness signal.
+- `Gathering` + `On My Way` — active commitment; count for now while not stale.
+- newly invited `Gathering` with no response — count during the configured response/stale grace period.
 
-Count toward effective Gathering Target:
-- `Gathering` + `Nearby` — strongest readiness signal; callable for normal Your Turn progression.
-- `Gathering` + `On My Way` — active commitment and countable for now; future event evidence may refine this.
-- newly invited `Gathering` with no response — count only during a defined response grace period.
+Do not count toward effective Gathering capacity/Target or Max:
+- unconfirmed Gathering guests after the stale threshold;
+- On My Way guests after an appropriate later stale threshold if they never become Nearby. If the existing data/config does not safely support a distinct On My Way stale duration in this bounded slice, preserve the existing stale duration and document that follow-up rather than inventing a new operator setting.
 
-Do not count toward effective Gathering Target:
-- unconfirmed Gathering guests after their response grace period expires;
-- `On My Way` guests after a separate/later stale threshold if they never become Nearby.
+Stale guests remain in Gathering and retain queue position/history. Mere silence does **not** Return to Waiting or trigger cooldown. They may recover by later marking On My Way or Nearby.
 
-### Stale Behavior
+### Gathering Target and Max
 
-A guest who fails to respond should not automatically be punished with Return to Waiting/cooldown. After the applicable response window, keep the guest in Gathering but treat them as stale so they no longer consume effective Gathering Target. They retain original queue position/history and may recover by later marking On My Way or Nearby.
+Keep both concepts for now, but redefine Max rather than removing it:
+- **Target** = desired effective engaged population feeding service.
+- **Max** = ceiling on the same currently active/effective Gathering exposure.
+- Stale Gathering guests do not consume either Target or Max.
 
-Cooldown / Return to Waiting should remain for explicit Not Here or other policy-driven unavailability, not mere silence.
+Do not allow stale tickets to block replenishment merely because total historical/current-stage Gathering rows exceed Max. Existing Target <= Max configuration relationship may remain unless a code change is necessary for the effective-capacity behavior.
 
 ### Auto vs Manual
 
-- **Auto mode:** qME should automatically replenish effective Gathering when it falls below Target. No operator Apply Flow action should be required for normal replenishment.
-- **Manual mode:** qME does not replenish automatically. `Apply Flow` means run the same flow algorithm once now. If nothing moves, operator feedback should explain why.
+- **Auto mode:** automatically replenish effective Gathering when it falls below Target. No Apply Flow action is required for normal replenishment.
+- **Manual mode:** do not replenish automatically. `Apply Flow` runs the same flow algorithm once. If nothing moves, provide concise actionable feedback explaining why.
 
 ### Nearby
 
-Nearby is the key callable readiness signal and we likely want more than one Nearby guest when possible, but qME cannot force guests to mark Nearby. Do not invent a separate Nearby-driven invitation algorithm yet. Observe Nearby separately from On My Way and learn from event behavior.
+Nearby remains the only normal callable signal for progression to Your Turn. Do not create a separate Nearby-target invitation algorithm in this slice.
 
-### Gathering Max
+## Existing Implementation Findings
 
-Product Owner questions whether a user-facing Gathering Max is needed at all. If stale/unresponsive guests stop counting toward Target, qME should continue inviting until effective Gathering Target is met. If protection against runaway outstanding invitations is technically necessary, prefer an internal/system safety ceiling rather than making Target and Max competing operator settings. Do not assume Target and Max should remain equal.
+- `run_queue_pilot_flow` already removes stale non-nearby standby tickets from `blocking_standby_count`, but stale tickets remain in total `standby_pool_count`, so `gathering_max` can still block replenishment.
+- Target and Max are coupled by a floor (`gathering_max >= standby_target`) but are not forced equal.
+- Stale Gathering already remains in Gathering rather than being returned to Waiting.
+- On My Way exists end-to-end through `tickets.on_my_way_at`, guest/admin display state, and admin override support.
+- Nearby is already the release-ready signal.
+- Auto mode already re-applies flow periodically; Manual Apply Flow invokes the same RPC.
 
-## Prior Gap Review
+## Implementation Scope
 
-1. Cooling Down + remaining time — **Satisfied**.
-2. Gathering full explanation — **Partial**, but do not implement messaging until the effective-Gathering capacity model above is resolved.
-3. Auto/manual explanation — **Partial**; product intent is now clarified above.
-4. Credit/eligibility blocker explanation — **Missing**.
-5. Apply Flow no-movement feedback — **Missing**, but relevant primarily to Manual mode after the underlying flow algorithm is correct.
-6. Not Here recovery policy — **Satisfied**.
+1. Correct SQL/RPC effective-capacity math so stale Gathering tickets do not consume Target or Max and therefore cannot starve replenishment.
+2. Ensure On My Way is treated as an active commitment for capacity while fresh and becomes non-blocking when stale according to the safest existing timing semantics.
+3. Preserve Nearby as the only normal release-ready/callable signal.
+4. Preserve stale tickets in Gathering with history/position; do not add automatic cooldown/Return to Waiting for silence.
+5. Preserve Not Here cooldown behavior.
+6. Keep Auto mode replenishment automatic and Manual mode operator-driven.
+7. Add the smallest useful Manual Apply Flow no-movement feedback based on actual flow outcome/reason. Do not build a generalized diagnostics engine.
+8. Update admin wording only where needed so Target/Max descriptions match effective active Gathering semantics and do not misleadingly describe stale tickets as consuming capacity.
 
-## Required Inspection Before Implementation
+## Validation / Acceptance
 
-Inspect current queue flow code/RPCs and report concisely:
+Validate at minimum:
+- Target can replenish even when raw Gathering count is above Target/Max because some Gathering tickets are stale.
+- fresh unconfirmed Gathering counts until stale threshold, then stops blocking.
+- fresh On My Way counts; stale On My Way stops blocking; On My Way never becomes callable without Nearby.
+- Nearby counts and remains release-ready.
+- stale guests remain Gathering and can later recover by On My Way/Nearby.
+- Auto mode replenishes without Apply Flow.
+- Manual mode does not auto-replenish; Apply Flow runs once and explains a zero-movement result.
+- Not Here still returns to Waiting/cooldown according to existing policy.
+- Existing guest/admin Stage + State behavior remains consistent.
 
-1. Exactly how current automation calculates Gathering occupancy/Target today.
-2. Whether `Gathering Target` and `Gathering Max` are currently coupled or forced equal anywhere in UI, service, RPC, or database logic.
-3. How current stale-Gathering behavior works: thresholds, state/status changes, whether stale guests continue counting toward capacity, and whether they are returned to Waiting/cooldown.
-4. Whether `On My Way` exists end-to-end in the current guest/admin/server flow and how it currently affects automation/capacity.
-5. What triggers Auto mode replenishment today and whether it automatically re-runs when effective conditions change or only on specific actions/timers.
-6. The smallest technical delta required to implement the Product Decision / Working Flow Model above.
-
-Do not code, change roadmap status/content, deploy, or seed Planning. Do not narrate routine investigation. Return one concise inspection report and stop for Product Owner review.
+Run targeted validation plus full local TypeScript/Vite validation before completion. Do not change roadmap status; Billy/Product Owner will close the story after acceptance. Do not deploy without explicit Product Owner authorization. Update CURRENT-WORK with implementation/validation state and stop with one concise completion summary.

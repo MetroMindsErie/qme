@@ -274,7 +274,7 @@ const QME_ROADMAP = {
             {
               "id": "story-sms-cost-compliance-feasibility",
               "title": "Evaluate SMS recall costs, compliance, and go/no-go",
-              "status": "discovery",
+              "status": "done",
               "sprint": "now",
               "summary": "Use the existing Twilio direction/account readiness to understand what SMS would cost and require before qMe promises phone buzzing or text recall at a live event.",
               "acceptanceCriteria": [
@@ -284,7 +284,7 @@ const QME_ROADMAP = {
                 "Document secure server-side trigger architecture with duplicate prevention and delivery logging.",
                 "Make a go/no-go recommendation before enabling SMS for production event operations."
               ],
-              "notes": "User likely has Twilio signed up and ready from July 20, but SMS should be investigated in Sprint 3 rather than treated as off-limits or silently enabled. In-app remains the reliable fallback until SMS compliance/costs are clear."
+              "notes": "Sprint 3 discovery complete 2026-08-21. Product decision: GO when a confirmed event need warrants SMS recall; do not implement or purchase sender infrastructure now. Twilio Programmable Messaging is technically appropriate for backend-triggered queue-status alerts, and expected per-message operating cost is low enough that cost is not a blocker at qME event scale. SMS should remain an optional recall/notification channel; in-app/server-side queue state remains authoritative. Future implementation should use explicit guest opt-in, STOP/HELP handling, secure server-side sends, delivery logging, and duplicate-send prevention. July 14 Twilio correspondence stated that the submitted queue-status A2P 10DLC use case/campaign had been approved, but the Twilio console reviewed on 2026-08-21 is still a Trial account and currently shows no Twilio phone number, no Messaging Service, and no visible A2P campaign; resolve that account/setup discrepancy only when SMS is actually needed. The Twilio account used for this work is under ebcooper@growU.biz. No Twilio upgrade, number purchase, or Messaging Service creation is authorized at this time."
             },
             {
               "id": "story-admin-guest-search-state-reconciliation",

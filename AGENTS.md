@@ -5,8 +5,11 @@
 - The ChatGPT product/strategy partner is **Billy**.
 - The Codex implementation agent is **Steve**.
 - Billy and Steve use `planning/CURRENT-WORK.md` as the shared concise handoff for the active development slice.
-- **Billy owns product-roadmap refinement, prioritization, acceptance/closure decisions, and normal edits to `planning/roadmap-data.js`.** Steve consumes the roadmap as product authority and does not independently change roadmap product content or status.
-- Steve may edit `planning/roadmap-data.js` only when Billy/Product Owner explicitly delegates a specific mechanical roadmap change in `planning/CURRENT-WORK.md` or a direct instruction. Do not infer roadmap-edit authority merely because implementation is complete.
+- **Billy owns product-roadmap refinement, prioritization, acceptance/closure decisions, and normal Product Owner roadmap edits.**
+- Canonical roadmap content lives under `planning/roadmap/`. For routine story-level changes, Billy should prefer the deliberately small `planning/roadmap/story-edits.js` surface rather than asking Steve to edit large roadmap modules.
+- `planning/roadmap-data.js` is a generated compatibility artifact, not the canonical Product Owner edit surface.
+- Steve consumes the roadmap as product authority and does not independently change roadmap product content or status.
+- Steve may apply a specific mechanical roadmap change only when Billy/Product Owner explicitly delegates it in `planning/CURRENT-WORK.md` or a direct instruction. Do not infer roadmap-edit authority merely because implementation is complete.
 - Steve owns implementation, technical validation, git/push/rebase work, and deployment/synchronization checks when explicitly authorized.
 
 ## Operating Style
@@ -28,7 +31,9 @@
 
 ## Product Authority
 
-- `planning/roadmap-data.js` is the Product Owner source of truth for what/why qME is building. Do not silently change product direction, acceptance criteria, terminology, workflow rules, priority, or story status.
+- Canonical roadmap modules under `planning/roadmap/` are the Product Owner source of truth for what/why qME is building. `planning/roadmap-data.js` is generated from them.
+- `planning/roadmap/story-edits.js` is the small Product Owner edit layer for routine story patches, additions, and sprint membership changes. The roadmap generator applies this file generically; the generator itself must never contain product-specific story IDs or decisions.
+- Do not silently change product direction, acceptance criteria, terminology, workflow rules, priority, or story status.
 - Do not make silent product, security, or architecture decisions. If intended behavior is not already resolved by the roadmap, current product principles, existing architecture, or `planning/CURRENT-WORK.md`, stop only when proceeding would make a consequential choice.
 - Server-side participation is authoritative. Browser storage may cache identifiers and recovery hints, but it must never determine current participation, queue Stage, or State.
 - Admin and guest surfaces must derive queue participation from the same server-side ticket truth.
@@ -50,7 +55,8 @@
 - Do not deploy without explicit Product Owner instruction.
 - Do not present a fix as production-ready if required local validation did not run or failed.
 - Avoid repeated full builds after tiny edits unless they are necessary to diagnose the active problem.
-- **A roadmap edit is not complete merely because it is committed to GitHub.** When a roadmap change is intended to be visible in the qME planning UI, verify the live planning page is serving the updated `roadmap-data.js`/planning artifact and that the visible story statuses/content match the committed source. If GitHub is correct but the planning UI is stale, treat that as a deployment/synchronization issue and resolve it when deployment is authorized.
+- Roadmap workflow: edit canonical files under `planning/roadmap/` (normally `story-edits.js` for small Product Owner changes), run `npm run planning:validate`, then `npm run planning:seed` when the change should be synchronized to the live Planning document.
+- **A roadmap edit is not complete merely because it is committed to GitHub.** When a roadmap change is intended to be visible in the qME planning UI, verify the live planning page reflects the synchronized canonical roadmap content. If GitHub is correct but the planning UI is stale, treat that as a deployment/synchronization issue.
 
 ## Shared Handoff: planning/CURRENT-WORK.md
 

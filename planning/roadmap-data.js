@@ -1,35 +1,32 @@
 const QME_ROADMAP = {
-  meta: {
-    product: "qME",
-    workspace: "Product roadmap and sprint planning",
-    updated: "2026-08-19",
-    immediateGoal:
-      "Use the July 22 SOTC Rock Hall production event as the evidence base for Sprint 3: operational hardening, recovery, reporting, archive/baseline setup, and selective product discovery before adding broad new platform features.",
-    eventAnchor: {
-      organization: "Summer on the Cuyahoga",
-      event: "SOTC Rock Hall Mixer",
-      date: "2026-07-22",
-      venue: "Rock and Roll Hall of Fame and Museum",
-      purpose:
-        "Demo and develop qME around a real event with registration, sponsors, headshots, resume reviews, networking, workshops, and digital resources."
+  "meta": {
+    "product": "qME",
+    "workspace": "Product roadmap and sprint planning",
+    "updated": "2026-08-19",
+    "immediateGoal": "Use the July 22 SOTC Rock Hall production event as the evidence base for Sprint 3: operational hardening, recovery, reporting, archive/baseline setup, and selective product discovery before adding broad new platform features.",
+    "eventAnchor": {
+      "organization": "Summer on the Cuyahoga",
+      "event": "SOTC Rock Hall Mixer",
+      "date": "2026-07-22",
+      "venue": "Rock and Roll Hall of Fame and Museum",
+      "purpose": "Demo and develop qME around a real event with registration, sponsors, headshots, resume reviews, networking, workshops, and digital resources."
     },
-    statusLegend: {
-      idea: "Possible but still fuzzy",
-      discovery: "Needs product discussion",
-      ready: "Ready to break into implementation",
-      current: "Candidate for current work",
-      future: "Important later",
-      deferred: "Known idea intentionally parked",
-      done: "Completed or already exists"
+    "statusLegend": {
+      "idea": "Possible but still fuzzy",
+      "discovery": "Needs product discussion",
+      "ready": "Ready to break into implementation",
+      "current": "Candidate for current work",
+      "future": "Important later",
+      "deferred": "Known idea intentionally parked",
+      "done": "Completed or already exists"
     }
   },
-  sprints: [
+  "sprints": [
     {
-      id: "now",
-      title: "Sprint 3: Post-SOTC Operational Hardening",
-      goal:
-        "Turn the July 22 SOTC production learning into a more reliable operating system: preserve production evidence, create an internal full-data baseline, improve guest recovery, add admin CSV exports, evaluate SMS costs/compliance, and make operator controls more visible without starting broad new platform expansion.",
-      storyIds: [
+      "id": "now",
+      "title": "Sprint 3: Post-SOTC Operational Hardening",
+      "goal": "Turn the July 22 SOTC production learning into a more reliable operating system: preserve production evidence, create an internal full-data baseline, improve guest recovery, add admin CSV exports, evaluate SMS costs/compliance, and make operator controls more visible without starting broad new platform expansion.",
+      "storyIds": [
         "story-sotc-production-archive-and-baselines",
         "story-sotc-admin-csv-exports",
         "story-guest-session-persistence-diagnostics",
@@ -43,11 +40,10 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "next",
-      title: "Next: Experience Type Review and Configuration",
-      goal:
-        "After Sprint 3 hardening, review concrete experience types and decide which configuration deserves productization, starting with Check-In, Headshots, Food & Beverage, Resume Reviews, and lightweight event content.",
-      storyIds: [
+      "id": "next",
+      "title": "Next: Experience Type Review and Configuration",
+      "goal": "After Sprint 3 hardening, review concrete experience types and decide which configuration deserves productization, starting with Check-In, Headshots, Food & Beverage, Resume Reviews, and lightweight event content.",
+      "storyIds": [
         "story-remove-hardcoded-demo-assumptions",
         "story-experience-model",
         "story-managed-image-storage",
@@ -61,39 +57,36 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "soon",
-      title: "Soon: SOTC Program Depth",
-      goal:
-        "Expand SOTC from the first event model into registration, attendee import, networking, schedules, and event activities.",
-      storyIds: [
+      "id": "soon",
+      "title": "Soon: SOTC Program Depth",
+      "goal": "Expand SOTC from the first event model into registration, attendee import, networking, schedules, and event activities.",
+      "storyIds": [
         "story-workshop-signups",
         "story-personal-agenda"
       ]
     },
     {
-      id: "future",
-      title: "Future: Optimization and Magic",
-      goal:
-        "Use guest intent, location, surveys, and timing to help people maximize the event without losing their place.",
-      storyIds: [
+      "id": "future",
+      "title": "Future: Optimization and Magic",
+      "goal": "Use guest intent, location, surveys, and timing to help people maximize the event without losing their place.",
+      "storyIds": [
         "story-workshop-signups",
         "story-guest-intentions",
         "story-location-beacons",
         "story-networking-matching",
-        "story-food-filters"
+        "story-food-filters",
+        "story-browser-persistence-edge-cases-degraded-storage"
       ]
     }
   ],
-  completedSprints: [
+  "completedSprints": [
     {
-      id: "completed-sprint-2-foundation",
-      title: "Completed: Sprint 2 Organization, Roles, Auth, and RLS Foundation",
-      completedDate: "2026-07-01",
-      goal:
-        "Build the minimum organization, admin, staff, authentication, and RLS foundation needed before the SOTC pilot can move from guided alpha into real event readiness.",
-      summary:
-        "Sprint 2 moved qME from founder-operated demo toward organization-ready pilot: named admin identities, organization/event ownership, staff assignments, guest session tokens, role-scoped admin access, authenticated RPC boundaries, and audit logging for newer sensitive staff/admin actions are now in place. qME is not fully production-hardened yet, but the remaining risk has shifted from architecture design to validation and hardening.",
-      storyIds: [
+      "id": "completed-sprint-2-foundation",
+      "title": "Completed: Sprint 2 Organization, Roles, Auth, and RLS Foundation",
+      "completedDate": "2026-07-01",
+      "goal": "Build the minimum organization, admin, staff, authentication, and RLS foundation needed before the SOTC pilot can move from guided alpha into real event readiness.",
+      "summary": "Sprint 2 moved qME from founder-operated demo toward organization-ready pilot: named admin identities, organization/event ownership, staff assignments, guest session tokens, role-scoped admin access, authenticated RPC boundaries, and audit logging for newer sensitive staff/admin actions are now in place. qME is not fully production-hardened yet, but the remaining risk has shifted from architecture design to validation and hardening.",
+      "storyIds": [
         "story-governance-principles-foundation",
         "story-org-table",
         "story-preserve-peony-demo",
@@ -109,7 +102,7 @@ const QME_ROADMAP = {
         "story-stale-queue-blocker-recovery",
         "story-sotc-admin-staff-rls-hardening"
       ],
-      notes: [
+      "notes": [
         "The old temporary admin passphrase path was removed.",
         "Jalani can sign in with named SOTC event-admin access and act only inside the SOTC event scope.",
         "Guest-owned actions and staff/admin-owned actions are separated more clearly through guest-token RPCs and authenticated admin/staff RPCs.",
@@ -118,20 +111,18 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "completed-sotc-alpha-ui-stabilization",
-      title: "Completed: SOTC Alpha UI Stabilization",
-      completedDate: "2026-06-26",
-      goal:
-        "Resolve the obvious SOTC alpha-test UI, refresh, messaging, and recovery issues before starting role/auth/database hardening.",
-      summary:
-        "Sprint 1 alpha follow-up is complete: calm refresh behavior, mobile button/layout polish, headshot/standby messaging, Not Here guest recovery, auto-flow recovery when admin is closed, and hidden internal ticket numbers on guest pilot screens are resolved.",
-      storyIds: [
+      "id": "completed-sotc-alpha-ui-stabilization",
+      "title": "Completed: SOTC Alpha UI Stabilization",
+      "completedDate": "2026-06-26",
+      "goal": "Resolve the obvious SOTC alpha-test UI, refresh, messaging, and recovery issues before starting role/auth/database hardening.",
+      "summary": "Sprint 1 alpha follow-up is complete: calm refresh behavior, mobile button/layout polish, headshot/standby messaging, Not Here guest recovery, auto-flow recovery when admin is closed, and hidden internal ticket numbers on guest pilot screens are resolved.",
+      "storyIds": [
         "story-sotc-calm-refresh",
         "story-sotc-mobile-layout-polish",
         "story-headshot-queue",
         "story-sotc-not-here-recovery"
       ],
-      notes: [
+      "notes": [
         "The alpha test with Jalani Ball and the SOTC student group produced polish findings, not a rejection of the core flow.",
         "Guests should see stages and clear instructions, not internal ticket mechanics.",
         "Admin/staff can retain operational identifiers and controls.",
@@ -139,14 +130,12 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "completed-planning-cleanup",
-      title: "Completed: Planning Workspace and Demo Stabilization",
-      completedDate: "2026-06-11",
-      goal:
-        "Get qME cleaned up enough to trust the Peony Festival flow, then create a product roadmap/planning workspace for SOTC and multi-org work.",
-      summary:
-        "Peony Festival is stable enough to demonstrate; Bouquet Bar access, fresh reset, kiosk bad-slug handling, legacy cleanup, Node/test setup, roadmap deployment, planning data protection, Trello import, governance review, and pre-multi-org cleanup are complete.",
-      storyIds: [
+      "id": "completed-planning-cleanup",
+      "title": "Completed: Planning Workspace and Demo Stabilization",
+      "completedDate": "2026-06-11",
+      "goal": "Get qME cleaned up enough to trust the Peony Festival flow, then create a product roadmap/planning workspace for SOTC and multi-org work.",
+      "summary": "Peony Festival is stable enough to demonstrate; Bouquet Bar access, fresh reset, kiosk bad-slug handling, legacy cleanup, Node/test setup, roadmap deployment, planning data protection, Trello import, governance review, and pre-multi-org cleanup are complete.",
+      "storyIds": [
         "story-planning-workspace",
         "story-roadmap-data-model",
         "story-cleanup-before-multi-org",
@@ -155,7 +144,7 @@ const QME_ROADMAP = {
         "story-triage-inbox",
         "story-bouquet-access-fixed"
       ],
-      notes: [
+      "notes": [
         "Peony Festival guest flow is good enough for now and should remain demonstrable.",
         "The planning workspace is the source of truth for the next few weeks.",
         "SOTC MVP detail is intentionally deferred until the foundation work starts.",
@@ -163,85 +152,77 @@ const QME_ROADMAP = {
       ]
     }
   ],
-  epics: [
+  "epics": [
     {
-      id: "epic-post-sotc-sprint-3",
-      title: "Post-SOTC Sprint 3 Operational Hardening",
-      summary:
-        "Use July 22 Rock Hall production evidence to harden qMe operations before expanding the platform: archive what happened, preserve a full-data working baseline, improve guest recovery, add admin exports, make queue behavior explainable, and evaluate SMS without turning it on prematurely.",
-      status: "current",
-      themes: [
+      "id": "epic-post-sotc-sprint-3",
+      "title": "Post-SOTC Sprint 3 Operational Hardening",
+      "summary": "Use July 22 Rock Hall production evidence to harden qMe operations before expanding the platform: archive what happened, preserve a full-data working baseline, improve guest recovery, add admin exports, make queue behavior explainable, and evaluate SMS without turning it on prematurely.",
+      "status": "current",
+      "themes": [
         {
-          id: "theme-sotc-post-production-data",
-          title: "Archive, Baseline, and Reports",
-          status: "current",
-          stories: [
+          "id": "theme-sotc-post-production-data",
+          "title": "Archive, Baseline, and Reports",
+          "status": "current",
+          "stories": [
             {
-              id: "story-sotc-production-archive-and-baselines",
-              title: "Archive SOTC production event and create working baselines",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Separate the July 22 SOTC production record from future testing by preserving an archive snapshot and treating the existing SOTC event as the internal full-data working baseline that can be reset or overwritten during Sprint 3 testing.",
-              acceptanceCriteria: [
+              "id": "story-sotc-production-archive-and-baselines",
+              "title": "Archive SOTC production event and create working baselines",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Separate the July 22 SOTC production record from future testing by preserving an archive snapshot and treating the existing SOTC event as the internal full-data working baseline that can be reset or overwritten during Sprint 3 testing.",
+              "acceptanceCriteria": [
                 "The July 22 SOTC production event and activity are preserved in an archive snapshot for review.",
                 "The existing SOTC event remains the internal full-data working baseline with the same event structure, real check-ins, queue history, names, contact fields, and activity patterns from the production run.",
                 "The internal baseline can be used for testing recovery, queue behavior, reporting, and admin workflows while the archive snapshot preserves the production record.",
                 "Future public demo data is tracked separately and may later use sanitized fake names, emails, phones, and activity while preserving realistic event shape.",
                 "Reset/clone behavior is documented so testing does not accidentally overwrite the production archive."
               ],
-              notes:
-                "Completed 2026-08-18: live Supabase now has a production archive snapshot and an internal full-data baseline snapshot for sotc-rockhall, both preserving 132 check-ins, 96 queue tickets, and 250 imported registrations. Post-SOTC direction: preserve the July 22 record in an archive snapshot and keep the existing sotc-rockhall event as the full-data internal working baseline for ongoing testing. Sprint 3 first slice added event_data_snapshots plus optional archive-lock functions/triggers and a runbook in docs/sotc-production-archive-baseline-v1.md. Archive-locking and a separate relational working event clone are deferred unless needed. A sanitized public demo clone is a useful later story, but not required before the next Sprint 3 block. Updated 2026-08-19: after the Headshot ticket/check-in linkage and credit-used reconciliation fix, live Supabase received corrected snapshots `sotc-rockhall-production-2026-07-22-corrected-headshot-credit-v1` and `sotc-rockhall-internal-full-data-baseline-v2-headshot-credit-corrected`, each verifying 132 check-ins, 96 queue tickets, and 105 guest-credit rows. The original snapshots remain preserved as historical evidence."
+              "notes": "Completed 2026-08-18: live Supabase now has a production archive snapshot and an internal full-data baseline snapshot for sotc-rockhall, both preserving 132 check-ins, 96 queue tickets, and 250 imported registrations. Post-SOTC direction: preserve the July 22 record in an archive snapshot and keep the existing sotc-rockhall event as the full-data internal working baseline for ongoing testing. Sprint 3 first slice added event_data_snapshots plus optional archive-lock functions/triggers and a runbook in docs/sotc-production-archive-baseline-v1.md. Archive-locking and a separate relational working event clone are deferred unless needed. A sanitized public demo clone is a useful later story, but not required before the next Sprint 3 block. Updated 2026-08-19: after the Headshot ticket/check-in linkage and credit-used reconciliation fix, live Supabase received corrected snapshots `sotc-rockhall-production-2026-07-22-corrected-headshot-credit-v1` and `sotc-rockhall-internal-full-data-baseline-v2-headshot-credit-corrected`, each verifying 132 check-ins, 96 queue tickets, and 105 guest-credit rows. The original snapshots remain preserved as historical evidence."
             },
             {
-              id: "story-sotc-admin-csv-exports",
-              title: "Add admin CSV exports for attendance and Headshot activity",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Give event admins a straightforward way to download CSV reports from the admin console, starting with attendance/check-in and Headshot activity.",
-              acceptanceCriteria: [
+              "id": "story-sotc-admin-csv-exports",
+              "title": "Add admin CSV exports for attendance and Headshot activity",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Give event admins a straightforward way to download CSV reports from the admin console, starting with attendance/check-in and Headshot activity.",
+              "acceptanceCriteria": [
                 "Event Admin or higher can export attendance/check-in CSV for an event.",
                 "Event Admin or higher can export Headshot activity CSV including relevant timestamps and final status.",
                 "Station staff do not see admin-only export controls unless their role is later expanded.",
                 "Exports work from the admin console without requiring manual SQL.",
                 "The report shape is documented before expanding to more advanced analytics."
               ],
-              notes:
-                "Completed 2026-08-18: added admin-only CSV exports to Event Check-In and queue admin screens. Attendance/check-in export lives on the admin-only Settings tab, is labeled Export Check-Ins, and includes guest status, imported-registration markers, Needs Help metadata, and Headshot credit status without raw metadata JSON. Queue activity export lives on the admin-only queue Settings tab, is labeled Export Queue Activity, and includes queue stage/status timestamps plus Headshot service-start markers where present without raw metadata JSON. Report shapes are documented in docs/sotc-admin-csv-reports-v1.md. Updated 2026-08-19: fixed the Headshot completion reporting gap by linking queue tickets to event check-ins on join, passing the check-in through admin Mark Served, backfilling historical completed Headshot tickets where the name match was unique, and reconciling professional_headshot used quantities. Re-exported attendance and Headshot activity CSVs were verified against the corrected data. Deeper report views can follow once the first export format proves useful."
+              "notes": "Completed 2026-08-18: added admin-only CSV exports to Event Check-In and queue admin screens. Attendance/check-in export lives on the admin-only Settings tab, is labeled Export Check-Ins, and includes guest status, imported-registration markers, Needs Help metadata, and Headshot credit status without raw metadata JSON. Queue activity export lives on the admin-only queue Settings tab, is labeled Export Queue Activity, and includes queue stage/status timestamps plus Headshot service-start markers where present without raw metadata JSON. Report shapes are documented in docs/sotc-admin-csv-reports-v1.md. Updated 2026-08-19: fixed the Headshot completion reporting gap by linking queue tickets to event check-ins on join, passing the check-in through admin Mark Served, backfilling historical completed Headshot tickets where the name match was unique, and reconciling professional_headshot used quantities. Re-exported attendance and Headshot activity CSVs were verified against the corrected data. Deeper report views can follow once the first export format proves useful."
             }
           ]
         },
         {
-          id: "theme-guest-session-recovery",
-          title: "Guest Session Recovery",
-          status: "current",
-          stories: [
+          "id": "theme-guest-session-recovery",
+          "title": "Guest Session Recovery",
+          "status": "current",
+          "stories": [
             {
-              id: "story-guest-session-persistence-diagnostics",
-              title: "Diagnose guest session persistence from repeat QR scans",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Determine why some Rock Hall guests used the same phone/default QR flow but qMe later did not recognize their browser session, even though server-side check-in state still existed.",
-              acceptanceCriteria: [
+              "id": "story-guest-session-persistence-diagnostics",
+              "title": "Diagnose guest session persistence from repeat QR scans",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Determine why some Rock Hall guests used the same phone/default QR flow but qMe later did not recognize their browser session, even though server-side check-in state still existed.",
+              "acceptanceCriteria": [
                 "Test repeat QR scans on the same phone/browser after refresh, tab close, browser close, and reopening from the camera QR flow.",
                 "Test private browsing, blocked cookies/storage, iOS Safari behavior, Chrome behavior, and low-storage or cleared-site-data cases where practical.",
                 "Document whether the failure is localStorage, cookies, sessionStorage, browser choice, QR app behavior, or another state restoration issue.",
                 "Identify which failures can be prevented and which require recovery UX.",
                 "Do not assume storage can be made perfect; use findings to design recovery."
               ],
-              notes:
-                "Rock Hall evidence suggests guests often scanned the QR code on the same phone and default browser, checked in, joined a queue, then later qMe did not reconnect them. They could find themselves again and see 'already checked in', which means server-side state existed but the browser-side session pointer was missing or unavailable. 2026-08-19 live acceptance confirmed that deliberately clearing cookies/site storage destroys the browser guest identity and returns the guest to Check-In; this is an expected recovery-entry condition, not something qME can fully prevent in-browser. Recovery now provides the path back to existing server-side participation. Keep this story current for broader repeat-QR/browser/private-mode/iOS/Chrome/storage-condition diagnostics."
+              "notes": "Rock Hall evidence showed repeat QR scans on the same phone/browser could produce an already-checked-in state without stable reconnect. Live acceptance confirmed that deliberate local/session-data clearance breaks browser identity and returns guests to Check-In, then manual registration recovery reconnects existing participation. Normal iPhone Safari behavior after refresh, tab close, browser close/reopen, and repeat QR entry is passing again; this is now complete."
             },
             {
-              id: "story-already-checked-in-recovery",
-              title: "Recover an already checked-in guest from registration search",
-              status: "done",
-              sprint: "now",
-              summary:
-                "When qMe does not recognize the browser but the guest finds their imported registration again, let them safely reconnect to their existing event participation instead of creating a duplicate or reaching a dead end.",
-              acceptanceCriteria: [
+              "id": "story-already-checked-in-recovery",
+              "title": "Recover an already checked-in guest from registration search",
+              "status": "done",
+              "sprint": "now",
+              "summary": "When qMe does not recognize the browser but the guest finds their imported registration again, let them safely reconnect to their existing event participation instead of creating a duplicate or reaching a dead end.",
+              "acceptanceCriteria": [
                 "Guest search can identify a previously claimed/checked-in imported registration.",
                 "Search results use whatever useful identifying source fields are available for that event and display them in appropriately masked form where needed, such as email, mobile number, company/organization, or other mapped registration hints; recovery does not assume every event has the same fields.",
                 "The guest sees a clear recovery path such as Reconnect to My Event instead of only an already-checked-in dead end.",
@@ -252,58 +233,66 @@ const QME_ROADMAP = {
                 "Ambiguous, duplicate-name, or unverifiable recovery routes the guest to event staff without exposing unnecessary attendee data.",
                 "Removed/released registrations continue through the existing re-check-in/recovery behavior rather than silently reconnecting."
               ],
-              notes:
-                "This is the product fix for lost browser recognition. It reconnects to server-side truth rather than relying on perfect local browser storage. Check-In Mode governs initial event admission; recovery restores participation that already exists and should not unnecessarily send an already checked-in guest back through Registration staff. Stronger verification such as SMS OTP can later layer onto the same recovery flow without redesigning it. Completed 2026-08-19 after multi-round live SOTC acceptance with real baseline guests including Chiderah Emeakoroha, Charlie Haslett, and Madeline Vlaeminck. Recovery now reconnects the current browser/session to existing check-ins, queue tickets, Stage/State, credits, marks, and completion history without duplicate participation. The key implementation lesson was that browser/localStorage is only a recovery hint; existing server-side participation must be rediscovered/adopted from authoritative ticket and check-in truth."
+              "notes": "This is the product fix for lost browser recognition. It reconnects to server-side truth rather than relying on perfect local browser storage. Check-In Mode governs initial event admission; recovery restores participation that already exists and should not unnecessarily send an already checked-in guest back through Registration staff. Stronger verification such as SMS OTP can later layer onto the same recovery flow without redesigning it. Completed 2026-08-19 after multi-round live SOTC acceptance with real baseline guests including Chiderah Emeakoroha, Charlie Haslett, and Madeline Vlaeminck. Recovery now reconnects the current browser/session to existing check-ins, queue tickets, Stage/State, credits, marks, and completion history without duplicate participation. The key implementation lesson was that browser/localStorage is only a recovery hint; existing server-side participation must be rediscovered/adopted from authoritative ticket and check-in truth."
             },
             {
-              id: "story-storage-health-recovery-contact-prompt",
-              title: "Prompt for recovery contact when browser storage looks risky",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Add a lightweight diagnostic and prompt so qMe can warn guests when browser storage may not persist and ask for optional phone or email to help recovery.",
-              acceptanceCriteria: [
+              "id": "story-storage-health-recovery-contact-prompt",
+              "title": "Prompt for recovery contact when browser storage looks risky",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Add a lightweight diagnostic and prompt so qMe can warn guests when browser storage may not persist and ask for optional phone or email to help recovery.",
+              "acceptanceCriteria": [
                 "Guest flow can test whether required browser storage appears writable/readable.",
                 "If storage looks risky, qMe clearly asks the guest to add a recovery phone or email.",
                 "Phone/email remains optional unless a future event configuration requires it.",
                 "Prompt copy explains recovery value without implying full account creation.",
                 "The design accounts for domestic 10-digit phone numbers and international/WhatsApp-style numbers without overblocking legitimate guests."
               ],
-              notes:
-                "This supports the Rock Hall lesson without making check-in feel heavy. Future event types may choose stronger identity or host-assisted check-in."
+              "notes": "Keep this story open, but frame it around two separate concepts: session viability (can this browser persist required qMe state?) and recovery identity/contact (how can we reconnect later). Session viability is foundational; optional phone/email improves recovery, but does not fix a browser that cannot persist state. Intervention should be targeted to detected-risk sessions only."
+            },
+            {
+              "id": "story-browser-persistence-edge-cases-degraded-storage",
+              "title": "Browser persistence edge cases and degraded-storage UX",
+              "status": "deferred",
+              "sprint": "future",
+              "summary": "Investigate browser persistence edge cases and degraded-storage UX for guest recovery after successful initial participation.",
+              "acceptanceCriteria": [
+                "Document storage and privacy conditions where guest session identity works initially but degrades later after re-entry.",
+                "Track whether qMe preserves participation under blocked cookies/storage pressure/private modes and note reproducible patterns.",
+                "Prefer targeted, low-friction interventions only when storage risk is detected.",
+                "Keep scope limited to diagnostics and UX guidance until broader feasibility/verification paths are justified."
+              ],
+              "notes": "Preserve for later investigation:\n- what browser/device/privacy/storage conditions allow an initially usable qMe session but later discard guest identity;\n- Android/Chrome and other combinations if future evidence warrants\n- storage pressure/content-blocker/privacy behaviors;\n- whether legacy SOTC storage implementation contributed;\n- why Safari Block All Cookies reduced visible event context and why reconnect behavior differed;\n- whether degraded modes should offer explicit guidance and when."
             }
           ]
         },
         {
-          id: "theme-recall-and-operator-controls",
-          title: "Recall and Operator Controls",
-          status: "current",
-          stories: [
+          "id": "theme-recall-and-operator-controls",
+          "title": "Recall and Operator Controls",
+          "status": "current",
+          "stories": [
             {
-              id: "story-sms-cost-compliance-feasibility",
-              title: "Evaluate SMS recall costs, compliance, and go/no-go",
-              status: "discovery",
-              sprint: "now",
-              summary:
-                "Use the existing Twilio direction/account readiness to understand what SMS would cost and require before qMe promises phone buzzing or text recall at a live event.",
-              acceptanceCriteria: [
+              "id": "story-sms-cost-compliance-feasibility",
+              "title": "Evaluate SMS recall costs, compliance, and go/no-go",
+              "status": "discovery",
+              "sprint": "now",
+              "summary": "Use the existing Twilio direction/account readiness to understand what SMS would cost and require before qMe promises phone buzzing or text recall at a live event.",
+              "acceptanceCriteria": [
                 "Confirm provider/account status, sending number readiness, and whether A2P 10DLC or other approval is required.",
                 "Estimate monthly and per-message costs for likely event volumes.",
                 "Draft consent, STOP/HELP, and event-use language before any live SMS opt-in.",
                 "Document secure server-side trigger architecture with duplicate prevention and delivery logging.",
                 "Make a go/no-go recommendation before enabling SMS for production event operations."
               ],
-              notes:
-                "User likely has Twilio signed up and ready from July 20, but SMS should be investigated in Sprint 3 rather than treated as off-limits or silently enabled. In-app remains the reliable fallback until SMS compliance/costs are clear."
+              "notes": "User likely has Twilio signed up and ready from July 20, but SMS should be investigated in Sprint 3 rather than treated as off-limits or silently enabled. In-app remains the reliable fallback until SMS compliance/costs are clear."
             },
             {
-              id: "story-admin-guest-search-state-reconciliation",
-              title: "Improve admin guest search, status, timing, and history visibility",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Help operators quickly understand who a guest is, where they are in the queue workflow, their readiness condition, their queue position and surrounding queue context, how long they have been there, and what meaningful actions happened previously.",
-              acceptanceCriteria: [
+              "id": "story-admin-guest-search-state-reconciliation",
+              "title": "Improve admin guest search, status, timing, and history visibility",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Help operators quickly understand who a guest is, where they are in the queue workflow, their readiness condition, their queue position and surrounding queue context, how long they have been there, and what meaningful actions happened previously.",
+              "acceptanceCriteria": [
                 "Admin can search by guest name, email, phone where available, ticket number, and relevant event/check-in status; name remains the primary live-operations use case.",
                 "Admin sees product-facing Stage and State separately: Stage describes workflow position (Waiting, Gathering, Your Turn, Completed) while State describes a meaningful condition within that stage (for example Cooling Down, On My Way, or Nearby).",
                 "Admin can see queue order/position where meaningful, active guests ahead, total active queue size, and relevant Gathering/Nearby/Your Turn counts; internal ticket IDs are never presented as queue position.",
@@ -314,17 +303,15 @@ const QME_ROADMAP = {
                 "Search helps resolve duplicate-looking or already-checked-in cases without exposing unnecessary data to station staff.",
                 "Visibility is role-aware and separates event-admin views from limited station-staff views."
               ],
-              notes:
-                "Post-SOTC lesson: operators need to understand both queue order and readiness, not merely a technical ticket stage. Product refinement on 2026-08-19 established Stage / State / Timestamps-History: Stage is where the guest is in the workflow; State is additional current condition that affects treatment; timestamps/history record what happened and when. For the current managed queue, conceptual stages are Waiting -> Gathering -> Your Turn -> Completed. Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. Completed 2026-08-19 after live SOTC acceptance confirmed admin search/state visibility, CSV/export semantics, timing/status visibility, queue context, and guest/admin reconciliation across Waiting, Gathering, On My Way, Nearby, Your Turn, Return to Waiting/cooldown, and Completed. Admin and guest surfaces now derive from the same authoritative server-side ticket truth."
+              "notes": "Post-SOTC lesson: operators need to understand both queue order and readiness, not merely a technical ticket stage. Product refinement on 2026-08-19 established Stage / State / Timestamps-History: Stage is where the guest is in the workflow; State is additional current condition that affects treatment; timestamps/history record what happened and when. For the current managed queue, conceptual stages are Waiting -> Gathering -> Your Turn -> Completed. Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. Completed 2026-08-19 after live SOTC acceptance confirmed admin search/state visibility, CSV/export semantics, timing/status visibility, queue context, and guest/admin reconciliation across Waiting, Gathering, On My Way, Nearby, Your Turn, Return to Waiting/cooldown, and Completed. Admin and guest surfaces now derive from the same authoritative server-side ticket truth."
             },
             {
-              id: "story-authorized-queue-state-overrides",
-              title: "Add authorized queue state override controls",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Give Event Admin or approved station authority operational controls to reconcile qME with physical event reality while preserving normal automation as the default.",
-              acceptanceCriteria: [
+              "id": "story-authorized-queue-state-overrides",
+              "title": "Add authorized queue state override controls",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Give Event Admin or approved station authority operational controls to reconcile qME with physical event reality while preserving normal automation as the default.",
+              "acceptanceCriteria": [
                 "Admin actions use operational language and map to Stage + State semantics rather than exposing raw database mutations: Move/Invite to Gathering, Mark On My Way, Mark Nearby, Make Your Turn, Return to Waiting, and Mark Not Here where appropriate.",
                 "Normal automatic progression to Your Turn requires Stage = Gathering and State = Nearby; On My Way indicates commitment/response but does not make the guest callable.",
                 "Authorized operators may record commitment/readiness on a guest's behalf when the guest cannot interact with qME, such as a dead phone, accessibility need, or direct call to the station; history records whether the update came from guest, admin/staff, or system where practical.",
@@ -335,80 +322,71 @@ const QME_ROADMAP = {
                 "The resulting override is visible in the guest's operational history.",
                 "Station staff visibility/editability is role-aware; Event Admin or higher can perform broader event-level overrides."
               ],
-              notes:
-                "This is broader than 'let this person go next' but includes that normal operational need. Product refinement on 2026-08-19 distinguishes Stage from State: Waiting/Gathering/Your Turn/Completed are workflow stages; Cooling Down, On My Way, and Nearby are conditions within stages. Completed 2026-08-19 after Product Owner exercised authorized forward/backward operational transitions with real SOTC records, including On My Way, Nearby, Your Turn, Return to Waiting/cooldown, Not Here-related paths, and completion. On My Way is persisted as a real Gathering State marker; Nearby remains the stronger Gathering State and makes the guest callable. Overrides are accepted for live operational reconciliation while automation remains the default."
+              "notes": "This is broader than 'let this person go next' but includes that normal operational need. Product refinement on 2026-08-19 distinguishes Stage from State: Waiting/Gathering/Your Turn/Completed are workflow stages; Cooling Down, On My Way, and Nearby are conditions within stages. Completed 2026-08-19 after Product Owner exercised authorized forward/backward operational transitions with real SOTC records, including On My Way, Nearby, Your Turn, Return to Waiting/cooldown, Not Here-related paths, and completion. On My Way is persisted as a real Gathering State marker; Nearby remains the stronger Gathering State and makes the guest callable. Overrides are accepted for live operational reconciliation while automation remains the default."
             }
           ]
         }
       ]
     },
     {
-      id: "epic-stabilization",
-      title: "Cleanup and Stabilization Before Multi-Org",
-      summary:
-        "Clean up known issues and local workflow friction before building the larger organization/event structure.",
-      status: "current",
-      themes: [
+      "id": "epic-stabilization",
+      "title": "Cleanup and Stabilization Before Multi-Org",
+      "summary": "Clean up known issues and local workflow friction before building the larger organization/event structure.",
+      "status": "current",
+      "themes": [
         {
-          id: "theme-guest-access-cleanup",
-          title: "Guest Access and Queue Rules",
-          status: "current",
-          stories: [
+          "id": "theme-guest-access-cleanup",
+          "title": "Guest Access and Queue Rules",
+          "status": "current",
+          "stories": [
             {
-              id: "story-bouquet-access-fixed",
-              title: "Fix Bouquet Bar eligibility messaging",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Guests now see different Bouquet Bar messages depending on whether they are not checked in, checked in as general admission, or checked in with Festival + Flowers.",
-              acceptanceCriteria: [
+              "id": "story-bouquet-access-fixed",
+              "title": "Fix Bouquet Bar eligibility messaging",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Guests now see different Bouquet Bar messages depending on whether they are not checked in, checked in as general admission, or checked in with Festival + Flowers.",
+              "acceptanceCriteria": [
                 "Not checked in guests are prompted to check in.",
                 "General admission guests are blocked with the correct explanation.",
                 "Festival + Flowers guests can join the queue."
               ],
-              notes:
-                "Verified on phone after Vercel deploy."
+              "notes": "Verified on phone after Vercel deploy."
             },
             {
-              id: "story-peony-main-event-weird-queue-number",
-              title: "Hotfix Peony main event weird queue number",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Fix the Peony event main guest screen showing a stale or incorrect line number that does not match the guest's actual queue position.",
-              acceptanceCriteria: [
+              "id": "story-peony-main-event-weird-queue-number",
+              "title": "Hotfix Peony main event weird queue number",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Fix the Peony event main guest screen showing a stale or incorrect line number that does not match the guest's actual queue position.",
+              "acceptanceCriteria": [
                 "Reproduce the case where the main event screen shows a number like #490 while the actual guest queue position is 23.",
                 "Identify whether the page is displaying ticket id, stale localStorage state, the wrong queue, or an aggregate queue value.",
                 "Main event guest messaging displays the correct queue status or does not display a misleading queue number.",
                 "Flower Photos and Wrapped Bouquets queue ticket displays remain correct.",
                 "The fix does not break admin queue advancement or guest served/removed behavior."
               ],
-              notes:
-                "Captured from Product Inbox bug: Peony event - main event guest shows a weird queue number. Treat as a hotfix before deeper multi-org work."
+              "notes": "Captured from Product Inbox bug: Peony event - main event guest shows a weird queue number. Treat as a hotfix before deeper multi-org work."
             },
             {
-              id: "story-cleanup-before-multi-org",
-              title: "Complete cleanup pass before multi-organization build",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Keep a short, explicit cleanup list so known issues are reviewed before the architecture expands.",
-              acceptanceCriteria: [
+              "id": "story-cleanup-before-multi-org",
+              "title": "Complete cleanup pass before multi-organization build",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Keep a short, explicit cleanup list so known issues are reviewed before the architecture expands.",
+              "acceptanceCriteria": [
                 "Known guest-flow bugs are either fixed or documented.",
                 "Known local build/workflow issues are captured.",
                 "Deferred cleanup items are separated from multi-org stories."
               ],
-              notes:
-                "Completed with docs/pre-multi-org-cleanup.md. Demo-specific Peony behavior is intentionally preserved and deferred until the multi-org foundation can absorb it safely."
+              "notes": "Completed with docs/pre-multi-org-cleanup.md. Demo-specific Peony behavior is intentionally preserved and deferred until the multi-org foundation can absorb it safely."
             },
             {
-              id: "story-preserve-peony-demo",
-              title: "Migrate Peony Festival into a demo organization without breaking it",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Create a demo/test organization for Peony Festival and use it as the safety check while organizations and event ownership are introduced.",
-              acceptanceCriteria: [
+              "id": "story-preserve-peony-demo",
+              "title": "Migrate Peony Festival into a demo organization without breaking it",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Create a demo/test organization for Peony Festival and use it as the safety check while organizations and event ownership are introduced.",
+              "acceptanceCriteria": [
                 "A demo/test organization exists for the Peony Festival demo.",
                 "The Peony Festival event is assigned to that demo organization.",
                 "Existing Peony Festival URLs keep working.",
@@ -416,65 +394,57 @@ const QME_ROADMAP = {
                 "Demo-specific assumptions are documented before they are generalized.",
                 "The migration explicitly preserves the 'please do not break the demo' requirement."
               ],
-              notes:
-                "Completed at the foundation level in supabase-org-event-foundation.sql: Walnut Ridge Farm is seeded as the Peony owner, Peony keeps its existing slug/guest URLs, and demo-specific assumptions remain documented in docs/hard-coded-demo-assumptions-audit.md."
+              "notes": "Completed at the foundation level in supabase-org-event-foundation.sql: Walnut Ridge Farm is seeded as the Peony owner, Peony keeps its existing slug/guest URLs, and demo-specific assumptions remain documented in docs/hard-coded-demo-assumptions-audit.md."
             },
             {
-              id: "story-admin-update-guest-access",
-              title: "Allow admin to update guest access after check-in",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Let an admin correct or upgrade a checked-in guest's access, such as changing a Peony guest from general admission to Festival + Flowers so they can join Wrapped Bouquets.",
-              acceptanceCriteria: [
+              "id": "story-admin-update-guest-access",
+              "title": "Allow admin to update guest access after check-in",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Let an admin correct or upgrade a checked-in guest's access, such as changing a Peony guest from general admission to Festival + Flowers so they can join Wrapped Bouquets.",
+              "acceptanceCriteria": [
                 "Admin can view a guest's current event check-in access type.",
                 "Admin can upgrade a checked-in guest from general admission to Festival + Flowers.",
                 "Updated access is respected by the Wrapped Bouquets queue guard without requiring a new phone/browser identity.",
                 "The pattern is documented as a precursor to SOTC access tags such as student, professional, and professional-with-photo."
               ],
-              notes:
-                "Implemented for Peony event check-ins as a one-way correction from general to Festival + Flowers access. SOTC photo credit states should be modeled separately."
+              "notes": "Implemented for Peony event check-ins as a one-way correction from general to Festival + Flowers access. SOTC photo credit states should be modeled separately."
             },
             {
-              id: "story-hardcoded-demo-assumptions-audit",
-              title: "Identify hard-coded demo assumptions before foundation build",
-              status: "ready",
-              sprint: "now",
-              summary:
-                "Audit the app for Peony-specific, Bouquet-specific, static-image, route-guard, and demo-only assumptions before they are generalized or removed.",
-              acceptanceCriteria: [
+              "id": "story-hardcoded-demo-assumptions-audit",
+              "title": "Identify hard-coded demo assumptions before foundation build",
+              "status": "ready",
+              "sprint": "now",
+              "summary": "Audit the app for Peony-specific, Bouquet-specific, static-image, route-guard, and demo-only assumptions before they are generalized or removed.",
+              "acceptanceCriteria": [
                 "Hard-coded event slugs, queue slugs, ticket/access types, static event content, image paths, and demo route guards are listed.",
                 "Each item is classified as keep-for-demo, migrate-to-data, generalize-now, or remove-later.",
                 "Peony demo safety requirements are captured beside each risky item.",
                 "Findings produce follow-up implementation stories rather than broad untracked cleanup."
               ],
-              notes:
-                "Identification is separate from removal so the Peony demo remains stable while the multi-org foundation is introduced."
+              "notes": "Identification is separate from removal so the Peony demo remains stable while the multi-org foundation is introduced."
             },
             {
-              id: "story-remove-hardcoded-demo-assumptions",
-              title: "Remove or generalize hard-coded demo assumptions",
-              status: "ready",
-              sprint: "next",
-              summary:
-                "Replace audited hard-coded demo assumptions with organization/event/experience data once the foundation exists.",
-              acceptanceCriteria: [
+              "id": "story-remove-hardcoded-demo-assumptions",
+              "title": "Remove or generalize hard-coded demo assumptions",
+              "status": "ready",
+              "sprint": "next",
+              "summary": "Replace audited hard-coded demo assumptions with organization/event/experience data once the foundation exists.",
+              "acceptanceCriteria": [
                 "Only items classified for removal or generalization are changed.",
                 "Peony remains demonstrable after each removal/generalization step.",
                 "SOTC can be modeled without copying Peony-specific code paths.",
                 "Static content or images move to data/storage only after ownership is defined."
               ],
-              notes:
-                "This follows the hard-coded assumptions audit and should be split into smaller implementation stories if the list is large."
+              "notes": "This follows the hard-coded assumptions audit and should be split into smaller implementation stories if the list is large."
             },
             {
-              id: "story-event-guest-data-cleanup",
-              title: "Clean up event guest and check-in data before org migration",
-              status: "ready",
-              sprint: "now",
-              summary:
-                "Review and normalize Peony demo guest/check-in data before it is carried into an organization-based system.",
-              acceptanceCriteria: [
+              "id": "story-event-guest-data-cleanup",
+              "title": "Clean up event guest and check-in data before org migration",
+              "status": "ready",
+              "sprint": "now",
+              "summary": "Review and normalize Peony demo guest/check-in data before it is carried into an organization-based system.",
+              "acceptanceCriteria": [
                 "Identify test/demo guest and event_check_ins rows that should be archived, deleted, renamed, or preserved.",
                 "Identify completed event_check_ins rows with null or ambiguous ticket_type values.",
                 "Decide whether null ticket_type values should become general for Peony demo rows.",
@@ -482,54 +452,48 @@ const QME_ROADMAP = {
                 "Document any cleanup SQL or manual Supabase steps before changing live data.",
                 "Do not mutate production/demo data until the cleanup plan is reviewed."
               ],
-              notes:
-                "Prompted by observing a completed event_check_ins row with NULL ticket_type. This is data cleanup/planning first, not an immediate data mutation."
+              "notes": "Prompted by observing a completed event_check_ins row with NULL ticket_type. This is data cleanup/planning first, not an immediate data mutation."
             }
           ]
         },
         {
-          id: "theme-local-workflow-cleanup",
-          title: "Local Build and Tooling Friction",
-          status: "current",
-          stories: [
+          "id": "theme-local-workflow-cleanup",
+          "title": "Local Build and Tooling Friction",
+          "status": "current",
+          "stories": [
             {
-              id: "story-dist-images-lock",
-              title: "Track recurring app/dist/images build lock",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Normal npm run build can fail when Windows/Dropbox locks generated app/dist/images, even though TypeScript and Vite bundling pass.",
-              acceptanceCriteria: [
+              "id": "story-dist-images-lock",
+              "title": "Track recurring app/dist/images build lock",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Normal npm run build can fail when Windows/Dropbox locks generated app/dist/images, even though TypeScript and Vite bundling pass.",
+              "acceptanceCriteria": [
                 "Document that this is generated-folder lock behavior, not an app compile failure.",
                 "Keep npx vite build --emptyOutDir false as a temporary verification fallback.",
                 "Decide whether to move generated build output away from Dropbox or change local cleanup workflow."
               ],
-              notes:
-                "Completed 2026-08-18: added npm run build:verify:local, which runs TypeScript and Vite with output directed to the system temp folder so local verification does not depend on clearing Dropbox-managed app/dist/images. Production build behavior is unchanged."
+              "notes": "Completed 2026-08-18: added npm run build:verify:local, which runs TypeScript and Vite with output directed to the system temp folder so local verification does not depend on clearing Dropbox-managed app/dist/images. Production build behavior is unchanged."
             },
             {
-              id: "story-sandbox-spawn-hiccup",
-              title: "Track intermittent Windows sandbox spawn hiccup",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Some shell commands occasionally fail before execution with a Windows sandbox spawn setup refresh error.",
-              acceptanceCriteria: [
+              "id": "story-sandbox-spawn-hiccup",
+              "title": "Track intermittent Windows sandbox spawn hiccup",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Some shell commands occasionally fail before execution with a Windows sandbox spawn setup refresh error.",
+              "acceptanceCriteria": [
                 "Capture the symptom in the cleanup list.",
                 "Use approved reruns only when needed.",
                 "Do not treat pre-execution spawn failures as code failures."
               ],
-              notes:
-                "Seen with normal build and git diff-stat/diff style commands."
+              "notes": "Seen with normal build and git diff-stat/diff style commands."
             },
             {
-              id: "story-git-command-friction",
-              title: "Track intermittent Git command friction",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Occasional diff/status commands hit local sandbox friction, but Git operations have succeeded after safe reruns.",
-              acceptanceCriteria: [
+              "id": "story-git-command-friction",
+              "title": "Track intermittent Git command friction",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Occasional diff/status commands hit local sandbox friction, but Git operations have succeeded after safe reruns.",
+              "acceptanceCriteria": [
                 "Keep GitHub push path working.",
                 "Avoid interactive Git commands.",
                 "Document when command failures are environmental rather than repository state."
@@ -540,107 +504,97 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "epic-product-management",
-      title: "Product Management Workspace",
-      summary:
-        "A repo-native planning tool that preserves epics/themes/stories and shows both roadmap hierarchy and sprint focus.",
-      status: "current",
-      themes: [
+      "id": "epic-product-management",
+      "title": "Product Management Workspace",
+      "summary": "A repo-native planning tool that preserves epics/themes/stories and shows both roadmap hierarchy and sprint focus.",
+      "status": "current",
+      "themes": [
         {
-          id: "theme-roadmap-tool",
-          title: "Roadmap Tool",
-          status: "current",
-          stories: [
+          "id": "theme-roadmap-tool",
+          "title": "Roadmap Tool",
+          "status": "current",
+          "stories": [
             {
-              id: "story-planning-workspace",
-              title: "Create static planning workspace",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Add HTML pages in the repo for roadmap, backlog, and sprint review views.",
-              acceptanceCriteria: [
+              "id": "story-planning-workspace",
+              "title": "Create static planning workspace",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Add HTML pages in the repo for roadmap, backlog, and sprint review views.",
+              "acceptanceCriteria": [
                 "Planning pages open locally without a backend.",
                 "Epics expand to show themes and stories.",
                 "Sprint view uses the same story data as the roadmap."
               ],
-              notes:
-                "This should be easy for Codex, Claude Code, or a human developer to inspect."
+              "notes": "This should be easy for Codex, Claude Code, or a human developer to inspect."
             },
             {
-              id: "story-roadmap-data-model",
-              title: "Store roadmap as structured data",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Keep roadmap content in a single data file so graphical views do not duplicate cards.",
-              acceptanceCriteria: [
+              "id": "story-roadmap-data-model",
+              "title": "Store roadmap as structured data",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Keep roadmap content in a single data file so graphical views do not duplicate cards.",
+              "acceptanceCriteria": [
                 "Epics, themes, stories, sprints, and inbox notes live in one source file.",
                 "Stories can be reused across views by id.",
                 "Status and sprint assignment are visible."
               ]
             },
             {
-              id: "story-triage-inbox",
-              title: "Add product inbox for emailed thoughts",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Create a place for raw notes to be captured, triaged, promoted to stories, or parked.",
-              acceptanceCriteria: [
+              "id": "story-triage-inbox",
+              "title": "Add product inbox for emailed thoughts",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Create a place for raw notes to be captured, triaged, promoted to stories, or parked.",
+              "acceptanceCriteria": [
                 "Inbox items can be tagged as consider, promote, or defer.",
                 "Raw wording can be preserved while product implications are clarified.",
                 "Deferred ideas remain visible without distracting the current sprint."
               ]
             },
             {
-              id: "story-import-trello-detail-cards",
-              title: "Import detailed Trello cards into product board",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Review screenshots/PDF of detailed Trello cards and reconcile them into the repo-based product roadmap.",
-              acceptanceCriteria: [
+              "id": "story-import-trello-detail-cards",
+              "title": "Import detailed Trello cards into product board",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Review screenshots/PDF of detailed Trello cards and reconcile them into the repo-based product roadmap.",
+              "acceptanceCriteria": [
                 "Trello card screenshots are collected into a PDF or readable image set.",
                 "PDF is reviewed for overlap with existing roadmap epics, themes, and stories.",
                 "New or missing items are added to the roadmap or product inbox.",
                 "Duplicate items are merged, linked, or noted against existing stories.",
                 "Open questions from Trello are captured separately as decisions or discovery items."
               ],
-              notes:
-                "Imported from sotc planning doc.pdf on 2026-06-10. Most items overlapped existing epics; missing details were added as role, event scheduling, eCe lifecycle, SOTC registration, and admin operations cards."
+              "notes": "Imported from sotc planning doc.pdf on 2026-06-10. Most items overlapped existing epics; missing details were added as role, event scheduling, eCe lifecycle, SOTC registration, and admin operations cards."
             },
             {
-              id: "story-planning-admin-access-controls",
-              title: "Replace planning access code with admin controls",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Move the deployed planning workspace from a shared access code to qME admin-aware controls so roadmap viewing, editing, and syncing are governed like the rest of the platform.",
-              acceptanceCriteria: [
+              "id": "story-planning-admin-access-controls",
+              "title": "Replace planning access code with admin controls",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Move the deployed planning workspace from a shared access code to qME admin-aware controls so roadmap viewing, editing, and syncing are governed like the rest of the platform.",
+              "acceptanceCriteria": [
                 "Planning access no longer depends on the hard-coded/shared planning code as the primary control.",
                 "qME superadmin can view and edit the planning workspace.",
                 "Future organization/admin visibility rules are documented before exposing planning data outside qME operators.",
                 "Planning document writes/syncs are restricted to approved admin roles.",
                 "Temporary fallback access, if retained during transition, is labeled with risk and removal intent."
               ],
-              notes:
-                "Completed on 2026-06-29: /planning now unlocks from the same Supabase Auth session used by /admin, and /api/planning-data verifies that the caller is an active qME superadmin before allowing roadmap reads or writes. The old shared planning access code and cookie gate were removed from the planning route. Future expansion can add org-scoped planning visibility once the product planning model needs collaborators beyond qME operators."
+              "notes": "Completed on 2026-06-29: /planning now unlocks from the same Supabase Auth session used by /admin, and /api/planning-data verifies that the caller is an active qME superadmin before allowing roadmap reads or writes. The old shared planning access code and cookie gate were removed from the planning route. Future expansion can add org-scoped planning visibility once the product planning model needs collaborators beyond qME operators."
             }
           ]
         },
         {
-          id: "theme-sprint-review",
-          title: "Sprint Review Rhythm",
-          status: "ready",
-          stories: [
+          "id": "theme-sprint-review",
+          "title": "Sprint Review Rhythm",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-sprint-review-template",
-              title: "Define sprint review checklist",
-              status: "ready",
-              sprint: "next",
-              summary:
-                "Use a lightweight review concept for what changed, what was learned, what is next, and what decisions are needed.",
-              acceptanceCriteria: [
+              "id": "story-sprint-review-template",
+              "title": "Define sprint review checklist",
+              "status": "ready",
+              "sprint": "next",
+              "summary": "Use a lightweight review concept for what changed, what was learned, what is next, and what decisions are needed.",
+              "acceptanceCriteria": [
                 "Review view shows current sprint goal.",
                 "Done, carried, added, and deferred items are visible.",
                 "Open decisions are separated from implementation work."
@@ -651,40 +605,36 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "epic-org-admin",
-      title: "Organizations and Admin Accounts",
-      summary:
-        "Support qME customers as organizations with admins, staff, and scoped access.",
-      status: "ready",
-      themes: [
+      "id": "epic-org-admin",
+      "title": "Organizations and Admin Accounts",
+      "summary": "Support qME customers as organizations with admins, staff, and scoped access.",
+      "status": "ready",
+      "themes": [
         {
-          id: "theme-organizations",
-          title: "Organizations",
-          status: "ready",
-          stories: [
+          "id": "theme-organizations",
+          "title": "Organizations",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-org-table",
-              title: "Create organizations table",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Add the core organization model so qME is no longer only a single demo/event app.",
-              acceptanceCriteria: [
+              "id": "story-org-table",
+              "title": "Create organizations table",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Add the core organization model so qME is no longer only a single demo/event app.",
+              "acceptanceCriteria": [
                 "Supabase has an organizations table.",
                 "Organizations have name, slug, status, and timestamps.",
                 "Existing Peony Festival data can belong to a default organization."
               ],
-              notes:
-                "Completed in supabase-org-event-foundation.sql: creates organizations, adds events.organization_id, seeds Walnut Ridge Farm, qME Demo, and Summer on the Cuyahoga, and keeps policies temporary until Sprint 2 roles/RLS hardening."
+              "notes": "Completed in supabase-org-event-foundation.sql: creates organizations, adds events.organization_id, seeds Walnut Ridge Farm, qME Demo, and Summer on the Cuyahoga, and keeps policies temporary until Sprint 2 roles/RLS hardening."
             },
             {
-              id: "story-governance-principles-foundation",
-              title: "Define governance principles for multi-org foundation",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Use the authority/object governance model to settle the minimum role, authority, ownership, and audit principles before building superadmin, organization, and admin structures.",
-              acceptanceCriteria: [
+              "id": "story-governance-principles-foundation",
+              "title": "Define governance principles for multi-org foundation",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Use the authority/object governance model to settle the minimum role, authority, ownership, and audit principles before building superadmin, organization, and admin structures.",
+              "acceptanceCriteria": [
                 "Superadmin, organization admin, and staff boundaries are defined.",
                 "Active organization context behavior is decided for users who belong to multiple organizations.",
                 "Organizations owning events is confirmed as a foundation rule.",
@@ -693,89 +643,79 @@ const QME_ROADMAP = {
                 "Full custom permissions are explicitly deferred.",
                 "Decisions are translated into initial table/schema requirements before implementation."
               ],
-              notes:
-                "Completed in docs/admin-governance-v1.md. This sets the Sprint 2 boundaries for super admin, org admin, event admin, staff, station/service provider, guest access, audit candidates, and deferred custom permissions."
+              "notes": "Completed in docs/admin-governance-v1.md. This sets the Sprint 2 boundaries for super admin, org admin, event admin, staff, station/service provider, guest access, audit candidates, and deferred custom permissions."
             },
             {
-              id: "story-image-ownership-model",
-              title: "Define image ownership model before schema work",
-              status: "ready",
-              sprint: "now",
-              summary:
-                "Decide where organization logos, event images, experience images, sponsor logos, resource images, and gallery images belong before tables and storage are implemented.",
-              acceptanceCriteria: [
+              "id": "story-image-ownership-model",
+              "title": "Define image ownership model before schema work",
+              "status": "ready",
+              "sprint": "now",
+              "summary": "Decide where organization logos, event images, experience images, sponsor logos, resource images, and gallery images belong before tables and storage are implemented.",
+              "acceptanceCriteria": [
                 "Image ownership is defined for organizations, events, experiences/eCe's, sponsors, resources, and galleries.",
                 "Initial database fields or image reference strategy are identified before event schema work proceeds.",
                 "Managed storage implementation remains a separate story.",
                 "Static app images are limited to defaults/placeholders over time.",
                 "Peony and SOTC image needs are both considered."
               ],
-              notes:
-                "This is the pre-build design decision. The separate managed image storage story covers Supabase Storage and upload/selection implementation."
+              "notes": "This is the pre-build design decision. The separate managed image storage story covers Supabase Storage and upload/selection implementation."
             },
             {
-              id: "story-seed-sotc-org",
-              title: "Seed Summer on the Cuyahoga organization",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Create Summer on the Cuyahoga as a first real organization for the Rock Hall event demo.",
-              acceptanceCriteria: [
+              "id": "story-seed-sotc-org",
+              "title": "Seed Summer on the Cuyahoga organization",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Create Summer on the Cuyahoga as a first real organization for the Rock Hall event demo.",
+              "acceptanceCriteria": [
                 "Organization slug is stable.",
                 "The organization can own the July 22 Rock Hall event.",
                 "Future staff/admin records can be attached."
               ],
-              notes:
-                "Completed in supabase-org-event-foundation.sql with slug summer-on-the-cuyahoga and SOTC event ownership backfill for sotc-test-check-in and future sotc-rock-hall."
+              "notes": "Completed in supabase-org-event-foundation.sql with slug summer-on-the-cuyahoga and SOTC event ownership backfill for sotc-test-check-in and future sotc-rock-hall."
             },
             {
-              id: "story-org-staff",
-              title: "Model organization staff",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Allow organizations to invite staff or assign event-specific roles.",
-              acceptanceCriteria: [
+              "id": "story-org-staff",
+              "title": "Model organization staff",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Allow organizations to invite staff or assign event-specific roles.",
+              "acceptanceCriteria": [
                 "One person can belong to one or more organizations.",
                 "Staff permissions can be narrower than owner/admin permissions.",
                 "Staff can be assigned to event operations later.",
                 "A user with multiple organizations can choose which organization/account context to use after login."
               ],
-              notes:
-                "Schema foundation added in supabase-admin-role-foundation.sql with admin_principals, organization_memberships, and event_staff_assignments. App passes added: Organization Staff panel for org_admin/universal_staff memberships; Event Staff panel on admin event detail for event_admin, check_in_staff, and feature-scoped service_staff/service_provider/station_account assignments by existing admin principal email. Invite emails, smoother new-user flow, and role-aware database RLS enforcement remain in Sprint 2."
+              "notes": "Schema foundation added in supabase-admin-role-foundation.sql with admin_principals, organization_memberships, and event_staff_assignments. App passes added: Organization Staff panel for org_admin/universal_staff memberships; Event Staff panel on admin event detail for event_admin, check_in_staff, and feature-scoped service_staff/service_provider/station_account assignments by existing admin principal email. Invite emails, smoother new-user flow, and role-aware database RLS enforcement remain in Sprint 2."
             }
           ]
         },
         {
-          id: "theme-admin-roles",
-          title: "Admin Account Management",
-          status: "ready",
-          stories: [
+          "id": "theme-admin-roles",
+          "title": "Admin Account Management",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-admin-org-role",
-              title: "Add admin and organization roles",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Separate qME superadmin access from organization admin access.",
-              acceptanceCriteria: [
+              "id": "story-admin-org-role",
+              "title": "Add admin and organization roles",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Separate qME superadmin access from organization admin access.",
+              "acceptanceCriteria": [
                 "A qME superadmin can manage all organizations.",
                 "An organization admin can manage only their organization.",
                 "Role checks are documented before sensitive admin screens expand.",
                 "Superadmin can assume an admin role in an organization for support.",
                 "Admin operational actions such as start, pause, end, and reset have extra friction such as confirmation or PIN."
               ],
-              notes:
-                "Schema foundation added in supabase-admin-role-foundation.sql with platform_roles for superadmin/support, organization memberships for org_admin/universal_staff, event staff assignments, and helper functions for the RLS pass. App enforcement pass added: AdminGate displays organization/event roles, superadmin can see all orgs/events, org admins are scoped to their organizations, event/station staff are scoped to assigned events, and setup controls are hidden from non-managers. Database RLS enforcement is still temporary until SOTC RLS hardening."
+              "notes": "Schema foundation added in supabase-admin-role-foundation.sql with platform_roles for superadmin/support, organization memberships for org_admin/universal_staff, event staff assignments, and helper functions for the RLS pass. App enforcement pass added: AdminGate displays organization/event roles, superadmin can see all orgs/events, org admins are scoped to their organizations, event/station staff are scoped to assigned events, and setup controls are hidden from non-managers. Database RLS enforcement is still temporary until SOTC RLS hardening."
             },
             {
-              id: "story-authentication-cleanup",
-              title: "Clean up authentication path for admin and staff",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Choose and implement the near-term authentication structure for qME admin, organization admin, event staff, and temporary pilot operations.",
-              acceptanceCriteria: [
+              "id": "story-authentication-cleanup",
+              "title": "Clean up authentication path for admin and staff",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Choose and implement the near-term authentication structure for qME admin, organization admin, event staff, and temporary pilot operations.",
+              "acceptanceCriteria": [
                 "Current demo/admin access assumptions are listed.",
                 "Near-term admin/staff login approach is chosen.",
                 "qME admin, organization admin, and event/station staff access paths are separated enough to support RLS work.",
@@ -783,17 +723,15 @@ const QME_ROADMAP = {
                 "Guest/anon access remains available for event check-in and queue participation without exposing staff actions.",
                 "The authentication decision feeds the SOTC RLS hardening story."
               ],
-              notes:
-                "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Near-term decision is documented in docs/admin-auth-transition-v1.md. AdminGate now requires Supabase Auth users linked to admin_principals and shows a visible admin identity/role bar; the old passphrase fallback has been removed. Superadmin utility added at /admin/principals to list admin principals, create named principals, link an existing Supabase Auth user UUID, and create a Supabase Auth login plus qME principal from the tool when SUPABASE_SERVICE_ROLE_KEY is configured server-side. One email/Auth user should map to one admin principal, and that principal may hold memberships in multiple organizations; UI should preserve that rather than duplicating users per organization. Role-scoped routing is active; first RLS hardening pass is drafted, while invite-email automation and temporary-password-change enforcement remain pending."
+              "notes": "Sprint 2 focus from post-alpha planning: do this before asking the computer engineering student to review database hardening, so the review has concrete role/auth structure. Near-term decision is documented in docs/admin-auth-transition-v1.md. AdminGate now requires Supabase Auth users linked to admin_principals and shows a visible admin identity/role bar; the old passphrase fallback has been removed. Superadmin utility added at /admin/principals to list admin principals, create named principals, link an existing Supabase Auth user UUID, and create a Supabase Auth login plus qME principal from the tool when SUPABASE_SERVICE_ROLE_KEY is configured server-side. One email/Auth user should map to one admin principal, and that principal may hold memberships in multiple organizations; UI should preserve that rather than duplicating users per organization. Role-scoped routing is active; first RLS hardening pass is drafted, while invite-email automation and temporary-password-change enforcement remain pending."
             },
             {
-              id: "story-temp-password-first-login",
-              title: "Require temporary admin/staff password change on first login",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Make admin-created temporary passwords explicit by requiring a staff/admin user to set a new password before using protected admin tools.",
-              acceptanceCriteria: [
+              "id": "story-temp-password-first-login",
+              "title": "Require temporary admin/staff password change on first login",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Make admin-created temporary passwords explicit by requiring a staff/admin user to set a new password before using protected admin tools.",
+              "acceptanceCriteria": [
                 "Admin-created users can be marked as requiring a password change.",
                 "A user with a required password change is redirected to a password-change screen after sign-in.",
                 "Protected admin tools are blocked until the password change is completed.",
@@ -801,33 +739,29 @@ const QME_ROADMAP = {
                 "The temporary-password flag is cleared only after a successful password update.",
                 "The current Jalani/SOTC pilot setup is documented as a temporary manual-password bridge until this story is implemented."
               ],
-              notes:
-                "Added during Sprint 2 while creating Jalani as an event admin for the SOTC test. Current pilot flow can use a manually shared temporary password, but production-ready staff onboarding should not leave temporary credentials as permanent credentials."
+              "notes": "Added during Sprint 2 while creating Jalani as an event admin for the SOTC test. Current pilot flow can use a manually shared temporary password, but production-ready staff onboarding should not leave temporary credentials as permanent credentials."
             },
             {
-              id: "story-role-permissions-audit",
-              title: "Define role permissions and audit logs",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Model organization roles as permission sets and record sensitive admin actions with actor, timestamp, and rationale.",
-              acceptanceCriteria: [
+              "id": "story-role-permissions-audit",
+              "title": "Define role permissions and audit logs",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Model organization roles as permission sets and record sensitive admin actions with actor, timestamp, and rationale.",
+              "acceptanceCriteria": [
                 "Roles can grant capabilities such as create, edit, view, delete, check-in, pause/resume, skip/reorder, merge/split, and priority override.",
                 "User state can be live, suspended, or unsuspended.",
                 "Sensitive operational actions create audit log entries with actor identity and timestamp.",
                 "The model can start with default roles and allow later customization."
               ],
-              notes:
-                "Imported from Trello admin/staff role cards and provisional admin console notes. Initial audit table added in supabase-admin-role-foundation.sql; audit-writing behavior and polished audit UI remain future work."
+              "notes": "Imported from Trello admin/staff role cards and provisional admin console notes. Initial audit table added in supabase-admin-role-foundation.sql; audit-writing behavior and polished audit UI remain future work."
             },
             {
-              id: "story-sotc-admin-staff-rls-hardening",
-              title: "Define SOTC admin/staff roles and Supabase RLS boundaries",
-              status: "done",
-              sprint: "completed",
-              summary:
-                "Review and harden the SOTC pilot database permission model before moving beyond guided alpha testing.",
-              acceptanceCriteria: [
+              "id": "story-sotc-admin-staff-rls-hardening",
+              "title": "Define SOTC admin/staff roles and Supabase RLS boundaries",
+              "status": "done",
+              "sprint": "completed",
+              "summary": "Review and harden the SOTC pilot database permission model before moving beyond guided alpha testing.",
+              "acceptanceCriteria": [
                 "Role matrix exists for qME admin, event admin, check-in staff, service staff/photographer, and guest/anon.",
                 "Each protected SOTC pilot table has intended read/write rules documented.",
                 "Current permissive policies, including broad using true and with check true policies, are listed with replacement policy recommendations.",
@@ -837,17 +771,15 @@ const QME_ROADMAP = {
                 "Near-term pilot auth approach is chosen: Supabase Auth, magic link, staff PIN, invite code, or a documented temporary bridge.",
                 "Remaining database/security risks are documented before real event use."
               ],
-              notes:
-                "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. First RLS hardening pass added in supabase-sotc-rls-hardening.sql with companion notes in docs/sotc-rls-hardening-v1.md: admin principals/roles/memberships/event staff assignments are scoped to authenticated admins, event guest designations are staff/admin managed, guest credit writes are staff/admin only, and guest-sourced scan/code marks remain open for pilot completion. Second pass added in supabase-sprint2-setup-rls.sql: active organizations/events/expies/eCes/legacy experiences/queues remain guest-readable, while setup writes are restricted to qME superadmin, organization admin, or event admin. Third pass drafted in supabase-guest-session-foundation.sql: anonymous guest browsers receive event-scoped session tokens, event_check_ins/tickets can link to guest_sessions, queue RPC overloads can attach/verify ticket ownership, and the guest check-in form can optionally capture email/phone for later recovery. Fourth pass drafted in supabase-guest-action-rls-tightening.sql: guest check-in reads/completion, ticket reads/name updates/nearby/completion, guest marks, and guest credit reads move behind guest-token verified RPCs, while direct table access for event_check_ins, tickets, event_guest_marks, and event_guest_credits becomes staff/admin scoped. July 1 app hardening update: guest-facing actions now fail closed when the scoped RPC is missing or rejects the guest token, instead of falling back to unscoped direct table access. July 1 SQL follow-up: guest-session and guest-action functions now explicitly revoke default public execution and grant only intended browser RPCs to anon/authenticated roles. Admin queue RPC boundary pass added in supabase-admin-queue-action-rpcs.sql: release, Not Here, Return to Waiting, and staff/admin completion now use authenticated role-checked RPCs with basic audit logs instead of direct browser table mutations. Admin check-in RPC boundary pass added in supabase-admin-checkin-action-rpcs.sql: check-in completion, guest access/ticket-type updates, and photo-credit grants now use authenticated role-checked RPCs with audit logs instead of direct browser mutations. Reminder: re-engage the computer engineering student after this pass is run and smoke-tested so his review can focus on concrete policies and remaining risks."
+              "notes": "Alpha-test follow-up from computer engineering student feedback: the pilot works, but the database needs manual hardening around roles, RLS, action ownership, and auditability before real SOTC operations. First RLS hardening pass added in supabase-sotc-rls-hardening.sql with companion notes in docs/sotc-rls-hardening-v1.md: admin principals/roles/memberships/event staff assignments are scoped to authenticated admins, event guest designations are staff/admin managed, guest credit writes are staff/admin only, and guest-sourced scan/code marks remain open for pilot completion. Second pass added in supabase-sprint2-setup-rls.sql: active organizations/events/expies/eCes/legacy experiences/queues remain guest-readable, while setup writes are restricted to qME superadmin, organization admin, or event admin. Third pass drafted in supabase-guest-session-foundation.sql: anonymous guest browsers receive event-scoped session tokens, event_check_ins/tickets can link to guest_sessions, queue RPC overloads can attach/verify ticket ownership, and the guest check-in form can optionally capture email/phone for later recovery. Fourth pass drafted in supabase-guest-action-rls-tightening.sql: guest check-in reads/completion, ticket reads/name updates/nearby/completion, guest marks, and guest credit reads move behind guest-token verified RPCs, while direct table access for event_check_ins, tickets, event_guest_marks, and event_guest_credits becomes staff/admin scoped. July 1 app hardening update: guest-facing actions now fail closed when the scoped RPC is missing or rejects the guest token, instead of falling back to unscoped direct table access. July 1 SQL follow-up: guest-session and guest-action functions now explicitly revoke default public execution and grant only intended browser RPCs to anon/authenticated roles. Admin queue RPC boundary pass added in supabase-admin-queue-action-rpcs.sql: release, Not Here, Return to Waiting, and staff/admin completion now use authenticated role-checked RPCs with basic audit logs instead of direct browser table mutations. Admin check-in RPC boundary pass added in supabase-admin-checkin-action-rpcs.sql: check-in completion, guest access/ticket-type updates, and photo-credit grants now use authenticated role-checked RPCs with audit logs instead of direct browser mutations. Reminder: re-engage the computer engineering student after this pass is run and smoke-tested so his review can focus on concrete policies and remaining risks."
             },
             {
-              id: "story-foundation-role-permission-smoke-matrix",
-              title: "Run role and permission smoke-test matrix",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Validate that each qME role can do what it should and cannot overreach into another organization, event, station, or guest state.",
-              acceptanceCriteria: [
+              "id": "story-foundation-role-permission-smoke-matrix",
+              "title": "Run role and permission smoke-test matrix",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Validate that each qME role can do what it should and cannot overreach into another organization, event, station, or guest state.",
+              "acceptanceCriteria": [
                 "qME superadmin, organization admin, event admin, check-in staff, feature/station staff, and guest/anonymous paths are tested.",
                 "A signed-in admin/staff user participating as a guest is tested as a separate guest-session context, not as an admin identity.",
                 "Guest attempting an admin URL is blocked.",
@@ -859,66 +791,58 @@ const QME_ROADMAP = {
                 "Superadmin can access support/admin areas.",
                 "Guest token cannot read or mutate another guest's state."
               ],
-              notes:
-                "Added by the 2026-07-01 Foundation Review. This is validation, not a broad new build phase. July 16 security smoke test verified the roles currently in real use: anonymous guests can check in, join Headshot, mark nearby, and complete via guest self-service; qME superadmin can complete check-in, grant photo credit, operate Headshot, and complete guests; Jalani/event admin can reset event test data after the hardening changes. Station Staff and Station Supervisor are not yet fully productized roles, so their smoke test remains pending under role-aware admin landing and station-role finalization."
+              "notes": "Added by the 2026-07-01 Foundation Review. This is validation, not a broad new build phase. July 16 security smoke test verified the roles currently in real use: anonymous guests can check in, join Headshot, mark nearby, and complete via guest self-service; qME superadmin can complete check-in, grant photo credit, operate Headshot, and complete guests; Jalani/event admin can reset event test data after the hardening changes. Station Staff and Station Supervisor are not yet fully productized roles, so their smoke test remains pending under role-aware admin landing and station-role finalization."
             },
             {
-              id: "story-foundation-privileged-action-matrix",
-              title: "Document privileged action matrix",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Create a concise matrix of sensitive actions, their RPC/function path, required role, audit behavior, RLS/table protection, and remaining risk.",
-              acceptanceCriteria: [
+              "id": "story-foundation-privileged-action-matrix",
+              "title": "Document privileged action matrix",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Create a concise matrix of sensitive actions, their RPC/function path, required role, audit behavior, RLS/table protection, and remaining risk.",
+              "acceptanceCriteria": [
                 "Matrix includes release guest, mark Not Here, Return to Waiting, complete ticket, complete check-in, grant photo credit, update guest access, reset test data, edit event setup, edit queue settings, and live queue controls.",
                 "Each action has a user-facing action name, code/RPC path, required role, audit behavior, RLS protection, and remaining risk.",
                 "Matrix distinguishes event-wide/destructive authority from station-level staff and station-admin authority.",
                 "Any direct-client/RLS-backed action is identified as accepted for now, moved to a follow-up, or replaced with an RPC."
               ],
-              notes:
-                "Added by the 2026-07-01 Foundation Review to prevent protection gaps from hiding inside scattered UI/service calls. Completed July 16 with docs/privileged-action-matrix-v1.md. The matrix documents guest check-in/session actions, admin check-in/photo-credit actions, queue flow/release/Not Here/Return to Waiting/completion, Headshot guest service-start self-completion, destructive reset controls, setup mutations, admin principal management, and bootstrap restrictions. Current conclusion: emergency anonymous/admin RPC boundaries are much stronger and verified live; the next layer is station-role clarity, role-aware workspace visibility, and moving remaining important setup mutations behind named audited RPCs where direct RLS is still ambiguous."
+              "notes": "Added by the 2026-07-01 Foundation Review to prevent protection gaps from hiding inside scattered UI/service calls. Completed July 16 with docs/privileged-action-matrix-v1.md. The matrix documents guest check-in/session actions, admin check-in/photo-credit actions, queue flow/release/Not Here/Return to Waiting/completion, Headshot guest service-start self-completion, destructive reset controls, setup mutations, admin principal management, and bootstrap restrictions. Current conclusion: emergency anonymous/admin RPC boundaries are much stronger and verified live; the next layer is station-role clarity, role-aware workspace visibility, and moving remaining important setup mutations behind named audited RPCs where direct RLS is still ambiguous."
             },
             {
-              id: "story-foundation-external-db-security-review",
-              title: "Re-engage computer engineering student for database/security review",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Ask the student reviewer to critique the implemented role/auth/RLS/RPC foundation rather than brainstorm an open-ended redesign.",
-              acceptanceCriteria: [
+              "id": "story-foundation-external-db-security-review",
+              "title": "Re-engage computer engineering student for database/security review",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Ask the student reviewer to critique the implemented role/auth/RLS/RPC foundation rather than brainstorm an open-ended redesign.",
+              "acceptanceCriteria": [
                 "Review packet includes role model, guest token approach, RLS policies, RPC boundaries, audit logging, and remaining permissive policies.",
                 "Reviewer is asked to look for obvious guest/staff/admin overreach paths.",
                 "Findings are captured as planning inbox items, decisions, or stories.",
                 "Follow-up work is bounded before SOTC Event Builder resumes."
               ],
-              notes:
-                "Completed July 20 after Ahmed reviewed the security remediation report and confirmed qME is good for the July SOTC pilot, with remaining items safely deferrable. Future security reviews should continue the same evidence-based process: independent review, verification, risk classification, bounded remediation, regression testing, production validation, and documentation."
+              "notes": "Completed July 20 after Ahmed reviewed the security remediation report and confirmed qME is good for the July SOTC pilot, with remaining items safely deferrable. Future security reviews should continue the same evidence-based process: independent review, verification, risk classification, bounded remediation, regression testing, production validation, and documentation."
             },
             {
-              id: "story-foundation-jalani-admin-walkthrough",
-              title: "Run Jalani named-admin walkthrough",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Have Jalani walk through the SOTC admin/event-staff flow using named access to validate whether the role and UI model makes sense without founder guidance.",
-              acceptanceCriteria: [
+              "id": "story-foundation-jalani-admin-walkthrough",
+              "title": "Run Jalani named-admin walkthrough",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Have Jalani walk through the SOTC admin/event-staff flow using named access to validate whether the role and UI model makes sense without founder guidance.",
+              "acceptanceCriteria": [
                 "Jalani can sign in with named access.",
                 "If Jalani participates as a guest, that flow uses guest-session state and is not confused with admin sign-in.",
                 "Jalani can reach the SOTC event and not unrelated admin areas.",
                 "Walkthrough covers admin tabs, check-in flow, queue flow, Not Here, Return to Waiting, and photo-credit/headshot flow.",
                 "Confusing labels, missing affordances, and permission surprises are captured."
               ],
-              notes:
-                "Initial sign-in and scoped event-admin access are already verified. This story is the deeper usability/operations walkthrough."
+              "notes": "Initial sign-in and scoped event-admin access are already verified. This story is the deeper usability/operations walkthrough."
             },
             {
-              id: "story-security-emergency-remediation",
-              title: "Complete Ahmed security emergency remediation pass",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Verify and close confirmed high-risk security findings from Ahmed's review before resuming nonessential feature expansion.",
-              acceptanceCriteria: [
+              "id": "story-security-emergency-remediation",
+              "title": "Complete Ahmed security emergency remediation pass",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Verify and close confirmed high-risk security findings from Ahmed's review before resuming nonessential feature expansion.",
+              "acceptanceCriteria": [
                 "Each emergency finding is classified as confirmed/exploitable, confirmed lower-risk, already fixed, not reproducible, or deferred defense-in-depth.",
                 "Anonymous group-order writes and broad guest-credit reads are verified against live Supabase and closed if present.",
                 "Flexlink intake no longer contains committed secret/hash material, no longer uses a hash as a bearer cookie, and hard-fails without service-role configuration.",
@@ -926,34 +850,30 @@ const QME_ROADMAP = {
                 "Superadmin/bootstrap and other privileged functions have explicit execute grants and cannot be called by ordinary authenticated users.",
                 "Verification SQL, remediation SQL, tests, manual deployment actions, and remaining risks are documented for Ahmed follow-up."
               ],
-              notes:
-                "Added by the 2026-07-16 security review. This paused unrelated feature expansion until emergency findings were verified and closed. July 16 follow-up: smoke-test reset bug was fixed, then security work resumed by updating remediation/current SQL to revoke anonymous direct table grants from admin_principals, platform_roles, organization_memberships, event_staff_assignments, event_check_ins, tickets, event_guest_marks, event_guest_credits, and event_group_order_items while preserving authenticated RLS access and scoped anonymous guest RPCs. Live verification now shows sensitive table RLS enabled, no direct anon table grants on the reviewed sensitive tables, no permissive using-true policies on those tables, no guest-credit rows without check-in ownership, clean group-order data audit, legacy unscoped guest queue RPCs revoked, queue reset restricted to event-admin-or-above internally, and admin/staff RPC execute grants cleaned so anon is false and authenticated remains true with internal role checks. Functional smoke test after remediation verified guest check-in/Headshot self-service, superadmin check-in/photo-credit/queue operation, and Jalani event-admin reset. July 17 clarification: the prior group-order pilot is disabled security debt, not a partially supported feature. Keep existing data for audit, mark old pilot SQL as superseded/dangerous, add a regression check for permissive group-order writes, and do not re-enable ordering until guest-session-owned order records, scoped RPCs, station/event staff authorization, server-side quantity/state validation, idempotency, audit logging, and draft/submitted/approved/fulfilled order states exist. July 17 finding-by-finding evidence packet added in docs/security-review-ahmed-finding-evidence-2026-07-17.md. Final bounded pre-SOTC pass added repo fixes for the remaining immediate hardening items: revoked/replaced guest sessions no longer reactivate on retry, guest self-check-in ticket type is constrained to a nonprivileged allowlist and cannot overwrite authoritative classifications, and admin/staff principal lookup now uses exact normalized email equality with duplicate-match refusal instead of wildcard-sensitive ilike. July 20 closure: production regression SQL passed, live verification remained clean, guest/admin smoke testing passed, and Ahmed confirmed the remaining work can be deferred until after the SOTC pilot. Emergency remediation is closed. Remaining items are security maturity backlog, not emergency work: provider-level rate limiting, invite/password-reset workflow, additional audited administrative RPCs where appropriate, browser-storage improvements, mobile security enhancements, group-order secure redesign, additional security monitoring/auditing, npm ci/build reproducibility after SOTC, canonical auth-user identity/multi-email modeling, and station-role product finalization."
+              "notes": "Added by the 2026-07-16 security review. This paused unrelated feature expansion until emergency findings were verified and closed. July 16 follow-up: smoke-test reset bug was fixed, then security work resumed by updating remediation/current SQL to revoke anonymous direct table grants from admin_principals, platform_roles, organization_memberships, event_staff_assignments, event_check_ins, tickets, event_guest_marks, event_guest_credits, and event_group_order_items while preserving authenticated RLS access and scoped anonymous guest RPCs. Live verification now shows sensitive table RLS enabled, no direct anon table grants on the reviewed sensitive tables, no permissive using-true policies on those tables, no guest-credit rows without check-in ownership, clean group-order data audit, legacy unscoped guest queue RPCs revoked, queue reset restricted to event-admin-or-above internally, and admin/staff RPC execute grants cleaned so anon is false and authenticated remains true with internal role checks. Functional smoke test after remediation verified guest check-in/Headshot self-service, superadmin check-in/photo-credit/queue operation, and Jalani event-admin reset. July 17 clarification: the prior group-order pilot is disabled security debt, not a partially supported feature. Keep existing data for audit, mark old pilot SQL as superseded/dangerous, add a regression check for permissive group-order writes, and do not re-enable ordering until guest-session-owned order records, scoped RPCs, station/event staff authorization, server-side quantity/state validation, idempotency, audit logging, and draft/submitted/approved/fulfilled order states exist. July 17 finding-by-finding evidence packet added in docs/security-review-ahmed-finding-evidence-2026-07-17.md. Final bounded pre-SOTC pass added repo fixes for the remaining immediate hardening items: revoked/replaced guest sessions no longer reactivate on retry, guest self-check-in ticket type is constrained to a nonprivileged allowlist and cannot overwrite authoritative classifications, and admin/staff principal lookup now uses exact normalized email equality with duplicate-match refusal instead of wildcard-sensitive ilike. July 20 closure: production regression SQL passed, live verification remained clean, guest/admin smoke testing passed, and Ahmed confirmed the remaining work can be deferred until after the SOTC pilot. Emergency remediation is closed. Remaining items are security maturity backlog, not emergency work: provider-level rate limiting, invite/password-reset workflow, additional audited administrative RPCs where appropriate, browser-storage improvements, mobile security enhancements, group-order secure redesign, additional security monitoring/auditing, npm ci/build reproducibility after SOTC, canonical auth-user identity/multi-email modeling, and station-role product finalization."
             },
             {
-              id: "story-guest-session-recovery-code",
-              title: "Let guests recover their event session by email or phone code",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Allow an anonymous guest to provide email or phone, receive a short code, and recover their event check-in, queue tickets, and submitted activity state on another browser/device.",
-              acceptanceCriteria: [
+              "id": "story-guest-session-recovery-code",
+              "title": "Let guests recover their event session by email or phone code",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Allow an anonymous guest to provide email or phone, receive a short code, and recover their event check-in, queue tickets, and submitted activity state on another browser/device.",
+              "acceptanceCriteria": [
                 "Guest check-in can capture email or phone as an optional contact method.",
                 "Guest can request a one-time code to recover their event session.",
                 "Successful code verification restores the guest's check-in and active tickets without creating a full admin account.",
                 "Codes expire and cannot be reused.",
                 "The feature does not expose other guests' check-ins, tickets, credits, or order/activity submissions."
               ],
-              notes:
-                "Added during Sprint 2 guest-session hardening discussion. The first foundation pass stores optional email/phone on guest_sessions but does not yet send or verify recovery codes."
+              "notes": "Added during Sprint 2 guest-session hardening discussion. The first foundation pass stores optional email/phone on guest_sessions but does not yet send or verify recovery codes."
             },
             {
-              id: "story-superadmin-role",
-              title: "Define qME superadmin role",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Add explicit owner/operator permissions for qME platform management.",
-              acceptanceCriteria: [
+              "id": "story-superadmin-role",
+              "title": "Define qME superadmin role",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Add explicit owner/operator permissions for qME platform management.",
+              "acceptanceCriteria": [
                 "Superadmin role is distinct from event host role.",
                 "Superadmin can create organizations.",
                 "Superadmin can assist customer event setup."
@@ -964,40 +884,36 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "epic-events",
-      title: "Events",
-      summary:
-        "Create and manage events owned by organizations, including public guest pages and admin configuration.",
-      status: "ready",
-      themes: [
+      "id": "epic-events",
+      "title": "Events",
+      "summary": "Create and manage events owned by organizations, including public guest pages and admin configuration.",
+      "status": "ready",
+      "themes": [
         {
-          id: "theme-event-lifecycle",
-          title: "Event Lifecycle",
-          status: "ready",
-          stories: [
+          "id": "theme-event-lifecycle",
+          "title": "Event Lifecycle",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-event-org-owner",
-              title: "Attach events to organizations",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Make event ownership explicit so each customer can manage their own events.",
-              acceptanceCriteria: [
+              "id": "story-event-org-owner",
+              "title": "Attach events to organizations",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Make event ownership explicit so each customer can manage their own events.",
+              "acceptanceCriteria": [
                 "events.organization_id references organizations.id.",
                 "Existing guest URLs keep working.",
                 "Admin event lists can filter by organization."
               ],
-              notes:
-                "Completed in supabase-org-event-foundation.sql and app services: events.organization_id references organizations, known Peony and SOTC events are assigned, public URLs remain slug-based, and listEvents can filter by organizationId."
+              "notes": "Completed in supabase-org-event-foundation.sql and app services: events.organization_id references organizations, known Peony and SOTC events are assigned, public URLs remain slug-based, and listEvents can filter by organizationId."
             },
             {
-              id: "story-event-create-edit",
-              title: "Create and edit events",
-              status: "ready",
-              sprint: "now",
-              summary:
-                "Allow an admin or qME operator to set up an event without code changes.",
-              acceptanceCriteria: [
+              "id": "story-event-create-edit",
+              "title": "Create and edit events",
+              "status": "ready",
+              "sprint": "now",
+              "summary": "Allow an admin or qME operator to set up an event without code changes.",
+              "acceptanceCriteria": [
                 "Admin can create event name, slug, date, venue, and status.",
                 "Admin can edit event details.",
                 "Validation protects unique slugs within an organization.",
@@ -1005,13 +921,12 @@ const QME_ROADMAP = {
               ]
             },
             {
-              id: "story-event-operational-mode-config",
-              title: "Make event automation and operating mode configurable",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Replace hidden SOTC test/demo automation assumptions with explicit event-level operating settings so each organization knows how an event will behave.",
-              acceptanceCriteria: [
+              "id": "story-event-operational-mode-config",
+              "title": "Make event automation and operating mode configurable",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Replace hidden SOTC test/demo automation assumptions with explicit event-level operating settings so each organization knows how an event will behave.",
+              "acceptanceCriteria": [
                 "Event setup can represent whether check-in, guest participation, and queue flow are manual, self-service, pilot/demo, or automated where relevant.",
                 "SOTC Test Check-in keeps its current automated/pilot behavior through explicit configuration rather than hard-coded event assumptions.",
                 "Production events default to conservative/manual behavior unless automation is intentionally enabled.",
@@ -1022,48 +937,42 @@ const QME_ROADMAP = {
                 "If a reset confirmation is typed incorrectly, the admin receives a clear message that no reset happened.",
                 "Any temporary pilot flags are documented with replacement intent before RLS hardening."
               ],
-              notes:
-                "Added during Sprint 2 product discussion after confirming that SOTC's automated test behavior should be configurable by event. This supports the Sprint 2 trust goal: an organization can independently operate an event with appropriate permissions and predictable behavior. 2026-07-01 architecture review clarified the distinction between Event Setup, Live Operations, and Live Event Controls: controls such as queue flow mode, gathering target/max, stale timing, pause/resume, and intake behavior belong with operations and should be editable only by event admin or higher. Current implementation lets event admins reset test data because event_admin satisfies canManageEvent; before live production, decide whether destructive reset should require org admin/superadmin, event test mode, or a separate reset permission. Reset confirmation feedback was tightened on 2026-06-30 so wrong confirmation text reports that no reset happened."
+              "notes": "Added during Sprint 2 product discussion after confirming that SOTC's automated test behavior should be configurable by event. This supports the Sprint 2 trust goal: an organization can independently operate an event with appropriate permissions and predictable behavior. 2026-07-01 architecture review clarified the distinction between Event Setup, Live Operations, and Live Event Controls: controls such as queue flow mode, gathering target/max, stale timing, pause/resume, and intake behavior belong with operations and should be editable only by event admin or higher. Current implementation lets event admins reset test data because event_admin satisfies canManageEvent; before live production, decide whether destructive reset should require org admin/superadmin, event test mode, or a separate reset permission. Reset confirmation feedback was tightened on 2026-06-30 so wrong confirmation text reports that no reset happened."
             },
             {
-              id: "story-event-schedules-recurrence",
-              title: "Support event schedules and recurrence",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Allow events to span multiple days, have multiple daily start/stop blocks, and later support recurring schedules.",
-              acceptanceCriteria: [
+              "id": "story-event-schedules-recurrence",
+              "title": "Support event schedules and recurrence",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Allow events to span multiple days, have multiple daily start/stop blocks, and later support recurring schedules.",
+              "acceptanceCriteria": [
                 "Event can represent multi-day date/time windows.",
                 "Event can represent multiple time blocks in a day, such as breakfast, lunch, happy hour, or session blocks.",
                 "Calendar-style event schedule view is considered.",
                 "Recurring event rules are parked for later unless a customer requires them."
               ],
-              notes:
-                "Imported from Trello event creation card."
+              "notes": "Imported from Trello event creation card."
             },
             {
-              id: "story-event-type-templates",
-              title: "Define event types and templates",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Use event types such as festival, conference, concert, sporting event, speaker event, or trade show to seed useful default experiences.",
-              acceptanceCriteria: [
+              "id": "story-event-type-templates",
+              "title": "Define event types and templates",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Use event types such as festival, conference, concert, sporting event, speaker event, or trade show to seed useful default experiences.",
+              "acceptanceCriteria": [
                 "Event type list is documented.",
                 "Each event type can suggest expected experience types.",
                 "Templates remain optional and do not block simple event creation."
               ],
-              notes:
-                "Imported from Trello Events have types card."
+              "notes": "Imported from Trello Events have types card."
             },
             {
-              id: "story-event-suspend",
-              title: "Suspend or archive events",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Give admins a controlled way to hide or close events without deleting them.",
-              acceptanceCriteria: [
+              "id": "story-event-suspend",
+              "title": "Suspend or archive events",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Give admins a controlled way to hide or close events without deleting them.",
+              "acceptanceCriteria": [
                 "Suspended events are not joinable by guests.",
                 "Archived events remain available for reporting.",
                 "Admin can see why an event is unavailable.",
@@ -1073,102 +982,92 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-sotc-anchor",
-          title: "SOTC Rock Hall Event Setup",
-          status: "current",
-          stories: [
+          "id": "theme-sotc-anchor",
+          "title": "SOTC Rock Hall Event Setup",
+          "status": "current",
+          "stories": [
             {
-              id: "story-sotc-anchor-event",
-              title: "Create SOTC Rock Hall event plan",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Use the July 22 event as the product anchor for multi-org and event-builder work.",
-              acceptanceCriteria: [
+              "id": "story-sotc-anchor-event",
+              "title": "Create SOTC Rock Hall event plan",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Use the July 22 event as the product anchor for multi-org and event-builder work.",
+              "acceptanceCriteria": [
                 "Event basics are captured in the roadmap.",
                 "Known event modules are listed.",
                 "Demo priorities are separated from future ideas."
               ],
-              references: [
+              "references": [
                 "I-Pitch Presentation - qMe.pptx",
                 "SOTC interview notes",
                 "Mixer resources page"
               ],
-              notes:
-                "Done as the working anchor plan in docs/sotc-rock-hall-event-plan.md. Exact July 22 operating scope will be confirmed after the first SOTC foundation demo."
+              "notes": "Done as the working anchor plan in docs/sotc-rock-hall-event-plan.md. Exact July 22 operating scope will be confirmed after the first SOTC foundation demo."
             },
             {
-              id: "story-sotc-experience-inventory",
-              title: "Inventory SOTC event experiences",
-              status: "ready",
-              sprint: "now",
-              summary:
-                "Turn the brochure/program areas into event experience candidates.",
-              acceptanceCriteria: [
+              "id": "story-sotc-experience-inventory",
+              "title": "Inventory SOTC event experiences",
+              "status": "ready",
+              "sprint": "now",
+              "summary": "Turn the brochure/program areas into event experience candidates.",
+              "acceptanceCriteria": [
                 "Registration, sponsors, headshots, networking, resume reviews, food, bar, greetings, workshops, galleries, and resources are captured.",
                 "Each experience has an initial treatment: queue, info card, signup, notification, map, or future experiment.",
                 "Queue-bearing experiences are identified first.",
                 "QR entry, attendee lookup/import, registration admin view, headshot queue, resume queue, scavenger hunts, and micro-activities are represented at least as thin backlog items."
               ],
-              notes:
-                "Do not overbuild this yet. Use the inventory to inform the foundation and later pick a thin SOTC MVP."
+              "notes": "Do not overbuild this yet. Use the inventory to inform the foundation and later pick a thin SOTC MVP."
             },
             {
-              id: "story-sotc-hardware-needs",
-              title: "Analyze SOTC event hardware needs",
-              status: "ready",
-              sprint: "now",
-              summary:
-                "Decide what physical hardware is needed for the July 22 Rock Hall event, then purchase or source it in time for setup and testing.",
-              acceptanceCriteria: [
+              "id": "story-sotc-hardware-needs",
+              "title": "Analyze SOTC event hardware needs",
+              "status": "ready",
+              "sprint": "now",
+              "summary": "Decide what physical hardware is needed for the July 22 Rock Hall event, then purchase or source it in time for setup and testing.",
+              "acceptanceCriteria": [
                 "Identify hardware needed for registration, QR display/signage, admin/staff use, host queues, and any guest-facing kiosk or display flow.",
                 "Decide what can be handled by personal phones/laptops versus dedicated event hardware.",
                 "Create a purchase/source list with quantities, owner, estimated cost, and needed-by date.",
                 "Confirm hardware can be tested before the event in a realistic setup."
               ],
-              notes:
-                "This should happen before finalizing the operational July 22 scope. Include backup/power/connectivity considerations."
+              "notes": "This should happen before finalizing the operational July 22 scope. Include backup/power/connectivity considerations."
             }
           ]
         }
       ]
     },
     {
-      id: "epic-experiences",
-      title: "Experiences and eCe's",
-      summary:
-        "Model event activities as configurable experiences that can be information cards, queues, signups, resources, sponsor placements, or interactive activities.",
-      status: "ready",
-      themes: [
+      "id": "epic-experiences",
+      "title": "Experiences and eCe's",
+      "summary": "Model event activities as configurable experiences that can be information cards, queues, signups, resources, sponsor placements, or interactive activities.",
+      "status": "ready",
+      "themes": [
         {
-          id: "theme-experience-model",
-          title: "Experience Model",
-          status: "ready",
-          stories: [
+          "id": "theme-experience-model",
+          "title": "Experience Model",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-experience-model",
-              title: "Create experience model",
-              status: "ready",
-              sprint: "soon",
-              summary:
-                "Create a flexible model for event modules such as headshots, resume reviews, sponsors, greetings, galleries, and workshops.",
-              acceptanceCriteria: [
+              "id": "story-experience-model",
+              "title": "Create experience model",
+              "status": "ready",
+              "sprint": "soon",
+              "summary": "Create a flexible model for event modules such as headshots, resume reviews, sponsors, greetings, galleries, and workshops.",
+              "acceptanceCriteria": [
                 "Experiences belong to events.",
                 "Experiences have type, title, location, time window, status, and display order.",
                 "An experience can optionally connect to a queue.",
                 "Experience can store short/long description, image/logo/media, and configurable feature flags."
               ],
-              notes:
-                "Trello uses 'expie' for the reusable experienceable unit. Product language can still use Experience while eCe may represent an event-specific instance. 2026-07-01 architecture reviews clarified that Experiences are the primary product unit, while queue is one reusable capability an Experience can compose. Experience Types should be reusable across events, organizations, and repeated placements within the same event; avoid SOTC-specific implementation when a reusable Experience Type is possible. Examples: Headshots may use queue, notifications, and status tracking; Food may use ordering, menu, notifications, and status tracking; Resume Reviews may use queue, staff assignment, and status tracking; Sponsors may use resources and passport. Open question: whether service-like experiences eventually justify a separate Service layer."
+              "notes": "Trello uses 'expie' for the reusable experienceable unit. Product language can still use Experience while eCe may represent an event-specific instance. 2026-07-01 architecture reviews clarified that Experiences are the primary product unit, while queue is one reusable capability an Experience can compose. Experience Types should be reusable across events, organizations, and repeated placements within the same event; avoid SOTC-specific implementation when a reusable Experience Type is possible. Examples: Headshots may use queue, notifications, and status tracking; Food may use ordering, menu, notifications, and status tracking; Resume Reviews may use queue, staff assignment, and status tracking; Sponsors may use resources and passport. Open question: whether service-like experiences eventually justify a separate Service layer."
             },
             {
-              id: "story-experience-types",
-              title: "Define experience types",
-              status: "ready",
-              sprint: "soon",
-              summary:
-                "Clarify types such as queue, sponsor, vendor, session, resource, food, bar, gallery, and announcement.",
-              acceptanceCriteria: [
+              "id": "story-experience-types",
+              "title": "Define experience types",
+              "status": "ready",
+              "sprint": "soon",
+              "summary": "Clarify types such as queue, sponsor, vendor, session, resource, food, bar, gallery, and announcement.",
+              "acceptanceCriteria": [
                 "Type names are documented.",
                 "Sponsor and vendor are intentionally distinguished.",
                 "Types drive guest UI defaults without hard-coding the SOTC event.",
@@ -1178,30 +1077,27 @@ const QME_ROADMAP = {
               ]
             },
             {
-              id: "story-experience-configuration",
-              title: "Configure experience features and content",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Allow an experience/expie to enable feature modules such as menu, queue, merchandising, media, guest-facing content, or later POS integration.",
-              acceptanceCriteria: [
+              "id": "story-experience-configuration",
+              "title": "Configure experience features and content",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Allow an experience/expie to enable feature modules such as menu, queue, merchandising, media, guest-facing content, or later POS integration.",
+              "acceptanceCriteria": [
                 "Experience can enable/disable feature modules with configuration flags.",
                 "Queue is treated as one reusable capability, not the definition of an Experience.",
                 "Experience can publish guest-facing content such as descriptions, menus, prices, modifiers, allergens, preparation time, or limited-time offerings.",
                 "Food/menu items can support searchable tags such as chicken, pesto, gluten free, or nuts.",
                 "POS/API integration remains a future option, not a July dependency."
               ],
-              notes:
-                "Imported from Trello Expies are created and provisional queue content cards."
+              "notes": "Imported from Trello Expies are created and provisional queue content cards."
             },
             {
-              id: "story-experience-hierarchy-grouping",
-              title: "Explore experience hierarchy and grouping",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Explore the likely reusable layer between Experience Type and Station: an organization-owned reusable definition that can be placed into one or more events/stations.",
-              acceptanceCriteria: [
+              "id": "story-experience-hierarchy-grouping",
+              "title": "Explore experience hierarchy and grouping",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Explore the likely reusable layer between Experience Type and Station: an organization-owned reusable definition that can be placed into one or more events/stations.",
+              "acceptanceCriteria": [
                 "Relationship between organization-owned expies and event-specific instances is documented.",
                 "Same experience can appear in multiple locations or times.",
                 "Grouping can support future smart ordering or routing.",
@@ -1209,17 +1105,15 @@ const QME_ROADMAP = {
                 "The model is validated through Registration, Headshots, Resume Reviews, and Food discussions before implementation.",
                 "The discovery avoids adding a Service layer until enough evidence exists."
               ],
-              notes:
-                "Imported from Trello expie hierarchy notes. July 8 Alpha 2/Product Discovery identified this as a likely missing reusable layer, but explicitly deferred implementation until more Experience Type discussions validate the shape."
+              "notes": "Imported from Trello expie hierarchy notes. July 8 Alpha 2/Product Discovery identified this as a likely missing reusable layer, but explicitly deferred implementation until more Experience Type discussions validate the shape."
             },
             {
-              id: "story-experience-suspend",
-              title: "Suspend or hide experiences",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Allow admins to turn event modules on/off before or during an event.",
-              acceptanceCriteria: [
+              "id": "story-experience-suspend",
+              "title": "Suspend or hide experiences",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Allow admins to turn event modules on/off before or during an event.",
+              "acceptanceCriteria": [
                 "Hidden experiences do not appear to guests.",
                 "Suspended queues stop new joins but preserve existing tickets.",
                 "Admin can restore an experience."
@@ -1228,66 +1122,59 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-ece-lifecycle",
-          title: "eCe Lifecycle",
-          status: "discovery",
-          stories: [
+          "id": "theme-ece-lifecycle",
+          "title": "eCe Lifecycle",
+          "status": "discovery",
+          "stories": [
             {
-              id: "story-ece-definition",
-              title: "Define eCe meaning and lifecycle",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Clarify what an eCe is, how it is created, how it turns on, and when it resets.",
-              acceptanceCriteria: [
+              "id": "story-ece-definition",
+              "title": "Define eCe meaning and lifecycle",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Clarify what an eCe is, how it is created, how it turns on, and when it resets.",
+              "acceptanceCriteria": [
                 "The term eCe is defined in product language.",
                 "Creation, edit, suspend, activation, and reset behavior are documented.",
                 "The relationship between eCe, experience, queue, and event is clear.",
                 "eCe is modeled as an event-specific instance that combines an event, an expie/experience, date/time, location, and optional queue behavior.",
                 "Inheritance and overrides from event and expie/experience are documented."
               ],
-              notes:
-                "Trello import says eCe combines event + expie at specific date/time/location, can inherit properties, can be reused in multiple locations/times, and each eCe may have its own host/admin console."
+              "notes": "Trello import says eCe combines event + expie at specific date/time/location, can inherit properties, can be reused in multiple locations/times, and each eCe may have its own host/admin console."
             },
             {
-              id: "story-ece-cross-org-permissions",
-              title: "Define cross-organization eCe attachment permissions",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Allow an event to attach an experience owned by another organization only when permission rules allow it.",
-              acceptanceCriteria: [
+              "id": "story-ece-cross-org-permissions",
+              "title": "Define cross-organization eCe attachment permissions",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Allow an event to attach an experience owned by another organization only when permission rules allow it.",
+              "acceptanceCriteria": [
                 "An event organization can request to attach another organization's experience.",
                 "The owning organization can approve, deny, or preconfigure attachment rules.",
                 "Inherited and overridden fields are clear to both organizations."
               ],
-              notes:
-                "Imported from Trello eCe creation card."
+              "notes": "Imported from Trello eCe creation card."
             },
             {
-              id: "story-ece-activation-reset",
-              title: "Define eCe activation, reset, and restricted controls",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Document how an eCe turns on, whether it activates by calendar/location/admin action, and who may reset it.",
-              acceptanceCriteria: [
+              "id": "story-ece-activation-reset",
+              "title": "Define eCe activation, reset, and restricted controls",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Document how an eCe turns on, whether it activates by calendar/location/admin action, and who may reset it.",
+              "acceptanceCriteria": [
                 "Activation can be manual, scheduled, or later location-triggered.",
                 "Activation controls guest visibility, map display, and joinability.",
                 "Reset is limited to admin or special role and has extra confirmation friction.",
                 "Active eCe edit/suspend restrictions are documented."
               ],
-              notes:
-                "Imported from Trello eCe lifecycle cards."
+              "notes": "Imported from Trello eCe lifecycle cards."
             },
             {
-              id: "story-ece-queue-entry-limits",
-              title: "Limit queue entry by eCe state",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Prevent joining too early or after the system can no longer reasonably serve the guest.",
-              acceptanceCriteria: [
+              "id": "story-ece-queue-entry-limits",
+              "title": "Limit queue entry by eCe state",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Prevent joining too early or after the system can no longer reasonably serve the guest.",
+              "acceptanceCriteria": [
                 "Queue entry can depend on experience time, capacity, and guest eligibility.",
                 "Guest receives a clear reason when they cannot join.",
                 "Admin can understand blocked entry counts.",
@@ -1299,59 +1186,53 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "epic-queues",
-      title: "Digital Queues and Service Provider Flow",
-      summary:
-        "Support queues for headshots, resume reviews, and similar service experiences, including guest eligibility and host/provider operation.",
-      status: "ready",
-      themes: [
+      "id": "epic-queues",
+      "title": "Digital Queues and Service Provider Flow",
+      "summary": "Support queues for headshots, resume reviews, and similar service experiences, including guest eligibility and host/provider operation.",
+      "status": "ready",
+      "themes": [
         {
-          id: "theme-headshots",
-          title: "Professional Headshots",
-          status: "ready",
-          stories: [
+          "id": "theme-headshots",
+          "title": "Professional Headshots",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-headshot-queue",
-              title: "Create headshot digital queue",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Model the Headshot Photographer queue using imported-registration entitlement and staff-confirmed event check-in.",
-              acceptanceCriteria: [
+              "id": "story-headshot-queue",
+              "title": "Create headshot digital queue",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Model the Headshot Photographer queue using imported-registration entitlement and staff-confirmed event check-in.",
+              "acceptanceCriteria": [
                 "Headshot experience has a queue.",
                 "Checked-in guests can join only when the imported registration or staff grant provides an unused professional_headshot credit.",
                 "Student/Professional values from the attendee file remain source metadata and do not drive queue authorization directly.",
                 "Headshot queue copy follows the same clear state model as the pilot queue: Waiting, Almost Ready, I'm Nearby, Your Turn, Completed.",
                 "Copy is tested with at least one student/contact for comprehension."
               ],
-              notes:
-                "This extends the Bouquet Bar access pattern into guest credits/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity. Messaging pass completed on 2026-06-26: Headshot Photographer runtime copy now uses Waiting, Almost Ready, I'm Nearby, Your Turn, and Completed language, with photo-specific wording only around the actual photographer step. July attendee-import update retired the Student/Professional operational authorization model; the active SOTC gate is checked-in status plus Headshot entitlement/unused credit."
+              "notes": "This extends the Bouquet Bar access pattern into guest credits/conditions. Alpha-test finding: students responded better to standby-style queue language than custom photo queue language; keep photo-specific wording only where it adds clarity. Messaging pass completed on 2026-06-26: Headshot Photographer runtime copy now uses Waiting, Almost Ready, I'm Nearby, Your Turn, and Completed language, with photo-specific wording only around the actual photographer step. July attendee-import update retired the Student/Professional operational authorization model; the active SOTC gate is checked-in status plus Headshot entitlement/unused credit."
             },
             {
-              id: "story-headshot-tags",
-              title: "Retire Student/Professional headshot tag authorization",
-              status: "done",
-              sprint: "completed",
-              summary:
-                "Do not use Student/Professional photo states as the active qME authorization model for SOTC Headshots.",
-              acceptanceCriteria: [
+              "id": "story-headshot-tags",
+              "title": "Retire Student/Professional headshot tag authorization",
+              "status": "done",
+              "sprint": "completed",
+              "summary": "Do not use Student/Professional photo states as the active qME authorization model for SOTC Headshots.",
+              "acceptanceCriteria": [
                 "SOTC operational authorization uses registered/imported-or-manual, pending staff confirmation or checked in, Headshot entitled or not, and Headshot credit unused or used.",
                 "Student/Professional values may remain imported source metadata for reporting or nametag context.",
                 "Student/Professional values do not grant queue access directly.",
                 "Headshot completion consumes/completes the professional_headshot credit/ticket path rather than updating a student/professional photo tag.",
                 "Future configurable registration outcomes can revisit broader grant-policy modeling after SOTC."
               ],
-              notes:
-                "Supersedes the 2026-06-11/2026-07-01 Student/Professional photo-state direction after the actual attendee import was implemented. For current SOTC operations, imported entitlement and staff-granted credits are authoritative; Student/Professional remains source metadata, not the active authorization model."
+              "notes": "Supersedes the 2026-06-11/2026-07-01 Student/Professional photo-state direction after the actual attendee import was implemented. For current SOTC operations, imported entitlement and staff-granted credits are authoritative; Student/Professional remains source metadata, not the active authorization model."
             },
             {
-              id: "story-photographer-console",
-              title: "Photographer service console",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Let the photographer or booth host signal readiness and check in the next guest.",
-              acceptanceCriteria: [
+              "id": "story-photographer-console",
+              "title": "Photographer service console",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Let the photographer or booth host signal readiness and check in the next guest.",
+              "acceptanceCriteria": [
                 "Provider can mark ready for next guest.",
                 "Provider can see checked-in/nearby queue guests.",
                 "Provider can mark photo complete."
@@ -1360,47 +1241,43 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-resume-reviews",
-          title: "Resume Reviews",
-          status: "ready",
-          stories: [
+          "id": "theme-resume-reviews",
+          "title": "Resume Reviews",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-resume-review-queue",
-              title: "Create resume review digital queue",
-              status: "ready",
-              sprint: "soon",
-              summary:
-                "Let students join a review queue and be routed to an available reviewer.",
-              acceptanceCriteria: [
+              "id": "story-resume-review-queue",
+              "title": "Create resume review digital queue",
+              "status": "ready",
+              "sprint": "soon",
+              "summary": "Let students join a review queue and be routed to an available reviewer.",
+              "acceptanceCriteria": [
                 "Resume review experience has a queue.",
                 "Guest can see position/status.",
                 "Host/reviewer can call the next guest."
               ]
             },
             {
-              id: "story-resume-upload",
-              title: "Explore resume upload/release flow",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Consider whether guests can upload resumes and release them to the assigned reviewer.",
-              acceptanceCriteria: [
+              "id": "story-resume-upload",
+              "title": "Explore resume upload/release flow",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Consider whether guests can upload resumes and release them to the assigned reviewer.",
+              "acceptanceCriteria": [
                 "Privacy and file handling questions are identified.",
                 "Mobile upload feasibility is validated.",
                 "MVP alternative is documented if upload is too much for July.",
                 "Forwarding or releasing a resume to an assigned reviewer is considered separately from raw upload."
               ],
-              notes:
-                "Trello import includes possibly forwarding resume to reviewer before guest walks up."
+              "notes": "Trello import includes possibly forwarding resume to reviewer before guest walks up."
             },
             {
-              id: "story-reviewer-ready",
-              title: "Reviewer ready workflow",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Let a reviewer say they are ready, then route/call the next guest.",
-              acceptanceCriteria: [
+              "id": "story-reviewer-ready",
+              "title": "Reviewer ready workflow",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Let a reviewer say they are ready, then route/call the next guest.",
+              "acceptanceCriteria": [
                 "Reviewer can request next guest.",
                 "Guest can be directed to a specific reviewer or station.",
                 "Admin can see reviewer availability."
@@ -1409,18 +1286,17 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-host-console",
-          title: "Host Console",
-          status: "future",
-          stories: [
+          "id": "theme-host-console",
+          "title": "Host Console",
+          "status": "future",
+          "stories": [
             {
-              id: "story-host-console-redesign",
-              title: "Redesign host console around service needs",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Move beyond the provisional kiosk/host console into a real operational tool.",
-              acceptanceCriteria: [
+              "id": "story-host-console-redesign",
+              "title": "Redesign host console around service needs",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Move beyond the provisional kiosk/host console into a real operational tool.",
+              "acceptanceCriteria": [
                 "Host can advance, pause, and inspect a queue.",
                 "Host can see check-in/standby state.",
                 "Console language matches the experience type.",
@@ -1428,13 +1304,12 @@ const QME_ROADMAP = {
               ]
             },
             {
-              id: "story-sotc-production-pilot",
-              title: "Validate SOTC scan-code queue pilot in production",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Run the first SOTC queue/adventure pilot live on qme-nine.vercel.app with guest check-in, queue stages, Auto Assist, station code completion, and completed event-card state.",
-              acceptanceCriteria: [
+              "id": "story-sotc-production-pilot",
+              "title": "Validate SOTC scan-code queue pilot in production",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Run the first SOTC queue/adventure pilot live on qme-nine.vercel.app with guest check-in, queue stages, Auto Assist, station code completion, and completed event-card state.",
+              "acceptanceCriteria": [
                 "Production guest link works for the SOTC test event.",
                 "Guests can check in, join the Scan-Code Adventure queue, move through waiting, standby, your turn, and completed states.",
                 "Admin can control manual/auto flow with one active released guest and three standby guests.",
@@ -1442,34 +1317,30 @@ const QME_ROADMAP = {
                 "Canonical guest and admin links are documented.",
                 "Alpha-test findings from the student group are captured and triaged."
               ],
-              notes:
-                "Validated in production on 2026-06-19. Alpha-tested on 2026-06-24 with 8 SOTC students, including Jalani Ball. Core event check-in, queue states, headshot/photo-credit flow, and admin controls worked well enough for guided testing. Jalani helped lead the test, gathered students, and is willing to help move the pilot toward ready. Follow-up findings are mostly polish: refresh blinking, button alignment, and clearer photo queue/standby messaging."
+              "notes": "Validated in production on 2026-06-19. Alpha-tested on 2026-06-24 with 8 SOTC students, including Jalani Ball. Core event check-in, queue states, headshot/photo-credit flow, and admin controls worked well enough for guided testing. Jalani helped lead the test, gathered students, and is willing to help move the pilot toward ready. Follow-up findings are mostly polish: refresh blinking, button alignment, and clearer photo queue/standby messaging."
             },
             {
-              id: "story-sotc-pilot-ops-controls",
-              title: "Polish SOTC pilot operations controls",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Make the admin queue controls clear enough to rehearse without a live student group: slug admin links, readable standby/released thresholds, practice reset, and explicit remaining cleanup gaps.",
-              acceptanceCriteria: [
+              "id": "story-sotc-pilot-ops-controls",
+              "title": "Polish SOTC pilot operations controls",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Make the admin queue controls clear enough to rehearse without a live student group: slug admin links, readable standby/released thresholds, practice reset, and explicit remaining cleanup gaps.",
+              "acceptanceCriteria": [
                 "Admin slug links work for the SOTC test event and Scan-Code Adventure queue.",
                 "Threshold controls use operator language: standby nearby and active released.",
                 "Admin sees the combined guests-in-motion count.",
                 "Admin can reset the queue ticket practice run with confirmation.",
                 "Full event check-in and guest-mark cleanup remains tracked separately if not implemented."
               ],
-              notes:
-                "This keeps momentum while external testing is paused."
+              "notes": "This keeps momentum while external testing is paused."
             },
             {
-              id: "story-sotc-calm-refresh",
-              title: "Calm realtime refresh behavior on SOTC pilot screens",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Make guest and admin SOTC pilot screens update without visible blinking, blanking, or layout jumps during polling/realtime refresh.",
-              acceptanceCriteria: [
+              "id": "story-sotc-calm-refresh",
+              "title": "Calm realtime refresh behavior on SOTC pilot screens",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Make guest and admin SOTC pilot screens update without visible blinking, blanking, or layout jumps during polling/realtime refresh.",
+              "acceptanceCriteria": [
                 "Guest event page does not blink or temporarily blank during routine refresh.",
                 "Guest queue ticket page keeps the current state visible while polling.",
                 "Admin queue dashboard keeps guest rows and controls stable during refresh.",
@@ -1478,17 +1349,15 @@ const QME_ROADMAP = {
                 "Loading indicators are subtle and do not displace primary content.",
                 "Verified on mobile viewport for SOTC guest flow and admin queue flow."
               ],
-              notes:
-                "Alpha-test inbox finding: App refresh with screen blinking is distracting. Completed on 2026-06-26: guest event polling now preserves eligibility state until fresh data is ready, guest ticket polling avoids replacing identical ticket state, and admin pilot ticket polling/auto-flow avoids identical row replacement and interval resets. User confirmed calm refresh is working."
+              "notes": "Alpha-test inbox finding: App refresh with screen blinking is distracting. Completed on 2026-06-26: guest event polling now preserves eligibility state until fresh data is ready, guest ticket polling avoids replacing identical ticket state, and admin pilot ticket polling/auto-flow avoids identical row replacement and interval resets. User confirmed calm refresh is working."
             },
             {
-              id: "story-sotc-mobile-layout-polish",
-              title: "Polish SOTC pilot mobile layout and button alignment",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Use alpha-test screenshots and mobile testing to clean up visible layout issues on SOTC pilot guest/admin screens.",
-              acceptanceCriteria: [
+              "id": "story-sotc-mobile-layout-polish",
+              "title": "Polish SOTC pilot mobile layout and button alignment",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Use alpha-test screenshots and mobile testing to clean up visible layout issues on SOTC pilot guest/admin screens.",
+              "acceptanceCriteria": [
                 "Primary and secondary buttons align consistently on guest event, queue ticket, and admin queue screens.",
                 "Button labels do not wrap awkwardly or overflow on common mobile widths.",
                 "Action rows keep stable height and spacing when state changes.",
@@ -1497,17 +1366,15 @@ const QME_ROADMAP = {
                 "Screenshots from the alpha-test issue are reviewed against the fix.",
                 "Verified at mobile widths around 360px, 390px, and desktop/tablet."
               ],
-              notes:
-                "Alpha-test inbox findings: misaligned buttons, screenshot evidence that pilot ticket actions could appear outside the card boundary, and guest confusion over visible internal ticket numbers. Completed on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, SOTC admin pilot controls/guest row actions use shared responsive classes, the pilot ticket uses the contained ticket-card structure with compact status/location/code panels, and SOTC pilot guest screens no longer show the internal ticket number. User confirmed the layout fix works."
+              "notes": "Alpha-test inbox findings: misaligned buttons, screenshot evidence that pilot ticket actions could appear outside the card boundary, and guest confusion over visible internal ticket numbers. Completed on 2026-06-26: guest event card action buttons now have stable minimum dimensions, guest ticket action buttons use balanced mobile touch targets, SOTC admin pilot controls/guest row actions use shared responsive classes, the pilot ticket uses the contained ticket-card structure with compact status/location/code panels, and SOTC pilot guest screens no longer show the internal ticket number. User confirmed the layout fix works."
             },
             {
-              id: "story-sotc-not-here-recovery",
-              title: "Explain Not Here recovery to guests",
-              status: "done",
-              sprint: "now",
-              summary:
-                "When staff marks a released SOTC pilot guest as Not here, keep the same ticket but return the guest to Waiting/back of line so Gathering max is preserved.",
-              acceptanceCriteria: [
+              "id": "story-sotc-not-here-recovery",
+              "title": "Explain Not Here recovery to guests",
+              "status": "done",
+              "sprint": "now",
+              "summary": "When staff marks a released SOTC pilot guest as Not here, keep the same ticket but return the guest to Waiting/back of line so Gathering max is preserved.",
+              "acceptanceCriteria": [
                 "Admin confirms before marking a released guest Not here.",
                 "A Not here guest returns to Waiting/back of line on the same ticket.",
                 "Guest sees a modal explaining they were removed because they did not come when called after saying they were nearby.",
@@ -1515,17 +1382,15 @@ const QME_ROADMAP = {
                 "The guest must be invited to Gathering again before they can tap I'm Nearby and become eligible to be called.",
                 "Normal first-time Waiting or Gathering does not show the Not here modal."
               ],
-              notes:
-                "Completed on 2026-06-26 and revised on 2026-07-01 after multi-guest testing showed that returning Not Here guests directly to Gathering could exceed Gathering max after a freed slot was filled. First pass intentionally uses client-side transition detection rather than adding a durable database marker. If the guest page is closed during the staff action, a future database field such as not_here_at may be needed."
+              "notes": "Completed on 2026-06-26 and revised on 2026-07-01 after multi-guest testing showed that returning Not Here guests directly to Gathering could exceed Gathering max after a freed slot was filled. First pass intentionally uses client-side transition detection rather than adding a durable database marker. If the guest page is closed during the staff action, a future database field such as not_here_at may be needed."
             },
             {
-              id: "story-sotc-jalani-readiness-review",
-              title: "Prepare SOTC pilot for Jalani-led readiness review",
-              status: "ready",
-              sprint: "now",
-              summary:
-                "Use alpha-test feedback from Jalani Ball and the student group to get the SOTC pilot into a ready-for-review state.",
-              acceptanceCriteria: [
+              "id": "story-sotc-jalani-readiness-review",
+              "title": "Prepare SOTC pilot for Jalani-led readiness review",
+              "status": "ready",
+              "sprint": "now",
+              "summary": "Use alpha-test feedback from Jalani Ball and the student group to get the SOTC pilot into a ready-for-review state.",
+              "acceptanceCriteria": [
                 "Alpha-test findings are triaged into stories or story notes.",
                 "Jalani can run through the guest flow with minimal prompting.",
                 "Guest event check-in, Headshot queue, Scan-Code Adventure, and admin controls are tested end-to-end after polish fixes.",
@@ -1533,17 +1398,15 @@ const QME_ROADMAP = {
                 "Known remaining issues are either fixed or explicitly deferred.",
                 "Jalani confirms the flow is understandable enough for the next SOTC stakeholder demo."
               ],
-              notes:
-                "Alpha-test inbox finding: Alpha test went well. Jalani Ball helped lead the test and can help move the pilot toward ready."
+              "notes": "Alpha-test inbox finding: Alpha test went well. Jalani Ball helped lead the test and can help move the pilot toward ready."
             },
             {
-              id: "story-sotc-pre-alpha-event-guide",
-              title: "Shape SOTC guest home as event guide for pre-alpha",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Use reusable eCe metadata to make the SOTC guest home feel like an event companion for the next alpha, without creating SOTC-only UI or removing the Scan-Code demo station.",
-              acceptanceCriteria: [
+              "id": "story-sotc-pre-alpha-event-guide",
+              "title": "Shape SOTC guest home as event guide for pre-alpha",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Use reusable eCe metadata to make the SOTC guest home feel like an event companion for the next alpha, without creating SOTC-only UI or removing the Scan-Code demo station.",
+              "acceptanceCriteria": [
                 "Guest home can group event activities into reusable sections from eCe metadata.",
                 "Headshot Photographer remains the primary featured operational experience.",
                 "Scan-Code Adventure remains available as an optional demo station, not required for the alpha path.",
@@ -1552,17 +1415,15 @@ const QME_ROADMAP = {
                 "Tomorrow's alpha still keeps registration simple: Student, Professional, and Professional + Photo.",
                 "Deferred architecture items remain deferred: generalized registration config, generalized credit engine, service abstraction, speaker/sponsor engines, and event guidance engine."
               ],
-              notes:
-                "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha, then course-corrected after reviewing the 2025 SOTC brochure: qME should feel like a digital companion to a real conference, not a list of app features. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, home_items_layout, home_items_limit, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay available because it is useful as an optional demo, while July guest-home emphasis stays on Headshots and the event guide. July 2 pre-test build added brochure-style schedule, featured speakers, sponsor logos, food/drinks, resources, generic media-row rendering, oldest-first live check-in ordering, and reset hardening so stale guest queue tabs with old join intent cannot recreate tickets after event test data is reset. July 16 content refinement grouped schedule items by time with item/location rows, kept Resume Reviews and Networking lower on the guest home, made Sticker Guide a native qME modal, and kept Mixer Resources as a direct Canva link after Canva blocked embedded display."
+              "notes": "Added from the Pre-Alpha Build direction for the July 2 SOTC alpha, then course-corrected after reviewing the 2025 SOTC brochure: qME should feel like a digital companion to a real conference, not a list of app features. First implementation uses eCe metadata fields such as home_section, home_section_title, home_section_order, home_badge, home_action_label, home_items_layout, home_items_limit, and home_items. Seed data lives in supabase-sotc-alpha-event-guide.sql. User clarified that Scan-Code Adventure should stay available because it is useful as an optional demo, while July guest-home emphasis stays on Headshots and the event guide. July 2 pre-test build added brochure-style schedule, featured speakers, sponsor logos, food/drinks, resources, generic media-row rendering, oldest-first live check-in ordering, and reset hardening so stale guest queue tabs with old join intent cannot recreate tickets after event test data is reset. July 16 content refinement grouped schedule items by time with item/location rows, kept Resume Reviews and Networking lower on the guest home, made Sticker Guide a native qME modal, and kept Mixer Resources as a direct Canva link after Canva blocked embedded display."
             },
             {
-              id: "story-admin-console-needs",
-              title: "Document admin console needs",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Identify what admins need before building broader event operations screens.",
-              acceptanceCriteria: [
+              "id": "story-admin-console-needs",
+              "title": "Document admin console needs",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Identify what admins need before building broader event operations screens.",
+              "acceptanceCriteria": [
                 "Needs are grouped by qME operator, organization admin, event host, and service provider.",
                 "Screens are prioritized against the SOTC event.",
                 "Temporary demo-only controls are marked.",
@@ -1570,13 +1431,12 @@ const QME_ROADMAP = {
               ]
             },
             {
-              id: "story-admin-event-activity-status-overview",
-              title: "Add admin event activity status overview",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Show read-only operating counts on the admin event screen before redesigning the queue screens into tabs.",
-              acceptanceCriteria: [
+              "id": "story-admin-event-activity-status-overview",
+              "title": "Add admin event activity status overview",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Show read-only operating counts on the admin event screen before redesigning the queue screens into tabs.",
+              "acceptanceCriteria": [
                 "The admin event screen shows event check-in counts for people waiting for staff and people checked in.",
                 "Each queue-based event feature shows counts for Waiting, Gathering, Nearby, Your Turn, and Done.",
                 "Counts use operational labels that match the guest status language.",
@@ -1584,17 +1444,15 @@ const QME_ROADMAP = {
                 "The overview remains read-only; detailed actions still happen in Event Check-Ins or Manage Queue.",
                 "The implementation supports Scan-Code Adventure and Headshot Photographer before the broader tab redesign."
               ],
-              notes:
-                "Added during Sprint 2 admin UX discussion. Built before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions plus a lightweight fallback refresh for pilot reliability, and was later tightened to use the safe queue count RPC for more consistent guest/admin counts. Future production-scale architecture should move these counts to operational metrics tables."
+              "notes": "Added during Sprint 2 admin UX discussion. Built before the queue tab refactor so the main event screen gives hosts a quick view of people waiting for check-in, people in line, guests gathering nearby, guests ready/nearby, active guests, and completed guests. First implementation uses debounced Supabase realtime subscriptions plus a lightweight fallback refresh for pilot reliability, and was later tightened to use the safe queue count RPC for more consistent guest/admin counts. Future production-scale architecture should move these counts to operational metrics tables."
             },
             {
-              id: "story-operational-metrics-tables",
-              title: "Create operational metrics tables for event and queue counts",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Replace repeated admin count scans with precomputed event and queue metric rows that can power live admin overview, tabs, and future dashboards.",
-              acceptanceCriteria: [
+              "id": "story-operational-metrics-tables",
+              "title": "Create operational metrics tables for event and queue counts",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Replace repeated admin count scans with precomputed event and queue metric rows that can power live admin overview, tabs, and future dashboards.",
+              "acceptanceCriteria": [
                 "Event-level metrics include waiting-for-staff check-ins, completed check-ins, and last updated time.",
                 "Queue-level metrics include Waiting, Gathering, Nearby, Your Turn, Done, and last updated time.",
                 "Metrics update reliably when guests check in, join queues, mark nearby, are released, complete, leave, are marked not here, or event test data is reset.",
@@ -1602,17 +1460,15 @@ const QME_ROADMAP = {
                 "The implementation documents whether metrics are maintained by triggers, RPC refresh, or a server process.",
                 "A fallback/rebuild function exists to recalculate metrics from source tables if counts drift."
               ],
-              notes:
-                "Captured during Sprint 2 discussion after adding live admin status overview. This is the better long-term architecture for larger events and multiple active admin/staff screens, but the pilot can first validate the overview with debounced realtime refresh."
+              "notes": "Captured during Sprint 2 discussion after adding live admin status overview. This is the better long-term architecture for larger events and multiple active admin/staff screens, but the pilot can first validate the overview with debounced realtime refresh."
             },
             {
-              id: "story-admin-queue-tabs",
-              title: "Organize admin operational screens into focused tabs",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Refactor event, queue, and check-in admin screens so staff can work from focused tabs instead of crowded operational pages.",
-              acceptanceCriteria: [
+              "id": "story-admin-queue-tabs",
+              "title": "Organize admin operational screens into focused tabs",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Refactor event, queue, and check-in admin screens so staff can work from focused tabs instead of crowded operational pages.",
+              "acceptanceCriteria": [
                 "Main event admin is split into Operations, Staff, and Setup tabs.",
                 "Headshot Photographer admin has a clean active queue tab showing only guests currently waiting, standby, nearby, or released for photo service.",
                 "Queue history is moved to a separate tab showing completed, left, cancelled, not-here, and stale/expired guests.",
@@ -1626,17 +1482,15 @@ const QME_ROADMAP = {
                 "Feature-scoped staff do not default into unrelated event setup, staff management, reset, or advanced queue-engine panels.",
                 "Mobile and tablet layouts keep the active work view uncluttered during live operations."
               ],
-              notes:
-                "Captured from Sprint 2 admin UX discussion and inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. Completed first pass across main event admin, queue detail admin, and event check-in admin. Main event admin now separates Operations, Staff, and Setup; queue detail admin separates Live Line, History, and Settings; event check-in admin separates Live Check-In, History, and Settings. July 17 update: destructive Reset Test Data is no longer exposed in the top event action row and now lives behind Setup; check-in Settings is hidden from non-event-admin operators."
+              "notes": "Captured from Sprint 2 admin UX discussion and inspired by the cleaner tabbed admin pattern in the user's Playing the Game app. Completed first pass across main event admin, queue detail admin, and event check-in admin. Main event admin now separates Operations, Staff, and Setup; queue detail admin separates Live Line, History, and Settings; event check-in admin separates Live Check-In, History, and Settings. July 17 update: destructive Reset Test Data is no longer exposed in the top event action row and now lives behind Setup; check-in Settings is hidden from non-event-admin operators."
             },
             {
-              id: "story-role-aware-admin-landing",
-              title: "Route staff to role-aware admin workspaces",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Send admins and staff to the most relevant admin workspace based on their organization, event, and feature assignments.",
-              acceptanceCriteria: [
+              "id": "story-role-aware-admin-landing",
+              "title": "Route staff to role-aware admin workspaces",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Send admins and staff to the most relevant admin workspace based on their organization, event, and feature assignments.",
+              "acceptanceCriteria": [
                 "Event admins land on the event overview with setup, staff, check-in, feature, and reset context available.",
                 "Check-in staff land on the event check-in workspace or a check-in-focused event tab.",
                 "Feature-scoped service staff land on their assigned station or queue active-work tab.",
@@ -1648,17 +1502,15 @@ const QME_ROADMAP = {
                 "Station Staff and Station Supervisor boundaries are finalized before broader platform expansion.",
                 "Station Supervisor versus Event Admin control ownership is documented for queue controls, photo-credit/service controls, reset, and cross-station actions."
               ],
-              notes:
-                "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaved mostly like an event-level overview. July 8 Alpha 2 review shifted this from permission checks to workspace visibility. July 16 update: target role/workspace/control boundaries are documented in docs/station-role-visibility-matrix-v1.md, and the useful first implementation slice is complete: /admin now routes broad admins to /admin/events, single-assignment event/station/check-in staff directly to the assigned workspace, and multi-assignment staff to a simple workspace chooser. July 17 update: event detail Staff/Setup tabs, event check-in Settings, and queue/station Settings are gated to event-admin-and-up so lower-role operators stay in live operations/history surfaces; the Staff tab assignment form now creates only limited Staff access instead of exposing event-admin/station-provider role choices. Staff onboarding now supports creating a new limited staff login from the event Staff tab with generated temporary password display, then requiring the staff person to enter first and/or last name plus optional phone on first login; existing qME accounts are reused for additional event staff assignments; duplicate event assignment attempts warn the admin; the staff list can be searched by name/email; and a pilot Reset Password action keeps a generated temporary password visible until the staff person signs in again without wiping their existing profile. This remains a pilot credential flow and should be replaced with proper invite/reset-password handling later. July 17 decision: because SOTC has not requested special station/staff privilege distinctions and event admins are easy to create/manage, deeper role-specific tab hiding/read-locking is documented but intentionally deferred until a real operational need appears. July 17 SOTC pilot policy: assigned check-in staff may grant Headshot photo credit because Tanya previously said this was acceptable for the operating model; revisit after SOTC before making this a platform default."
+              "notes": "Added during Sprint 2 admin UX discussion after testing Jalani/event-staff access. The role model can already represent event-level and feature-scoped assignments, but the admin UI still behaved mostly like an event-level overview. July 8 Alpha 2 review shifted this from permission checks to workspace visibility. July 16 update: target role/workspace/control boundaries are documented in docs/station-role-visibility-matrix-v1.md, and the useful first implementation slice is complete: /admin now routes broad admins to /admin/events, single-assignment event/station/check-in staff directly to the assigned workspace, and multi-assignment staff to a simple workspace chooser. July 17 update: event detail Staff/Setup tabs, event check-in Settings, and queue/station Settings are gated to event-admin-and-up so lower-role operators stay in live operations/history surfaces; the Staff tab assignment form now creates only limited Staff access instead of exposing event-admin/station-provider role choices. Staff onboarding now supports creating a new limited staff login from the event Staff tab with generated temporary password display, then requiring the staff person to enter first and/or last name plus optional phone on first login; existing qME accounts are reused for additional event staff assignments; duplicate event assignment attempts warn the admin; the staff list can be searched by name/email; and a pilot Reset Password action keeps a generated temporary password visible until the staff person signs in again without wiping their existing profile. This remains a pilot credential flow and should be replaced with proper invite/reset-password handling later. July 17 decision: because SOTC has not requested special station/staff privilege distinctions and event admins are easy to create/manage, deeper role-specific tab hiding/read-locking is documented but intentionally deferred until a real operational need appears. July 17 SOTC pilot policy: assigned check-in staff may grant Headshot photo credit because Tanya previously said this was acceptable for the operating model; revisit after SOTC before making this a platform default."
             },
             {
-              id: "story-qme-root-landing-event-directory",
-              title: "Create qME root landing page and public event directory",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Replace the Peony-specific root route with a lightweight qME platform landing page that introduces qME, lists public events in useful date order, and provides a clear organizer/admin sign-in path.",
-              acceptanceCriteria: [
+              "id": "story-qme-root-landing-event-directory",
+              "title": "Create qME root landing page and public event directory",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Replace the Peony-specific root route with a lightweight qME platform landing page that introduces qME, lists public events in useful date order, and provides a clear organizer/admin sign-in path.",
+              "acceptanceCriteria": [
                 "The root route at qme.lol / www.qme.lol shows a qME platform landing page instead of redirecting to the Peony Festival.",
                 "The page is guest-first and functions primarily as an event portal, not a SaaS marketing site.",
                 "Guests can see active/upcoming public events and open the correct event route.",
@@ -1671,17 +1523,15 @@ const QME_ROADMAP = {
                 "Private, internal, rehearsal, and test events do not appear unless explicitly allowed for public directory display.",
                 "The implementation uses existing event records first rather than adding a separate marketing CMS."
               ],
-              notes:
-                "Added after qme.lol and www.qme.lol were connected in Vercel and exposed that the platform root still opened the Walnut Ridge Farm Peony Festival. The first implementation uses a conservative allow-list/metadata filter so active internal events are not automatically exposed. July 21 update: SOTC direct routing now treats /events/sotc-rockhall as the canonical guest URL from the event slug, keeps legacy SOTC aliases working, and adds a printable /events/sotc-rockhall/sign QR entry page for the registration entrance. Future cleanup should add an explicit public-directory/event-visibility field in event setup and consider organization/event slug nesting such as /org-slug/event-slug."
+              "notes": "Added after qme.lol and www.qme.lol were connected in Vercel and exposed that the platform root still opened the Walnut Ridge Farm Peony Festival. The first implementation uses a conservative allow-list/metadata filter so active internal events are not automatically exposed. July 21 update: SOTC direct routing now treats /events/sotc-rockhall as the canonical guest URL from the event slug, keeps legacy SOTC aliases working, and adds a printable /events/sotc-rockhall/sign QR entry page for the registration entrance. Future cleanup should add an explicit public-directory/event-visibility field in event setup and consider organization/event slug nesting such as /org-slug/event-slug."
             },
             {
-              id: "story-station-operational-control-visibility",
-              title: "Make station operational controls visible and understandable",
-              status: "current",
-              sprint: "now",
-              summary:
-                "Expose station-level operating settings in a way staff can understand, while preserving edit permissions for the appropriate authority level.",
-              acceptanceCriteria: [
+              "id": "story-station-operational-control-visibility",
+              "title": "Make station operational controls visible and understandable",
+              "status": "current",
+              "sprint": "now",
+              "summary": "Expose station-level operating settings in a way staff can understand, while preserving edit permissions for the appropriate authority level.",
+              "acceptanceCriteria": [
                 "Station screens show Gathering Target, Gathering Max, Gathering timeout, On My Way timeout, Not Here cooldown, and Auto Flow where applicable.",
                 "Visibility is separated from editability: staff can understand queue behavior even when they cannot change settings.",
                 "Event Admin or higher can edit event-wide/live-control settings.",
@@ -1689,17 +1539,15 @@ const QME_ROADMAP = {
                 "Read-only controls explain why they are locked for the current role.",
                 "Settings use operational labels that match the guest queue language."
               ],
-              notes:
-                "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed that hidden queue settings made correct behavior look broken. Station staff need to understand why the line behaves as it does, even when only Event Admin or higher can change the controls."
+              "notes": "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed that hidden queue settings made correct behavior look broken. Station staff need to understand why the line behaves as it does, even when only Event Admin or higher can change the controls."
             },
             {
-              id: "story-queue-automation-observability",
-              title: "Explain queue automation blockers to operators",
-              status: "current",
-              sprint: "now",
-              summary:
-                "When automation does not move a guest, show the reason so staff know whether the queue is working, cooling down, paused, full, or blocked by eligibility.",
-              acceptanceCriteria: [
+              "id": "story-queue-automation-observability",
+              "title": "Explain queue automation blockers to operators",
+              "status": "current",
+              "sprint": "now",
+              "summary": "When automation does not move a guest, show the reason so staff know whether the queue is working, cooling down, paused, full, or blocked by eligibility.",
+              "acceptanceCriteria": [
                 "Queue admin surfaces show when a guest is Cooling Down and, where practical, the remaining time.",
                 "Queue admin surfaces explain when Gathering is full.",
                 "Queue admin surfaces explain when Auto Flow is paused or manual.",
@@ -1707,17 +1555,15 @@ const QME_ROADMAP = {
                 "Apply Flow feedback reports when no movement happened and why.",
                 "Not Here recovery follows the policy: cooldown, return to active Waiting, then normal progression by original queue order with no extra punishment."
               ],
-              notes:
-                "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed the queue engine could be behaving correctly while operators thought it was stuck because the cooldown timer and other blockers were invisible. qME should explain automation decisions, not make staff infer them."
+              "notes": "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed the queue engine could be behaving correctly while operators thought it was stuck because the cooldown timer and other blockers were invisible. qME should explain automation decisions, not make staff infer them."
             },
             {
-              id: "story-stale-queue-blocker-recovery",
-              title: "Handle stale queue guests who block active flow",
-              status: "done",
-              sprint: "now",
-              summary:
-                "Prevent Gathering guests who have not marked themselves Nearby from indefinitely blocking newer guests and slowing down a live queue.",
-              acceptanceCriteria: [
+              "id": "story-stale-queue-blocker-recovery",
+              "title": "Handle stale queue guests who block active flow",
+              "status": "done",
+              "sprint": "now",
+              "summary": "Prevent Gathering guests who have not marked themselves Nearby from indefinitely blocking newer guests and slowing down a live queue.",
+              "acceptanceCriteria": [
                 "Gathering is treated as a prompt state, not a protected blocking position.",
                 "A non-nearby Gathering guest stops counting against the Gathering/Nearby target after a pilot bypass window.",
                 "Auto-flow targets the configured Gathering threshold for fresh guests.",
@@ -1732,49 +1578,43 @@ const QME_ROADMAP = {
                 "The story captures later staff actions such as nudge, skip for now, remove, and recover.",
                 "The story captures later notification support so guests can be buzzed or messaged when moved from Waiting to Gathering."
               ],
-              notes:
-                "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. Updated after product discussion: the queue must keep moving toward Nearby candidates without hiding the overflow rule in code. Current implementation exposes Gathering target, Gathering max, and stale-after seconds on the queue controls. Auto-flow can invite newer Waiting guests into Gathering up to the max when earlier Gathering guests go stale. Staff can manually return stale non-nearby Gathering guests to Waiting; returned guests keep their ticket but move behind guests already waiting. Not Here now returns released guests to Waiting with a cooldown, and a database trigger guardrail prevents older clients from moving released guests directly back into Gathering. Validated on 2026-07-01 with a 7-guest Scan-Code Adventure test and a Headshot Photographer test: admin removals from Gathering and Your Turn moved guests to Waiting for the 15-second cooldown, Gathering max held, and guests later progressed again when space opened. Added guest-facing Return to Waiting messaging so a guest moved back by staff understands that they should wait until Gathering appears again, move to the station, and tap I'm Nearby when ready. July 2 pre-test reset hardening fixed a stale-tab edge case where an old guest queue URL with join intent could recreate a ticket after Reset Test Data; reset now clears that URL intent on queue landing and ticket pages. User confirmed the lost Headshot Gathering ticket disappeared and reset testing passed. Future production readiness should move auto-flow execution toward a durable server-side scheduler, trigger, or metrics-driven worker rather than relying on open browser screens. Future work should add richer staff controls to skip/remove/remind stale Gathering guests, automate return-to-waiting when space is needed, make real-event timing configurable, and add buzz/SMS/push/in-app notification when guests move from Waiting to Gathering."
+              "notes": "Captured from Sprint 2 smoke testing after guest-session foundation: guest #5 could be waiting behind stale guests who had not tapped I'm Nearby, and another guest in front could block the queue. Updated after product discussion: the queue must keep moving toward Nearby candidates without hiding the overflow rule in code. Current implementation exposes Gathering target, Gathering max, and stale-after seconds on the queue controls. Auto-flow can invite newer Waiting guests into Gathering up to the max when earlier Gathering guests go stale. Staff can manually return stale non-nearby Gathering guests to Waiting; returned guests keep their ticket but move behind guests already waiting. Not Here now returns released guests to Waiting with a cooldown, and a database trigger guardrail prevents older clients from moving released guests directly back into Gathering. Validated on 2026-07-01 with a 7-guest Scan-Code Adventure test and a Headshot Photographer test: admin removals from Gathering and Your Turn moved guests to Waiting for the 15-second cooldown, Gathering max held, and guests later progressed again when space opened. Added guest-facing Return to Waiting messaging so a guest moved back by staff understands that they should wait until Gathering appears again, move to the station, and tap I'm Nearby when ready. July 2 pre-test reset hardening fixed a stale-tab edge case where an old guest queue URL with join intent could recreate a ticket after Reset Test Data; reset now clears that URL intent on queue landing and ticket pages. User confirmed the lost Headshot Gathering ticket disappeared and reset testing passed. Future production readiness should move auto-flow execution toward a durable server-side scheduler, trigger, or metrics-driven worker rather than relying on open browser screens. Future work should add richer staff controls to skip/remove/remind stale Gathering guests, automate return-to-waiting when space is needed, make real-event timing configurable, and add buzz/SMS/push/in-app notification when guests move from Waiting to Gathering."
             },
             {
-              id: "story-queue-rule-configuration",
-              title: "Configure queue rules and priority policies",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Allow admins to configure queue capacity, pacing, intake, remote wait, commitment windows, no-show handling, and priority structures.",
-              acceptanceCriteria: [
+              "id": "story-queue-rule-configuration",
+              "title": "Configure queue rules and priority policies",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Allow admins to configure queue capacity, pacing, intake, remote wait, commitment windows, no-show handling, and priority structures.",
+              "acceptanceCriteria": [
                 "Queue rules can include capacity thresholds, max digital positions, intake rates, and average service time.",
                 "Rules can include commitment prompts, expiration, grace periods, skip/reinsert behavior, and no-show policies.",
                 "Rules can distinguish Gathering timeout, optional On My Way timeout, I'm Nearby grace, and Not Here cooldown.",
                 "Priority structures can support premium tiers, staff passes, accessibility accommodations, or weighted/batched service.",
                 "This remains future configuration until a concrete event requires it."
               ],
-              notes:
-                "Imported from Trello/provisional queue rules. July 8 Alpha 2 review clarified that Not Here should cool down, return to active Waiting, and resume normal progression without additional punishment; cooldown itself is the penalty."
+              "notes": "Imported from Trello/provisional queue rules. July 8 Alpha 2 review clarified that Not Here should cool down, return to active Waiting, and resume normal progression without additional punishment; cooldown itself is the penalty."
             },
             {
-              id: "story-notification-policies",
-              title: "Configure notification policies and templates",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Define guest and staff notification rules for now-serving, up-next, commitment prompts, approach reminders, and exceptions.",
-              acceptanceCriteria: [
+              "id": "story-notification-policies",
+              "title": "Configure notification policies and templates",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Define guest and staff notification rules for now-serving, up-next, commitment prompts, approach reminders, and exceptions.",
+              "acceptanceCriteria": [
                 "Notification templates can support merge fields such as queue name, estimated time, map pin, and instructions.",
                 "Policies can include now serving, up next, commitment threshold, head toward venue, proceed-to-service, slowdowns, pauses, closures, or rerouting.",
                 "Delivery channels such as in-app, SMS, email, and push are evaluated separately."
               ],
-              notes:
-                "Imported from Trello/provisional notification policy notes."
+              "notes": "Imported from Trello/provisional notification policy notes."
             },
             {
-              id: "story-sotc-notification-july-fallback",
-              title: "Define July notification fallback for SOTC queues",
-              status: "current",
-              sprint: "next",
-              summary:
-                "Determine and implement the reliable July notification behavior for Headshots and other SOTC queues before committing to SMS or web push.",
-              acceptanceCriteria: [
+              "id": "story-sotc-notification-july-fallback",
+              "title": "Define July notification fallback for SOTC queues",
+              "status": "current",
+              "sprint": "next",
+              "summary": "Determine and implement the reliable July notification behavior for Headshots and other SOTC queues before committing to SMS or web push.",
+              "acceptanceCriteria": [
                 "Guest receives clear in-app modal/banner messaging for Waiting to Gathering, Your Turn, Not Here, and Return to Waiting/Cooldown events while the guest page is open.",
                 "Guest-facing notifications include an acknowledgement action and enough timestamp/history context to understand what changed.",
                 "Optional sound is evaluated only as an in-app enhancement after guest interaction, not as the primary notification channel.",
@@ -1782,17 +1622,15 @@ const QME_ROADMAP = {
                 "Staff guidance and event signage explain the July fallback behavior for Headshots.",
                 "SMS is not promised for July until provider setup, consent, compliance, delivery logging, and duplicate prevention are confirmed."
               ],
-              notes:
-                "Added from July 14 notification feasibility review. Tanya asked whether qME can buzz guests when queue status changes. Current reliable July path is in-app notification while the page is open, with SMS treated as a compliance-gated enhancement and web push treated as poor fit for a one-time iPhone-heavy event."
+              "notes": "Added from July 14 notification feasibility review. Tanya asked whether qME can buzz guests when queue status changes. Current reliable July path is in-app notification while the page is open, with SMS treated as a compliance-gated enhancement and web push treated as poor fit for a one-time iPhone-heavy event."
             },
             {
-              id: "story-notification-event-architecture",
-              title: "Create notification-event architecture",
-              status: "ready",
-              sprint: "future",
-              summary:
-                "Separate domain status changes from delivery channels by recording notification events before delivering in-app, SMS, push, or future channels.",
-              acceptanceCriteria: [
+              "id": "story-notification-event-architecture",
+              "title": "Create notification-event architecture",
+              "status": "ready",
+              "sprint": "future",
+              "summary": "Separate domain status changes from delivery channels by recording notification events before delivering in-app, SMS, push, or future channels.",
+              "acceptanceCriteria": [
                 "Domain actions such as queue movement, Not Here, cooldown completion, order-ready, or reminders can create durable notification events.",
                 "Notification events include event/check-in/ticket context, notification type, transition, idempotency key, created timestamp, and acknowledgement/read fields.",
                 "Channel delivery records track in-app, SMS, push, or future delivery attempts separately.",
@@ -1800,17 +1638,15 @@ const QME_ROADMAP = {
                 "Untrusted browsers cannot directly trigger SMS delivery.",
                 "The architecture supports audit review and future delivery channels without coupling queue logic directly to one provider."
               ],
-              notes:
-                "Preferred direction: domain status change -> create notification event -> deliver in-app -> optionally deliver SMS -> later support web push or other channels."
+              "notes": "Preferred direction: domain status change -> create notification event -> deliver in-app -> optionally deliver SMS -> later support web push or other channels."
             },
             {
-              id: "story-sms-notification-feasibility",
-              title: "Evaluate transactional SMS for event notifications",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Investigate whether SMS can responsibly support queue and reminder notifications after account, compliance, consent, and delivery constraints are understood.",
-              acceptanceCriteria: [
+              "id": "story-sms-notification-feasibility",
+              "title": "Evaluate transactional SMS for event notifications",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Investigate whether SMS can responsibly support queue and reminder notifications after account, compliance, consent, and delivery constraints are understood.",
+              "acceptanceCriteria": [
                 "Provider setup requirements are documented, including sender registration and approval timing.",
                 "Opt-in, STOP/HELP, consent copy, and message-purpose requirements are documented before any live SMS commitment.",
                 "Existing phone capture is reviewed and updated if explicit SMS consent is required.",
@@ -1818,34 +1654,30 @@ const QME_ROADMAP = {
                 "Delivery logging, duplicate prevention, and failure handling are designed before SMS is used at a live event.",
                 "A go/no-go decision is made before SMS becomes part of a guest promise."
               ],
-              notes:
-                "Twilio or similar SMS may be useful, but July 22 timing is risky unless registration/verification and compliance are already complete. Treat SMS as a pilot add-on, not the core notification fallback."
+              "notes": "Twilio or similar SMS may be useful, but July 22 timing is risky unless registration/verification and compliance are already complete. Treat SMS as a pilot add-on, not the core notification fallback."
             },
             {
-              id: "story-headshot-low-staff-operating-model",
-              title: "Explore low-staff Headshot operating model",
-              status: "current",
-              sprint: "next",
-              summary:
-                "Review safe Headshot workflows where qME can advance the queue and the photographer may not need to operate qME directly.",
-              acceptanceCriteria: [
+              "id": "story-headshot-low-staff-operating-model",
+              "title": "Explore low-staff Headshot operating model",
+              "status": "current",
+              "sprint": "next",
+              "summary": "Review safe Headshot workflows where qME can advance the queue and the photographer may not need to operate qME directly.",
+              "acceptanceCriteria": [
                 "At least two operating models are documented for Tanya/Eric discussion.",
                 "Models distinguish photographer-free, guest-confirmed, timed, and supervisor-assisted completion options.",
                 "Risks are documented for false guest confirmation, missed guests, photo-credit misuse, and inaccurate completion.",
                 "Required state-model changes are identified before adding states such as active service or starting headshot.",
                 "The July recommendation preserves a simple fallback that staff can execute under pressure."
               ],
-              notes:
-                "Final pre-meeting model supports both operating paths. In the low-staff path, qME moves the guest to Your Turn, the photographer calls their name, and the guest taps I've Been Called to record a durable service-start marker and complete the ticket. In the admin-operated path, staff calls the name from the queue list and clicks Mark Served, completing the guest directly. Not Here remains the exception path."
+              "notes": "Final pre-meeting model supports both operating paths. In the low-staff path, qME moves the guest to Your Turn, the photographer calls their name, and the guest taps I've Been Called to record a durable service-start marker and complete the ticket. In the admin-operated path, staff calls the name from the queue list and clicks Mark Served, completing the guest directly. Not Here remains the exception path."
             },
             {
-              id: "story-headshot-service-start-acknowledgement",
-              title: "Prototype Headshot guest-called completion",
-              status: "done",
-              sprint: "next",
-              summary:
-                "Add a Headshot-only guest action after Your Turn so the guest can confirm they were called by the photographer; for the low-staff pilot this completes the Headshot queue ticket and frees the next guest.",
-              acceptanceCriteria: [
+              "id": "story-headshot-service-start-acknowledgement",
+              "title": "Prototype Headshot guest-called completion",
+              "status": "done",
+              "sprint": "next",
+              "summary": "Add a Headshot-only guest action after Your Turn so the guest can confirm they were called by the photographer; for the low-staff pilot this completes the Headshot queue ticket and frees the next guest.",
+              "acceptanceCriteria": [
                 "I’ve Been Called appears only for Headshot guests in Your Turn.",
                 "Supporting copy says: Tap this when the photographer calls your name and you are starting your headshot.",
                 "The action writes a durable headshot_service_started marker tied to the guest/ticket.",
@@ -1858,33 +1690,30 @@ const QME_ROADMAP = {
                 "Not Here controls remain available before the guest taps I've Been Called.",
                 "No SMS, photographer screen, or durable notification-event infrastructure is introduced for this prototype."
               ],
-              notes:
-                "Built and tested for Tanya/Eric discussion. The implementation records a service-start mark/timestamp for the guest path and then uses completed as the low-staff terminal state, rather than adding an active_service ticket stage. Admin Mark Served creates the normal completion timestamp/mark without pretending the guest tapped I've Been Called."
+              "notes": "Built and tested for Tanya/Eric discussion. The implementation records a service-start mark/timestamp for the guest path and then uses completed as the low-staff terminal state, rather than adding an active_service ticket stage. Admin Mark Served creates the normal completion timestamp/mark without pretending the guest tapped I've Been Called."
             }
           ]
         }
       ]
     },
     {
-      id: "epic-sotc-program",
-      title: "SOTC Rock Hall Program",
-      summary:
-        "Translate the 2025/2026 mixer materials into guest-facing cards, queues, signups, prompts, and resources.",
-      status: "current",
-      themes: [
+      "id": "epic-sotc-program",
+      "title": "SOTC Rock Hall Program",
+      "summary": "Translate the 2025/2026 mixer materials into guest-facing cards, queues, signups, prompts, and resources.",
+      "status": "current",
+      "themes": [
         {
-          id: "theme-registration-passport",
-          title: "Registration and Passport",
-          status: "ready",
-          stories: [
+          "id": "theme-registration-passport",
+          "title": "Registration and Passport",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-registration",
-              title: "Registration experience",
-              status: "done",
-              sprint: "completed",
-              summary:
-                "Represent the 5:30-7:30 level 1 registration area and connect QR/name entry to imported-attendee lookup, staff confirmation, and the admin check-in console.",
-              acceptanceCriteria: [
+              "id": "story-registration",
+              "title": "Registration experience",
+              "status": "done",
+              "sprint": "completed",
+              "summary": "Represent the 5:30-7:30 level 1 registration area and connect QR/name entry to imported-attendee lookup, staff confirmation, and the admin check-in console.",
+              "acceptanceCriteria": [
                 "Registration appears as an event experience.",
                 "Guest-facing check-in starts from the Event Check-In card.",
                 "Guest-facing copy explains what to do next.",
@@ -1894,17 +1723,15 @@ const QME_ROADMAP = {
                 "Headshot access is derived from the imported attendee entitlement rather than arbitrary guest-entered or staff-entered classification.",
                 "SOTC staff can still use their external materials/name-tag process while qME manages the guest digital flow."
               ],
-              notes:
-                "Superseded by story-attendee-import after the actual SOTC attendee file arrived. The 2026-06-11 no-import assumption was historically correct for the first alpha slice, but the implemented July SOTC path now uses imported Eventbrite registrations, masked guest search/claim, Needs Help fallback, staff confirmation, and server-derived Headshot entitlement."
+              "notes": "Superseded by story-attendee-import after the actual SOTC attendee file arrived. The 2026-06-11 no-import assumption was historically correct for the first alpha slice, but the implemented July SOTC path now uses imported Eventbrite registrations, masked guest search/claim, Needs Help fallback, staff confirmation, and server-derived Headshot entitlement."
             },
             {
-              id: "story-sotc-qr-entry",
-              title: "SOTC QR entry and guest lookup",
-              status: "done",
-              sprint: "completed",
-              summary:
-                "Let guests scan a QR code at entry, search the imported SOTC attendee list, and enter the staff-confirmed check-in flow.",
-              acceptanceCriteria: [
+              "id": "story-sotc-qr-entry",
+              "title": "SOTC QR entry and guest lookup",
+              "status": "done",
+              "sprint": "completed",
+              "summary": "Let guests scan a QR code at entry, search the imported SOTC attendee list, and enter the staff-confirmed check-in flow.",
+              "acceptanceCriteria": [
                 "Guest can scan QR to enter the SOTC event experience.",
                 "Guest can search imported registrations by name with masked email hints.",
                 "Guest can claim their imported registration or use the Needs Help fallback.",
@@ -1912,17 +1739,15 @@ const QME_ROADMAP = {
                 "Guests who do not want digital entry or cannot find themselves can still go to the desk.",
                 "Staff confirmation remains required before event features are available."
               ],
-              notes:
-                "Superseded by story-attendee-import after the actual SOTC attendee file arrived. The older acceptance criterion about not relying on an imported attendee list is no longer the SOTC July implementation; the current flow uses imported registration search plus manual fallback for unresolved guests."
+              "notes": "Superseded by story-attendee-import after the actual SOTC attendee file arrived. The older acceptance criterion about not relying on an imported attendee list is no longer the SOTC July implementation; the current flow uses imported registration search plus manual fallback for unresolved guests."
             },
             {
-              id: "story-attendee-import",
-              title: "Import or sync SOTC attendee list",
-              status: "done",
-              sprint: "completed",
-              summary:
-                "Bring the received SOTC Eventbrite attendee records into qME for event check-in, Headshot entitlement, and narrow guest self check-in.",
-              acceptanceCriteria: [
+              "id": "story-attendee-import",
+              "title": "Import or sync SOTC attendee list",
+              "status": "done",
+              "sprint": "completed",
+              "summary": "Bring the received SOTC Eventbrite attendee records into qME for event check-in, Headshot entitlement, and narrow guest self check-in.",
+              "acceptanceCriteria": [
                 "Imported attendee records are stored separately from guest sessions/check-ins.",
                 "Headshot entitlement is derived from the imported Price Tier rather than guest-entered classification.",
                 "Reset Test Data clears rehearsal check-in/linkage state without deleting the imported attendee source list.",
@@ -1939,17 +1764,15 @@ const QME_ROADMAP = {
                 "Future API sync with Evite/Eventbrite is noted separately from manual import.",
                 "Realtime updates are considered but not required for the July SOTC slice."
               ],
-              notes:
-                "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. The live table was manually populated with 191 imported registrations. App/SQL slice added scoped guest registration search and claim RPCs: guests search by name, see masked email hints, claim one imported record, and are created as check-in rows from the authoritative import. July 21 Tanya direction removed the extra staff-confirmation gate for matched imported registrations: successful imported claims now self check in immediately, unlock event participation, stamp checked_in_at, and direct the guest to the registration desk for the physical name tag/sticker. Manual fallback rows remain Needs Help in the same admin list rather than sent to a separate hidden queue. Duplicate-name claims require exact email confirmation. Headshot credit is granted only from imported Headshot entitlement. Follow-up recovery slice added an audited staff Remove action for Live Check-In rows; imported matches are unlinked so a mistaken claim can be reclaimed, removed rows remain in History, and the guest-facing event/check-in screens show a removed state with a Check In Again path. Eventbrite API sync remains deferred."
+              "notes": "Deferred by the 2026-06-11 PO review until actual attendee data arrived. Updated 2026-07-20 after receiving cleaned SOTC-Mixer-List.csv: dry-run analysis found 191 rows, 191 importable, 147 Headshot price-tier rows, 44 blank price-tier rows, 145 student registrations, 46 professional registrations, 0 duplicate attendee numbers, 0 duplicate emails, 0 duplicate names, 0 missing required fields, and 0 unknown price tiers. Local foundation SQL added event_import_batches and event_imported_registrations, with reset behavior that clears linked check-in/session fields while preserving the imported attendee list for audit. The live table was manually populated with 191 imported registrations. App/SQL slice added scoped guest registration search and claim RPCs: guests search by name, see masked email hints, claim one imported record, and are created as check-in rows from the authoritative import. July 21 Tanya direction removed the extra staff-confirmation gate for matched imported registrations: successful imported claims now self check in immediately, unlock event participation, stamp checked_in_at, and direct the guest to the registration desk for the physical name tag/sticker. Manual fallback rows remain Needs Help in the same admin list rather than sent to a separate hidden queue. Duplicate-name claims require exact email confirmation. Headshot credit is granted only from imported Headshot entitlement. Follow-up recovery slice added an audited staff Remove action for Live Check-In rows; imported matches are unlinked so a mistaken claim can be reclaimed, removed rows remain in History, and the guest-facing event/check-in screens show a removed state with a Check In Again path. Eventbrite API sync remains deferred."
             },
             {
-              id: "story-registration-import-tool",
-              title: "Build superadmin registration import and field-mapping tool",
-              status: "ready",
-              sprint: "next",
-              summary:
-                "Let qME Superadmin upload the organizer's existing electronic attendee export, have qME inspect the file and suggest field mappings, preview the result, and add only registrations qME has not previously imported.",
-              acceptanceCriteria: [
+              "id": "story-registration-import-tool",
+              "title": "Build superadmin registration import and field-mapping tool",
+              "status": "ready",
+              "sprint": "next",
+              "summary": "Let qME Superadmin upload the organizer's existing electronic attendee export, have qME inspect the file and suggest field mappings, preview the result, and add only registrations qME has not previously imported.",
+              "acceptanceCriteria": [
                 "The first version is visible and usable only by qME Superadmin.",
                 "Superadmin can upload a common attendee export such as CSV without first reshaping it into a qME-specific template.",
                 "qME proposes mappings for useful normalized fields such as first name, last name or full name, email, mobile, company/organization, registration type, and stable external registration id where available.",
@@ -1961,34 +1784,30 @@ const QME_ROADMAP = {
                 "Changed values on an already-known source registration are surfaced for review rather than silently overwriting qME-owned participation or profile state.",
                 "Import records preserve source/provenance information sufficient to support later provider synchronization."
               ],
-              notes:
-                "Near-term direction from 2026-08-19 discovery. The organizer should be able to give qME the electronic export they already have rather than learning CSV preparation. File import is a legitimate general capability, not merely a temporary Eventbrite workaround. Direct provider integration can later automate ongoing ingestion and late-registration discovery using the same source-registration model."
+              "notes": "Near-term direction from 2026-08-19 discovery. The organizer should be able to give qME the electronic export they already have rather than learning CSV preparation. File import is a legitimate general capability, not merely a temporary Eventbrite workaround. Direct provider integration can later automate ongoing ingestion and late-registration discovery using the same source-registration model."
             },
             {
-              id: "story-registration-late-arrival-walk-in-policy",
-              title: "Define configurable late-registration and walk-in policy",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Define how each event handles a person who arrives but is not yet known to qME, whether because they registered after the last import, were invited late, or are a true walk-in.",
-              acceptanceCriteria: [
+              "id": "story-registration-late-arrival-walk-in-policy",
+              "title": "Define configurable late-registration and walk-in policy",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Define how each event handles a person who arrives but is not yet known to qME, whether because they registered after the last import, were invited late, or are a true walk-in.",
+              "acceptanceCriteria": [
                 "Explore event-configurable policies including closed list, staff-approved addition, and open/self-registration.",
                 "Treat a qME-created walk-in registration as another registration source rather than an error condition.",
                 "Clarify what minimum identity/contact fields are required for each policy.",
                 "Clarify how late external registrations are added without disturbing existing qME participation.",
                 "Keep provider/API integration separate from the exception policy because even synchronized events may still have true walk-ins."
               ],
-              notes:
-                "A later full registration export should normally discover and add only new source registrations. Integration reduces late-registration exceptions but does not eliminate the need for an event-specific not-found/walk-in policy."
+              "notes": "A later full registration export should normally discover and add only new source registrations. Integration reduces late-registration exceptions but does not eliminate the need for an event-specific not-found/walk-in policy."
             },
             {
-              id: "story-passport-activity",
-              title: "Passport activity",
-              status: "ready",
-              sprint: "soon",
-              summary:
-                "Model the passport as a simple activity that can encourage sponsor engagement or QR check-ins.",
-              acceptanceCriteria: [
+              "id": "story-passport-activity",
+              "title": "Passport activity",
+              "status": "ready",
+              "sprint": "soon",
+              "summary": "Model the passport as a simple activity that can encourage sponsor engagement or QR check-ins.",
+              "acceptanceCriteria": [
                 "Passport activity has a clear completion definition.",
                 "Sponsor/registration check-ins can count toward progress.",
                 "Reward or completion question is captured."
@@ -1997,31 +1816,29 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-sponsors",
-          title: "Sponsors",
-          status: "ready",
-          stories: [
+          "id": "theme-sponsors",
+          "title": "Sponsors",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-sponsor-cards",
-              title: "Sponsor cards and placement",
-              status: "ready",
-              sprint: "soon",
-              summary:
-                "Show sponsors as event experiences with meaningful placement and optional passport activity.",
-              acceptanceCriteria: [
+              "id": "story-sponsor-cards",
+              "title": "Sponsor cards and placement",
+              "status": "ready",
+              "sprint": "soon",
+              "summary": "Show sponsors as event experiences with meaningful placement and optional passport activity.",
+              "acceptanceCriteria": [
                 "Sponsor card includes name, logo, location, and description.",
                 "Sponsor placement can be highlighted.",
                 "Sponsor is distinct from vendor in the model."
               ]
             },
             {
-              id: "story-sponsor-goals",
-              title: "Capture sponsor goals",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Clarify what sponsors want from the event so qME can support measurable engagement.",
-              acceptanceCriteria: [
+              "id": "story-sponsor-goals",
+              "title": "Capture sponsor goals",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Clarify what sponsors want from the event so qME can support measurable engagement.",
+              "acceptanceCriteria": [
                 "Sponsor desired outcomes are documented.",
                 "Engagement actions are identified.",
                 "Reporting needs are parked or promoted to stories."
@@ -2030,34 +1847,32 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-resources",
-          title: "Mixer Resources and Digital Brochure",
-          status: "ready",
-          stories: [
+          "id": "theme-resources",
+          "title": "Mixer Resources and Digital Brochure",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-resource-cards",
-              title: "Create mixer resource cards",
-              status: "ready",
-              sprint: "soon",
-              summary:
-                "Bring the QR code/mixer resources page into qME as structured guest-facing cards.",
-              acceptanceCriteria: [
+              "id": "story-resource-cards",
+              "title": "Create mixer resource cards",
+              "status": "ready",
+              "sprint": "soon",
+              "summary": "Bring the QR code/mixer resources page into qME as structured guest-facing cards.",
+              "acceptanceCriteria": [
                 "Resources can be grouped by category.",
                 "Each resource has title, link, description, and optional sponsor/source.",
                 "Guest can access resources from the event page."
               ],
-              references: [
+              "references": [
                 "https://sites.google.com/summeronthecuyahoga.com/mixerresourcespage?usp=sharing"
               ]
             },
             {
-              id: "story-digital-brochure",
-              title: "Digital brochure view",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Create a richer event program that can turn modules on before, during, or after the event.",
-              acceptanceCriteria: [
+              "id": "story-digital-brochure",
+              "title": "Digital brochure view",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Create a richer event program that can turn modules on before, during, or after the event.",
+              "acceptanceCriteria": [
                 "Event schedule and resources are visible.",
                 "Certain interactive items can open before the event.",
                 "Guest sees relevant cards without needing the old brochure."
@@ -2066,44 +1881,41 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-networking-food-bar",
-          title: "Networking, Food, and Bar",
-          status: "discovery",
-          stories: [
+          "id": "theme-networking-food-bar",
+          "title": "Networking, Food, and Bar",
+          "status": "discovery",
+          "stories": [
             {
-              id: "story-networking-prompts",
-              title: "Simple networking prompts",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Start with lightweight prompts/questions before deeper matching.",
-              acceptanceCriteria: [
+              "id": "story-networking-prompts",
+              "title": "Simple networking prompts",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Start with lightweight prompts/questions before deeper matching.",
+              "acceptanceCriteria": [
                 "Existing SOTC networking ideas are captured.",
                 "MVP prompts can be shown without personal matching.",
                 "Sponsor opportunity is noted separately."
               ]
             },
             {
-              id: "story-food-filters",
-              title: "Food tags and filters",
-              status: "future",
-              sprint: "future",
-              summary:
-                "List hors d'oeuvres and allow filtering by vegan, vegetarian, gluten free, allergens, or ingredients.",
-              acceptanceCriteria: [
+              "id": "story-food-filters",
+              "title": "Food tags and filters",
+              "status": "future",
+              "sprint": "future",
+              "summary": "List hors d'oeuvres and allow filtering by vegan, vegetarian, gluten free, allergens, or ingredients.",
+              "acceptanceCriteria": [
                 "Food items have dietary tags.",
                 "Guest can filter common needs.",
                 "Unknown/typed needs can be captured as learning."
               ]
             },
             {
-              id: "story-bar-menu",
-              title: "Cocktail and mocktail menu",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Show special cocktails/mocktails as a simple information card.",
-              acceptanceCriteria: [
+              "id": "story-bar-menu",
+              "title": "Cocktail and mocktail menu",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Show special cocktails/mocktails as a simple information card.",
+              "acceptanceCriteria": [
                 "Bar card can list drinks.",
                 "Mocktails and alcoholic drinks can be distinguished.",
                 "No queue behavior is assumed unless needed later."
@@ -2112,44 +1924,41 @@ const QME_ROADMAP = {
           ]
         },
         {
-          id: "theme-sessions-galleries",
-          title: "Greetings, Workshops, and Galleries",
-          status: "discovery",
-          stories: [
+          "id": "theme-sessions-galleries",
+          "title": "Greetings, Workshops, and Galleries",
+          "status": "discovery",
+          "stories": [
             {
-              id: "story-host-greetings",
-              title: "Host and sponsor greetings notification",
-              status: "discovery",
-              sprint: "future",
-              summary:
-                "Notify guests to gather for host/sponsor greetings from 6:15-6:45 on level 0.",
-              acceptanceCriteria: [
+              "id": "story-host-greetings",
+              "title": "Host and sponsor greetings notification",
+              "status": "discovery",
+              "sprint": "future",
+              "summary": "Notify guests to gather for host/sponsor greetings from 6:15-6:45 on level 0.",
+              "acceptanceCriteria": [
                 "Greeting appears in the event schedule.",
                 "Notification behavior is defined.",
                 "QR/passport check-in alternative is considered if no beacons exist."
               ]
             },
             {
-              id: "story-workshop-signups",
-              title: "Pop-up mini workshop signups",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Let guests sign up for workshop blocks and coordinate with queue timing.",
-              acceptanceCriteria: [
+              "id": "story-workshop-signups",
+              "title": "Pop-up mini workshop signups",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Let guests sign up for workshop blocks and coordinate with queue timing.",
+              "acceptanceCriteria": [
                 "Workshop sessions have time, location, speaker, organization, title, and description.",
                 "Guest can sign up before or during the event.",
                 "Queue status and workshop attendance do not fight each other."
               ]
             },
             {
-              id: "story-gallery-map",
-              title: "Gallery and landmark map cards",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Show all galleries open for viewing, landmarks, levels, and suggested things to see.",
-              acceptanceCriteria: [
+              "id": "story-gallery-map",
+              "title": "Gallery and landmark map cards",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Show all galleries open for viewing, landmarks, levels, and suggested things to see.",
+              "acceptanceCriteria": [
                 "Gallery cards include level/location.",
                 "Map or wayfinding view is explored.",
                 "Scavenger hunt/tour ideas are parked for later."
@@ -2160,86 +1969,79 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "epic-guest-intelligence",
-      title: "Guest Conditions, Intentions, and Timing",
-      summary:
-        "Use guest identity, tags, intent, access rules, and optional location signals to drive what actions qME suggests.",
-      status: "future",
-      themes: [
+      "id": "epic-guest-intelligence",
+      "title": "Guest Conditions, Intentions, and Timing",
+      "summary": "Use guest identity, tags, intent, access rules, and optional location signals to drive what actions qME suggests.",
+      "status": "future",
+      "themes": [
         {
-          id: "theme-guest-conditions",
-          title: "Guest Conditions and Access",
-          status: "ready",
-          stories: [
+          "id": "theme-guest-conditions",
+          "title": "Guest Conditions and Access",
+          "status": "ready",
+          "stories": [
             {
-              id: "story-guest-condition-engine",
-              title: "Generalize guest access conditions",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Turn Bouquet Bar-style access rules into a reusable eligibility model.",
-              acceptanceCriteria: [
+              "id": "story-guest-condition-engine",
+              "title": "Generalize guest access conditions",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Turn Bouquet Bar-style access rules into a reusable eligibility model.",
+              "acceptanceCriteria": [
                 "Queue access can depend on guest tags, check-in state, purchase state, or completion state.",
                 "Blocked guests receive context-specific messages.",
                 "Rules are configurable per experience."
               ]
             },
             {
-              id: "story-guest-intentions",
-              title: "Guest announces intentions",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Let guests indicate what they want to do so qME can coordinate queues, signups, and recommendations.",
-              acceptanceCriteria: [
+              "id": "story-guest-intentions",
+              "title": "Guest announces intentions",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Let guests indicate what they want to do so qME can coordinate queues, signups, and recommendations.",
+              "acceptanceCriteria": [
                 "Guest can express interest in experiences.",
                 "Intent can influence suggested actions.",
                 "Intent history does not overcomplicate the July MVP."
               ],
-              notes:
-                "User note: 'Guest keeps announcing intentions (I want that).'"
+              "notes": "User note: 'Guest keeps announcing intentions (I want that).'"
             }
           ]
         },
         {
-          id: "theme-location-matching",
-          title: "Location, Beacons, and Matching",
-          status: "deferred",
-          stories: [
+          "id": "theme-location-matching",
+          "title": "Location, Beacons, and Matching",
+          "status": "deferred",
+          "stories": [
             {
-              id: "story-location-beacons",
-              title: "Explore location/beacon signals",
-              status: "deferred",
-              sprint: "future",
-              summary:
-                "Use location awareness to know whether a guest is near a queue, gathering, sponsor, or session.",
-              acceptanceCriteria: [
+              "id": "story-location-beacons",
+              "title": "Explore location/beacon signals",
+              "status": "deferred",
+              "sprint": "future",
+              "summary": "Use location awareness to know whether a guest is near a queue, gathering, sponsor, or session.",
+              "acceptanceCriteria": [
                 "Beacon feasibility is researched.",
                 "No July dependency unless hardware and venue support are confirmed.",
                 "QR fallback is documented."
               ]
             },
             {
-              id: "story-networking-matching",
-              title: "Matching and forced networking",
-              status: "deferred",
-              sprint: "future",
-              summary:
-                "Use surveys/tags/interests to create networking opportunities, possibly sponsor-backed.",
-              acceptanceCriteria: [
+              "id": "story-networking-matching",
+              "title": "Matching and forced networking",
+              "status": "deferred",
+              "sprint": "future",
+              "summary": "Use surveys/tags/interests to create networking opportunities, possibly sponsor-backed.",
+              "acceptanceCriteria": [
                 "Fun survey/tag concepts are captured.",
                 "Sponsor need is identified.",
                 "Privacy and consent questions are documented before build."
               ]
             },
             {
-              id: "story-survey-icons",
-              title: "Interest survey icons",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Use simple icon-based survey prompts to capture interests or group identity.",
-              acceptanceCriteria: [
+              "id": "story-survey-icons",
+              "title": "Interest survey icons",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Use simple icon-based survey prompts to capture interests or group identity.",
+              "acceptanceCriteria": [
                 "Survey prompts are lightweight.",
                 "Interest tags can feed networking or recommendations.",
                 "Guests can skip without breaking the event experience."
@@ -2250,38 +2052,35 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "epic-branding-itinerary",
-      title: "Branding and Personal Event Itinerary",
-      summary:
-        "Allow organizations and events to feel branded while guests get a personal agenda tied to queues and activities.",
-      status: "future",
-      themes: [
+      "id": "epic-branding-itinerary",
+      "title": "Branding and Personal Event Itinerary",
+      "summary": "Allow organizations and events to feel branded while guests get a personal agenda tied to queues and activities.",
+      "status": "future",
+      "themes": [
         {
-          id: "theme-branding",
-          title: "Organization and Event Branding",
-          status: "future",
-          stories: [
+          "id": "theme-branding",
+          "title": "Organization and Event Branding",
+          "status": "future",
+          "stories": [
             {
-              id: "story-branding-settings",
-              title: "Branding settings",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Offer organization logo, event logo, fonts, and color settings without turning qME into a design tool.",
-              acceptanceCriteria: [
+              "id": "story-branding-settings",
+              "title": "Branding settings",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Offer organization logo, event logo, fonts, and color settings without turning qME into a design tool.",
+              "acceptanceCriteria": [
                 "Organization can store logo and basic color settings.",
                 "Event can override limited branding fields.",
                 "Branding has safe defaults."
               ]
             },
             {
-              id: "story-managed-image-storage",
-              title: "Move event images to managed storage",
-              status: "ready",
-              sprint: "soon",
-              summary:
-                "Move organization, event, experience, sponsor, and resource images out of hard-coded public assets and into managed storage with database references.",
-              acceptanceCriteria: [
+              "id": "story-managed-image-storage",
+              "title": "Move event images to managed storage",
+              "status": "ready",
+              "sprint": "soon",
+              "summary": "Move organization, event, experience, sponsor, and resource images out of hard-coded public assets and into managed storage with database references.",
+              "acceptanceCriteria": [
                 "Inventory current static images used as event/demo content.",
                 "Define which image types belong to organizations, events, experiences, sponsors, resources, and galleries.",
                 "Choose a storage convention, likely Supabase Storage paths plus database URL/path fields.",
@@ -2290,24 +2089,22 @@ const QME_ROADMAP = {
                 "Peony demo keeps working during migration.",
                 "SOTC event can use managed/uploaded images instead of code-folder images."
               ],
-              notes:
-                "This should be considered while building multi-org/event ownership because image ownership follows organization/event/experience ownership. It may also reduce reliance on generated static images in the local Vite build pipeline."
+              "notes": "This should be considered while building multi-org/event ownership because image ownership follows organization/event/experience ownership. It may also reduce reliance on generated static images in the local Vite build pipeline."
             }
           ]
         },
         {
-          id: "theme-itinerary",
-          title: "Personal Event Itinerary",
-          status: "future",
-          stories: [
+          "id": "theme-itinerary",
+          "title": "Personal Event Itinerary",
+          "status": "future",
+          "stories": [
             {
-              id: "story-personal-agenda",
-              title: "Personal event agenda",
-              status: "future",
-              sprint: "future",
-              summary:
-                "Show each guest a personal view of joined queues, signed-up sessions, saved resources, and recommended next actions.",
-              acceptanceCriteria: [
+              "id": "story-personal-agenda",
+              "title": "Personal event agenda",
+              "status": "future",
+              "sprint": "future",
+              "summary": "Show each guest a personal view of joined queues, signed-up sessions, saved resources, and recommended next actions.",
+              "acceptanceCriteria": [
                 "Guest can see active queue tickets.",
                 "Guest can see selected/saved sessions.",
                 "Guest can distinguish current, upcoming, and completed items."
@@ -2318,15 +2115,13 @@ const QME_ROADMAP = {
       ]
     }
   ],
-  productReviews: [
+  "productReviews": [
     {
-      id: "review-post-sotc-sprint-3-rebaseline-2026-08-18",
-      date: "2026-08-18",
-      trigger:
-        "The July 22 SOTC Rock Hall event completed and produced enough production evidence to rebaseline qMe from pre-event operational readiness into post-event operational hardening.",
-      summary:
-        "qMe successfully moved beyond a single demo and proved meaningful event value at SOTC: guests could check in, use digital Headshot queues, and interact with event guide content. The next phase should not be broad platform expansion. Sprint 3 should preserve production evidence, create a reusable full-data internal baseline, improve recovery when browser recognition is lost, add admin CSV exports, evaluate SMS recall responsibly, and give operators clearer search, state, and override tools.",
-      observations: [
+      "id": "review-post-sotc-sprint-3-rebaseline-2026-08-18",
+      "date": "2026-08-18",
+      "trigger": "The July 22 SOTC Rock Hall event completed and produced enough production evidence to rebaseline qMe from pre-event operational readiness into post-event operational hardening.",
+      "summary": "qMe successfully moved beyond a single demo and proved meaningful event value at SOTC: guests could check in, use digital Headshot queues, and interact with event guide content. The next phase should not be broad platform expansion. Sprint 3 should preserve production evidence, create a reusable full-data internal baseline, improve recovery when browser recognition is lost, add admin CSV exports, evaluate SMS recall responsibly, and give operators clearer search, state, and override tools.",
+      "observations": [
         "SOTC Rock Hall was qMe's first substantial production event and should now be treated as the evidence base for Sprint 3.",
         "The strongest Headshot insight remains that qMe can free guests from standing in a physical line while still moving them toward the service at the right time.",
         "The next problem is reliable recall and recovery: guests should not have to stare at the app, and qMe must reconnect them to existing participation if browser storage/session recognition is lost.",
@@ -2339,7 +2134,7 @@ const QME_ROADMAP = {
         "On My Way remains an important queue commitment concept: it means the guest is responding and heading over, but only I'm Nearby makes the guest callable.",
         "Check-In should not be overgeneralized yet; SOTC and upcoming customer conversations should teach what a configurable Check-In Experience Type needs to support."
       ],
-      decisions: [
+      "decisions": [
         "Move current development back into normal Sprint 3 product work, not emergency security remediation.",
         "Frame Sprint 3 as Post-SOTC Operational Hardening.",
         "Create a SOTC production archive snapshot for review.",
@@ -2351,33 +2146,31 @@ const QME_ROADMAP = {
         "Treat authorized queue state override as controlled state management, not only a go-next shortcut.",
         "Keep Host Console as a later product-board item rather than a Sprint 3 build requirement."
       ],
-      risks: [
+      "risks": [
         "Production archive and internal baseline handling must avoid accidental mutation of the July 22 record.",
         "Keeping real names/contact data in the internal baseline is useful but requires treating it as private internal test data.",
         "Browser storage behavior may vary by device, browser, QR scanner, private mode, and user settings; recovery UX is still needed even after diagnostics.",
         "SMS may carry fixed monthly/provider costs and compliance requirements that make it inappropriate to turn on casually.",
         "Admin override tools can confuse queue fairness if they do not clearly show when they bypass automation or exceed max settings."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Renamed the current sprint to Sprint 3: Post-SOTC Operational Hardening.",
         "Added a new Sprint 3 epic with stories for production archive/full-data baseline, admin CSV exports, guest-session persistence diagnostics, already-checked-in recovery, storage-health/recovery-contact prompt, SMS feasibility, admin search/state reconciliation, and authorized queue state overrides.",
         "Kept existing queue automation observability and station operational control visibility in the current sprint because they remain relevant after SOTC.",
         "Moved the next sprint framing toward experience-type review and configuration rather than more pre-event readiness."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Start with the SOTC archive/full-data baseline block or the admin CSV reports block.",
         "Keep implementation one block at a time.",
         "Do not add broad new platform features until Sprint 3 recovery, reporting, and operator trust items are clearer."
       ]
     },
     {
-      id: "review-qme-root-landing-event-directory-2026-07-21",
-      date: "2026-07-21",
-      trigger:
-        "The custom qME domain was connected to Vercel, revealing that the root domain still opened directly into the Walnut Ridge Farm Peony Festival event.",
-      summary:
-        "qME now needs a platform-level root destination. The root domain should introduce qME lightly, help guests find the event they are attending, and give organizers/staff a clear sign-in path without becoming a full SaaS marketing site.",
-      observations: [
+      "id": "review-qme-root-landing-event-directory-2026-07-21",
+      "date": "2026-07-21",
+      "trigger": "The custom qME domain was connected to Vercel, revealing that the root domain still opened directly into the Walnut Ridge Farm Peony Festival event.",
+      "summary": "qME now needs a platform-level root destination. The root domain should introduce qME lightly, help guests find the event they are attending, and give organizers/staff a clear sign-in path without becoming a full SaaS marketing site.",
+      "observations": [
         "qME now supports more than one organization and event.",
         "The Peony Festival is no longer an appropriate platform-level root destination.",
         "Guests need a simple way to find the event they are attending.",
@@ -2388,7 +2181,7 @@ const QME_ROADMAP = {
         "Past events may remain accessible, but should not dominate the primary event list.",
         "Private or internal demo events should not automatically appear in the public directory."
       ],
-      decisions: [
+      "decisions": [
         "qme.lol becomes the qME platform landing page.",
         "Individual events remain accessible through event-specific public slugs.",
         "The first public SOTC route should use /sotc/rockhall while preserving the tested SOTC event route.",
@@ -2399,7 +2192,7 @@ const QME_ROADMAP = {
         "The page initially uses existing event records rather than a separate marketing CMS.",
         "Only events explicitly intended for public directory display should appear."
       ],
-      risks: [
+      "risks": [
         "Automatically listing every active event could expose test, rehearsal, private, or internal events.",
         "Sorting only by absolute date distance could cause a recently completed event to appear above an upcoming event.",
         "Event records may not yet have all the fields needed for an attractive public card.",
@@ -2407,26 +2200,24 @@ const QME_ROADMAP = {
         "Organizer Sign In must not expose unauthorized administrative content.",
         "Event directory date logic must account for multi-day events and events without reliable dates."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Added story-qme-root-landing-event-directory to current Operational Readiness.",
         "Moved the root route away from the Peony demo destination.",
         "Kept /demo and direct event routes available.",
         "Added /sotc/rockhall as the clean public SOTC route bridge."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Verify qme.lol and www.qme.lol load the root event portal after deployment.",
         "Confirm the public event directory shows only intended events.",
         "Add explicit event visibility controls after SOTC if the allow-list/metadata bridge becomes limiting."
       ]
     },
     {
-      id: "review-sotc-imported-registration-model-2026-07-20",
-      date: "2026-07-20",
-      trigger:
-        "Actual SOTC Eventbrite attendee data was received, cleaned, imported, and tested through the guest/staff check-in workflow",
-      summary:
-        "The SOTC registration model materially changed from a no-import alpha check-in simulation to an operational imported-registration workflow. Real attendee data supported a clean manual CSV import, guest self-search/claim, immediate self check-in for matched imports, Needs Help fallback, Remove/reclaim recovery, and Headshot entitlement from imported Price Tier rather than guest-entered classification.",
-      observations: [
+      "id": "review-sotc-imported-registration-model-2026-07-20",
+      "date": "2026-07-20",
+      "trigger": "Actual SOTC Eventbrite attendee data was received, cleaned, imported, and tested through the guest/staff check-in workflow",
+      "summary": "The SOTC registration model materially changed from a no-import alpha check-in simulation to an operational imported-registration workflow. Real attendee data supported a clean manual CSV import, guest self-search/claim, immediate self check-in for matched imports, Needs Help fallback, Remove/reclaim recovery, and Headshot entitlement from imported Price Tier rather than guest-entered classification.",
+      "observations": [
         "Real attendee data supported a clean imported-registration workflow.",
         "All 191 attendee rows imported without duplicate attendee numbers, duplicate emails, duplicate names, missing required fields, or unknown price-tier problems.",
         "Physical name-tag/sticker handoff remains an important registration desk step, but it is no longer the qMe participation gate for matched imported registrations.",
@@ -2434,7 +2225,7 @@ const QME_ROADMAP = {
         "Needs Help and Remove/reclaim keep registration exceptions visible and recoverable.",
         "Student/Professional values may remain imported source metadata, but they are not the active qME authorization model for SOTC Headshots."
       ],
-      decisions: [
+      "decisions": [
         "Imported registration, guest session, and event check-in remain separate concepts.",
         "Matched imported-registration claim creates a completed qMe event check-in and unlocks event participation.",
         "Guests who cannot find themselves create pending operational work with a Needs Help marker.",
@@ -2443,31 +2234,29 @@ const QME_ROADMAP = {
         "Eventbrite API synchronization remains deferred.",
         "Manual CSV import is sufficient for the SOTC pilot."
       ],
-      risks: [
+      "risks": [
         "Eventbrite API sync remains post-pilot work.",
         "Registration UX around duplicate names, no-match guests, recovery contact, and the physical name-tag handoff should be rehearsed with staff before the event.",
         "Future generalized registration outcomes should not be designed until post-SOTC evidence is reviewed."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Marked story-attendee-import done/completed.",
         "Marked the older story-registration and story-sotc-qr-entry assumptions done/superseded by the imported-registration path.",
         "Retired the Student/Professional photo-state authorization model in favor of registered/check-in/Headshot entitlement/credit state.",
         "Kept Eventbrite API synchronization deferred."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Rehearse registration desk operations with imported search, self check-in, name-tag/sticker handoff, Needs Help, Remove/reclaim, and Headshot entitlement.",
         "Confirm event staff understand that matched imported guests are checked in by qMe immediately, while Needs Help guests still require staff resolution.",
         "Continue SOTC operational readiness rather than rebuilding the import path before July 22."
       ]
     },
     {
-      id: "review-security-review-closure-2026-07-20",
-      date: "2026-07-20",
-      trigger:
-        "Ahmed reviewed the remediation report and confirmed qME is good for the July 2026 SOTC pilot, with remaining work deferrable",
-      summary:
-        "The independent security review is complete for the July 2026 SOTC pilot. Emergency remediation, production verification, regression testing, and smoke testing are complete, and the independent reviewer confirmed that remaining work can move back into normal post-SOTC security maturity rather than emergency remediation.",
-      observations: [
+      "id": "review-security-review-closure-2026-07-20",
+      "date": "2026-07-20",
+      "trigger": "Ahmed reviewed the remediation report and confirmed qME is good for the July 2026 SOTC pilot, with remaining work deferrable",
+      "summary": "The independent security review is complete for the July 2026 SOTC pilot. Emergency remediation, production verification, regression testing, and smoke testing are complete, and the independent reviewer confirmed that remaining work can move back into normal post-SOTC security maturity rather than emergency remediation.",
+      "observations": [
         "Independent security review completed.",
         "Emergency remediation completed.",
         "Production verification completed.",
@@ -2478,14 +2267,14 @@ const QME_ROADMAP = {
         "Remaining items are security maturity work rather than emergency remediation.",
         "The current security foundation is stable enough that continued feature development should not introduce architectural security debt, provided future work follows the established authorization and verification patterns."
       ],
-      decisions: [
+      "decisions": [
         "Emergency security remediation is closed.",
         "Resume normal product development.",
         "Keep Security Hardening Sprint 2 on the roadmap after SOTC.",
         "Continue treating security as an ongoing engineering practice rather than a one-time project.",
         "Do not promote remaining maturity items back into emergency work unless a new High/Critical issue is identified."
       ],
-      risks: [
+      "risks": [
         "Provider-level rate limiting remains post-SOTC maturity work.",
         "Invite/password-reset workflow remains post-SOTC maturity work.",
         "Additional audited administrative RPCs remain appropriate where direct setup writes need tighter operational evidence.",
@@ -2493,25 +2282,24 @@ const QME_ROADMAP = {
         "Group-ordering remains blocked until a secure redesign exists.",
         "Additional security monitoring and auditing remain normal hardening work."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Moved the project back from emergency security remediation into normal Operational Readiness.",
         "Marked the external database/security review story complete.",
         "Kept remaining security work in backlog as maturity hardening, not emergency remediation.",
         "Preserved the security engineering workflow as a repeatable process: independent review, verification, risk classification, bounded remediation, regression testing, production validation, and documentation."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Focus development on SOTC operational readiness and product capabilities.",
         "Continue feature work only through the established authorization and verification patterns.",
         "Reopen emergency remediation only if a new High/Critical issue is identified."
       ]
     },
     {
-      id: "review-security-ahmed-emergency-remediation-2026-07-16",
-      date: "2026-07-16",
-      trigger: "Ahmed completed a database/security review and ChatGPT converted the feedback into an emergency verification/remediation plan",
-      summary:
-        "The next operating-readiness focus is security evidence, not new product expansion. Recent hardening substantially improved qME, but high-risk exposure may remain in older pilot SQL, legacy permissive policies, weak Flexlink intake auth, display-name credit binding, and privileged bootstrap functions. The work must verify live Supabase state, close confirmed emergency paths, and produce evidence for Ahmed to review.",
-      observations: [
+      "id": "review-security-ahmed-emergency-remediation-2026-07-16",
+      "date": "2026-07-16",
+      "trigger": "Ahmed completed a database/security review and ChatGPT converted the feedback into an emergency verification/remediation plan",
+      "summary": "The next operating-readiness focus is security evidence, not new product expansion. Recent hardening substantially improved qME, but high-risk exposure may remain in older pilot SQL, legacy permissive policies, weak Flexlink intake auth, display-name credit binding, and privileged bootstrap functions. The work must verify live Supabase state, close confirmed emergency paths, and produce evidence for Ahmed to review.",
+      "observations": [
         "The hardening pass substantially improved the platform, but older pilot paths can still become production vulnerabilities if not explicitly retired.",
         "Remaining high-risk issues are concentrated in legacy/pilot policies, old auth shortcuts, and weak identity binding.",
         "Dynamic admin assignment is intentional and required for the product; the fix is stronger authorization and audit boundaries, not hard-coded administrators.",
@@ -2520,7 +2308,7 @@ const QME_ROADMAP = {
         "Notification, ordering, and future registration work must build on verified guest identity and narrow server enforcement.",
         "Production security status cannot be inferred from repo files alone; live grants, policies, function grants, and deployed secrets must be verified."
       ],
-      decisions: [
+      "decisions": [
         "Pause nonessential platform expansion until confirmed emergency findings are fixed or classified.",
         "Preserve SOTC event-guide/content work where it does not touch vulnerable write paths.",
         "Keep dynamic role assignment, but verify all privileged role mutation functions and EXECUTE grants.",
@@ -2530,7 +2318,7 @@ const QME_ROADMAP = {
         "Require evidence and regression tests or SQL verification for every security closure.",
         "Re-engage Ahmed after the bounded remediation pass."
       ],
-      risks: [
+      "risks": [
         "Legacy SQL may reintroduce vulnerabilities if rerun.",
         "Deployed Supabase schema may differ from repository assumptions.",
         "Existing data may have been altered or enumerated before policies were tightened.",
@@ -2538,12 +2326,12 @@ const QME_ROADMAP = {
         "Overreliance on RLS helpers without live tests can create false confidence.",
         "Moving every write behind service-role APIs without careful design could create a large privileged backend attack surface."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Added emergency security remediation as the first current Operational Readiness story.",
         "Created verification/remediation packet expectations for Ahmed follow-up.",
         "Kept feature work paused unless explicitly approved while emergency findings are addressed."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Verify findings against live/current state.",
         "Fix emergency anonymous write/read paths.",
         "Rotate and rebuild Flexlink intake authentication.",
@@ -2556,12 +2344,11 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "review-tanya-eric-sotc-operating-model-2026-07-15",
-      date: "2026-07-15",
-      trigger: "Tanya/Eric/SOTC intern meeting clarified the July 22 operating model and simplified the SOTC guest home",
-      summary:
-        "The July operating model is clearer and narrower: Headshots remain the primary operational experience using a hybrid guest-confirmed/Supervisor-assisted model, Eventbrite self-check-in is the preferred registration direction but must wait for the actual export, walk-up paid professional headshots stay outside qME for July, and the guest home should feel like a digital event companion led by schedule, Headshots, resources, speakers, sponsors, and food/drinks.",
-      observations: [
+      "id": "review-tanya-eric-sotc-operating-model-2026-07-15",
+      "date": "2026-07-15",
+      "trigger": "Tanya/Eric/SOTC intern meeting clarified the July 22 operating model and simplified the SOTC guest home",
+      "summary": "The July operating model is clearer and narrower: Headshots remain the primary operational experience using a hybrid guest-confirmed/Supervisor-assisted model, Eventbrite self-check-in is the preferred registration direction but must wait for the actual export, walk-up paid professional headshots stay outside qME for July, and the guest home should feel like a digital event companion led by schedule, Headshots, resources, speakers, sponsors, and food/drinks.",
+      "observations": [
         "Photographers should remain focused on photography rather than operating qME.",
         "Evan will serve as Station Supervisor near the photographer and use the active queue for exceptions such as Not Here or manual Mark Served.",
         "Eventbrite attendee lookup is now the preferred registration direction, but the export must be reviewed before designing lookup, duplicate handling, or walk-in recovery.",
@@ -2573,7 +2360,7 @@ const QME_ROADMAP = {
         "The project is now primarily waiting on customer content rather than software architecture: speakers, sponsors, logos, links, and food information remain customer-content dependencies. The attendee CSV has arrived and passed dry-run review.",
         "Scan-Code Adventure should not appear in the July guest-facing home, but can remain available as an internal/demo capability."
       ],
-      decisions: [
+      "decisions": [
         "Adopt the hybrid Headshot operating model: guest-confirmed completion via I've Been Called plus Station Supervisor/Admin Mark Served and Not Here recovery.",
         "Do not add photographer-specific controls unless later testing proves they are useful.",
         "Keep walk-up Venmo headshots outside qME for July.",
@@ -2584,21 +2371,21 @@ const QME_ROADMAP = {
         "Remove Scan-Code Adventure from the July guest home while preserving it for demo/internal use.",
         "Keep Resume Reviews and Networking visible as lower-priority guest-home cards."
       ],
-      risks: [
+      "risks": [
         "The current Eventbrite CSV is clean, but late registrations or future exports may introduce duplicates or insufficient identifying fields.",
         "The self-check-in design should still fail safely if a future attendee file is less clean than the current dry-run.",
         "Walk-ins may require a recovery workflow that is not yet designed.",
         "Placeholder speakers, sponsors, logos, links, and food information must be replaced before production use.",
         "Event-specific styling must feel like SOTC while remaining mobile-readable and not overly hard-coded."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Added Tanya/Eric meeting direction as a Product Review.",
         "Prioritized guest-home updates before Eventbrite/self-registration work.",
         "Kept SMS, web push, photographer console, generalized speaker/sponsor engines, Food & Beverage ordering, and Experience hierarchy changes deferred.",
         "Captured the resource-link decision: external guide links should stay direct unless qME recreates the content natively.",
         "Clarified that Scan-Code Adventure remains a reusable/demo capability but is removed from the July SOTC guest home."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Completed: SOTC guest-home information architecture, schedule/layout, event guide structure, Event Resources with external Mixer Resources link, temporary speaker/sponsor/food content, and removal of Scan-Code Adventure from the July guest experience while preserving it as a reusable/demo capability.",
         "Waiting on SOTC: updated speaker list, updated sponsor list, updated sponsor logos, sponsor destination links, and updated food/drink information.",
         "Completed/under validation: SOTC-Mixer-List.csv was dry-run reviewed with 191 attendees, 147 Headshot-entitled records, no duplicate attendee numbers/emails/names, and no missing required fields; the live imported-registration table has been populated with 191 records.",
@@ -2607,87 +2394,84 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "review-notification-feasibility-2026-07-14",
-      date: "2026-07-14",
-      trigger: "Tanya asked whether qME can buzz guests for Headshots and other queue status changes before the July 22 SOTC event",
-      summary:
-        "The reliable July notification path is in-app status-change messaging while the guest page is open. SMS may become valuable, but it should not be promised until sender registration, opt-in consent, delivery logging, duplicate prevention, and provider approval timing are confirmed. Mobile web push is not a good July primary channel because iPhone guests would need Home Screen installation and notification permission.",
-      observations: [
+      "id": "review-notification-feasibility-2026-07-14",
+      "date": "2026-07-14",
+      "trigger": "Tanya asked whether qME can buzz guests for Headshots and other queue status changes before the July 22 SOTC event",
+      "summary": "The reliable July notification path is in-app status-change messaging while the guest page is open. SMS may become valuable, but it should not be promised until sender registration, opt-in consent, delivery logging, duplicate prevention, and provider approval timing are confirmed. Mobile web push is not a good July primary channel because iPhone guests would need Home Screen installation and notification permission.",
+      "observations": [
         "Current guest queue pages already detect Not Here and Return to Waiting transitions and show in-app messaging.",
         "The guest queue page currently relies on frequent refresh/polling and page-visible behavior; a closed or heavily backgrounded mobile browser cannot be treated as reachable.",
         "Optional sound can help only after a guest has interacted with the page and should not be treated as a guaranteed background buzz.",
         "SMS requires explicit consent language, provider setup, sender registration/verification, server-side triggering, delivery logs, and duplicate prevention.",
         "Queue and notification architecture should remain provider-agnostic: domain status changes should create notification events, and delivery channels should process those events."
       ],
-      decisions: [
+      "decisions": [
         "Do not promise SMS for July 22 unless account/compliance setup is complete and tested.",
         "Use in-app modal/banner notifications as the July fallback for Waiting to Gathering, Your Turn, Not Here, and Return to Waiting/Cooldown.",
         "Treat sound as an optional in-app enhancement, not a replacement for SMS or push.",
         "Keep mobile web push as a later channel, not a July solution for a one-time event.",
         "Discuss low-staff Headshot operating models with Tanya/Eric before adding new queue states such as active service."
       ],
-      risks: [
+      "risks": [
         "Guests may close the page or lock their phone and miss in-app-only notifications.",
         "SMS timing may fail if sender registration, campaign approval, or consent language is not ready.",
         "Web push friction may distract guests and staff during a one-time event.",
         "Adding Headshot-specific states too quickly may make the reusable queue model less generic."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Added July notification fallback story for SOTC queues.",
         "Added notification-event architecture story.",
         "Added SMS notification feasibility story.",
         "Added low-staff Headshot operating model discovery story."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Choose the July Headshot notification promise: in-app only, or in-app plus SMS pilot if compliance is ready.",
         "Add in-app notifications and acknowledgement/history before any SMS channel work.",
         "Review Headshot operating models with Tanya/Eric and decide whether guest confirmation or supervisor completion is the safest alpha path."
       ]
     },
     {
-      id: "review-headshot-operating-model-2026-07-14",
-      date: "2026-07-14",
-      trigger: "Post-implementation reflection after testing the dual Headshot operating model",
-      summary:
-        "The Headshot model now demonstrates a reusable operational pattern: queue progression can remain simple while durable service milestones capture what happened inside the station. The July prototype supports both guest-confirmed and admin-operated completion without adding an active_service ticket state.",
-      observations: [
+      "id": "review-headshot-operating-model-2026-07-14",
+      "date": "2026-07-14",
+      "trigger": "Post-implementation reflection after testing the dual Headshot operating model",
+      "summary": "The Headshot model now demonstrates a reusable operational pattern: queue progression can remain simple while durable service milestones capture what happened inside the station. The July prototype supports both guest-confirmed and admin-operated completion without adding an active_service ticket state.",
+      "observations": [
         "Recording I've Been Called as a durable service-start marker rather than another queue state kept the queue lifecycle simpler while preserving useful operational timestamps.",
         "Headshots now demonstrates a possible Queue -> Service Starts -> Queue Complete pattern that may apply to other Experience Types later.",
         "Photographer interaction should remain minimal: guests participate, Station Supervisors handle exceptions, and photographers stay focused on photography.",
         "The admin-operated path and guest-confirmed path can coexist as two valid operating modes for the same station.",
         "The next Experience Type review should likely be Food & Beverage because it can validate menus, station-specific credits, fulfillment, approvals, and reusable station operations."
       ],
-      decisions: [
+      "decisions": [
         "Prefer durable operational events/timestamps over new queue states when the state is an analytic or service milestone rather than a routing state.",
         "Do not introduce an active_service ticket state for Headshots before the Tanya/Eric discussion.",
         "Do not add photographer-specific controls unless the operating discussion proves they are necessary.",
         "Treat the Cookie Event as a product experiment for ordering, credits, approvals, fulfillment, and feedback, not as a commercial product direction.",
         "Keep the possible Experience Type -> organization-owned reusable definition -> Station layer as an open architecture question."
       ],
-      risks: [
+      "risks": [
         "If service milestones are over-generalized too soon, qME may create an abstraction before Food, Resume Reviews, Registration, and Networking validate it.",
         "If photographer controls are added prematurely, qME may create operational burden for the person who should be focused on service delivery.",
         "If completed remains the only terminal state, history display must clearly distinguish guest-called completion from admin-served completion."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Marked the Headshot guest-called completion prototype done.",
         "Updated the low-staff Headshot operating model notes with both the guest and admin completion paths.",
         "Captured Food & Beverage as the recommended next Experience Type review lens.",
         "Reinforced the open architecture question about an organization-owned reusable definition between Experience Type and Station."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Use the Headshot model in the Tanya/Eric meeting to validate whether guest confirmation and admin Mark Served are operationally understandable.",
         "Review Food & Beverage as the next Experience Type before introducing any new service layer.",
         "Keep SMS/phone buzzing out of the immediate build unless the meeting makes it essential and compliance setup is realistic."
       ]
     },
     {
-      id: "review-alpha-2-product-discovery-2026-07-08",
-      date: "2026-07-08",
-      trigger: "July 2 SOTC alpha, Jalani testing, queue operations testing, and follow-up product discovery",
-      summary:
-        "Alpha 2 moved qME from a working SOTC demo toward a clearer event-companion and operations platform. The product decisions are mostly planning decisions, not immediate feature expansion: finalize operational role visibility, make station controls understandable, explain queue automation behavior, keep Not Here as a cooldown-and-return policy, and continue validating reusable Experience Type architecture before adding generalized engines.",
-      observations: [
+      "id": "review-alpha-2-product-discovery-2026-07-08",
+      "date": "2026-07-08",
+      "trigger": "July 2 SOTC alpha, Jalani testing, queue operations testing, and follow-up product discovery",
+      "summary": "Alpha 2 moved qME from a working SOTC demo toward a clearer event-companion and operations platform. The product decisions are mostly planning decisions, not immediate feature expansion: finalize operational role visibility, make station controls understandable, explain queue automation behavior, keep Not Here as a cooldown-and-return policy, and continue validating reusable Experience Type architecture before adding generalized engines.",
+      "observations": [
         "The queue engine often behaved correctly while operators believed it was broken because cooldowns and automation blockers were invisible.",
         "The next role problem is less about whether permission checks exist and more about whether each role lands in the right workspace with the right tabs and controls.",
         "Station operational settings are product UI, not just configuration; staff need to understand them even when they cannot edit them.",
@@ -2697,7 +2481,7 @@ const QME_ROADMAP = {
         "A likely reusable layer exists between Experience Type and Station: an organization-owned reusable definition that can be placed in one or more event stations.",
         "The cookie event is useful as a product experiment for ordering, credits, approvals, fulfillment, and feedback, but not as a commercial feature direction yet."
       ],
-      decisions: [
+      "decisions": [
         "Finalize operational role visibility for qME Superadmin, Organization Admin, Event Admin, Station Supervisor, and Station Staff before broader platform expansion.",
         "Determine which tabs each role sees, which tabs are hidden, which tabs are read-only, and which controls are editable.",
         "Treat Station Supervisor versus Station Staff as operational workspace authority, while preserving event-wide/destructive controls for Event Admin or higher.",
@@ -2709,14 +2493,14 @@ const QME_ROADMAP = {
         "Do not build a generalized credit engine, service abstraction, configurable registration engine, generalized speaker/sponsor engines, payment, or POS integration yet.",
         "Use Product Reviews increasingly to capture hypotheses, evidence, and decisions in the Test > Discovery > Resolution > Test rhythm."
       ],
-      risks: [
+      "risks": [
         "If queue automation remains opaque, correct behavior will still feel unreliable during live operations.",
         "If role visibility is not finalized, station staff may see too much setup surface or miss the operational workspace they need.",
         "If station controls are editable without clear authority boundaries, live-event operators may accidentally change event-wide behavior.",
         "If the Experience Type hierarchy is implemented too early, qME may add a wrong abstraction before Registration, Headshots, Resume Reviews, and Food provide enough evidence.",
         "If credits are generalized too soon, simple station-specific grant/use rules may become unnecessarily heavy."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Moved role-aware admin landing/workspace visibility into the current Operational Readiness focus.",
         "Added station operational control visibility as a current story.",
         "Added queue automation observability as a current story.",
@@ -2725,7 +2509,7 @@ const QME_ROADMAP = {
         "Kept generalized credit engine, Service abstraction, registration config, speaker/sponsor engines, payment, and POS integration deferred.",
         "Captured cookie event as a future product experiment rather than a commercial feature."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Finalize role/tab/control visibility across Superadmin, Organization Admin, Event Admin, Station Supervisor, and Station Staff.",
         "Make station queue controls visible and explainable, even where read-only.",
         "Add operator-facing reasons when flow automation does not move someone.",
@@ -2734,12 +2518,11 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "review-sotc-alpha-2-pretest-wrap-2026-07-02",
-      date: "2026-07-02",
-      trigger: "Pre-test wrap-up before the July 2 SOTC alpha",
-      summary:
-        "The July 2 pre-test build shifted the SOTC guest home from a list of app capabilities toward a credible event companion. Headshots remains the hero operational experience, Scan-Code Adventure remains available as an optional queue/code demo, and the event home now uses reusable eCe metadata to show schedule, featured speakers, sponsors, food/drinks, and resources without hard-coding SOTC sections into React.",
-      observations: [
+      "id": "review-sotc-alpha-2-pretest-wrap-2026-07-02",
+      "date": "2026-07-02",
+      "trigger": "Pre-test wrap-up before the July 2 SOTC alpha",
+      "summary": "The July 2 pre-test build shifted the SOTC guest home from a list of app capabilities toward a credible event companion. Headshots remains the hero operational experience, Scan-Code Adventure remains available as an optional queue/code demo, and the event home now uses reusable eCe metadata to show schedule, featured speakers, sponsors, food/drinks, and resources without hard-coding SOTC sections into React.",
+      "observations": [
         "The product story is now clearer: qME can help guests understand what is happening at an event, not only move through a queue.",
         "The current build is good enough to test comprehension, orientation, and operational trust with real users.",
         "Most of the remaining risk is test/readiness risk rather than obvious implementation absence.",
@@ -2747,38 +2530,37 @@ const QME_ROADMAP = {
         "Reusable eCe metadata is carrying the new guest-home structure, which supports the Experience Type reuse direction.",
         "Final pre-test reset verification found a stale guest-tab edge case; clearing queue URL intent after event reset fixed it, and Headshot reset testing passed."
       ],
-      decisions: [
+      "decisions": [
         "Do not add new product behavior before the July 2 test unless something is obviously broken.",
         "Use the test to observe whether guests understand arrival, check-in, photo eligibility, Headshots, and optional Scan-Code Adventure without founder narration.",
         "Keep Scan-Code Adventure visible but treat it as a demo/supporting experience rather than the featured alpha path.",
         "Treat Headshots as the featured interactive experience for the test.",
         "Capture broad feedback after the test in an Alpha 2 Product Review instead of immediately expanding scope."
       ],
-      risks: [
+      "risks": [
         "Seeded brochure content may make qME look more complete than the underlying content-management model actually is.",
         "Guests may still need clearer hierarchy between event information and action-required experiences.",
         "The optional Scan-Code demo may distract from Headshots if testers treat all cards as equally important.",
         "The current image/logo assets are sufficient for alpha, but not yet a durable media-management workflow."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Updated the SOTC event-guide story with the implemented metadata fields and pre-test build notes.",
         "Kept Scan-Code Adventure in scope as optional demo content.",
         "Confirmed no new abstractions should be introduced before the July 2 alpha.",
         "Left speaker/sponsor/food/resource management as future Experience Type or content-model work."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Run the July 2 alpha with a clean reset and a short smoke test first.",
         "Watch where guests hesitate, what they understand without prompting, and whether staff/admin flow feels controlled.",
         "After the test, write Alpha 2 Product Review and decide whether Registration or Headshots should be reviewed next as an Experience Type."
       ]
     },
     {
-      id: "review-sotc-pre-alpha-build-2026-07-02",
-      date: "2026-07-01",
-      trigger: "Pre-alpha build direction for the July 2 SOTC alpha",
-      summary:
-        "This review keeps the next SOTC alpha focused on feeling like a real event companion rather than a technical demo. The immediate build should improve the guest home with reusable event-guide activities, preserve the Scan-Code demo station as optional, and avoid introducing broad new abstractions before the experience types are reviewed.",
-      observations: [
+      "id": "review-sotc-pre-alpha-build-2026-07-02",
+      "date": "2026-07-01",
+      "trigger": "Pre-alpha build direction for the July 2 SOTC alpha",
+      "summary": "This review keeps the next SOTC alpha focused on feeling like a real event companion rather than a technical demo. The immediate build should improve the guest home with reusable event-guide activities, preserve the Scan-Code demo station as optional, and avoid introducing broad new abstractions before the experience types are reviewed.",
+      "observations": [
         "The alpha should show a credible event flow: arrival, registration, event home, then experiences.",
         "Registration should remain simple for tomorrow: Student, Professional, and Professional + Photo.",
         "The guest home should start showing more of the event, but through reusable eCe configuration rather than SOTC-specific code.",
@@ -2786,7 +2568,7 @@ const QME_ROADMAP = {
         "The 2025 SOTC brochure reframes the alpha around conference-companion usefulness: schedule, speakers, sponsors, food/drinks, resources, and only then interactive experiences.",
         "Guest Profile should be treated as event-scoped identity, attributes, access, and credits rather than a full user account."
       ],
-      decisions: [
+      "decisions": [
         "Keep Scan-Code Adventure in the SOTC test event as an optional demo station.",
         "Make Professional Headshots the hero interactive experience.",
         "Make the Event Home feel like Welcome, Tonight's Schedule, Featured Experiences, Featured Speakers, Sponsors, Food & Drinks, and Resources rather than a list of application features.",
@@ -2795,39 +2577,38 @@ const QME_ROADMAP = {
         "Keep recovery contact as a future-friendly identity field, not a password account requirement.",
         "After tomorrow's test, create an Alpha 2 Product Review rather than logging every observation as an immediate fix."
       ],
-      risks: [
+      "risks": [
         "Adding event-guide content too quickly could make the alpha look broader than the implemented operational depth.",
         "Hard-coding SOTC sections would weaken the reusable Experience Type direction.",
         "Keeping Scan-Code visible could confuse the main alpha path unless it is clearly treated as optional/demo.",
         "Registration, credits, and recovery-contact concepts could become tangled if they are overbuilt before tomorrow's test."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Added the SOTC pre-alpha event-guide story.",
         "Added a seed/data path for lightweight event-guide eCes rather than hard-coded guest-home content.",
         "Course-corrected the seed toward the brochure: Tonight's Schedule, workshop speakers, sponsors, food/drinks, and resources.",
         "Recorded Scan-Code Adventure as retained optional demo content.",
         "Kept the next deeper product review focused on individual Experience Types."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Run the July 2 alpha as an event companion test.",
         "Watch whether guests understand registration, photo eligibility, headshot access, and optional/demo activities.",
         "After testing, write Alpha 2 Product Review and decide whether Registration or Headshots should be the next Experience Type review."
       ]
     },
     {
-      id: "review-product-architecture-part-3-2026-07-01",
-      date: "2026-07-01",
-      trigger: "Refinement of product architecture decisions after Part 2 review",
-      summary:
-        "This review refined the event authority, queue commitment, and experience reuse decisions. It clarified that station admin distinctions are station-defined rather than universal, live/destructive event controls remain above station authority, queue stale timing may differ by commitment state, and Experience Types should be reusable before qME introduces any new Service abstraction.",
-      observations: [
+      "id": "review-product-architecture-part-3-2026-07-01",
+      "date": "2026-07-01",
+      "trigger": "Refinement of product architecture decisions after Part 2 review",
+      "summary": "This review refined the event authority, queue commitment, and experience reuse decisions. It clarified that station admin distinctions are station-defined rather than universal, live/destructive event controls remain above station authority, queue stale timing may differ by commitment state, and Experience Types should be reusable before qME introduces any new Service abstraction.",
+      "observations": [
         "Most items were clarifications rather than new implementation work.",
         "Station Staff and Station Admin should not be treated as universally distinct platform roles.",
         "Some stations may need elevated local station actions, while others may have no practical difference between station staff and station admin.",
         "Experience Types should be designed for reuse across organizations, events, and repeated placements inside the same event.",
         "The Experience versus Service relationship is important but should remain unresolved until Registration, Headshots, Resume Reviews, and Food Ordering provide more evidence."
       ],
-      decisions: [
+      "decisions": [
         "Station Staff versus Station Admin is station-defined, not platform-defined.",
         "Reset, destructive actions, event-wide configuration, live event control settings, and cross-station operations remain event admin or higher.",
         "On My Way extends grace time but does not make a guest callable; only I'm Nearby makes a guest callable.",
@@ -2835,39 +2616,38 @@ const QME_ROADMAP = {
         "Everything possible should be designed as a reusable Experience Type rather than a SOTC-specific implementation.",
         "Do not introduce a Service layer yet; keep Experience versus Service as an open architecture question."
       ],
-      risks: [
+      "risks": [
         "Over-modeling station admin as a universal role could create unnecessary complexity.",
         "Under-modeling elevated station actions could leave check-in and future station workflows too coarse.",
         "SOTC-specific implementations could weaken reuse if they are not generalized into Experience Types.",
         "Introducing a Service abstraction too early could make the architecture heavier before the product has enough evidence."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Refined the station authority decision to make station-admin differences station-defined.",
         "Refined the queue commitment decision with state-specific stale-timer guidance.",
         "Strengthened experience reuse guidance on the experience model stories.",
         "Added Experience versus Service as an explicit open architecture question.",
         "Kept implementation backlog unchanged except for planning/story-note refinements."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Begin reviewing individual Experience Types instead of adding more platform abstraction.",
         "Review Registration first, then Headshots, Resume Reviews, Passport, Sponsors, and Food Ordering.",
         "Let those experience designs validate whether qME needs a separate Service concept."
       ]
     },
     {
-      id: "review-product-architecture-part-2-2026-07-01",
-      date: "2026-07-01",
-      trigger: "Follow-up product architecture discussion after the Foundation Review",
-      summary:
-        "This review reduced architectural ambiguity before more implementation. The discussion clarified qME as an event platform where guest participation, admin/staff operations, recoverable assets, event authority, queue commitment, live controls, and experience composition each have distinct product rules.",
-      observations: [
+      "id": "review-product-architecture-part-2-2026-07-01",
+      "date": "2026-07-01",
+      "trigger": "Follow-up product architecture discussion after the Foundation Review",
+      "summary": "This review reduced architectural ambiguity before more implementation. The discussion clarified qME as an event platform where guest participation, admin/staff operations, recoverable assets, event authority, queue commitment, live controls, and experience composition each have distinct product rules.",
+      "observations": [
         "The goal of this discussion was not feature expansion, but clarifying how qME should behave as an event platform.",
         "A single person may hold admin/staff roles while also participating as a guest, but guest participation remains a separate operational context.",
         "Recoverable benefits need recoverable contact information, even when the guest experience remains accountless.",
         "Experiences are the primary product unit; queues are one reusable capability an experience may compose.",
         "Live Event Controls are distinct from Event Setup and may legitimately change during active operations."
       ],
-      decisions: [
+      "decisions": [
         "Guest participation continues to use guest-session context even when the same human is signed in as an admin or staff user.",
         "Recoverable assets such as complimentary or purchased professional headshots require email or mobile number before the asset is granted.",
         "Student or Professional + Photo without recovery contact automatically becomes Needs More Info; staff should not manually decide this.",
@@ -2876,47 +2656,46 @@ const QME_ROADMAP = {
         "Live Event Controls such as flow mode, gathering target/max, stale timing, pause/resume, and intake behavior belong with operations and require event admin or higher.",
         "Experience architecture should compose reusable capabilities such as queue, ordering, menu, resources, passport, notifications, staff assignment, and status tracking."
       ],
-      risks: [
+      "risks": [
         "Admin identity and guest identity could become confusing if UI does not keep contexts visibly separate.",
         "Recoverable-contact requirements could create check-in friction if the Needs More Info path is not clear.",
         "Station-level authority could become too broad unless station staff and station admin are modeled deliberately.",
         "Queue terminology and status progression could drift across experiences unless the commitment model is documented and reused.",
         "Live controls could be mistaken for setup controls unless admin screens separate them clearly."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Added architecture decisions for guest/admin context separation, recoverable assets, Needs More Info, event authority, queue commitment, live event controls, and experience capabilities.",
         "Updated Foundation Validation criteria to test guest/admin context separation and station-level authority boundaries.",
         "Updated privileged action matrix criteria to include live queue controls and station-level authority.",
         "Updated headshot eligibility criteria with recoverable-contact and Needs More Info behavior.",
         "Updated experience model notes to treat queue as a reusable capability rather than the definition of an experience."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Validate role and permission boundaries before broad platform expansion.",
         "Review experience-by-experience starting with Registration, then Headshots, Resume Reviews, Passport, Sponsors, and Food Ordering.",
         "Keep architecture ahead of implementation without expanding the backlog beyond near-term validation needs."
       ]
     },
     {
-      id: "review-foundation-organization-roles-auth-rls-2026-07-01",
-      date: "2026-07-01",
-      trigger: "Sprint 2 foundation completion and external product/security review direction",
-      summary:
-        "Sprint 2 moved qME from a founder-operated demo toward an organization-ready pilot. Named admin identities, organization ownership, event ownership, staff assignments, guest session tokens, authenticated RPC boundaries, role-scoped admin access, and audit logging for newer staff/admin actions are now real enough for external validation. qME should not be treated as fully production-hardened yet; the remaining risk has shifted from architecture design to validation and hardening.",
-      observations: [
+      "id": "review-foundation-organization-roles-auth-rls-2026-07-01",
+      "date": "2026-07-01",
+      "trigger": "Sprint 2 foundation completion and external product/security review direction",
+      "summary": "Sprint 2 moved qME from a founder-operated demo toward an organization-ready pilot. Named admin identities, organization ownership, event ownership, staff assignments, guest session tokens, authenticated RPC boundaries, role-scoped admin access, and audit logging for newer staff/admin actions are now real enough for external validation. qME should not be treated as fully production-hardened yet; the remaining risk has shifted from architecture design to validation and hardening.",
+      "observations": [
         "Removing the old temporary admin passphrase was a major trust milestone.",
         "Role boundaries are now understandable: qME superadmin, organization admin, event admin, feature/station staff, and guest/anonymous.",
         "Guest actions and staff/admin actions are separated more clearly through guest-token and authenticated admin/staff RPCs.",
         "The product is no longer only operated by the founder in demo mode.",
         "The main remaining risk is no longer whether qME can design the foundation, but whether the implemented foundation has been tested correctly across roles and edge cases."
       ],
-      decisions: [
+      "decisions": [
         "Do not jump directly into broad platform expansion.",
         "Run a short Foundation Validation checkpoint before deeper SOTC Event Builder work.",
         "Re-engage the computer engineering student now that concrete role/auth/RLS structure exists to review.",
         "Continue using role-based access rather than building a full custom permissions engine.",
         "Complete only a focused RLS/RPC consistency pass before returning toward product work."
       ],
-      risks: [
+      "risks": [
         "Some privileged actions may still have inconsistent protection paths.",
         "Role boundaries may be conceptually clear but need cross-role testing.",
         "Audit logging may not yet cover every sensitive action consistently.",
@@ -2924,14 +2703,14 @@ const QME_ROADMAP = {
         "Admin mistake recovery remains limited.",
         "Event reset/test-mode permissions may need stricter live-event rules."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Closed Sprint 2 as a completed foundation sprint.",
         "Created Foundation Validation as the current short checkpoint sprint.",
         "Added role/permission smoke matrix, privileged action matrix, external database/security review, and Jalani named-admin walkthrough stories.",
         "Kept temporary password first-login cleanup visible in the validation sprint.",
         "Moved full SOTC Event Builder / Program Readiness behind Foundation Validation."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Run role and permission smoke-test matrix.",
         "Document privileged action matrix.",
         "Re-engage the computer engineering student for database/security review.",
@@ -2940,33 +2719,32 @@ const QME_ROADMAP = {
       ]
     },
     {
-      id: "review-sotc-alpha-2026-06-24",
-      date: "2026-06-24",
-      trigger: "SOTC student alpha test and external roadmap review",
-      summary:
-        "The SOTC alpha test validated the core event check-in, queue state, photo-credit/headshot, and admin control flows with real students. Feedback centered on polish and readiness rather than product rejection.",
-      observations: [
+      "id": "review-sotc-alpha-2026-06-24",
+      "date": "2026-06-24",
+      "trigger": "SOTC student alpha test and external roadmap review",
+      "summary": "The SOTC alpha test validated the core event check-in, queue state, photo-credit/headshot, and admin control flows with real students. Feedback centered on polish and readiness rather than product rejection.",
+      "observations": [
         "qME is converging toward an event experience platform, not simply a queue app.",
         "Guests move through events; they do not wait in lines.",
         "Jalani Ball emerged as a student partner who can help move the pilot toward ready.",
         "Near-term work should focus on production readiness before additional platform expansion."
       ],
-      decisions: [
+      "decisions": [
         "Prioritize refresh behavior, mobile polish, queue messaging, Jalani readiness review, and database hardening before broader feature expansion.",
         "Keep operational dashboard and post-event analytics as future stories, not July blockers.",
         "Treat Product Reviews as learning artifacts distinct from sprint execution."
       ],
-      risks: [
+      "risks": [
         "Platform expansion may outrun customer validation.",
         "Small UX issues can become live-event operational friction.",
         "Database/RLS hardening is required before broader deployment."
       ],
-      roadmapChanges: [
+      "roadmapChanges": [
         "Added SOTC alpha follow-up stories.",
         "Added SOTC admin/staff RLS hardening story.",
         "Recommended Event Rehearsal Mode and Failure Recovery as next planning candidates."
       ],
-      nextFocus: [
+      "nextFocus": [
         "Calm refresh/blinking",
         "Mobile layout/button polish",
         "Headshot/standby messaging",
@@ -2977,166 +2755,189 @@ const QME_ROADMAP = {
       ]
     }
   ],
-  inbox: [
+  "inbox": [
     {
-      id: "inbox-guest-event-home-evolving-information-architecture",
-      title: "Evolve guest Event Home beyond indefinite long scroll",
-      disposition: "future",
-      summary:
-        "As Event Home gains event information, active experiences, personal status, voting, networking, resources, and other guest functions, evolve the guest information architecture rather than allowing one increasingly long scrolling page. Do not prescribe tabs or another navigation pattern yet; let the structure emerge from real guest needs and Experience Types.",
-      linkedStoryIds: ["story-sotc-pre-alpha-event-guide", "story-personal-agenda"],
-      createdAt: "2026-08-19T00:00:00.000Z"
+      "id": "inbox-guest-event-home-evolving-information-architecture",
+      "title": "Evolve guest Event Home beyond indefinite long scroll",
+      "disposition": "future",
+      "summary": "As Event Home gains event information, active experiences, personal status, voting, networking, resources, and other guest functions, evolve the guest information architecture rather than allowing one increasingly long scrolling page. Do not prescribe tabs or another navigation pattern yet; let the structure emerge from real guest needs and Experience Types.",
+      "linkedStoryIds": [
+        "story-sotc-pre-alpha-event-guide",
+        "story-personal-agenda"
+      ],
+      "createdAt": "2026-08-19T00:00:00.000Z"
     },
     {
-      id: "inbox-bubbles-physical-networking-orchestration",
-      title: "Bubbles - opt-in physical networking orchestration",
-      disposition: "future",
-      summary:
-        "Far-future networking concept: people exist in overlapping bubbles such as university, class/year, local alumni community, employer, industry, neighborhood, friends, parents, interests, and the temporary population of a particular event. Some bubbles come from registration/source data, some may be inferred, some explicitly chosen, and some may exist only for the event. qME could use permitted registration/profile attributes, optional guest-supplied information, and event context to form temporary pair or small-group connection bubbles. Rather than behaving like a dating-app directory, participants opt in and receive a shared highly visible identifier such as a giant number on the phone: Find #27. Guests physically look around the room, hold up phones, find the matching person/group, then optionally confirm they found each other and reveal why qME connected them or receive an icebreaker. Group variants could form temporary physical bubbles and direct them to a venue area. Known-to-qME, allowed-for-matching, and allowed-to-reveal are separate permissions; data-derived membership never automatically authorizes disclosure. Progressive profile/consent may later let guests choose which company, university, role, or interest information can be used. The first experiment should test the physical interaction before intelligent matching: randomly pair willing participants, show matching giant numbers, ask them to find one another, and observe whether the interaction creates movement, laughter, easy stranger approaches, and useful connection. Only after proving the Experience should qME invest in deciding who should match with whom. This is consistent with qME orchestrating physical event flow: Headshots orchestrates return to service, future food flow may orchestrate release, and Bubbles could orchestrate a reason to connect.",
-      linkedStoryIds: ["story-networking-matching", "story-survey-icons"],
-      createdAt: "2026-08-19T00:00:00.000Z"
+      "id": "inbox-bubbles-physical-networking-orchestration",
+      "title": "Bubbles - opt-in physical networking orchestration",
+      "disposition": "future",
+      "summary": "Far-future networking concept: people exist in overlapping bubbles such as university, class/year, local alumni community, employer, industry, neighborhood, friends, parents, interests, and the temporary population of a particular event. Some bubbles come from registration/source data, some may be inferred, some explicitly chosen, and some may exist only for the event. qME could use permitted registration/profile attributes, optional guest-supplied information, and event context to form temporary pair or small-group connection bubbles. Rather than behaving like a dating-app directory, participants opt in and receive a shared highly visible identifier such as a giant number on the phone: Find #27. Guests physically look around the room, hold up phones, find the matching person/group, then optionally confirm they found each other and reveal why qME connected them or receive an icebreaker. Group variants could form temporary physical bubbles and direct them to a venue area. Known-to-qME, allowed-for-matching, and allowed-to-reveal are separate permissions; data-derived membership never automatically authorizes disclosure. Progressive profile/consent may later let guests choose which company, university, role, or interest information can be used. The first experiment should test the physical interaction before intelligent matching: randomly pair willing participants, show matching giant numbers, ask them to find one another, and observe whether the interaction creates movement, laughter, easy stranger approaches, and useful connection. Only after proving the Experience should qME invest in deciding who should match with whom. This is consistent with qME orchestrating physical event flow: Headshots orchestrates return to service, future food flow may orchestrate release, and Bubbles could orchestrate a reason to connect.",
+      "linkedStoryIds": [
+        "story-networking-matching",
+        "story-survey-icons"
+      ],
+      "createdAt": "2026-08-19T00:00:00.000Z"
     },
     {
-      id: "inbox-post-ipitch-provisional-patent-review",
-      title: "Post-I-Pitch provisional patent review",
-      disposition: "future",
-      summary:
-        "After the September 3 I-Pitch event, review the January 2026 provisional patent against what qME has learned and demonstrated through Peony, SOTC, I-Pitch, and intervening product discovery. Separate original concepts reinforced in practice, original concepts that evolved, new concepts derived from event operations, speculative/future concepts such as Bubbles, and ideas that proved unimportant. Patentability/claim strategy and prior-art analysis remain attorney work; the product task is to preserve dated learning and identify what the invention appears to have become through practice.",
-      linkedStoryIds: [],
-      createdAt: "2026-08-19T00:00:00.000Z"
+      "id": "inbox-post-ipitch-provisional-patent-review",
+      "title": "Post-I-Pitch provisional patent review",
+      "disposition": "future",
+      "summary": "After the September 3 I-Pitch event, review the January 2026 provisional patent against what qME has learned and demonstrated through Peony, SOTC, I-Pitch, and intervening product discovery. Separate original concepts reinforced in practice, original concepts that evolved, new concepts derived from event operations, speculative/future concepts such as Bubbles, and ideas that proved unimportant. Patentability/claim strategy and prior-art analysis remain attorney work; the product task is to preserve dated learning and identify what the invention appears to have become through practice.",
+      "linkedStoryIds": [],
+      "createdAt": "2026-08-19T00:00:00.000Z"
     },
     {
-      id: "inbox-guest-self-standby-open-capacity",
-      title: "Guest self-Standby for open service capacity",
-      disposition: "future",
-      summary:
-        "Allow a guest who is still back in the normal Waiting order to declare that they are physically nearby and willing to fill otherwise unused service capacity. Standby should not jump normally ready/callable guests or change the guest's normal queue order; it creates an additional availability signal that qME may use only when normal callable capacity is empty. Host Console or another physical-presence interaction may later strengthen the signal.",
-      linkedStoryIds: ["story-authorized-queue-state-overrides", "story-location-beacons"],
-      createdAt: "2026-08-19T00:00:00.000Z"
+      "id": "inbox-guest-self-standby-open-capacity",
+      "title": "Guest self-Standby for open service capacity",
+      "disposition": "future",
+      "summary": "Allow a guest who is still back in the normal Waiting order to declare that they are physically nearby and willing to fill otherwise unused service capacity. Standby should not jump normally ready/callable guests or change the guest's normal queue order; it creates an additional availability signal that qME may use only when normal callable capacity is empty. Host Console or another physical-presence interaction may later strengthen the signal.",
+      "linkedStoryIds": [
+        "story-authorized-queue-state-overrides",
+        "story-location-beacons"
+      ],
+      "createdAt": "2026-08-19T00:00:00.000Z"
     },
     {
-      id: "inbox-intelligent-queue-readiness-management",
-      title: "Intelligent queue readiness management",
-      disposition: "future",
-      summary:
-        "Move beyond managing only raw Gathering counts toward managing expected near-term service readiness. Future logic can use Stage/State, elapsed time, Nearby and On My Way response, stale/unresponsive Gathering guests, current service cadence, Not Here behavior, standby availability, and later location signals to decide when additional guests should be recalled. Start with transparent deterministic scoring/rules; consider AI/ML only after enough production data exists. Operators should be able to see why qME invited additional guests.",
-      linkedStoryIds: ["story-queue-automation-observability", "story-stale-queue-blocker-recovery", "story-queue-rule-configuration"],
-      createdAt: "2026-08-19T00:00:00.000Z"
+      "id": "inbox-intelligent-queue-readiness-management",
+      "title": "Intelligent queue readiness management",
+      "disposition": "future",
+      "summary": "Move beyond managing only raw Gathering counts toward managing expected near-term service readiness. Future logic can use Stage/State, elapsed time, Nearby and On My Way response, stale/unresponsive Gathering guests, current service cadence, Not Here behavior, standby availability, and later location signals to decide when additional guests should be recalled. Start with transparent deterministic scoring/rules; consider AI/ML only after enough production data exists. Operators should be able to see why qME invited additional guests.",
+      "linkedStoryIds": [
+        "story-queue-automation-observability",
+        "story-stale-queue-blocker-recovery",
+        "story-queue-rule-configuration"
+      ],
+      "createdAt": "2026-08-19T00:00:00.000Z"
     },
     {
-      id: "inbox-cookie-event-product-experiment",
-      title: "Cookie event as tiny product experiment",
-      disposition: "future",
-      summary:
-        "Treat a cookie event as a small complete product experiment, not a commercial feature. Use it to validate ordering, station-specific credits, approvals, fulfillment, and feedback with the smallest possible event surface only after the secure ordering replacement path exists. Do not use it to justify a generalized credit engine, payment/POS integration, or service abstraction yet.",
-      linkedStoryIds: [
+      "id": "inbox-cookie-event-product-experiment",
+      "title": "Cookie event as tiny product experiment",
+      "disposition": "future",
+      "summary": "Treat a cookie event as a small complete product experiment, not a commercial feature. Use it to validate ordering, station-specific credits, approvals, fulfillment, and feedback with the smallest possible event surface only after the secure ordering replacement path exists. Do not use it to justify a generalized credit engine, payment/POS integration, or service abstraction yet.",
+      "linkedStoryIds": [
         "story-experience-configuration",
         "story-experience-hierarchy-grouping",
         "story-guest-intentions"
       ],
-      createdAt: "2026-07-08T00:00:00.000Z"
+      "createdAt": "2026-07-08T00:00:00.000Z"
     },
     {
-      id: "inbox-test-lab-group-dinner-order",
-      title: "qME Test Lab group dinner order pilot",
-      disposition: "future",
-      summary:
-        "Quick dinner test: guests check in with first and last name, join a Dinner Order feature, add tapas/drink items with quantities, see what they submitted, add more, remove their own unsubmitted items, and admin can send gathered items to an ordered bucket. Test went well but showed that a real group-order feature would need structured menu selection rather than free typing, menu URL/PDF support, per-item quantities per order, fractional/minimum quantities such as half portions, and the ability to increment an existing item. July 17 security update: ordering is blocked until the prior group-order pilot is replaced with guest-session-owned order records, verified event/guest ownership, scoped RPCs, station/event staff authorization, server-side quantity/state validation, idempotency, audit logging, and explicit draft/submitted/approved/fulfilled states. This remains a fun future qME facilitation feature, but not core SOTC readiness.",
-      linkedStoryIds: ["story-guest-intentions", "story-queue-length-readiness-states", "story-testing-workspace-issue-capture"],
-      createdAt: "2026-06-28T00:00:00.000Z"
+      "id": "inbox-test-lab-group-dinner-order",
+      "title": "qME Test Lab group dinner order pilot",
+      "disposition": "future",
+      "summary": "Quick dinner test: guests check in with first and last name, join a Dinner Order feature, add tapas/drink items with quantities, see what they submitted, add more, remove their own unsubmitted items, and admin can send gathered items to an ordered bucket. Test went well but showed that a real group-order feature would need structured menu selection rather than free typing, menu URL/PDF support, per-item quantities per order, fractional/minimum quantities such as half portions, and the ability to increment an existing item. July 17 security update: ordering is blocked until the prior group-order pilot is replaced with guest-session-owned order records, verified event/guest ownership, scoped RPCs, station/event staff authorization, server-side quantity/state validation, idempotency, audit logging, and explicit draft/submitted/approved/fulfilled states. This remains a fun future qME facilitation feature, but not core SOTC readiness.",
+      "linkedStoryIds": [
+        "story-guest-intentions",
+        "story-queue-length-readiness-states",
+        "story-testing-workspace-issue-capture"
+      ],
+      "createdAt": "2026-06-28T00:00:00.000Z"
     },
     {
-      id: "inbox-ece-visible-before-check-in-option",
-      title: "eCe visibility before completed check-in",
-      disposition: "promote",
-      summary:
-        "Add an eCe setup option controlling whether a feature is visible before completed event check-in. Some features should be hidden entirely until check-in is complete; others should remain visible with a locked/status message such as check in first, waiting for host check-in, photo credit required, or join paused. This should be configured per eCe rather than hard-coded by feature type.",
-      linkedStoryIds: ["story-ece-activation-reset", "story-guest-condition-engine"],
-      createdAt: "2026-06-29T00:00:00.000Z"
+      "id": "inbox-ece-visible-before-check-in-option",
+      "title": "eCe visibility before completed check-in",
+      "disposition": "promote",
+      "summary": "Add an eCe setup option controlling whether a feature is visible before completed event check-in. Some features should be hidden entirely until check-in is complete; others should remain visible with a locked/status message such as check in first, waiting for host check-in, photo credit required, or join paused. This should be configured per eCe rather than hard-coded by feature type.",
+      "linkedStoryIds": [
+        "story-ece-activation-reset",
+        "story-guest-condition-engine"
+      ],
+      "createdAt": "2026-06-29T00:00:00.000Z"
     },
     {
-      id: "inbox-remind-db-hardening-student-after-role-structure",
-      title: "Reminder: re-engage computer engineering student for database hardening review",
-      disposition: "ready",
-      summary:
-        "The platform stabilization pass now has enough concrete organization, admin, staff, guest-token, RLS, and RPC structure for a bounded review. Re-engage the computer engineering student and ask him to critique the implemented foundation: role model, guest token approach, RLS policies, RPC boundaries, audit logging, remaining permissive policies, and obvious ways a guest or staff user could overreach.",
-      linkedStoryIds: ["story-sotc-admin-staff-rls-hardening", "story-foundation-external-db-security-review"],
-      createdAt: "2026-06-26T00:00:00.000Z"
+      "id": "inbox-remind-db-hardening-student-after-role-structure",
+      "title": "Reminder: re-engage computer engineering student for database hardening review",
+      "disposition": "ready",
+      "summary": "The platform stabilization pass now has enough concrete organization, admin, staff, guest-token, RLS, and RPC structure for a bounded review. Re-engage the computer engineering student and ask him to critique the implemented foundation: role model, guest token approach, RLS policies, RPC boundaries, audit logging, remaining permissive policies, and obvious ways a guest or staff user could overreach.",
+      "linkedStoryIds": [
+        "story-sotc-admin-staff-rls-hardening",
+        "story-foundation-external-db-security-review"
+      ],
+      "createdAt": "2026-06-26T00:00:00.000Z"
     },
     {
-      id: "inbox-guest-status-color-system",
-      title: "Guest card status color system",
-      disposition: "idea",
-      summary:
-        "Define a consistent visual system for guest card states so color explains meaning instead of just decoration. Clarify why completed is green, how inQ/waiting should differ from completed, and how paused, locked, photo-credit-required, and active states should read on event cards.",
-      linkedStoryIds: ["story-sotc-pilot-ops-controls"],
-      createdAt: "2026-06-20T00:00:00.000Z"
+      "id": "inbox-guest-status-color-system",
+      "title": "Guest card status color system",
+      "disposition": "idea",
+      "summary": "Define a consistent visual system for guest card states so color explains meaning instead of just decoration. Clarify why completed is green, how inQ/waiting should differ from completed, and how paused, locked, photo-credit-required, and active states should read on event cards.",
+      "linkedStoryIds": [
+        "story-sotc-pilot-ops-controls"
+      ],
+      "createdAt": "2026-06-20T00:00:00.000Z"
     },
     {
-      id: "inbox-queue-length-readiness-states",
-      title: "Queue length and guest readiness states",
-      disposition: "idea",
-      summary:
-        "Explore queue messaging beyond exact queue length: waiting, almost ready, nearby/ready, released/your turn, served, and what happens when a released guest is marked Not here. Current pilot can stay as-is, but future fairness rules should evaluate practical Not here options: a soft penalty that sorts recently missed guests after other ready guests, a simple penalty that clears nearby and puts them behind already-ready standby guests, or a hard penalty that sends them back to waiting. Goal is to avoid false precision while making readiness and fairness obvious to staff and guests.",
-      linkedStoryIds: ["story-sotc-not-here-recovery"],
-      createdAt: "2026-06-14T00:00:00.000Z"
+      "id": "inbox-queue-length-readiness-states",
+      "title": "Queue length and guest readiness states",
+      "disposition": "idea",
+      "summary": "Explore queue messaging beyond exact queue length: waiting, almost ready, nearby/ready, released/your turn, served, and what happens when a released guest is marked Not here. Current pilot can stay as-is, but future fairness rules should evaluate practical Not here options: a soft penalty that sorts recently missed guests after other ready guests, a simple penalty that clears nearby and puts them behind already-ready standby guests, or a hard penalty that sends them back to waiting. Goal is to avoid false precision while making readiness and fairness obvious to staff and guests.",
+      "linkedStoryIds": [
+        "story-sotc-not-here-recovery"
+      ],
+      "createdAt": "2026-06-14T00:00:00.000Z"
     },
     {
-      id: "inbox-testing-workspace-issue-capture",
-      title: "Testing workspace and issue capture",
-      disposition: "idea",
-      summary:
-        "Consider a separate testing environment or planning tab for QA notes, test plans, issue reports, screenshots/images, and event testing evidence. Start with quick text capture; image support needs a storage/security decision.",
-      linkedStoryIds: [],
-      createdAt: "2026-06-14T00:00:00.000Z"
+      "id": "inbox-testing-workspace-issue-capture",
+      "title": "Testing workspace and issue capture",
+      "disposition": "idea",
+      "summary": "Consider a separate testing environment or planning tab for QA notes, test plans, issue reports, screenshots/images, and event testing evidence. Start with quick text capture; image support needs a storage/security decision.",
+      "linkedStoryIds": [],
+      "createdAt": "2026-06-14T00:00:00.000Z"
     },
     {
-      id: "inbox-headshot-tags",
-      title: "Headshot tags from user notes",
-      disposition: "superseded",
-      summary:
-        "Historical pre-import direction: Student, professional, student-took-photo, professional-with-photo, professional-took-photo. Superseded for SOTC by imported-registration entitlement and professional_headshot credits; Student/Professional may remain source metadata only.",
-      linkedStoryIds: ["story-headshot-tags", "story-guest-condition-engine"]
+      "id": "inbox-headshot-tags",
+      "title": "Headshot tags from user notes",
+      "disposition": "superseded",
+      "summary": "Historical pre-import direction: Student, professional, student-took-photo, professional-with-photo, professional-took-photo. Superseded for SOTC by imported-registration entitlement and professional_headshot credits; Student/Professional may remain source metadata only.",
+      "linkedStoryIds": [
+        "story-headshot-tags",
+        "story-guest-condition-engine"
+      ]
     },
     {
-      id: "inbox-pay-at-desk",
-      title: "Headshot queue visibility and photo-credit gate",
-      disposition: "consider",
-      summary:
-        "Keep the Headshot Photographer queue visible to checked-in guests even when they do not have a photo credit, because the queue itself communicates a paid/special-access station. Guests without credit should see a quiet locked state such as photo credit required, not a join action. Guests with available credit can join; guests who completed/used the credit see completed/history. Future purchase or pay-at-desk flow can attach to this locked state.",
-      linkedStoryIds: ["story-headshot-queue", "story-guest-condition-engine"]
+      "id": "inbox-pay-at-desk",
+      "title": "Headshot queue visibility and photo-credit gate",
+      "disposition": "consider",
+      "summary": "Keep the Headshot Photographer queue visible to checked-in guests even when they do not have a photo credit, because the queue itself communicates a paid/special-access station. Guests without credit should see a quiet locked state such as photo credit required, not a join action. Guests with available credit can join; guests who completed/used the credit see completed/history. Future purchase or pay-at-desk flow can attach to this locked state.",
+      "linkedStoryIds": [
+        "story-headshot-queue",
+        "story-guest-condition-engine"
+      ]
     },
     {
-      id: "inbox-standby-near-booth",
-      title: "Standby near booth and scheduling blocks",
-      disposition: "future",
-      summary:
-        "Need people near booth when almost ready, but not physically waiting the whole time. May use location, standby, or call-ahead behavior.",
-      linkedStoryIds: ["story-headshot-queue", "story-location-beacons"]
+      "id": "inbox-standby-near-booth",
+      "title": "Standby near booth and scheduling blocks",
+      "disposition": "future",
+      "summary": "Need people near booth when almost ready, but not physically waiting the whole time. May use location, standby, or call-ahead behavior.",
+      "linkedStoryIds": [
+        "story-headshot-queue",
+        "story-location-beacons"
+      ]
     },
     {
-      id: "inbox-guest-intentions",
-      title: "Guest intentions - bottled future concept",
-      disposition: "future",
-      summary:
-        "Future concept only: qME may let guests express what they want, need, are interested in, or are willing to do during an event through explicit actions or lightweight prompts. Intentions may be momentary, Experience-specific, or event-long and could eventually support networking, standby/open capacity, food timing, recommendations, activities, or other event orchestration. Do not build a generalized intentions engine until concrete Experience Types demonstrate what needs to be common.",
-      linkedStoryIds: ["story-guest-intentions"]
+      "id": "inbox-guest-intentions",
+      "title": "Guest intentions - bottled future concept",
+      "disposition": "future",
+      "summary": "Future concept only: qME may let guests express what they want, need, are interested in, or are willing to do during an event through explicit actions or lightweight prompts. Intentions may be momentary, Experience-specific, or event-long and could eventually support networking, standby/open capacity, food timing, recommendations, activities, or other event orchestration. Do not build a generalized intentions engine until concrete Experience Types demonstrate what needs to be common.",
+      "linkedStoryIds": [
+        "story-guest-intentions"
+      ]
     },
     {
-      id: "inbox-survey-icons",
-      title: "Surveys and interest icons",
-      disposition: "future",
-      summary:
-        "Capture interests and different groups using simple icons; later can drive networking or recommendations.",
-      linkedStoryIds: ["story-survey-icons", "story-networking-matching"]
+      "id": "inbox-survey-icons",
+      "title": "Surveys and interest icons",
+      "disposition": "future",
+      "summary": "Capture interests and different groups using simple icons; later can drive networking or recommendations.",
+      "linkedStoryIds": [
+        "story-survey-icons",
+        "story-networking-matching"
+      ]
     },
     {
-      id: "inbox-trello-sotc-pdf-import",
-      title: "SOTC Trello PDF import",
-      disposition: "promote",
-      summary:
-        "sotc planning doc.pdf contained 11 pages of Trello detail. Promoted missing items around role permissions/audits, event schedules/templates, expie configuration, eCe lifecycle, queue rules, notifications, SOTC attendee import/QR entry, and admin operations.",
-      linkedStoryIds: [
+      "id": "inbox-trello-sotc-pdf-import",
+      "title": "SOTC Trello PDF import",
+      "disposition": "promote",
+      "summary": "sotc planning doc.pdf contained 11 pages of Trello detail. Promoted missing items around role permissions/audits, event schedules/templates, expie configuration, eCe lifecycle, queue rules, notifications, SOTC attendee import/QR entry, and admin operations.",
+      "linkedStoryIds": [
         "story-role-permissions-audit",
         "story-event-schedules-recurrence",
         "story-event-type-templates",
@@ -3149,188 +2950,162 @@ const QME_ROADMAP = {
       ]
     }
   ],
-  decisions: [
+  "decisions": [
     {
-      id: "decision-sotc-production-archive-and-internal-baseline",
-      title: "SOTC production archive and internal full-data baseline",
-      status: "decided",
-      prompt:
-        "Preserve the July 22 SOTC production event/data as an archive snapshot for review. Keep the existing sotc-rockhall event as the internal full-data working baseline for realistic Sprint 3 testing, with real event structure, names, contact fields, check-ins, queues, and activity as-is. Archive-locking or a separate relational clone can be added later if needed. Track a public sanitized demo clone as future work, not the first Sprint 3 block."
+      "id": "decision-sotc-production-archive-and-internal-baseline",
+      "title": "SOTC production archive and internal full-data baseline",
+      "status": "decided",
+      "prompt": "Preserve the July 22 SOTC production event/data as an archive snapshot for review. Keep the existing sotc-rockhall event as the internal full-data working baseline for realistic Sprint 3 testing, with real event structure, names, contact fields, check-ins, queues, and activity as-is. Archive-locking or a separate relational clone can be added later if needed. Track a public sanitized demo clone as future work, not the first Sprint 3 block."
     },
     {
-      id: "decision-session-recovery-from-server-truth",
-      title: "Guest recovery should reconnect to server-side truth",
-      status: "decided",
-      prompt:
-        "If qMe does not recognize the browser after a guest reopens or rescans the QR code, the guest should be able to recover by finding their registration again and reconnecting to the existing event check-in/queue state. The product fix is not to assume browser storage can be made perfect; recovery must use verified server-side participation without creating duplicates."
+      "id": "decision-session-recovery-from-server-truth",
+      "title": "Guest recovery should reconnect to server-side truth",
+      "status": "decided",
+      "prompt": "If qMe does not recognize the browser after a guest reopens or rescans the QR code, the guest should be able to recover by finding their registration again and reconnecting to the existing event check-in/queue state. The product fix is not to assume browser storage can be made perfect; recovery must use verified server-side participation without creating duplicates."
     },
     {
-      id: "decision-sms-feasibility-before-sms-promise",
-      title: "SMS requires cost and compliance feasibility before product promise",
-      status: "decided",
-      prompt:
-        "SMS may become an important recall channel, and the existing Twilio direction should be evaluated in Sprint 3. Do not promise or broadly enable SMS until provider setup, sender registration, monthly/per-message cost, consent/STOP/HELP language, secure server-side triggering, delivery logging, and duplicate prevention are understood."
+      "id": "decision-sms-feasibility-before-sms-promise",
+      "title": "SMS requires cost and compliance feasibility before product promise",
+      "status": "decided",
+      "prompt": "SMS may become an important recall channel, and the existing Twilio direction should be evaluated in Sprint 3. Do not promise or broadly enable SMS until provider setup, sender registration, monthly/per-message cost, consent/STOP/HELP language, secure server-side triggering, delivery logging, and duplicate prevention are understood."
     },
     {
-      id: "decision-authorized-queue-state-override",
-      title: "Queue override is authorized state management",
-      status: "decided",
-      prompt:
-        "Operational override is broader than letting a guest go next. Event Admin or approved station authority may need to move guests between valid states such as Waiting, Gathering, Nearby, Your Turn, Not Here, and recovery paths. Overrides may exceed normal automation settings when explicitly authorized, but must be visible, confirmed where disruptive, and auditable."
+      "id": "decision-authorized-queue-state-override",
+      "title": "Queue override is authorized state management",
+      "status": "decided",
+      "prompt": "Operational override is broader than letting a guest go next. Event Admin or approved station authority may need to move guests between valid states such as Waiting, Gathering, Nearby, Your Turn, Not Here, and recovery paths. Overrides may exceed normal automation settings when explicitly authorized, but must be visible, confirmed where disruptive, and auditable."
     },
     {
-      id: "decision-guest-admin-context-separation",
-      title: "Guest participation is separate from admin/staff operations",
-      status: "decided",
-      prompt:
-        "A person may simultaneously be qME superadmin, organization admin, event admin, event staff, and guest, but signing into admin is not the same as participating as a guest. Guest participation continues through the guest-session model; future credential management may unify identity, but operational context remains separate."
+      "id": "decision-guest-admin-context-separation",
+      "title": "Guest participation is separate from admin/staff operations",
+      "status": "decided",
+      "prompt": "A person may simultaneously be qME superadmin, organization admin, event admin, event staff, and guest, but signing into admin is not the same as participating as a guest. Guest participation continues through the guest-session model; future credential management may unify identity, but operational context remains separate."
     },
     {
-      id: "decision-recoverable-assets-contact-required",
-      title: "Recoverable assets require recoverable contact before grant",
-      status: "decided",
-      prompt:
-        "Guest participation remains accountless by default, but recoverable assets such as complimentary or purchased professional headshots require email or mobile number before the benefit is granted. This is about recoverability, not authentication."
+      "id": "decision-recoverable-assets-contact-required",
+      "title": "Recoverable assets require recoverable contact before grant",
+      "status": "decided",
+      "prompt": "Guest participation remains accountless by default, but recoverable assets such as complimentary or purchased professional headshots require email or mobile number before the benefit is granted. This is about recoverability, not authentication."
     },
     {
-      id: "decision-needs-more-info-recovery-contact",
-      title: "Missing recovery contact creates Needs More Info state",
-      status: "decided",
-      prompt:
-        "When staff selects Student or Professional + Photo and no recovery contact exists, the system should automatically put the guest into Needs More Info. The guest returns to check-in with prior information retained, provides email or phone, and resubmits. Staff sees Waiting for recovery contact, then Ready to Check In, and still completes check-in manually."
+      "id": "decision-needs-more-info-recovery-contact",
+      "title": "Missing recovery contact creates Needs More Info state",
+      "status": "decided",
+      "prompt": "When staff selects Student or Professional + Photo and no recovery contact exists, the system should automatically put the guest into Needs More Info. The guest returns to check-in with prior information retained, provides email or phone, and resubmits. Staff sees Waiting for recovery contact, then Ready to Check In, and still completes check-in manually."
     },
     {
-      id: "decision-event-authority-hierarchy",
-      title: "Event authority hierarchy and station authority",
-      status: "decided",
-      prompt:
-        "Authority hierarchy is qME superadmin, organization admin, event admin, and event staff. Event staff are assigned to one or more event activities/stations. A station may optionally distinguish Station Staff from Station Admin, but that distinction is station-defined rather than platform-defined: some stations may have no practical difference, while others may use Station Admin for elevated local actions such as check-in photo credit grants or guest classification resolution. Event-wide/destructive actions such as reset, event configuration, live event control settings, destructive operations, and cross-station configuration remain event admin or higher."
+      "id": "decision-event-authority-hierarchy",
+      "title": "Event authority hierarchy and station authority",
+      "status": "decided",
+      "prompt": "Authority hierarchy is qME superadmin, organization admin, event admin, and event staff. Event staff are assigned to one or more event activities/stations. A station may optionally distinguish Station Staff from Station Admin, but that distinction is station-defined rather than platform-defined: some stations may have no practical difference, while others may use Station Admin for elevated local actions such as check-in photo credit grants or guest classification resolution. Event-wide/destructive actions such as reset, event configuration, live event control settings, destructive operations, and cross-station configuration remain event admin or higher."
     },
     {
-      id: "decision-queue-commitment-model",
-      title: "Queue Stage, State, and history model",
-      status: "decided",
-      prompt:
-        "Distinguish Stage, State, and timestamps/history. Stage answers where the guest is in the workflow: Waiting -> Gathering -> Your Turn -> Completed. State answers what additional current condition affects treatment inside that stage: Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. On My Way indicates response/commitment but does not make the guest callable. Nearby is the stronger Gathering State and normal progression to Your Turn requires Gathering + Nearby. Timestamps/history record meaningful actions and transitions such as joined, Gathering, On My Way, Nearby, release, service start, completion, Not Here, Return to Waiting/cooldown, and admin override. During Sprint 3, Nearby may remain derived from the tested underlying representation while the product UI/CSV exposes Stage and State separately. On My Way must receive the smallest safe additive durable marker needed for current behavior (preferably a nullable timestamp) rather than being omitted because legacy storage did not include it. Broader schema normalization remains a separate deliberate structural pass."
+      "id": "decision-queue-commitment-model",
+      "title": "Queue Stage, State, and history model",
+      "status": "decided",
+      "prompt": "Distinguish Stage, State, and timestamps/history. Stage answers where the guest is in the workflow: Waiting -> Gathering -> Your Turn -> Completed. State answers what additional current condition affects treatment inside that stage: Waiting may be null or Cooling Down; Gathering may be null, On My Way, or Nearby. On My Way indicates response/commitment but does not make the guest callable. Nearby is the stronger Gathering State and normal progression to Your Turn requires Gathering + Nearby. Timestamps/history record meaningful actions and transitions such as joined, Gathering, On My Way, Nearby, release, service start, completion, Not Here, Return to Waiting/cooldown, and admin override. During Sprint 3, Nearby may remain derived from the tested underlying representation while the product UI/CSV exposes Stage and State separately. On My Way must receive the smallest safe additive durable marker needed for current behavior (preferably a nullable timestamp) rather than being omitted because legacy storage did not include it. Broader schema normalization remains a separate deliberate structural pass."
     },
     {
-      id: "decision-live-event-controls",
-      title: "Live Event Controls are operational, not setup",
-      status: "decided",
-      prompt:
-        "Distinguish Event Setup, Live Operations, and Live Event Controls. Controls such as queue flow mode, gathering target, gathering max, stale timing, pause/resume, and intake behavior may change during live operations and should be editable only by event admin or higher."
+      "id": "decision-live-event-controls",
+      "title": "Live Event Controls are operational, not setup",
+      "status": "decided",
+      "prompt": "Distinguish Event Setup, Live Operations, and Live Event Controls. Controls such as queue flow mode, gathering target, gathering max, stale timing, pause/resume, and intake behavior may change during live operations and should be editable only by event admin or higher."
     },
     {
-      id: "decision-experiences-compose-capabilities",
-      title: "Experiences compose reusable platform capabilities",
-      status: "decided",
-      prompt:
-        "Experiences are the primary product unit. Queue is one reusable capability, not the definition of an experience. Experiences may compose capabilities such as queue, ordering, menu, notifications, status tracking, staff assignment, resources, and passport. Experience Types should be reusable across multiple events, multiple organizations, and multiple times within the same event; avoid SOTC-specific implementations whenever a reusable Experience Type is possible."
+      "id": "decision-experiences-compose-capabilities",
+      "title": "Experiences compose reusable platform capabilities",
+      "status": "decided",
+      "prompt": "Experiences are the primary product unit. Queue is one reusable capability, not the definition of an experience. Experiences may compose capabilities such as queue, ordering, menu, notifications, status tracking, staff assignment, resources, and passport. Experience Types should be reusable across multiple events, multiple organizations, and multiple times within the same event; avoid SOTC-specific implementations whenever a reusable Experience Type is possible."
     },
     {
-      id: "decision-experience-service-relationship",
-      title: "What is the relationship between Experience and Service?",
-      status: "open",
-      prompt:
-        "Headshots, Resume Reviews, and Food Ordering appear to behave like services, while Sponsors, Galleries, Resources, and Passport do not naturally behave as services. Do not introduce a Service layer yet. Let the answer emerge while designing Registration, Headshots, Resume Reviews, and Food Ordering."
+      "id": "decision-experience-service-relationship",
+      "title": "What is the relationship between Experience and Service?",
+      "status": "open",
+      "prompt": "Headshots, Resume Reviews, and Food Ordering appear to behave like services, while Sponsors, Galleries, Resources, and Passport do not naturally behave as services. Do not introduce a Service layer yet. Let the answer emerge while designing Registration, Headshots, Resume Reviews, and Food Ordering."
     },
     {
-      id: "decision-event-scoped-guest-profile",
-      title: "Guest Profile is event-scoped",
-      status: "decided",
-      prompt:
-        "Guest Profile is event-scoped for now and contains identity, attributes, access, and credits for that event. It should not be treated as a full cross-event user account until product evidence requires it."
+      "id": "decision-event-scoped-guest-profile",
+      "title": "Guest Profile is event-scoped",
+      "status": "decided",
+      "prompt": "Guest Profile is event-scoped for now and contains identity, attributes, access, and credits for that event. It should not be treated as a full cross-event user account until product evidence requires it."
     },
     {
-      id: "decision-station-specific-credits",
-      title: "Credits stay station/experience-specific for now",
-      status: "decided",
-      prompt:
-        "Credits are experience or station specific for now, such as Headshot Credit, Cookie Credit, Drink Credit, or Bouquet Credit. Do not build a generalized credit engine yet; let multiple concrete experience designs reveal what needs to be common."
+      "id": "decision-station-specific-credits",
+      "title": "Credits stay station/experience-specific for now",
+      "status": "decided",
+      "prompt": "Credits are experience or station specific for now, such as Headshot Credit, Cookie Credit, Drink Credit, or Bouquet Credit. Do not build a generalized credit engine yet; let multiple concrete experience designs reveal what needs to be common."
     },
     {
-      id: "decision-org-reusable-definition-layer",
-      title: "Possible reusable layer between Experience Type and Station",
-      status: "open",
-      prompt:
-        "A likely missing layer exists between Experience Type and Station: an organization-owned reusable definition that can be placed into one or more stations or events. Examples include Food & Beverage > Lemonade Stand > West Patio Station and Professional Headshots > Corporate Headshot > Photographer A. Do not implement yet; validate through Registration, Headshots, Resume Reviews, and Food."
+      "id": "decision-org-reusable-definition-layer",
+      "title": "Possible reusable layer between Experience Type and Station",
+      "status": "open",
+      "prompt": "A likely missing layer exists between Experience Type and Station: an organization-owned reusable definition that can be placed into one or more stations or events. Examples include Food & Beverage > Lemonade Stand > West Patio Station and Professional Headshots > Corporate Headshot > Photographer A. Do not implement yet; validate through Registration, Headshots, Resume Reviews, and Food."
     },
     {
-      id: "decision-peony-demo-preservation",
-      title: "Peony Festival remains the working demo",
-      status: "decided",
-      prompt:
-        "Peony Festival guest/queue flow is good enough for now and should remain demonstrable while multi-organization and multi-event foundations are built."
+      "id": "decision-peony-demo-preservation",
+      "title": "Peony Festival remains the working demo",
+      "status": "decided",
+      "prompt": "Peony Festival guest/queue flow is good enough for now and should remain demonstrable while multi-organization and multi-event foundations are built."
     },
     {
-      id: "decision-planning-workspace-source",
-      title: "Planning workspace is source of truth for now",
-      status: "decided",
-      prompt:
-        "Use the repo-based planning workspace as the product source of truth for the next few weeks."
+      "id": "decision-planning-workspace-source",
+      "title": "Planning workspace is source of truth for now",
+      "status": "decided",
+      "prompt": "Use the repo-based planning workspace as the product source of truth for the next few weeks."
     },
     {
-      id: "decision-sotc-mvp",
-      title: "What must be real by July 22?",
-      status: "discovery",
-      prompt:
-        "Likely thin MVP: organization-owned SOTC event, public event page with structured experience cards, registration QR/name entry with admin tagging, headshot queue, resume review queue, and mixer resources/digital brochure cards. Exact demoable vs operational reliability line remains open."
+      "id": "decision-sotc-mvp",
+      "title": "What must be real by July 22?",
+      "status": "discovery",
+      "prompt": "Likely thin MVP: organization-owned SOTC event, public event page with structured experience cards, registration QR/name entry with admin tagging, headshot queue, resume review queue, and mixer resources/digital brochure cards. Exact demoable vs operational reliability line remains open."
     },
     {
-      id: "decision-sotc-slug",
-      title: "SOTC public slug",
-      status: "decided",
-      prompt:
-        "Use sotc-rock-hall for the public event slug. Keep SOTCRH as internal shorthand only."
+      "id": "decision-sotc-slug",
+      "title": "SOTC public slug",
+      "status": "decided",
+      "prompt": "Use sotc-rock-hall for the public event slug. Keep SOTCRH as internal shorthand only."
     },
     {
-      id: "decision-registration-import-additive-nondestructive",
-      title: "Registration imports are additive and non-destructive",
-      status: "decided",
-      prompt:
-        "External registration systems provide source registration facts; qME owns the evolving event participation built on top of them. Repeated full-file imports should identify registrations qME already knows and add only previously unseen source registrations. Never wipe, recreate, or silently overwrite existing qME sessions, check-ins, queues, credits, voting, profile additions, history, or other participation because a newer source export was uploaded. Preserve the full imported source record and provenance; changed source values on existing registrations require explicit future synchronization policy rather than automatic overwrite."
+      "id": "decision-registration-import-additive-nondestructive",
+      "title": "Registration imports are additive and non-destructive",
+      "status": "decided",
+      "prompt": "External registration systems provide source registration facts; qME owns the evolving event participation built on top of them. Repeated full-file imports should identify registrations qME already knows and add only previously unseen source registrations. Never wipe, recreate, or silently overwrite existing qME sessions, check-ins, queues, credits, voting, profile additions, history, or other participation because a newer source export was uploaded. Preserve the full imported source record and provenance; changed source values on existing registrations require explicit future synchronization policy rather than automatic overwrite."
     },
     {
-      id: "decision-sotc-attendee-import",
-      title: "Manual SOTC attendee import is allowed after dry-run review",
-      status: "decided",
-      prompt:
-        "The earlier no-import decision held until actual Eventbrite data was available. As of 2026-07-20, the cleaned SOTC-Mixer-List.csv has passed dry-run review with 191 importable attendees and no duplicate or missing required fields. A bounded manual import is acceptable for SOTC, with imported records kept separate from guest sessions/check-ins, Headshot entitlement derived server-side from the source Price Tier, and Reset Test Data clearing rehearsal linkage without deleting the source attendee list. Future API sync remains deferred."
+      "id": "decision-sotc-attendee-import",
+      "title": "Manual SOTC attendee import is allowed after dry-run review",
+      "status": "decided",
+      "prompt": "The earlier no-import decision held until actual Eventbrite data was available. As of 2026-07-20, the cleaned SOTC-Mixer-List.csv has passed dry-run review with 191 importable attendees and no duplicate or missing required fields. A bounded manual import is acceptable for SOTC, with imported records kept separate from guest sessions/check-ins, Headshot entitlement derived server-side from the source Price Tier, and Reset Test Data clearing rehearsal linkage without deleting the source attendee list. Future API sync remains deferred."
     },
     {
-      id: "decision-sotc-photo-states",
-      title: "SOTC Headshot authorization model",
-      status: "decided",
-      prompt:
-        "Retire the Student/Professional photo-state model as active qME authorization. For current SOTC operations qME needs: registered/imported or manual fallback; pending staff confirmation or checked in; Headshot entitled or not; Headshot credit unused or used. Student/Professional values from the imported attendee file may remain source metadata for reporting or nametag context, but they do not directly authorize Headshot queue access."
+      "id": "decision-sotc-photo-states",
+      "title": "SOTC Headshot authorization model",
+      "status": "decided",
+      "prompt": "Retire the Student/Professional photo-state model as active qME authorization. For current SOTC operations qME needs: registered/imported or manual fallback; pending staff confirmation or checked in; Headshot entitled or not; Headshot credit unused or used. Student/Professional values from the imported attendee file may remain source metadata for reporting or nametag context, but they do not directly authorize Headshot queue access."
     },
     {
-      id: "decision-sotc-day-one-queues",
-      title: "SOTC day-one queue/service flows",
-      status: "decided",
-      prompt:
-        "Day-one queue/service flows are registration check-in, professional headshots, and resume review."
+      "id": "decision-sotc-day-one-queues",
+      "title": "SOTC day-one queue/service flows",
+      "status": "decided",
+      "prompt": "Day-one queue/service flows are registration check-in, professional headshots, and resume review."
     },
     {
-      id: "decision-ece-language",
-      title: "Should product language use experience or eCe?",
-      status: "open",
-      prompt:
-        "The code/product model needs a clear term for event modules. Experience may be clearer for users; eCe may remain internal if useful."
+      "id": "decision-ece-language",
+      "title": "Should product language use experience or eCe?",
+      "status": "open",
+      "prompt": "The code/product model needs a clear term for event modules. Experience may be clearer for users; eCe may remain internal if useful."
     },
     {
-      id: "decision-headshot-payment",
-      title: "How should professional photo access be acknowledged?",
-      status: "decided",
-      prompt:
-        "For the first SOTC slice, admin/staff marking at registration/check-in is enough. Payment or purchase workflow is deferred."
+      "id": "decision-headshot-payment",
+      "title": "How should professional photo access be acknowledged?",
+      "status": "decided",
+      "prompt": "For the first SOTC slice, admin/staff marking at registration/check-in is enough. Payment or purchase workflow is deferred."
     },
     {
-      id: "decision-roadmap-auth",
-      title: "Real roadmap auth is deferred",
-      status: "decided",
-      prompt:
-        "Current code/API gate is acceptable while usage is limited to the owner and possibly one trusted collaborator. Revisit real auth before adding sensitive patent/customer details or expanding collaborators."
+      "id": "decision-roadmap-auth",
+      "title": "Real roadmap auth is deferred",
+      "status": "decided",
+      "prompt": "Current code/API gate is acceptable while usage is limited to the owner and possibly one trusted collaborator. Revisit real auth before adding sensitive patent/customer details or expanding collaborators."
     }
   ]
 };

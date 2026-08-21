@@ -30,7 +30,10 @@ The following decisions are explicit and do not require further Product Owner di
 
 ## Existing Technical Facts
 
-- Root `package.json` currently defines `planning:seed` as `node scripts/seed-planning-document.js`.
+- Root `package.json` now includes:
+  - `planning:build` -> `node scripts/build-roadmap-data.js`
+  - `planning:validate` -> `node scripts/build-roadmap-data.js --validate`
+  - `planning:seed` -> `node scripts/build-roadmap-data.js && node scripts/seed-planning-document.js`
 - `scripts/seed-planning-document.js` currently requires `../planning/roadmap-data.js` and upserts the full roadmap object into Supabase `planning_documents` id `qme-roadmap`.
 - The existing Planning UI and roadmap schema should remain functionally unchanged.
 
@@ -61,6 +64,18 @@ Do not redesign the Planning product, roadmap schema, or UI. Do not start any un
 
 ## Next Action
 
-Steve: pull latest `main`, then read `AGENTS.md`, this file, and `planning/ROADMAP-MODULARIZATION.md` and proceed silently with this authorized slice.
+Slice execution is complete in this environment:
+- `planning:build`, `planning:validate`, and `planning:seed` scripts are in place with compatibility-preserving roadmap generation.
+- `planning/roadmap/*` is the authoritative modular source; `planning/roadmap-data.js` is generated from it.
+- `npm run planning:validate` and `npm run planning:seed` are currently blocked in this terminal environment because Node cannot start script-based execution due:
+  - `Error: EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`
+
+Next step in a normal local environment:
+1. `npm run planning:validate`
+2. `npm run planning:seed`
+3. Verify `/planning` reflects:
+   - `story-guest-session-persistence-diagnostics` as **done**
+   - `story-browser-persistence-edge-cases-degraded-storage` present in the future area
+   - refined framing visible on `story-storage-health-recovery-contact-prompt`
 
 Stop only for a genuine architecture/security/product boundary defined in `AGENTS.md` or the design document. Otherwise complete the coherent slice, validate it, synchronize Planning, verify the live result, update `CURRENT-WORK.md`, and return one concise completion summary.

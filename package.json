@@ -6,9 +6,11 @@
     "start": "npm --prefix app run dev",
     "build": "npm --prefix app run build",
     "build:verify:local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify-app-build.ps1",
+    "planning:build": "node scripts/build-roadmap-data.js",
+    "planning:validate": "node scripts/build-roadmap-data.js --validate",
     "test": "npm --prefix app test",
     "mobile": "npm --prefix mobile start",
-    "planning:seed": "node scripts/seed-planning-document.js",
+    "planning:seed": "node scripts/build-roadmap-data.js && node scripts/seed-planning-document.js",
     "sotc:attendees:dry-run": "node scripts/sotc-attendee-import-dry-run.js",
     "sotc:attendees:import-sql": "node scripts/sotc-attendee-import-sql.js"
   },

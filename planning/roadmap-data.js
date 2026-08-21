@@ -238,7 +238,7 @@ const QME_ROADMAP = {
             {
               "id": "story-storage-health-recovery-contact-prompt",
               "title": "Prompt for recovery contact when browser storage looks risky",
-              "status": "current",
+              "status": "deferred",
               "sprint": "now",
               "summary": "Add a lightweight diagnostic and prompt so qMe can warn guests when browser storage may not persist and ask for optional phone or email to help recovery.",
               "acceptanceCriteria": [
@@ -248,7 +248,7 @@ const QME_ROADMAP = {
                 "Prompt copy explains recovery value without implying full account creation.",
                 "The design accounts for domestic 10-digit phone numbers and international/WhatsApp-style numbers without overblocking legitimate guests."
               ],
-              "notes": "Keep this story open, but frame it around two separate concepts: session viability (can this browser persist required qMe state?) and recovery identity/contact (how can we reconnect later). Session viability is foundational; optional phone/email improves recovery, but does not fix a browser that cannot persist state. Intervention should be targeted to detected-risk sessions only."
+              "notes": "Deferred after Sprint 3 persistence testing. Session viability and recovery identity/contact are separate concerns: optional phone/email can help identify or verify a returning guest, but it does not fix a browser environment that cannot persist qME state. Existing imported/self-registered guest records plus Reconnect to My Event provide a workable recovery path today. Revisit targeted storage-health detection or stronger recovery contact/verification only if fresh event evidence shows repeated session loss or a stronger identity requirement."
             },
             {
               "id": "story-browser-persistence-edge-cases-degraded-storage",

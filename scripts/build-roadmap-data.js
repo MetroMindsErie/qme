@@ -139,14 +139,16 @@ function validateRoadmap(roadmap) {
     }
   }
 
-  const allStoryIds = new Set();
   const duplicateInSprints = [];
   for (const sprint of roadmap.sprints || []) {
+    const seenInSprint = new Set();
     for (const storyId of sprint.storyIds || []) {
-      if (allStoryIds.has(storyId)) {
-        duplicateInSprints.push(`${storyId} appears in multiple sprint lists`);
+      if (seenInSprint.has(storyId)) {
+        duplicateInSprints.push(
+          `${storyId} appears multiple times in sprint ${sprint.id}`
+        );
       } else {
-        allStoryIds.add(storyId);
+        seenInSprint.add(storyId);
       }
     }
   }

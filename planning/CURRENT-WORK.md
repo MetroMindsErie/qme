@@ -63,11 +63,11 @@ Do not redesign the Planning product, roadmap schema, or UI. Do not start any un
 
 ## Next Action
 
-Architecture correction completed in this environment:
-- Product-owner content is now fully authored only in canonical `planning/roadmap/*.js` modules.
-- `scripts/build-roadmap-data.js` now only assembles, validates, and generates the compatibility artifact (no product-specific mutations).
-- `planning/roadmap/*` is the authoritative modular source; `planning/roadmap-data.js` is generated from it.
-- `npm run planning:validate` and `npm run planning:seed` are currently blocked in this terminal environment because Node cannot start script-based execution due:
+Validator correction completed in this environment:
+- `scripts/build-roadmap-data.js` still validates structure and references, but no longer treats intentional cross-sprint story references as invalid.
+- `storyId` duplication is now only flagged when duplicated within the same sprint list (same `storyIds` array), preserving pre-existing roadmap semantics.
+- `planning/roadmap/*` remains authoritative; `planning/roadmap-data.js` is generated from it.
+- `npm run planning:validate` and `npm run planning:seed` are still blocked in this terminal environment because Node cannot start script-based execution due:
   - `Error: EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`
 
 Next step in a normal local environment:

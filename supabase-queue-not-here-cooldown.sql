@@ -13,7 +13,7 @@ create or replace function public.run_queue_pilot_flow(
   p_queue_id uuid,
   p_force boolean default false
 )
-returns void
+returns jsonb
 language plpgsql
 security definer
 set search_path = public
@@ -29,6 +29,12 @@ declare
   blocking_standby_count integer := 0;
   standby_pool_count integer := 0;
   slots integer := 0;
+  invite_slots integer := 0;
+  waiting_eligible_count integer := 0;
+  target_headroom integer := 0;
+  max_headroom integer := 0;
+  released_count integer := 0;
+  invited_count integer := 0;
   ticket_record record;
 begin
   perform pg_advisory_xact_lock(hashtextextended(p_queue_id::text, 0));
@@ -42,19 +48,39 @@ begin
     raise exception 'Queue not found.';
   end if;
 
-  if not p_force and coalesce(queue_row.run_mode, 'manual') <> 'auto' then
-    return;
-  end if;
-
-  if coalesce(queue_row.join_status, 'open') <> 'open' then
-    return;
-  end if;
-
   max_active := greatest(0, coalesce(queue_row.max_active_released, 1));
   standby_target := greatest(0, coalesce(queue_row.standby_threshold, 3));
   gathering_max := greatest(standby_target, coalesce(queue_row.gathering_max, standby_target + max_active + 2));
   stale_after_seconds := greatest(0, coalesce(queue_row.gathering_stale_after_seconds, 15));
   not_here_cooldown_seconds := greatest(0, coalesce(queue_row.not_here_cooldown_seconds, stale_after_seconds, 300));
+
+  if not p_force and coalesce(queue_row.run_mode, 'manual') <> 'auto' then
+    return jsonb_build_object(
+      'released_count', 0,
+      'invited_count', 0,
+      'release_slots', greatest(0, max_active - active_released_count),
+      'invite_slots', 0,
+      'target_headroom', 0,
+      'max_headroom', 0,
+      'waiting_eligible_count', 0,
+      'standby_threshold', standby_target,
+      'gathering_max', gathering_max
+    );
+  end if;
+
+  if coalesce(queue_row.join_status, 'open') <> 'open' then
+    return jsonb_build_object(
+      'released_count', 0,
+      'invited_count', 0,
+      'release_slots', greatest(0, max_active - active_released_count),
+      'invite_slots', 0,
+      'target_headroom', 0,
+      'max_headroom', 0,
+      'waiting_eligible_count', 0,
+      'standby_threshold', standby_target,
+      'gathering_max', gathering_max
+    );
+  end if;
 
   select count(*)
   into active_released_count
@@ -78,6 +104,7 @@ begin
     update public.tickets
     set stage = 'released'
     where id = ticket_record.id;
+    released_count := released_count + 1;
   end loop;
 
   select count(*)
@@ -99,7 +126,29 @@ begin
   from public.tickets
   where queue_id = p_queue_id
     and stage = 'standby'
-    and coalesce(status, '') not in ('left', 'served');
+    and coalesce(status, '') not in ('left', 'served')
+    and (
+      nearby_confirmed_at is not null
+      or (
+        stale_after_seconds > 0
+        and coalesce(stage_updated_at, created_at) >= now() - make_interval(secs => stale_after_seconds)
+      )
+    );
+
+  select count(*)
+  into waiting_eligible_count
+  from public.tickets
+  where queue_id = p_queue_id
+    and coalesce(stage, 'waiting') = 'waiting'
+    and coalesce(status, '') not in ('left', 'served')
+    and (
+      gathering_snoozed_at is null
+      or gathering_snoozed_at < now() - make_interval(secs => not_here_cooldown_seconds)
+    );
+
+  target_headroom := greatest(0, standby_target - blocking_standby_count);
+  max_headroom := greatest(0, gathering_max - standby_pool_count);
+  invite_slots := least(target_headroom, max_headroom);
 
   for ticket_record in
     select id
@@ -118,8 +167,8 @@ begin
       ticket_number nulls last,
       id
     limit least(
-      greatest(0, standby_target - blocking_standby_count),
-      greatest(0, gathering_max - standby_pool_count)
+      target_headroom,
+      max_headroom
     )
   loop
     update public.tickets
@@ -127,7 +176,20 @@ begin
       stage = 'standby',
       gathering_snoozed_at = null
     where id = ticket_record.id;
+    invited_count := invited_count + 1;
   end loop;
+
+  return jsonb_build_object(
+    'released_count', released_count,
+    'invited_count', invited_count,
+    'release_slots', greatest(0, max_active - active_released_count),
+    'invite_slots', invite_slots,
+    'target_headroom', target_headroom,
+    'max_headroom', max_headroom,
+    'waiting_eligible_count', waiting_eligible_count,
+    'standby_threshold', standby_target,
+    'gathering_max', gathering_max
+  );
 end;
 $$;
 

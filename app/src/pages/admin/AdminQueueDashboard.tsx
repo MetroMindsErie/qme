@@ -24,6 +24,7 @@ import {
   resetQueueTickets,
   getQueueBySlug,
   updateQueue,
+  type QueuePilotFlowResult,
   type QueueOverrideTarget,
 } from '../../lib/queueService';
 import { getEvent } from '../../lib/eventService';
@@ -165,6 +166,20 @@ function getTicketConditionLabel(ticket: Ticket, cooldownSeconds: number) {
   return '';
 }
 
+function formatManualApplyFlowMessage(summary: QueuePilotFlowResult) {
+  const moved = summary.released_count + summary.invited_count;
+  if (moved > 0) {
+    return `Applied flow: ${summary.released_count} to Your Turn, ${summary.invited_count} to Gathering.`;
+  }
+  if (summary.target_headroom > 0 && summary.waiting_eligible_count <= 0) {
+    return 'No movement: no waiting guests are currently eligible to invite. They may be in cooldown or already on the line.';
+  }
+  if (summary.target_headroom <= 0 && summary.max_headroom <= 0) {
+    return `No movement: Gathering is already at target and max (${summary.standby_threshold}/${summary.gathering_max}) with fresh active guests.`;
+  }
+  return 'No movement: nothing changed.';
+}
+
 function ticketStageSortRank(ticket: Ticket) {
   const stage = ticket.stage ?? 'waiting';
   if (stage === 'standby' && isNearbyConfirmed(ticket)) return 1;
@@ -211,6 +226,7 @@ export default function AdminQueueDashboard() {
   const [serviceStartedMarks, setServiceStartedMarks] = useState<Record<number, EventGuestMark>>({});
   const [savingControls, setSavingControls] = useState(false);
   const [controlSaveStatus, setControlSaveStatus] = useState('');
+  const [applyFlowMessage, setApplyFlowMessage] = useState('');
   const [activeQueueTab, setActiveQueueTab] = useState<AdminQueueTab>('live');
   const [queueSearch, setQueueSearch] = useState('');
   const [overrideBusyTicketId, setOverrideBusyTicketId] = useState<number | null>(null);
@@ -223,6 +239,7 @@ export default function AdminQueueDashboard() {
   const lastAppliedRef = useRef<string | null>(null);
   const autoFlowInFlightRef = useRef(false);
   const saveStatusTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const applyFlowMessageTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [inputValue, setInputValue] = useState(String(nowServing));
 
   // Sync inputValue when nowServing changes externally
@@ -509,11 +526,26 @@ export default function AdminQueueDashboard() {
     if (autoFlowInFlightRef.current) return;
     autoFlowInFlightRef.current = true;
     try {
-      await adminApplyQueuePilotFlow(queue.id);
+      const summary = await adminApplyQueuePilotFlow(queue.id);
       await refreshPilotTickets();
+      if (!quiet) {
+        const message = formatManualApplyFlowMessage(summary);
+        setApplyFlowMessage(message);
+        if (applyFlowMessageTimerRef.current) clearTimeout(applyFlowMessageTimerRef.current);
+        applyFlowMessageTimerRef.current = setTimeout(() => {
+          setApplyFlowMessage('');
+        }, 5000);
+      } else {
+        setApplyFlowMessage('');
+      }
     } catch (e) {
       console.error('Auto pass failed', e);
       if (!quiet) alert('Could not apply auto flow.');
+      if (!quiet) setApplyFlowMessage('Could not apply auto flow.');
+      if (applyFlowMessageTimerRef.current) {
+        clearTimeout(applyFlowMessageTimerRef.current);
+      }
+      applyFlowMessageTimerRef.current = setTimeout(() => setApplyFlowMessage(''), 4000);
     } finally {
       autoFlowInFlightRef.current = false;
     }
@@ -764,13 +796,17 @@ export default function AdminQueueDashboard() {
                   const nextTarget = Math.max(0, Number(e.target.value) || 0);
                   void saveQueueControls({ standby_threshold: nextTarget, gathering_max: Math.max(nextTarget, gatheringMax) });
                 }} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
-                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>Normal number asked to come nearby.</span>
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>
+                  Target for effective Gathering (fresh Gathering, On My Way, and Nearby).
+                </span>
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
                 Gathering max
                 <input type="number" min={standbyTarget} value={gatheringMax} disabled={savingControls} onChange={(e) => saveQueueControls({ gathering_max: Math.max(standbyTarget, Number(e.target.value) || 0) })} style={{ padding: '0.55rem', borderRadius: 8, border: '1px solid #cbd5e1' }} />
-                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>Overflow cap when earlier guests go stale.</span>
+                <span style={{ color: '#64748b', fontSize: '0.72rem', fontWeight: 700, lineHeight: 1.2 }}>
+                  Maximum effective fresh Gathering exposure; non-nearby stale guests do not consume it.
+                </span>
               </label>
 
               <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontWeight: 800, color: '#2f3e4f' }}>
@@ -800,7 +836,7 @@ export default function AdminQueueDashboard() {
               )}
             </div>
             <div style={{ marginTop: '0.65rem', color: '#64748b', fontSize: '0.82rem', lineHeight: 1.35 }}>
-              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/On My Way/Nearby guests and can overflow up to {gatheringMax} when earlier Gathering guests do not tap I'm Nearby after {staleAfterSeconds} seconds. Guests marked Not Here wait {notHereCooldownSeconds} seconds before they can be invited again. Only Nearby guests are released.
+              Manual mode waits here until staff presses Apply Flow or uses the guest buttons below. Auto assist targets {standbyTarget} fresh Gathering/On My Way/Nearby guests and can hold up to {gatheringMax} while stale non-nearby Gathering and On My Way guests do not consume capacity. Guests marked Not Here wait {notHereCooldownSeconds} seconds before they can be invited again. Only Nearby guests are released.
             </div>
           </div>
           )}
@@ -830,6 +866,11 @@ export default function AdminQueueDashboard() {
             <button className="actionBtn actionBtn-primary admin-pilot-action-btn" onClick={() => applyAutoPilotPass()}>
               Apply Flow
             </button>
+            {applyFlowMessage && (
+              <span style={{ color: '#334155', fontWeight: 900, fontSize: '0.82rem' }}>
+                {applyFlowMessage}
+              </span>
+            )}
             <span style={{ color: canReleaseMore ? '#15803d' : '#c2410c', fontWeight: 900, fontSize: '0.86rem' }}>
               Released active: {activeReleased}/{maxActive}
             </span>

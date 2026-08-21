@@ -74,4 +74,17 @@ Validate at minimum:
 - Not Here still returns to Waiting/cooldown according to existing policy.
 - Existing guest/admin Stage + State behavior remains consistent.
 
+## Implementation Status
+
+- Status: completed in this branch.
+- Changes applied:
+  - `run_queue_pilot_flow` now applies the same freshness filter to both effective blocking and effective total Gathering cap calculations, so stale non-nearby Gathering/On My Way tickets no longer consume max capacity.
+  - Added flow outcome telemetry from `admin_apply_queue_pilot_flow` (`released_count`, `invited_count`, headroom/candidate metrics) and surfaced concise manual Apply Flow feedback in admin UI.
+  - Updated admin queue settings text for Target/Max wording to describe fresh effective Gathering semantics.
+- Validation:
+  - `npm --prefix app test src/test/queueService.test.ts` (pass)
+  - `npm --prefix app run build` (pass after clearing `app/dist`).
+  - Initial full build attempt failed once with a local lock (`EBUSY`) while cleaning output, then reran successfully.
+- Next action: none for this slice.
+
 Run targeted validation plus full local TypeScript/Vite validation before completion. Do not change roadmap status; Billy/Product Owner will close the story after acceptance. Do not deploy without explicit Product Owner authorization. Update CURRENT-WORK with implementation/validation state and stop with one concise completion summary.

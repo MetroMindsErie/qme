@@ -13,6 +13,18 @@ export type QueueStageSummary = {
   completed: number;
 };
 
+export type QueuePilotFlowResult = {
+  released_count: number;
+  invited_count: number;
+  release_slots: number;
+  invite_slots: number;
+  target_headroom: number;
+  max_headroom: number;
+  waiting_eligible_count: number;
+  standby_threshold: number;
+  gathering_max: number;
+};
+
 // ===================== QUEUE CRUD =====================
 
 function normalizeQueueDisplay(queue: Queue): Queue {
@@ -127,6 +139,32 @@ function normalizeTicketRpcResult(
   const id = Number(record.id ?? fallbackTicketId ?? record.ticket_number ?? 0);
   const ticketNumber = Number(record.ticket_number ?? record.ticketNumber ?? record.id ?? id);
   return { id, ticketNumber };
+}
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function toNumber(value: unknown): number {
+  const candidate = Number(value);
+  return Number.isFinite(candidate) ? candidate : 0;
+}
+
+function normalizeQueuePilotFlowResult(data: unknown): QueuePilotFlowResult {
+  const record = asRecord(data);
+  return {
+    released_count: toNumber(record.released_count),
+    invited_count: toNumber(record.invited_count),
+    release_slots: toNumber(record.release_slots),
+    invite_slots: toNumber(record.invite_slots),
+    target_headroom: toNumber(record.target_headroom),
+    max_headroom: toNumber(record.max_headroom),
+    waiting_eligible_count: toNumber(record.waiting_eligible_count),
+    standby_threshold: toNumber(record.standby_threshold),
+    gathering_max: toNumber(record.gathering_max),
+  };
 }
 
 function requireGuestQueueScope(
@@ -447,11 +485,12 @@ export async function applyQueuePilotFlow(queueId: string): Promise<void> {
   throw rpcError;
 }
 
-export async function adminApplyQueuePilotFlow(queueId: string): Promise<void> {
-  const { error } = await supabase.rpc('admin_apply_queue_pilot_flow', {
+export async function adminApplyQueuePilotFlow(queueId: string): Promise<QueuePilotFlowResult> {
+  const { data, error } = await supabase.rpc('admin_apply_queue_pilot_flow', {
     p_queue_id: queueId,
   });
   if (error) throw error;
+  return normalizeQueuePilotFlowResult(data);
 }
 
 export async function completeQueueTicketAction(input: {

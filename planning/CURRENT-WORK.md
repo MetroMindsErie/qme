@@ -2,70 +2,96 @@
 
 ## Current Slice
 
-Finish Sprint 3 story `story-explain-queue-automation-blockers` — **Explain queue automation blockers to operators** — with a small admin summary visibility change based on 2026-08-25 live acceptance testing.
+Finish Sprint 3 by completing **On My Way** end to end while preserving the queue blocker visibility behavior already accepted.
 
-Read `AGENTS.md` first. Implementation is authorized. Keep this slice tightly bounded to the headline queue summary cards and directly related wording/tests. Do not redesign queue flow, change queue automation semantics, change guest flow, change roadmap status, deploy SQL, or alter production data.
+Read `AGENTS.md` first. Implementation is authorized. Keep this slice bounded to On My Way semantics, guest action, queue-flow capacity math, directly related admin/headline behavior, tests, and required SQL definition updates. Do not broaden into SMS, reconnect UX, new queue states, unrelated admin redesign, or new timing settings.
 
-Current implementation status:
-- Added Waiting/Gathering headline subcounts in `app/src/pages/admin/AdminQueueDashboard.tsx`:
-  - Waiting shows `N COOLING` when cooldown count is non-zero.
-  - Gathering shows compact non-zero `OMW`, `NRBY`, and `STALE` subcounts computed with the same stale-window semantics used by auto-flow (nearby and current On My Way excluded from stale).
-- Validation results:
-  - `npm --prefix app test src/test/queueService.test.ts` — blocked in this environment with `EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`.
-  - `npm --prefix app run build` — blocked in this environment with `EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`.
-- Fix applied:
-  - corrected Waiting render variable typo from `waitingCooldownCount` to `waitingCoolingCount` in `app/src/pages/admin/AdminQueueDashboard.tsx`.
-- Next: rerun targeted tests and full build in an environment without the EPERM restriction.
+## Product Decision
 
-## Product Decision / Accepted Flow Behavior
+Product flow is:
 
-Live SOTC acceptance on 2026-08-25 confirmed:
-- stale Gathering guests no longer starve replenishment;
-- stale guests remain recoverable in Gathering rather than being punished with automatic Return to Waiting/cooldown;
-- fresh Gathering guests count toward effective Target during the configured stale window;
-- Auto assist replenishes effective Gathering without Apply Flow;
-- Manual mode does not auto-replenish; Apply Flow runs the flow once;
-- Nearby is the normal callable signal for Your Turn;
-- guest/admin state remained synchronized through Gathering -> Nearby -> Your Turn -> Completed;
-- Return to Waiting and explicit Not Here both produced Waiting + Cooling Down, with remaining cooldown visible to operators; after cooldown, guests returned to ordinary Waiting for flow;
-- the 60-second accelerated stale test caused repeated replacement waves as expected because unattended test guests repeatedly became stale; with the realistic 300-second setting, a replacement wave remained fresh and Auto did not continue inviting during the observation window.
+`Waiting -> Gathering (invited/unconfirmed) -> On My Way -> Nearby -> Your Turn -> Completed`
 
-`Gathering Max` remains in the current configuration model and may be >= Target, but stale guests do not consume effective automation capacity. Do not change Target/Max semantics in this slice.
+On My Way is **State within Gathering**, not a separate Stage.
 
-## Final Visibility Gap
+Meaning:
+- newly invited/unconfirmed Gathering counts toward effective Gathering only during the configured stale grace period;
+- **On My Way is an affirmative guest commitment and must count toward effective Gathering while current/fresh**;
+- On My Way is **not callable** and must not progress normally to Your Turn until Nearby;
+- Nearby remains the only normal callable/release-ready state;
+- a guest may move On My Way -> Nearby without losing queue position/history;
+- stale/silent Gathering remains recoverable and does not automatically Return to Waiting or incur cooldown.
 
-The headline cards currently show raw totals such as `25 GATHERING` and already show Nearby underneath. Because raw Gathering can include many stale/recoverable guests, operators need a compact explanation directly in the summary rather than inferring effective readiness from individual rows.
+Use the existing Gathering stale timing for On My Way in this slice unless the existing model already has a safe distinct timing mechanism. Do **not** invent another operator setting now.
 
-### Required summary display
+## Acceptance Finding That Triggered This Slice
 
-Keep the existing large headline totals. Add compact operational subcounts where non-zero/relevant:
+Live testing with Target = 7 exposed the mismatch:
+- headline correctly showed `1 OMW · 1 NRBY · 23 STALE`;
+- Apply Flow released the Nearby guest to Your Turn;
+- flow then invited **7** Waiting guests rather than accounting for the existing On My Way commitment;
+- result was `4 Waiting / 31 Gathering / 1 Your Turn` rather than replenishing around On My Way as effective capacity.
 
-- **WAITING**: show `N COOLING` for guests currently in Cooling Down.
-- **GATHERING**: show compact subcounts for:
-  - `N OMW` — current On My Way;
-  - `N NRBY` — current Nearby;
-  - `N STALE` — Gathering guests whose configured stale window has elapsed and who are not currently Nearby.
+Inspection confirmed `run_queue_pilot_flow` currently counts effective Gathering using Nearby or stage freshness, but does not explicitly use current `on_my_way_at` semantics. Fix this so UI and automation agree.
 
-Use concise separators/layout appropriate to the existing card width, e.g. `2 OMW · 1 NRBY · 15 STALE`. Do not add a new panel or generalized diagnostics UI.
+## Required Implementation
 
-Zero values may be omitted where that improves readability; preserve enough context that the existing Nearby visibility is not lost when zero. Follow existing UI conventions and keep mobile layout readable.
+1. **Queue flow / SQL**
+   - Update the production SQL definitions for `run_queue_pilot_flow` so a current/fresh On My Way ticket counts toward both effective Target occupancy and effective Max occupancy.
+   - On My Way must remain non-release-ready; only Nearby can be released normally.
+   - Ensure stale On My Way eventually stops blocking effective capacity using the existing stale timing semantics.
+   - Keep stale tickets in Gathering; do not Return to Waiting merely because the timer expires.
+   - Keep Not Here cooldown behavior unchanged.
+   - If the same function definition exists in more than one checked-in SQL file, update all authoritative copies consistently.
 
-The stale calculation shown to operators must use the same effective timing semantics as the queue flow logic so the summary does not disagree with automation.
+2. **Guest action**
+   - Add an explicit guest-facing **On My Way** action while the guest is Gathering and has not yet marked Nearby.
+   - Use the existing ticket/RPC/state plumbing where possible; do not create a parallel state model.
+   - After On My Way, guest and admin should show Stage = Gathering / State = On My Way.
+   - Guest must still be able to mark Nearby afterward.
+   - Preserve timestamps/history/source attribution where the existing model supports it.
 
-## Related Findings — Not In This Slice
+3. **Admin/headline consistency**
+   - Preserve the accepted headline display: Waiting may show `N COOLING`; Gathering may show `N OMW · N NRBY · N STALE`.
+   - The displayed OMW/STALE interpretation must agree with the flow algorithm.
+   - Nearby and On My Way must not be double-counted as stale while current.
 
-- Guest-facing **On My Way** is not currently selectable even though On My Way exists in data/admin/progress UI. A separate roadmap story now tracks that work.
-- Reconnect confirmation copy and immediate Back-to-Event refresh are tracked separately and do not block this story.
-- Do not implement either of those here.
+## Already Accepted — Do Not Rework
 
-## Acceptance
+Live acceptance already passed:
+- stale Gathering does not starve replenishment;
+- Manual vs Auto behavior;
+- Nearby -> Your Turn via Apply Flow in Manual;
+- admin/guest synchronization through completion;
+- Return to Waiting and Not Here cooldown behavior;
+- cooldown visibility and expiry back to ordinary Waiting;
+- headline `COOLING`, `NRBY`, `STALE`, and `OMW` display/arithmetic.
 
-Validate that:
-- Waiting headline correctly shows active Cooling Down count.
-- Gathering headline preserves raw Gathering total while showing OMW / NRBY / STALE operational subcounts.
-- A stale Gathering guest remains included in the raw Gathering total and STALE subcount but does not become Nearby/OMW merely from display logic.
-- Nearby/OMW are not double-counted as stale under the effective flow semantics.
-- Existing headline counts, responsive/mobile layout, admin search, and queue controls remain intact.
-- Existing targeted tests and full app build pass.
+Do not reopen those behaviors except as regression checks needed for the On My Way change.
 
-Do not change roadmap story status. Stop after implementation/validation and report the exact UI behavior for Product Owner acceptance.
+## Validation
+
+Validate at minimum:
+- guest in Gathering can choose On My Way;
+- admin and guest both show Gathering / On My Way;
+- On My Way counts toward effective Target and Max while fresh;
+- with Target 7, one current OMW and no other effective Gathering yields six invitations, not seven;
+- On My Way does not progress to Your Turn without Nearby;
+- On My Way -> Nearby -> Your Turn still works normally;
+- stale On My Way stops consuming effective capacity but remains Gathering/recoverable;
+- headline OMW/NRBY/STALE counts agree with flow semantics;
+- existing queue service tests and full app build pass where environment permits;
+- Vercel/deployment compile status is clean after push.
+
+## Deployment / Handoff
+
+Steve/Codex should make and commit/push the code/SQL file changes, but **must not apply SQL manually to Supabase**. Evan will run any required SQL definition script in the Supabase SQL Editor, following the established project workflow.
+
+Report:
+- exact files changed;
+- exact SQL file(s) Evan must run, if any;
+- tests/build results or environment blockers;
+- commit SHA;
+- concise live acceptance steps.
+
+Do not mark either roadmap story done. Product Owner will close **Explain queue automation blockers to operators** and **Let Gathering guests say On My Way** after live acceptance.

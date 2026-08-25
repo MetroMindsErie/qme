@@ -36,7 +36,8 @@ const QME_ROADMAP = {
         "story-admin-guest-search-state-reconciliation",
         "story-authorized-queue-state-overrides",
         "story-queue-automation-observability",
-        "story-station-operational-control-visibility"
+        "story-station-operational-control-visibility",
+        "story-guest-on-my-way-action"
       ]
     },
     {
@@ -76,8 +77,7 @@ const QME_ROADMAP = {
         "story-networking-matching",
         "story-food-filters",
         "story-browser-persistence-edge-cases-degraded-storage",
-        "story-reconnect-confirmation-and-event-refresh",
-        "story-guest-on-my-way-action"
+        "story-reconnect-confirmation-and-event-refresh"
       ]
     }
   ],
@@ -338,8 +338,8 @@ const QME_ROADMAP = {
               "id": "story-guest-on-my-way-action",
               "title": "Let Gathering guests say On My Way",
               "summary": "Give a guest who has been invited to Gathering an explicit On My Way action so qME can distinguish an acknowledged commitment from an unanswered invitation before the guest becomes Nearby.",
-              "status": "ready",
-              "sprint": "future",
+              "status": "current",
+              "sprint": "now",
               "acceptanceCriteria": [
                 "A guest in Gathering can explicitly mark On My Way before marking Nearby.",
                 "On My Way remains Stage = Gathering and is shown as State = On My Way on guest and admin surfaces.",
@@ -348,7 +348,7 @@ const QME_ROADMAP = {
                 "Admin history records the guest On My Way transition consistently with other Stage/State transitions.",
                 "Initial implementation may use the existing Gathering stale timing; a distinct longer On My Way stale policy should be introduced only if event evidence justifies it."
               ],
-              "notes": "Added from 2026-08-25 effective-Gathering acceptance testing. On My Way already exists in ticket data, admin override/state handling, and the guest progress indicator, but the live guest Gathering screen currently offers no On My Way action; the guest can only mark Nearby. Product intent is Invited/unconfirmed -> On My Way -> Nearby, with On My Way representing an affirmative commitment that counts toward effective Gathering but is not callable. Keep this near-term because it improves the signal used by automatic replenishment and will become especially useful with future SMS recall."
+              "notes": "Pulled into Sprint 3 on 2026-08-25 after acceptance testing exposed a real mismatch: admin/UI could show On My Way, but `run_queue_pilot_flow` did not explicitly count current On My Way as effective Gathering, so Apply Flow replenished as if that commitment did not exist. Complete the guest-facing action and align queue-flow capacity semantics now so On My Way is a real operational signal end to end. Product intent remains Invited/unconfirmed -> On My Way -> Nearby, with On My Way representing an affirmative commitment that counts toward effective Gathering but is not callable."
             }
           ]
         }

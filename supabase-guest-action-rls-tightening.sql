@@ -251,6 +251,33 @@ begin
 end;
 $$;
 
+create or replace function public.mark_ticket_on_my_way_for_guest(
+  p_ticket_id bigint,
+  p_guest_token text
+)
+returns public.tickets
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  ticket_row public.tickets;
+begin
+  ticket_row := public.get_ticket_for_guest(p_ticket_id, p_guest_token);
+
+  if ticket_row.nearby_confirmed_at is not null then
+    raise exception 'ticket already marked nearby';
+  end if;
+
+  update public.tickets
+  set on_my_way_at = now()
+  where id = p_ticket_id
+  returning * into ticket_row;
+
+  return ticket_row;
+end;
+$$;
+
 create or replace function public.complete_queue_ticket_for_guest(
   p_event_id uuid,
   p_ticket_id bigint,
@@ -549,6 +576,9 @@ grant execute on function public.update_ticket_guest_name_for_guest(bigint, text
 
 revoke all on function public.confirm_ticket_nearby_for_guest(bigint, text) from public;
 grant execute on function public.confirm_ticket_nearby_for_guest(bigint, text) to anon, authenticated;
+
+revoke all on function public.mark_ticket_on_my_way_for_guest(bigint, text) from public;
+grant execute on function public.mark_ticket_on_my_way_for_guest(bigint, text) to anon, authenticated;
 
 revoke all on function public.complete_queue_ticket_for_guest(uuid, bigint, text, text, text, uuid, text, text, jsonb) from public;
 grant execute on function public.complete_queue_ticket_for_guest(uuid, bigint, text, text, text, uuid, text, text, jsonb) to anon, authenticated;

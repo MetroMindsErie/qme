@@ -432,6 +432,21 @@ export async function confirmTicketNearby(
   return data as Ticket;
 }
 
+export async function markTicketOnMyWayForGuest(
+  ticketId: number,
+  queueId?: string | null,
+  eventId?: string | null
+): Promise<Ticket> {
+  requireGuestQueueScope(queueId, eventId);
+
+  const { data, error } = await supabase.rpc('mark_ticket_on_my_way_for_guest', {
+    p_ticket_id: ticketId,
+    p_guest_token: getGuestTokenForQueue(queueId, eventId),
+  });
+  if (error) throw error;
+  return data as Ticket;
+}
+
 export async function releaseQueueTicket(ticketId: number): Promise<Ticket> {
   const { data, error } = await supabase.rpc('admin_release_queue_ticket', {
     p_ticket_id: ticketId,

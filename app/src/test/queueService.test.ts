@@ -33,6 +33,7 @@ import {
   getAuthoritativeQueueTicketForGuest,
   checkInTicket,
   leaveQueue,
+  markTicketOnMyWayForGuest,
   getAdminSnapshotForQueue,
   getLostCountForQueue,
   resetQueueTickets,
@@ -315,6 +316,28 @@ describe('queueService', () => {
         p_guest_token: expect.any(String),
       });
       expect(mockRpc).toHaveBeenNthCalledWith(2, 'apply_queue_pilot_flow', { p_queue_id: 'q1' });
+    });
+  });
+
+  describe('markTicketOnMyWayForGuest', () => {
+    it('requires event scope for guest OMW action', async () => {
+      await expect(markTicketOnMyWayForGuest(10)).rejects.toThrow('Guest queue action requires queue and event scope.');
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('calls rpc("mark_ticket_on_my_way_for_guest") with the ticket id and guest token', async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: { id: 10, queue_id: 'q1', stage: 'standby', on_my_way_at: '2026-01-01T00:00:00.000Z' },
+        error: null,
+      });
+
+      const result = await markTicketOnMyWayForGuest(10, 'q1', 'e1');
+
+      expect(mockRpc).toHaveBeenCalledWith('mark_ticket_on_my_way_for_guest', {
+        p_ticket_id: 10,
+        p_guest_token: expect.any(String),
+      });
+      expect(result.stage).toBe('standby');
     });
   });
 

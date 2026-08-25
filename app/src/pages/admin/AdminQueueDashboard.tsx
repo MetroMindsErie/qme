@@ -44,6 +44,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 type PilotCompletionMode = 'guest_code' | 'staff_served';
 type AdminQueueTab = 'live' | 'history' | 'settings';
 const HEADSHOT_SERVICE_STARTED_MARK_KEY = 'headshot_service_started';
+const DEFAULT_GATHERING_STALE_SECONDS = 15;
 
 function hasSameShape(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
@@ -67,13 +68,17 @@ function isNearbyConfirmed(ticket: Ticket) {
   return !hasNearbyConfirmationField(ticket) || Boolean(ticket.nearby_confirmed_at);
 }
 
-function ticketHasCurrentOnMyWay(ticket: Ticket) {
-  if ((ticket.stage ?? 'waiting') !== 'standby' || !ticket.on_my_way_at || ticket.nearby_confirmed_at) return false;
-  if (!ticket.stage_updated_at) return true;
+function ticketHasCurrentOnMyWay(ticket: Ticket, staleAfterSeconds: number, nowMs = Date.now()) {
+  if (
+    (ticket.stage ?? 'waiting') !== 'standby'
+    || !ticket.on_my_way_at
+    || ticket.nearby_confirmed_at
+    || staleAfterSeconds <= 0
+  ) return false;
   const onMyWayTime = Date.parse(ticket.on_my_way_at);
-  const stageUpdatedTime = Date.parse(ticket.stage_updated_at);
-  if (!Number.isFinite(onMyWayTime) || !Number.isFinite(stageUpdatedTime)) return false;
-  return onMyWayTime >= stageUpdatedTime;
+  return Number.isFinite(onMyWayTime)
+    ? onMyWayTime >= nowMs - staleAfterSeconds * 1000
+    : false;
 }
 
 function ticketQueuePosition(ticket: Ticket) {
@@ -112,11 +117,15 @@ function getCheckInContact(checkIn?: EventCheckIn) {
   };
 }
 
-function getTicketProductState(ticket: Ticket) {
+function getTicketProductState(
+  ticket: Ticket,
+  staleAfterSeconds: number,
+  nowMs = Date.now()
+) {
   const stage = ticket.stage ?? 'waiting';
   if (stage === 'released') return 'your_turn';
   if (stage === 'standby' && isNearbyConfirmed(ticket)) return 'nearby';
-  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'on_my_way';
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)) return 'on_my_way';
   if (stage === 'standby') return 'gathering';
   return stage;
 }
@@ -142,8 +151,8 @@ function formatQueueLabel(value: string) {
   return labels[value] ?? value;
 }
 
-function getTicketProductStateLabel(ticket: Ticket) {
-  return formatQueueLabel(getTicketProductState(ticket));
+function getTicketProductStateLabel(ticket: Ticket, staleAfterSeconds: number, nowMs = Date.now()) {
+  return formatQueueLabel(getTicketProductState(ticket, staleAfterSeconds, nowMs));
 }
 
 function getTicketWorkflowStageLabel(ticket: Ticket) {
@@ -151,8 +160,12 @@ function getTicketWorkflowStageLabel(ticket: Ticket) {
 }
 
 function isGatheringStale(ticket: Ticket, staleAfterSeconds: number, nowMs = Date.now()) {
-  if ((ticket.stage ?? 'waiting') !== 'standby' || isNearbyConfirmed(ticket) || ticketHasCurrentOnMyWay(ticket)) return false;
-  if (staleAfterSeconds <= 0) return true;
+  if (
+    (ticket.stage ?? 'waiting') !== 'standby'
+    || isNearbyConfirmed(ticket)
+    || staleAfterSeconds <= 0
+    || ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)
+  ) return false;
   const stageUpdatedAt = Date.parse(ticket.stage_updated_at ?? ticket.created_at ?? '');
   return Number.isFinite(stageUpdatedAt)
     ? stageUpdatedAt <= nowMs - staleAfterSeconds * 1000
@@ -167,9 +180,17 @@ function getCooldownRemainingSeconds(ticket: Ticket, cooldownSeconds: number) {
   return Math.max(0, cooldownSeconds - elapsedSeconds);
 }
 
-function getTicketConditionLabel(ticket: Ticket, cooldownSeconds: number) {
+function getTicketConditionLabel(
+  ticket: Ticket,
+  cooldownSeconds: number,
+  staleAfterSeconds: number,
+  nowMs = Date.now()
+) {
   if ((ticket.stage ?? 'waiting') === 'standby' && isNearbyConfirmed(ticket)) return 'Nearby';
-  if ((ticket.stage ?? 'waiting') === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'On My Way';
+  if (
+    (ticket.stage ?? 'waiting') === 'standby'
+    && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)
+  ) return 'On My Way';
   const cooldownRemaining = getCooldownRemainingSeconds(ticket, cooldownSeconds);
   if (cooldownRemaining > 0) return `Cooling Down (${cooldownRemaining}s)`;
   return '';
@@ -189,10 +210,14 @@ function formatManualApplyFlowMessage(summary: QueuePilotFlowResult) {
   return 'No movement: nothing changed.';
 }
 
-function ticketStageSortRank(ticket: Ticket) {
+function ticketStageSortRank(
+  ticket: Ticket,
+  staleAfterSeconds: number,
+  nowMs = Date.now()
+) {
   const stage = ticket.stage ?? 'waiting';
   if (stage === 'standby' && isNearbyConfirmed(ticket)) return 1;
-  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 2;
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)) return 2;
   if (stage === 'standby') return 3;
   const rank: Record<string, number> = {
     released: 0,
@@ -631,12 +656,14 @@ export default function AdminQueueDashboard() {
     const maxActive = queue.max_active_released ?? 1;
     const standbyTarget = queue.standby_threshold ?? 3;
     const gatheringMax = Math.max(standbyTarget, queue.gathering_max ?? standbyTarget + maxActive + 2);
-    const staleAfterSeconds = queue.gathering_stale_after_seconds ?? 15;
+    const staleAfterSeconds = queue.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS;
     const notHereCooldownSeconds = queue.not_here_cooldown_seconds ?? 300;
     const nowMs = Date.now();
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
-    const onMyWayCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticketHasCurrentOnMyWay(ticket)).length;
+    const onMyWayCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket)
+      && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)
+    ).length;
     const staleGatheringCount = pilotTickets.filter((ticket) =>
       !isInactiveQueueTicket(ticket) && isGatheringStale(ticket, staleAfterSeconds, nowMs)
     ).length;
@@ -668,9 +695,9 @@ export default function AdminQueueDashboard() {
         ticket.status,
         getTicketWorkflowStage(ticket),
         getTicketWorkflowStageLabel(ticket),
-        getTicketProductState(ticket),
-        getTicketProductStateLabel(ticket),
-        getTicketConditionLabel(ticket, notHereCooldownSeconds),
+        getTicketProductState(ticket, staleAfterSeconds, nowMs),
+        getTicketProductStateLabel(ticket, staleAfterSeconds, nowMs),
+        getTicketConditionLabel(ticket, notHereCooldownSeconds, staleAfterSeconds, nowMs),
         checkIn?.first_name,
         checkIn?.last_name,
         checkIn?.status,
@@ -683,7 +710,7 @@ export default function AdminQueueDashboard() {
       .filter((ticket) => !isInactiveQueueTicket(ticket) && (ticket.stage ?? 'waiting') !== 'completed')
       .filter(ticketMatchesSearch)
       .sort((a, b) => {
-      const byStage = ticketStageSortRank(a) - ticketStageSortRank(b);
+      const byStage = ticketStageSortRank(a, staleAfterSeconds, nowMs) - ticketStageSortRank(b, staleAfterSeconds, nowMs);
       if (byStage !== 0) return byStage;
       return ticketQueuePosition(a) - ticketQueuePosition(b);
     });
@@ -720,7 +747,7 @@ export default function AdminQueueDashboard() {
         { header: 'contact_phone', value: (ticket) => ticket.check_in_id ? getCheckInContact(checkInById[ticket.check_in_id]).phone : '' },
         { header: 'raw_ticket_stage', value: (ticket) => ticket.stage ?? 'waiting' },
         { header: 'workflow_stage', value: (ticket) => getTicketWorkflowStageLabel(ticket) },
-        { header: 'workflow_state', value: (ticket) => getTicketConditionLabel(ticket, notHereCooldownSeconds) },
+        { header: 'workflow_state', value: (ticket) => getTicketConditionLabel(ticket, notHereCooldownSeconds, staleAfterSeconds, nowMs) },
         { header: 'status', value: (ticket) => ticket.status },
         { header: 'nearby_confirmed', value: (ticket) => isNearbyConfirmed(ticket) ? 'yes' : 'no' },
         { header: 'service_started_at', value: (ticket) => formatCsvTimestamp(serviceStartedMarks[ticket.id]?.created_at) },
@@ -936,13 +963,13 @@ export default function AdminQueueDashboard() {
               const guestName = `${ticket.first_name || 'Guest'} ${ticket.last_name || ''}`.trim();
               const checkIn = ticket.check_in_id ? checkInById[ticket.check_in_id] : undefined;
               const contact = getCheckInContact(checkIn);
-              const productState = getTicketProductState(ticket);
-              const productStateLabel = getTicketProductStateLabel(ticket);
+              const productState = getTicketProductState(ticket, staleAfterSeconds, nowMs);
+              const productStateLabel = getTicketProductStateLabel(ticket, staleAfterSeconds, nowMs);
               const workflowStageLabel = getTicketWorkflowStageLabel(ticket);
-              const conditionLabel = getTicketConditionLabel(ticket, notHereCooldownSeconds);
+              const conditionLabel = getTicketConditionLabel(ticket, notHereCooldownSeconds, staleAfterSeconds, nowMs);
               const isDone = ['completed', 'cancelled', 'left'].includes(stage);
               const nearbyConfirmed = isNearbyConfirmed(ticket);
-              const onMyWay = ticketHasCurrentOnMyWay(ticket);
+              const onMyWay = ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs);
               const canReleaseTicket = canReleaseMore && stage === 'standby' && nearbyConfirmed;
               const adminServesDirectly = pilotCompletionMode === 'staff_served' && canReleaseTicket;
               const canReturnToWaiting = stage === 'standby' && !nearbyConfirmed;

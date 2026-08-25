@@ -111,13 +111,23 @@ begin
     where queue_id = p_queue_id
       and stage = 'standby'
       and coalesce(status, '') not in ('left', 'served')
-      and (
-        nearby_confirmed_at is not null
-        or (
-          stale_after_seconds > 0
-          and coalesce(stage_updated_at, created_at) >= now() - make_interval(secs => stale_after_seconds)
+  and (
+      nearby_confirmed_at is not null
+      or (
+        stale_after_seconds > 0
+        and (
+          (
+            on_my_way_at is not null
+            and on_my_way_at >= now() - make_interval(secs => stale_after_seconds)
+          )
+          or (
+            on_my_way_at is null
+            and coalesce(stage_updated_at, created_at) >= now() - make_interval(secs => stale_after_seconds)
+          )
         )
-      );
+      )
+    )
+  );
 
   select count(*)
   into standby_pool_count
@@ -125,13 +135,23 @@ begin
   where queue_id = p_queue_id
     and stage = 'standby'
     and coalesce(status, '') not in ('left', 'served')
-    and (
+  and (
       nearby_confirmed_at is not null
       or (
         stale_after_seconds > 0
-        and coalesce(stage_updated_at, created_at) >= now() - make_interval(secs => stale_after_seconds)
+        and (
+          (
+            on_my_way_at is not null
+            and on_my_way_at >= now() - make_interval(secs => stale_after_seconds)
+          )
+          or (
+            on_my_way_at is null
+            and coalesce(stage_updated_at, created_at) >= now() - make_interval(secs => stale_after_seconds)
+          )
+        )
       )
-    );
+    )
+  );
 
   select count(*)
   into waiting_eligible_count

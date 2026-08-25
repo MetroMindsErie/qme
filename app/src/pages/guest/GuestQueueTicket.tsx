@@ -23,6 +23,7 @@ import {
   applyQueuePilotFlow,
   confirmTicketNearby,
   completeQueueTicketAction,
+  markTicketOnMyWayForGuest,
   getAuthoritativeQueueTicketForGuest,
   getQueueBySlug,
   getQueueServiceMarkForGuest,
@@ -44,6 +45,7 @@ const TIME_2_CHECKIN = 3;  // start prompting check-in when this many ahead
 // Delay (ms) the "Enjoy!" screen stays visible before navigating away
 const SERVED_LINGER_MS = 4000;
 const PILOT_COMPLETION_CODE = '4729';
+const DEFAULT_GATHERING_STALE_SECONDS = 15;
 const NOT_HERE_NOTICE =
   "Staff called you after you marked yourself nearby, but you were not at the station. You were returned to Waiting and will be invited to Gathering again when there is room.";
 const RETURN_TO_WAITING_NOTICE =
@@ -83,20 +85,43 @@ function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
-function ticketHasCurrentOnMyWay(ticket: Ticket | null | undefined): boolean {
-  if (!ticket) return false;
-  if ((ticket.stage ?? 'waiting') !== 'standby' || !ticket.on_my_way_at || ticket.nearby_confirmed_at) return false;
-  if (!ticket.stage_updated_at) return true;
+function isOnMyWayFresh(
+  ticket: Ticket | null | undefined,
+  staleAfterSeconds: number,
+  nowMs = Date.now()
+): boolean {
+  if (
+    !ticket
+    || (ticket.stage ?? 'waiting') !== 'standby'
+    || !ticket.on_my_way_at
+    || ticket.nearby_confirmed_at
+    || staleAfterSeconds <= 0
+  ) return false;
   const onMyWayTime = Date.parse(ticket.on_my_way_at);
-  const stageUpdatedTime = Date.parse(ticket.stage_updated_at);
-  if (Number.isNaN(onMyWayTime) || Number.isNaN(stageUpdatedTime)) return true;
-  return onMyWayTime >= stageUpdatedTime;
+  return Number.isFinite(onMyWayTime)
+    ? onMyWayTime >= nowMs - staleAfterSeconds * 1000
+    : false;
 }
 
-function getPilotDisplayState(ticket: Ticket | null | undefined): PilotDisplayState {
+function ticketHasCurrentOnMyWay(
+  ticket: Ticket | null | undefined,
+  staleAfterSeconds: number,
+  nowMs = Date.now()
+): boolean {
+  if (!Number.isFinite(staleAfterSeconds) || staleAfterSeconds <= 0) {
+    return false;
+  }
+  return isOnMyWayFresh(ticket, staleAfterSeconds, nowMs);
+}
+
+function getPilotDisplayState(
+  ticket: Ticket | null | undefined,
+  staleAfterSeconds: number,
+  nowMs = Date.now()
+): PilotDisplayState {
   const stage = ticket?.stage ?? 'waiting';
   if (stage === 'standby' && ticket?.nearby_confirmed_at) return 'nearby';
-  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'on_my_way';
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)) return 'on_my_way';
   return stage;
 }
 
@@ -186,6 +211,7 @@ export default function GuestQueueTicketPage() {
   const [completionSaving, setCompletionSaving] = useState(false);
   const [completionInputFocused, setCompletionInputFocused] = useState(false);
   const [nearbySaving, setNearbySaving] = useState(false);
+  const [onMyWaySaving, setOnMyWaySaving] = useState(false);
   const [notHereNoticeActive, setNotHereNoticeActive] = useState(false);
   const [returnToWaitingNoticeActive, setReturnToWaitingNoticeActive] = useState(false);
   const [showNotHereModal, setShowNotHereModal] = useState(false);
@@ -286,6 +312,7 @@ export default function GuestQueueTicketPage() {
   const pilotCompletionMode = getPilotCompletionMode(linkedEce, queue?.slug);
   const pilotCompletionCode = getPilotCompletionCode(linkedEce);
   const isHeadshotQueue = queue?.slug === 'headshot-photo-station';
+  const gatheringStaleAfterSeconds = queue?.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS;
   const queueImageSrc = queue?.slug === 'scan-code-adventure'
     ? '/images/dog-through-hoop.png'
     : queue?.slug === 'headshot-photo-station'
@@ -752,6 +779,27 @@ export default function GuestQueueTicketPage() {
     }
   }
 
+  async function markOnMyWay() {
+    if (!ticketId) return;
+    setOnMyWaySaving(true);
+    setCompletionError('');
+    try {
+      const row = await markTicketOnMyWayForGuest(ticketId, queue?.id, event?.id);
+      if (queue?.run_mode === 'auto' && row.queue_id) {
+        await applyQueuePilotFlow(row.queue_id);
+        const refreshed = await getQueueTicket(row.id, row.queue_id, event?.id);
+        setPilotTicket((current) => hasSameShape(current, refreshed) ? current : refreshed);
+      } else {
+        setPilotTicket(row);
+      }
+    } catch (err) {
+      console.error('Failed to mark on my way', err);
+      setCompletionError('Could not mark you on your way. Please try again or show staff this screen.');
+    } finally {
+      setOnMyWaySaving(false);
+    }
+  }
+
   // ── Loading / error states ────────────────────────────────────────────────
 
   async function completeHeadshotFromServiceMark(mark: EventGuestMark) {
@@ -1152,8 +1200,18 @@ export default function GuestQueueTicketPage() {
     const metadataCopy = getPilotStageCopy(linkedEce, pilotStage, copyVars);
     const hasNearbyField = pilotTicket ? Object.prototype.hasOwnProperty.call(pilotTicket, 'nearby_confirmed_at') : false;
     const nearbyConfirmed = Boolean(pilotTicket?.nearby_confirmed_at);
-    const guestDisplayState = getPilotDisplayState(pilotTicket);
+    const isCurrentOnMyWay = ticketHasCurrentOnMyWay(
+      pilotTicket,
+      gatheringStaleAfterSeconds,
+      Date.now()
+    );
+    const guestDisplayState = getPilotDisplayState(
+      pilotTicket,
+      gatheringStaleAfterSeconds,
+      Date.now()
+    );
     const needsNearbyConfirmation = pilotStage === 'standby' && hasNearbyField && !nearbyConfirmed;
+    const canMarkOnMyWay = pilotStage === 'standby' && !nearbyConfirmed && !isCurrentOnMyWay;
     const defaultInstruction = pilotStage === 'standby'
       ? nearbyConfirmed
         ? "You're marked nearby. Keep this page open."
@@ -1235,7 +1293,7 @@ export default function GuestQueueTicketPage() {
     const showLocation = pilotStage === 'standby' || pilotStage === 'released' || pilotStage === 'completed';
     const showInstruction = pilotStage === 'standby' && !nearbyConfirmed;
     const isGuestCodeTurn = pilotStage === 'released' && pilotCompletionMode === 'guest_code';
-    const isGuestActionStage = needsNearbyConfirmation || pilotStage === 'released';
+    const isGuestActionStage = needsNearbyConfirmation || canMarkOnMyWay || pilotStage === 'released';
 
     return (
       <div className={`card card-scrollable tkt-card tkt-pilot-card ${isGuestActionStage ? 'tkt-pilot-action-stage' : ''} ${isGuestCodeTurn ? 'tkt-pilot-code-turn' : ''} ${completionInputFocused ? 'tkt-pilot-code-focused' : ''}`}>
@@ -1340,6 +1398,16 @@ export default function GuestQueueTicketPage() {
               <strong>You were moved back to Waiting.</strong>{' '}
               {RETURN_TO_WAITING_NOTICE}
             </div>
+          )}
+
+          {canMarkOnMyWay && (
+            <button
+              className="tkt-btn-checkin"
+              onClick={markOnMyWay}
+              disabled={onMyWaySaving}
+            >
+              {onMyWaySaving ? 'Marking On My Way...' : "I'm On My Way"}
+            </button>
           )}
 
           {needsNearbyConfirmation && (

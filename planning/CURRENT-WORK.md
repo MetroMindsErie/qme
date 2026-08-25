@@ -36,7 +36,7 @@ Example with Gathering stale = 300 seconds: invited at 6:00, guest taps On My Wa
 
 Do **not** invent another operator setting now. A distinct/longer OMW duration can be considered later from event evidence.
 
-## Acceptance Finding That Triggered This Slice
+## Acceptance Findings
 
 Live testing with Target = 7 exposed the original mismatch:
 - headline correctly showed `1 OMW · 1 NRBY · 23 STALE`;
@@ -46,7 +46,11 @@ Live testing with Target = 7 exposed the original mismatch:
 
 That capacity mismatch was fixed and live acceptance later confirmed the correct result with `1 OMW · 2 NRBY · 4 STALE`: one Nearby released, one Nearby remained, the fresh OMW counted, and exactly 5 Waiting guests were invited.
 
-A second live acceptance defect was then found: after an OMW freshness timeout, the headline correctly moved the guest from `OMW` to `STALE`, but individual admin/guest/current event-card displays could still say `On My Way`. Fix current-state derivation so freshness governs all current displays, not only capacity/headline math.
+A second live acceptance defect was found and partially fixed: after an OMW freshness timeout, the headline correctly moved the guest from `OMW` to `STALE`, but individual admin/guest/current event-card displays could still say `On My Way`. Freshness-aware current-state helpers were added.
+
+**Final live defect still open:** with the guest ticket page already open when OMW expires, the admin headline updates from OMW -> STALE, but the open guest ticket can remain visibly `On My Way`. The current implementation computes freshness using `Date.now()` during render, but the guest ticket page does not appear to have a time-based rerender solely for the freshness deadline. This means the freshness helper can be correct yet the UI can remain stale until some unrelated state update/navigation/refresh occurs.
+
+Required behavior: the open guest ticket must automatically re-evaluate current OMW status when the freshness deadline passes, without requiring the guest to refresh, navigate away/back, or take another action.
 
 ## Required Implementation
 
@@ -64,15 +68,13 @@ A second live acceptance defect was then found: after an OMW freshness timeout, 
    - Remove the redundant instruction block immediately above the buttons (`When you arrive at the Headshot station, tap I'm Nearby. Keep this page open.` or equivalent Nearby-only repetition). After Location, proceed directly to the two action buttons when both actions are available.
    - Do not substitute alternate wording such as `Tap I'm On My Way to let us know you're heading over...`; use the approved copy above.
 
-3. **Current-state derivation / display consistency**
-   - Update any helpers/components that derive current On My Way state so **freshness is part of the definition of current OMW**.
-   - A stale OMW ticket remains Gathering but current display must no longer say `On My Way` on:
-     - admin guest row/card state;
-     - guest queue status/progress state;
-     - main event/experience card (`inQ - ...`);
-     - any other current-state surface using the same helper.
+3. **Current-state derivation / live display consistency**
+   - Keep freshness as part of the definition of current OMW.
+   - A stale OMW ticket remains Gathering but current display must no longer say `On My Way` on admin guest row/card, guest queue status/progress, main event/experience card, or any other current-state surface.
    - Historical timestamps/records may continue to show that OMW happened.
-   - Headline semantics remain: fresh OMW -> `OMW`; expired OMW -> `STALE`; never both.
+   - **Open guest ticket pages must transition automatically at the OMW freshness deadline.** Add the smallest safe client-side time invalidation/rerender mechanism so `Date.now()`-based freshness is re-evaluated when needed. Do not require manual page refresh and do not create a new server mutation just to expire the display state.
+   - Prefer a deadline-driven timeout or existing lightweight polling mechanism over an unnecessarily frequent timer. Clean up timers on dependency change/unmount.
+   - If the main event card can likewise stay open across the deadline without another data refresh, ensure it also re-evaluates freshness automatically or through its existing refresh cadence.
 
 4. **Admin/headline consistency**
    - Preserve Waiting `N COOLING` and Gathering `N OMW · N NRBY · N STALE` behavior already accepted.
@@ -90,18 +92,20 @@ Live acceptance already passed:
 - fresh OMW counts toward effective Target/Max;
 - OMW -> Nearby transition;
 - OMW freshness expiration moves headline OMW -> STALE while raw Gathering remains unchanged;
-- headline `COOLING`, `NRBY`, `STALE`, and `OMW` arithmetic.
+- headline `COOLING`, `NRBY`, `STALE`, and `OMW` arithmetic;
+- approved Gathering copy and redundant instruction removal are implemented.
 
-Do not reopen those behaviors except as regression checks needed for these final display/copy fixes.
+Do not reopen those behaviors except as regression checks needed for this final live-expiry display fix.
 
 ## Validation
 
 Validate at minimum:
-- Gathering screen uses the exact approved status copy above;
-- redundant Nearby-only instruction above the buttons is removed;
-- fresh OMW still displays as On My Way on guest/admin/event card;
-- after the configured stale duration from `on_my_way_at`, the same guest remains Gathering but no longer displays current State = On My Way on guest/admin/event card;
-- stale OMW still appears in `STALE`, not `OMW`, in the headline and is not double-counted;
+- Gathering screen uses the exact approved status copy and redundant Nearby-only instruction remains removed;
+- fresh OMW displays as On My Way on guest/admin/event card;
+- with the guest ticket page left open and untouched, after the configured stale duration from `on_my_way_at`, the page automatically changes from On My Way to Gathering without manual refresh/navigation/action;
+- the same guest remains Gathering and the historical OMW timestamp is preserved;
+- stale OMW appears in `STALE`, not `OMW`, in the headline and is not double-counted;
+- main event card no longer remains `inQ - On My Way` after expiry; verify automatic/current display behavior while the page remains open where practical;
 - OMW -> Nearby still works;
 - Nearby remains callable and not stale;
 - existing queue service tests and full app build pass where environment permits;
@@ -109,11 +113,11 @@ Validate at minimum:
 
 ## Deployment / Handoff
 
-This final pass should be app/UI/current-state derivation only unless inspection proves a DB definition change is genuinely required. If no SQL behavior changes are needed, explicitly report **no SQL to run**. Do not apply SQL to Supabase.
+This final pass should be app/UI time-based current-state invalidation only unless inspection proves otherwise. **No SQL rerun is expected.** Do not apply SQL to Supabase.
 
 Report:
 - exact files changed;
-- whether any SQL must be rerun (expected: none unless code inspection proves otherwise);
+- whether any SQL must be rerun (expected: none);
 - tests/build results or environment blockers;
 - commit SHA;
 - concise live acceptance steps.
@@ -126,8 +130,5 @@ Do not mark either roadmap story done. Product Owner will close **Explain queue 
 - Live capacity acceptance passed with fresh OMW counted correctly against Target/Max.
 - Live OMW -> Nearby acceptance passed.
 - Live 60-second stale test passed for headline/capacity semantics: OMW dropped out, STALE increased, raw Gathering stayed unchanged.
-- Final app-only acceptance fixes implemented:
-  1. Gathering guest copy now uses the exact approved wording, and the redundant instruction block above the buttons was removed.
-  2. current On My Way display now requires freshness on the guest ticket surface, admin row/card state, and main event card; expired OMW falls back to Gathering/stale current-state semantics while preserving OMW timestamp history.
-- Validation passed locally: `npx tsc -b`, `npx vite build`, and `npm run test -- src/test/queueService.test.ts`.
-- No SQL changes were made for this final fix; no Supabase SQL rerun is expected.
+- Final app-only copy/current-state helper fixes committed in `1cf540c`; Vercel deployment succeeded.
+- New live acceptance result after `1cf540c`: admin headline correctly ages OMW to STALE, but an already-open guest ticket still displays `On My Way` after the deadline. This final rerender/invalidation defect remains open.

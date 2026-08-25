@@ -61,6 +61,8 @@ Inspection confirmed `run_queue_pilot_flow` currently counts effective Gathering
    - After On My Way, guest and admin should show Stage = Gathering / State = On My Way while fresh.
    - Guest must still be able to mark Nearby afterward.
    - Preserve timestamps/history/source attribution where the existing model supports it.
+   - **Acceptance copy fix:** the Gathering status instructions must explain both new actions. Replace Nearby-only instruction copy with: `Let us know when you're heading over by tapping I'm On My Way. When you arrive at the station, tap I'm Nearby.`
+   - Avoid a second redundant Nearby-only instruction immediately above the action buttons; the status instruction should provide the guidance, followed by the `I'm On My Way` and `I'm Nearby` actions.
 
 3. **Admin/headline consistency**
    - Preserve the accepted headline display: Waiting may show `N COOLING`; Gathering may show `N OMW · N NRBY · N STALE`.
@@ -86,6 +88,7 @@ Do not reopen those behaviors except as regression checks needed for the On My W
 
 Validate at minimum:
 - guest in Gathering can choose On My Way;
+- Gathering instructions clearly explain when to tap On My Way and when to tap Nearby using the approved copy above;
 - marking On My Way starts/resets its freshness window from the OMW action time;
 - admin and guest both show Gathering / On My Way while fresh;
 - fresh On My Way counts toward effective Target and Max;
@@ -115,8 +118,9 @@ Do not mark either roadmap story done. Product Owner will close **Explain queue 
 ## Current Slice Status Update
 
 - Targeted implementation bug from commit `54cbf4a` (`waitingCoolingCount` / `waitingCooldownCount` mismatch) is not present in current main; both the calculation and render now use `waitingCoolingCount` in `app/src/pages/admin/AdminQueueDashboard.tsx`.
-- No additional product logic changes were made in this pass.
+- On My Way implementation was subsequently committed in `2964600` and its SQL definitions were manually applied to production Supabase for live acceptance on 2026-08-25.
+- Live acceptance found the Gathering screen still uses Nearby-only instructional copy even though both `I'm On My Way` and `I'm Nearby` actions are now present. The approved copy fix above is part of this story's completion, not a deferred follow-up.
 
-Validation status:
-- `npm --prefix app test src/test/queueService.test.ts` ❌ blocked by local environment `EPERM` (`lstat 'C:\\Users\\ebcoo'`), command did not execute to completion.
-- `npm --prefix app run build` ❌ blocked by same local environment `EPERM` (`lstat 'C:\\Users\\ebcoo'`).
+Validation status from implementation pass:
+- `npm --prefix app test src/test/queueService.test.ts --runInBand` passed (35 tests).
+- `npm --prefix app run build` was blocked by local `EBUSY` on `app/dist/images`; Vercel production deployment for `2964600` succeeded.

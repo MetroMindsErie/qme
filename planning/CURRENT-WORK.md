@@ -126,6 +126,8 @@ Do not mark either roadmap story done. Product Owner will close **Explain queue 
 - Live capacity acceptance passed with fresh OMW counted correctly against Target/Max.
 - Live OMW -> Nearby acceptance passed.
 - Live 60-second stale test passed for headline/capacity semantics: OMW dropped out, STALE increased, raw Gathering stayed unchanged.
-- Remaining acceptance failures are now limited to:
-  1. deployed Gathering copy does not match the approved wording and still contains redundant Nearby-only guidance;
-  2. stale OMW can remain displayed as current `On My Way` on individual/admin/guest/main-event surfaces even though headline/capacity correctly treat it as stale.
+- Final app-only acceptance fixes implemented:
+  1. Gathering guest copy now uses the exact approved wording, and the redundant instruction block above the buttons was removed.
+  2. current On My Way display now requires freshness on the guest ticket surface, admin row/card state, and main event card; expired OMW falls back to Gathering/stale current-state semantics while preserving OMW timestamp history.
+- Validation passed locally: `npx tsc -b`, `npx vite build`, and `npm run test -- src/test/queueService.test.ts`.
+- No SQL changes were made for this final fix; no Supabase SQL rerun is expected.

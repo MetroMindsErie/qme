@@ -1212,17 +1212,6 @@ export default function GuestQueueTicketPage() {
     );
     const needsNearbyConfirmation = pilotStage === 'standby' && hasNearbyField && !nearbyConfirmed;
     const canMarkOnMyWay = pilotStage === 'standby' && !nearbyConfirmed && !isCurrentOnMyWay;
-    const defaultGatheringInstruction = isCurrentOnMyWay
-      ? "Great, qMe knows you're on your way. When you get to the station, tap I'm Nearby."
-      : "Tap I'm On My Way to let us know you're coming, then tap I'm Nearby when you arrive.";
-    const defaultInstruction = pilotStage === 'standby'
-      ? nearbyConfirmed
-        ? "You're marked nearby. Keep this page open."
-        : defaultGatheringInstruction
-      : linkedEce?.description || queue.description || 'Keep this page open for the next step.';
-    const instructionText = pilotStage === 'standby'
-      ? metadataCopy.instruction || defaultInstruction
-      : metadataCopy.instruction || defaultInstruction;
     const statusCopy: Record<string, { title: string; detail: string }> = {
       waiting: {
         title: 'Waiting',
@@ -1230,13 +1219,13 @@ export default function GuestQueueTicketPage() {
       },
       standby: {
         title: 'Gathering',
-        detail: pilotStage === 'standby' && isCurrentOnMyWay
-          ? "Great, qMe knows you're on your way. When you get to the station, tap I'm Nearby."
-          : "Tap I'm On My Way to let us know you're heading over, then tap I'm Nearby when you arrive.",
+        detail: isCurrentOnMyWay
+          ? "Let us know when you're heading over by tapping I'm On My Way. When you arrive at the station, tap I'm Nearby."
+          : "Let us know when you're heading over by tapping I'm On My Way. When you arrive at the station, tap I'm Nearby.",
       },
       on_my_way: {
         title: 'On My Way',
-        detail: "qMe knows you're on your way. When you get to the station, tap I'm Nearby.",
+        detail: "You're on your way. When you arrive at the station, tap I'm Nearby.",
       },
       nearby: {
         title: 'Nearby',
@@ -1292,7 +1281,6 @@ export default function GuestQueueTicketPage() {
       ? statusSteps.length - 1
       : Math.max(0, statusSteps.findIndex((step) => step.key === guestDisplayState));
     const showLocation = pilotStage === 'standby' || pilotStage === 'released' || pilotStage === 'completed';
-    const showInstruction = pilotStage === 'standby' && !nearbyConfirmed;
     const isGuestCodeTurn = pilotStage === 'released' && pilotCompletionMode === 'guest_code';
     const isGuestActionStage = needsNearbyConfirmation || canMarkOnMyWay || pilotStage === 'released';
 
@@ -1376,12 +1364,6 @@ export default function GuestQueueTicketPage() {
               <div className="tkt-pilot-location">
                 {locationText}
               </div>
-            </div>
-          )}
-
-          {showInstruction && (
-            <div className="tkt-pilot-instruction">
-              {instructionText}
             </div>
           )}
 

@@ -139,6 +139,8 @@ type HomeItem = {
   detailsMode: string;
 };
 
+const DEFAULT_GATHERING_STALE_SECONDS = 15;
+
 function getHomeItemDetails(value: unknown): HomeItemDetail[] {
   if (!Array.isArray(value)) return [];
   return value
@@ -219,20 +221,29 @@ function queueStageStatus(stage?: Ticket['stage']): string {
   }
 }
 
-function ticketHasCurrentOnMyWay(ticket: Ticket | null | undefined): boolean {
+function ticketHasCurrentOnMyWay(
+  ticket: Ticket | null | undefined,
+  staleAfterSeconds: number,
+  nowMs = Date.now()
+): boolean {
   if (!ticket) return false;
-  if ((ticket.stage ?? 'waiting') !== 'standby' || !ticket.on_my_way_at || ticket.nearby_confirmed_at) return false;
-  if (!ticket.stage_updated_at) return true;
+  if (
+    (ticket.stage ?? 'waiting') !== 'standby'
+    || !ticket.on_my_way_at
+    || ticket.nearby_confirmed_at
+    || staleAfterSeconds <= 0
+  ) return false;
   const onMyWayTime = Date.parse(ticket.on_my_way_at);
-  const stageUpdatedTime = Date.parse(ticket.stage_updated_at);
-  if (Number.isNaN(onMyWayTime) || Number.isNaN(stageUpdatedTime)) return true;
-  return onMyWayTime >= stageUpdatedTime;
+  return Number.isFinite(onMyWayTime) ? onMyWayTime >= nowMs - staleAfterSeconds * 1000 : false;
 }
 
-function queueTicketStateStatus(ticket: Ticket | null | undefined): string {
+function queueTicketStateStatus(
+  ticket: Ticket | null | undefined,
+  staleAfterSeconds: number
+): string {
   const stage = ticket?.stage ?? 'waiting';
   if (stage === 'standby' && ticket?.nearby_confirmed_at) return 'Nearby';
-  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket)) return 'On My Way';
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds)) return 'On My Way';
   return queueStageStatus(stage);
 }
 
@@ -548,7 +559,10 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 } else {
                   ticket = String(ticketRow.ticket_number ?? ticketRow.id);
                   ticketStage = ticketRow.stage;
-                  ticketStateLabel = queueTicketStateStatus(ticketRow);
+                  ticketStateLabel = queueTicketStateStatus(
+                    ticketRow,
+                    q.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS
+                  );
                   localStorage.setItem(`qme:ticket:${q.id}`, String(ticketRow.id));
                   localStorage.setItem(`qme:ticketNum:${q.id}`, String(ticketRow.ticket_number ?? ticketRow.id));
                 }
@@ -563,7 +577,10 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 if (isAdoptableQueueTicket(recoveredTicket)) {
                   ticket = String(recoveredTicket.ticket_number ?? recoveredTicket.id);
                   ticketStage = recoveredTicket.stage;
-                  ticketStateLabel = queueTicketStateStatus(recoveredTicket);
+                  ticketStateLabel = queueTicketStateStatus(
+                    recoveredTicket,
+                    q.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS
+                  );
                   storeQueueTicket(q.id, recoveredTicket.id, recoveredTicket.ticket_number ?? recoveredTicket.id);
                 }
               } catch {

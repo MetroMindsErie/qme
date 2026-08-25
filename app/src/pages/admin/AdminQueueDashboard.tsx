@@ -1046,7 +1046,7 @@ export default function AdminQueueDashboard() {
                     <div style={{ color: '#64748b', fontSize: '0.74rem', fontWeight: 800, marginTop: 5, lineHeight: 1.35 }}>
                       Joined {formatQueueTime(ticket.created_at) || 'unknown'}
                       {ticket.stage_updated_at ? ` - Stage updated ${formatQueueTime(ticket.stage_updated_at)}` : ''}
-                      {onMyWay ? ` - On My Way ${formatQueueTime(ticket.on_my_way_at)}` : ''}
+                      {ticket.on_my_way_at ? ` - OMW recorded ${formatQueueTime(ticket.on_my_way_at)}` : ''}
                       {ticket.nearby_confirmed_at ? ` - Nearby ${formatQueueTime(ticket.nearby_confirmed_at)}` : ''}
                       {ticket.released_at ? ` - Your Turn ${formatQueueTime(ticket.released_at)}` : ''}
                     </div>

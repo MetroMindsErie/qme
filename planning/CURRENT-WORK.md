@@ -19,57 +19,64 @@ Meaning:
 - **On My Way is an affirmative guest commitment and starts a new freshness window when the guest marks On My Way**;
 - for this slice, that On My Way freshness window uses the existing configured Gathering stale duration; do not add a second operator timing setting;
 - while that On My Way window is fresh, the guest counts toward effective Gathering Target and Max;
-- when that On My Way window expires, the guest stops consuming effective capacity but remains Stage = Gathering and retains the On My Way history/state information; silence/staleness does not Return them to Waiting or trigger cooldown;
+- when that On My Way window expires, the guest stops consuming effective capacity but remains Stage = Gathering and retains the On My Way timestamp/history; silence/staleness does not Return them to Waiting or trigger cooldown;
+- **expired OMW is no longer the guest's current State**. Current guest/admin/main-event displays must fall back to ordinary Gathering/stale semantics rather than continuing to say `On My Way` indefinitely;
 - **On My Way is not callable** and must not progress normally to Your Turn until Nearby;
 - Nearby remains the only normal callable/release-ready state and is not made stale by the Gathering/OMW stale mechanism;
 - a guest may move On My Way -> Nearby without losing queue position/history;
 - stale/silent Gathering remains recoverable and does not automatically Return to Waiting or incur cooldown.
 
-Operational summary semantics must be mutually meaningful:
-- a **fresh/current** On My Way guest appears in the `OMW` headline subcount and not `STALE`;
-- once that On My Way freshness window expires, the guest appears in `STALE` rather than `OMW` for headline capacity/readiness purposes;
-- the individual guest row/history may continue to show that the guest previously said On My Way, while also making clear that the commitment is now stale if the current UI supports that distinction cleanly.
+Operational/current-state semantics must agree everywhere:
+- a **fresh/current** On My Way guest appears as State = On My Way, is shown in the `OMW` headline subcount, and may be shown as `inQ - On My Way` on the event card;
+- once that On My Way freshness window expires, the guest appears in `STALE` rather than `OMW` for headline purposes, current State falls back to Gathering/no special readiness state, and the event card must no longer say `inQ - On My Way`;
+- preserve `on_my_way_at` and/or history so staff can still tell the guest previously said On My Way; do not erase history just to fix current-state display;
+- Nearby must remain current/callable and must not be treated as stale by this mechanism.
 
-Example with Gathering stale = 300 seconds: invited at 6:00, guest taps On My Way at 6:04 -> the OMW freshness window runs from approximately 6:04 to 6:09, not from the original 6:00 invitation.
+Example with Gathering stale = 300 seconds: invited at 6:00, guest taps On My Way at 6:04 -> the OMW freshness window runs from approximately 6:04 to 6:09, not from the original 6:00 invitation. After ~6:09 the guest is still Gathering but is no longer currently On My Way.
 
 Do **not** invent another operator setting now. A distinct/longer OMW duration can be considered later from event evidence.
 
 ## Acceptance Finding That Triggered This Slice
 
-Live testing with Target = 7 exposed the mismatch:
+Live testing with Target = 7 exposed the original mismatch:
 - headline correctly showed `1 OMW · 1 NRBY · 23 STALE`;
 - Apply Flow released the Nearby guest to Your Turn;
 - flow then invited **7** Waiting guests rather than accounting for the existing On My Way commitment;
 - result was `4 Waiting / 31 Gathering / 1 Your Turn` rather than replenishing around On My Way as effective capacity.
 
-Inspection confirmed `run_queue_pilot_flow` currently counts effective Gathering using Nearby or stage freshness, but does not explicitly use current `on_my_way_at` semantics. Fix this so UI and automation agree.
+That capacity mismatch was fixed and live acceptance later confirmed the correct result with `1 OMW · 2 NRBY · 4 STALE`: one Nearby released, one Nearby remained, the fresh OMW counted, and exactly 5 Waiting guests were invited.
+
+A second live acceptance defect was then found: after an OMW freshness timeout, the headline correctly moved the guest from `OMW` to `STALE`, but individual admin/guest/current event-card displays could still say `On My Way`. Fix current-state derivation so freshness governs all current displays, not only capacity/headline math.
 
 ## Required Implementation
 
 1. **Queue flow / SQL**
-   - Update the production SQL definitions for `run_queue_pilot_flow` so a fresh On My Way ticket counts toward both effective Target occupancy and effective Max occupancy based on freshness from `on_my_way_at` (or the authoritative existing OMW transition timestamp if represented differently).
-   - On My Way must remain non-release-ready; only Nearby can be released normally.
+   - Preserve the production SQL behavior where a fresh On My Way ticket counts toward both effective Target occupancy and effective Max occupancy based on freshness from `on_my_way_at`.
+   - On My Way remains non-release-ready; only Nearby can be released normally.
    - After the OMW freshness window expires, the ticket stops blocking effective capacity but remains Gathering/recoverable.
    - Keep stale tickets in Gathering; do not Return to Waiting merely because the timer expires.
    - Keep Not Here cooldown behavior unchanged.
-   - If the same function definition exists in more than one checked-in SQL file, update all authoritative copies consistently.
 
-2. **Guest action**
-   - Add an explicit guest-facing **On My Way** action while the guest is Gathering and has not yet marked Nearby.
-   - Use the existing ticket/RPC/state plumbing where possible; do not create a parallel state model.
-   - Marking On My Way must establish/reset the OMW freshness timestamp/window.
-   - After On My Way, guest and admin should show Stage = Gathering / State = On My Way while fresh.
-   - Guest must still be able to mark Nearby afterward.
-   - Preserve timestamps/history/source attribution where the existing model supports it.
-   - **Acceptance copy fix:** the Gathering status instructions must explain both new actions. Replace Nearby-only instruction copy with: `Let us know when you're heading over by tapping I'm On My Way. When you arrive at the station, tap I'm Nearby.`
-   - Avoid a second redundant Nearby-only instruction immediately above the action buttons; the status instruction should provide the guidance, followed by the `I'm On My Way` and `I'm Nearby` actions.
+2. **Guest action and copy**
+   - Preserve the explicit guest-facing **I'm On My Way** action while the guest is Gathering and has not yet marked Nearby.
+   - After fresh On My Way, guest/admin show Stage = Gathering / State = On My Way, and guest can still mark Nearby.
+   - **Use this exact approved Gathering status instruction:** `Let us know when you're heading over by tapping I'm On My Way. When you arrive at the station, tap I'm Nearby.`
+   - Remove the redundant instruction block immediately above the buttons (`When you arrive at the Headshot station, tap I'm Nearby. Keep this page open.` or equivalent Nearby-only repetition). After Location, proceed directly to the two action buttons when both actions are available.
+   - Do not substitute alternate wording such as `Tap I'm On My Way to let us know you're heading over...`; use the approved copy above.
 
-3. **Admin/headline consistency**
-   - Preserve the accepted headline display: Waiting may show `N COOLING`; Gathering may show `N OMW · N NRBY · N STALE`.
-   - `OMW` means fresh/current OMW for effective-capacity purposes.
-   - A stale OMW moves from the OMW subcount to STALE; do not count it in both.
-   - The displayed OMW/STALE interpretation must agree with the flow algorithm.
-   - Nearby must not be double-counted as stale.
+3. **Current-state derivation / display consistency**
+   - Update any helpers/components that derive current On My Way state so **freshness is part of the definition of current OMW**.
+   - A stale OMW ticket remains Gathering but current display must no longer say `On My Way` on:
+     - admin guest row/card state;
+     - guest queue status/progress state;
+     - main event/experience card (`inQ - ...`);
+     - any other current-state surface using the same helper.
+   - Historical timestamps/records may continue to show that OMW happened.
+   - Headline semantics remain: fresh OMW -> `OMW`; expired OMW -> `STALE`; never both.
+
+4. **Admin/headline consistency**
+   - Preserve Waiting `N COOLING` and Gathering `N OMW · N NRBY · N STALE` behavior already accepted.
+   - Nearby and fresh OMW are not double-counted as stale.
 
 ## Already Accepted — Do Not Rework
 
@@ -80,47 +87,45 @@ Live acceptance already passed:
 - admin/guest synchronization through completion;
 - Return to Waiting and Not Here cooldown behavior;
 - cooldown visibility and expiry back to ordinary Waiting;
-- headline `COOLING`, `NRBY`, `STALE`, and basic `OMW` display/arithmetic.
+- fresh OMW counts toward effective Target/Max;
+- OMW -> Nearby transition;
+- OMW freshness expiration moves headline OMW -> STALE while raw Gathering remains unchanged;
+- headline `COOLING`, `NRBY`, `STALE`, and `OMW` arithmetic.
 
-Do not reopen those behaviors except as regression checks needed for the On My Way change.
+Do not reopen those behaviors except as regression checks needed for these final display/copy fixes.
 
 ## Validation
 
 Validate at minimum:
-- guest in Gathering can choose On My Way;
-- Gathering instructions clearly explain when to tap On My Way and when to tap Nearby using the approved copy above;
-- marking On My Way starts/resets its freshness window from the OMW action time;
-- admin and guest both show Gathering / On My Way while fresh;
-- fresh On My Way counts toward effective Target and Max;
-- with Target 7, one fresh OMW and no other effective Gathering yields six invitations, not seven;
-- On My Way does not progress to Your Turn without Nearby;
-- On My Way -> Nearby -> Your Turn still works normally;
-- after the configured stale duration measured from the OMW action, OMW stops consuming effective capacity but remains Gathering/recoverable;
-- stale OMW is represented as STALE rather than OMW in the headline operational subcounts and is not double-counted;
-- Nearby remains active/release-ready and is not made stale by this mechanism;
-- headline OMW/NRBY/STALE counts agree with flow semantics;
+- Gathering screen uses the exact approved status copy above;
+- redundant Nearby-only instruction above the buttons is removed;
+- fresh OMW still displays as On My Way on guest/admin/event card;
+- after the configured stale duration from `on_my_way_at`, the same guest remains Gathering but no longer displays current State = On My Way on guest/admin/event card;
+- stale OMW still appears in `STALE`, not `OMW`, in the headline and is not double-counted;
+- OMW -> Nearby still works;
+- Nearby remains callable and not stale;
 - existing queue service tests and full app build pass where environment permits;
 - Vercel/deployment compile status is clean after push.
 
 ## Deployment / Handoff
 
-Steve/Codex should make and commit/push the code/SQL file changes, but **must not apply SQL manually to Supabase**. Evan will run any required SQL definition script in the Supabase SQL Editor, following the established project workflow.
+This final pass should be app/UI/current-state derivation only unless inspection proves a DB definition change is genuinely required. If no SQL behavior changes are needed, explicitly report **no SQL to run**. Do not apply SQL to Supabase.
 
 Report:
 - exact files changed;
-- exact SQL file(s) Evan must run, if any;
+- whether any SQL must be rerun (expected: none unless code inspection proves otherwise);
 - tests/build results or environment blockers;
 - commit SHA;
 - concise live acceptance steps.
 
-Do not mark either roadmap story done. Product Owner will close **Explain queue automation blockers to operators** and **Let Gathering guests say On My Way** after live acceptance.
+Do not mark either roadmap story done. Product Owner will close **Explain queue automation blockers to operators** and **Let Gathering guests say On My Way** after final live acceptance.
 
 ## Current Slice Status Update
 
-- Targeted implementation bug from commit `54cbf4a` (`waitingCoolingCount` / `waitingCooldownCount` mismatch) is not present in current main; both the calculation and render now use `waitingCoolingCount` in `app/src/pages/admin/AdminQueueDashboard.tsx`.
-- On My Way implementation was subsequently committed in `2964600` and its SQL definitions were manually applied to production Supabase for live acceptance on 2026-08-25.
-- Live acceptance found the Gathering screen still uses Nearby-only instructional copy even though both `I'm On My Way` and `I'm Nearby` actions are now present. The approved copy fix above is part of this story's completion, not a deferred follow-up.
-
-Validation status from implementation pass:
-- `npm --prefix app test src/test/queueService.test.ts --runInBand` passed (35 tests).
-- `npm --prefix app run build` was blocked by local `EBUSY` on `app/dist/images`; Vercel production deployment for `2964600` succeeded.
+- On My Way implementation committed in `2964600`; required SQL definitions were manually applied to production Supabase.
+- Live capacity acceptance passed with fresh OMW counted correctly against Target/Max.
+- Live OMW -> Nearby acceptance passed.
+- Live 60-second stale test passed for headline/capacity semantics: OMW dropped out, STALE increased, raw Gathering stayed unchanged.
+- Remaining acceptance failures are now limited to:
+  1. deployed Gathering copy does not match the approved wording and still contains redundant Nearby-only guidance;
+  2. stale OMW can remain displayed as current `On My Way` on individual/admin/guest/main-event surfaces even though headline/capacity correctly treat it as stale.

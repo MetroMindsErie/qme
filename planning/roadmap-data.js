@@ -75,7 +75,8 @@ const QME_ROADMAP = {
         "story-location-beacons",
         "story-networking-matching",
         "story-food-filters",
-        "story-browser-persistence-edge-cases-degraded-storage"
+        "story-browser-persistence-edge-cases-degraded-storage",
+        "story-reconnect-confirmation-and-event-refresh"
       ]
     }
   ],
@@ -263,6 +264,14 @@ const QME_ROADMAP = {
                 "Keep scope limited to diagnostics and UX guidance until broader feasibility/verification paths are justified."
               ],
               "notes": "Preserve for later investigation:\n- what browser/device/privacy/storage conditions allow an initially usable qMe session but later discard guest identity;\n- Android/Chrome and other combinations if future evidence warrants\n- storage pressure/content-blocker/privacy behaviors;\n- whether legacy SOTC storage implementation contributed;\n- why Safari Block All Cookies reduced visible event context and why reconnect behavior differed;\n- whether degraded modes should offer explicit guidance and when."
+            },
+            {
+              "id": "story-reconnect-confirmation-and-event-refresh",
+              "title": "Make reconnect confirmation and event return reflect recovered state",
+              "summary": "After Reconnect to My Event, tell the guest they were reconnected rather than newly checked in, acknowledge existing participation such as an active queue ticket, and ensure Back to Event immediately renders the recovered event/experience state without requiring a manual refresh.",
+              "status": "ready",
+              "sprint": "future",
+              "notes": "Added from 2026-08-25 SOTC baseline acceptance testing. Hannah Oswick successfully reconnected to an existing checked-in registration and existing Gathering ticket after browser data was cleared. The confirmation reused first-time check-in copy (including language telling her to join Headshot later even though she was already in the queue), and after Back to Event the Headshot experience was initially absent until the page was manually refreshed. Preserve the working recovery behavior; fix the confirmation semantics and immediate client-state refresh."
             }
           ]
         },

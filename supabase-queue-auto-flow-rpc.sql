@@ -127,7 +127,7 @@ begin
         )
       )
     )
-  );
+  ;
 
   select count(*)
   into standby_pool_count
@@ -151,7 +151,7 @@ begin
         )
       )
     )
-  );
+  ;
 
   select count(*)
   into waiting_eligible_count

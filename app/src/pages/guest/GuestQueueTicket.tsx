@@ -1212,16 +1212,17 @@ export default function GuestQueueTicketPage() {
     );
     const needsNearbyConfirmation = pilotStage === 'standby' && hasNearbyField && !nearbyConfirmed;
     const canMarkOnMyWay = pilotStage === 'standby' && !nearbyConfirmed && !isCurrentOnMyWay;
+    const defaultGatheringInstruction = isCurrentOnMyWay
+      ? "Great, qMe knows you're on your way. When you get to the station, tap I'm Nearby."
+      : "Tap I'm On My Way to let us know you're coming, then tap I'm Nearby when you arrive.";
     const defaultInstruction = pilotStage === 'standby'
       ? nearbyConfirmed
         ? "You're marked nearby. Keep this page open."
-        : guestDisplayState === 'on_my_way'
-        ? "When you get to the station, tap I'm Nearby."
-        : "When you get nearby, tap I'm Nearby."
+        : defaultGatheringInstruction
       : linkedEce?.description || queue.description || 'Keep this page open for the next step.';
     const instructionText = pilotStage === 'standby'
-      ? defaultInstruction
-      : metadataCopy.instruction ?? defaultInstruction;
+      ? metadataCopy.instruction || defaultInstruction
+      : metadataCopy.instruction || defaultInstruction;
     const statusCopy: Record<string, { title: string; detail: string }> = {
       waiting: {
         title: 'Waiting',
@@ -1229,9 +1230,9 @@ export default function GuestQueueTicketPage() {
       },
       standby: {
         title: 'Gathering',
-        detail: nearbyConfirmed
-          ? "You're nearby. Keep this page open."
-          : "Come nearby. When you get here, tap I'm Nearby.",
+        detail: pilotStage === 'standby' && isCurrentOnMyWay
+          ? "Great, qMe knows you're on your way. When you get to the station, tap I'm Nearby."
+          : "Tap I'm On My Way to let us know you're heading over, then tap I'm Nearby when you arrive.",
       },
       on_my_way: {
         title: 'On My Way',
@@ -1384,14 +1385,14 @@ export default function GuestQueueTicketPage() {
             </div>
           )}
 
-          {notHereNoticeActive && (
-            <div className="tkt-pilot-not-here-banner">
-              <strong>You were marked not here.</strong>{' '}
-              {needsNearbyConfirmation
-                ? "Tap I'm Nearby again when you are at the station and ready to be called."
-                : 'You are back in Waiting and will be invited again when there is room.'}
-            </div>
-          )}
+            {notHereNoticeActive && (
+              <div className="tkt-pilot-not-here-banner">
+                <strong>You were marked not here.</strong>{' '}
+                {needsNearbyConfirmation
+                  ? 'You were marked not here. Keep this page open and tap the button when you are at the station.'
+                  : 'You are back in Waiting and will be invited again when there is room.'}
+              </div>
+            )}
 
           {returnToWaitingNoticeActive && pilotStage === 'waiting' && !notHereNoticeActive && (
             <div className="tkt-pilot-return-banner">

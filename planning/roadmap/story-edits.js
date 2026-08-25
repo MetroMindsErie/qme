@@ -22,20 +22,23 @@ module.exports = {
   },
   additions: [
     {
-      id: "story-reconnect-confirmation-and-event-refresh",
-      epicId: "theme-guest-session-recovery",
-      title: "Make reconnect confirmation and event return reflect recovered state",
-      summary: "After Reconnect to My Event, tell the guest they were reconnected rather than newly checked in, acknowledge existing participation such as an active queue ticket, and ensure Back to Event immediately renders the recovered event/experience state without requiring a manual refresh.",
-      status: "ready",
-      sprint: "future",
-      notes: "Added from 2026-08-25 SOTC baseline acceptance testing. Hannah Oswick successfully reconnected to an existing checked-in registration and existing Gathering ticket after browser data was cleared. The confirmation reused first-time check-in copy (including language telling her to join Headshot later even though she was already in the queue), and after Back to Event the Headshot experience was initially absent until the page was manually refreshed. Preserve the working recovery behavior; fix the confirmation semantics and immediate client-state refresh."
+      epicId: "epic-post-sotc-sprint-3",
+      themeId: "theme-guest-session-recovery",
+      story: {
+        id: "story-reconnect-confirmation-and-event-refresh",
+        title: "Make reconnect confirmation and event return reflect recovered state",
+        summary: "After Reconnect to My Event, tell the guest they were reconnected rather than newly checked in, acknowledge existing participation such as an active queue ticket, and ensure Back to Event immediately renders the recovered event/experience state without requiring a manual refresh.",
+        status: "ready",
+        sprint: "future",
+        notes: "Added from 2026-08-25 SOTC baseline acceptance testing. Hannah Oswick successfully reconnected to an existing checked-in registration and existing Gathering ticket after browser data was cleared. The confirmation reused first-time check-in copy (including language telling her to join Headshot later even though she was already in the queue), and after Back to Event the Headshot experience was initially absent until the page was manually refreshed. Preserve the working recovery behavior; fix the confirmation semantics and immediate client-state refresh."
+      }
     }
   ],
   sprintMembership: [
     {
-      storyId: "story-reconnect-confirmation-and-event-refresh",
       sprintId: "future",
-      action: "add"
+      add: ["story-reconnect-confirmation-and-event-refresh"],
+      remove: []
     }
   ]
 };

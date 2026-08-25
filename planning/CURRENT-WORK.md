@@ -111,3 +111,12 @@ Report:
 - concise live acceptance steps.
 
 Do not mark either roadmap story done. Product Owner will close **Explain queue automation blockers to operators** and **Let Gathering guests say On My Way** after live acceptance.
+
+## Current Slice Status Update
+
+- Targeted implementation bug from commit `54cbf4a` (`waitingCoolingCount` / `waitingCooldownCount` mismatch) is not present in current main; both the calculation and render now use `waitingCoolingCount` in `app/src/pages/admin/AdminQueueDashboard.tsx`.
+- No additional product logic changes were made in this pass.
+
+Validation status:
+- `npm --prefix app test src/test/queueService.test.ts` ❌ blocked by local environment `EPERM` (`lstat 'C:\\Users\\ebcoo'`), command did not execute to completion.
+- `npm --prefix app run build` ❌ blocked by same local environment `EPERM` (`lstat 'C:\\Users\\ebcoo'`).

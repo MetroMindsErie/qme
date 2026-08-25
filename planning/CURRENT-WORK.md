@@ -87,4 +87,20 @@ Validate at minimum:
   - Initial full build attempt failed once with a local lock (`EBUSY`) while cleaning output, then reran successfully.
 - Next action: none for this slice.
 
+## Snapshot Restore Mechanism
+
+- Status: implemented as SQL only; not applied to Supabase and no restore executed from this environment.
+- Added `supabase-event-data-snapshot-restore.sql`, which installs `public.restore_event_dataset_snapshot(...)`.
+- Restore guardrails:
+  - superadmin-only via `public.is_qme_superadmin()`;
+  - same-event restore only: snapshot event id/source id and slug must match the target event;
+  - source snapshot must be `internal_baseline`;
+  - target event must not be archive locked;
+  - a unique safety snapshot is created through `public.create_event_dataset_snapshot(...)` before any restore deletes/inserts;
+  - deletes are scoped to the target event and its queue/session/check-in/ticket ids;
+  - `p_preserve_current_queue_config = true` preserves current queue control fields after baseline queue rows are restored.
+- Intended SOTC restore source for acceptance testing: `sotc-rockhall-internal-full-data-baseline-v2-headshot-credit-corrected`.
+- Intended safety snapshot key: `sotc-rockhall-pre-restore-2026-08-25-effective-gathering-acceptance`.
+- Expected baseline checks after manual restore: 132 event check-ins, 96 tickets, 105 guest-credit rows, Headshot Photographer queue restored from baseline operational data, and current queue configuration fields preserved.
+
 Run targeted validation plus full local TypeScript/Vite validation before completion. Do not change roadmap status; Billy/Product Owner will close the story after acceptance. Do not deploy without explicit Product Owner authorization. Update CURRENT-WORK with implementation/validation state and stop with one concise completion summary.

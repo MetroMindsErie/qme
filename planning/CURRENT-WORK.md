@@ -6,6 +6,12 @@ Finish Sprint 3 story `story-explain-queue-automation-blockers` — **Explain qu
 
 Read `AGENTS.md` first. Implementation is authorized. Keep this slice tightly bounded to the headline queue summary cards and directly related wording/tests. Do not redesign queue flow, change queue automation semantics, change guest flow, change roadmap status, deploy SQL, or alter production data.
 
+Current implementation status:
+- Added Waiting/Gathering headline subcounts in `app/src/pages/admin/AdminQueueDashboard.tsx`:
+  - Waiting shows `N COOLING` when cooldown count is non-zero.
+  - Gathering shows compact non-zero `OMW`, `NRBY`, and `STALE` subcounts computed with the same stale-window semantics used by auto-flow (nearby and current On My Way excluded from stale).
+- Next: run targeted validation/tests and confirm full app build before reporting final acceptance.
+
 ## Product Decision / Accepted Flow Behavior
 
 Live SOTC acceptance on 2026-08-25 confirmed:

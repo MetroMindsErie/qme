@@ -150,6 +150,15 @@ function getTicketWorkflowStageLabel(ticket: Ticket) {
   return formatQueueLabel(getTicketWorkflowStage(ticket));
 }
 
+function isGatheringStale(ticket: Ticket, staleAfterSeconds: number, nowMs = Date.now()) {
+  if ((ticket.stage ?? 'waiting') !== 'standby' || isNearbyConfirmed(ticket) || ticketHasCurrentOnMyWay(ticket)) return false;
+  if (staleAfterSeconds <= 0) return true;
+  const stageUpdatedAt = Date.parse(ticket.stage_updated_at ?? ticket.created_at ?? '');
+  return Number.isFinite(stageUpdatedAt)
+    ? stageUpdatedAt <= nowMs - staleAfterSeconds * 1000
+    : false;
+}
+
 function getCooldownRemainingSeconds(ticket: Ticket, cooldownSeconds: number) {
   if ((ticket.stage ?? 'waiting') !== 'waiting' || !ticket.gathering_snoozed_at || cooldownSeconds <= 0) return 0;
   const snoozedAt = Date.parse(ticket.gathering_snoozed_at);
@@ -624,9 +633,22 @@ export default function AdminQueueDashboard() {
     const gatheringMax = Math.max(standbyTarget, queue.gathering_max ?? standbyTarget + maxActive + 2);
     const staleAfterSeconds = queue.gathering_stale_after_seconds ?? 15;
     const notHereCooldownSeconds = queue.not_here_cooldown_seconds ?? 300;
+    const nowMs = Date.now();
     const canReleaseMore = activeReleased < maxActive;
     const nearbyConfirmedCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticket.stage === 'standby' && isNearbyConfirmed(ticket)).length;
     const onMyWayCount = pilotTickets.filter((ticket) => !isInactiveQueueTicket(ticket) && ticketHasCurrentOnMyWay(ticket)).length;
+    const staleGatheringCount = pilotTickets.filter((ticket) =>
+      !isInactiveQueueTicket(ticket) && isGatheringStale(ticket, staleAfterSeconds, nowMs)
+    ).length;
+    const waitingCoolingCount = pilotTickets.filter((ticket) => {
+      if (isInactiveQueueTicket(ticket) || (ticket.stage ?? 'waiting') !== 'waiting') return false;
+      return getCooldownRemainingSeconds(ticket, notHereCooldownSeconds) > 0;
+    }).length;
+    const gatheringSubcounts = [
+      onMyWayCount > 0 ? `${onMyWayCount} OMW` : '',
+      nearbyConfirmedCount > 0 ? `${nearbyConfirmedCount} NRBY` : '',
+      staleGatheringCount > 0 ? `${staleGatheringCount} STALE` : '',
+    ].filter(Boolean);
     const checkInById = eventCheckIns.reduce<Record<string, EventCheckIn>>((acc, checkIn) => {
       acc[checkIn.id] = checkIn;
       return acc;
@@ -888,7 +910,12 @@ export default function AdminQueueDashboard() {
                 <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', fontWeight: 800, color: '#6b7280' }}>{label}</div>
                 {stage === 'standby' && (
                   <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', marginTop: 2 }}>
-                    {nearbyConfirmedCount} nearby{onMyWayCount ? ` - ${onMyWayCount} on my way` : ''}
+                    {gatheringSubcounts.length > 0 ? gatheringSubcounts.join(' · ') : ''}
+                  </div>
+                )}
+                {stage === 'waiting' && (
+                  <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', marginTop: 2 }}>
+                    {waitingCoolingCount > 0 ? `${waitingCooldownCount} COOLING` : ''}
                   </div>
                 )}
               </div>

@@ -10,7 +10,12 @@ Current implementation status:
 - Added Waiting/Gathering headline subcounts in `app/src/pages/admin/AdminQueueDashboard.tsx`:
   - Waiting shows `N COOLING` when cooldown count is non-zero.
   - Gathering shows compact non-zero `OMW`, `NRBY`, and `STALE` subcounts computed with the same stale-window semantics used by auto-flow (nearby and current On My Way excluded from stale).
-- Next: run targeted validation/tests and confirm full app build before reporting final acceptance.
+- Validation results:
+  - `npm --prefix app test src/test/queueService.test.ts` — blocked in this environment with `EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`.
+  - `npm --prefix app run build` — blocked in this environment with `EPERM: operation not permitted, lstat 'C:\\Users\\ebcoo'`.
+- Fix applied:
+  - corrected Waiting render variable typo from `waitingCooldownCount` to `waitingCoolingCount` in `app/src/pages/admin/AdminQueueDashboard.tsx`.
+- Next: rerun targeted tests and full build in an environment without the EPERM restriction.
 
 ## Product Decision / Accepted Flow Behavior
 

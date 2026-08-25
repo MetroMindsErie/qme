@@ -915,7 +915,7 @@ export default function AdminQueueDashboard() {
                 )}
                 {stage === 'waiting' && (
                   <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#64748b', marginTop: 2 }}>
-                    {waitingCoolingCount > 0 ? `${waitingCooldownCount} COOLING` : ''}
+                    {waitingCoolingCount > 0 ? `${waitingCoolingCount} COOLING` : ''}
                   </div>
                 )}
               </div>

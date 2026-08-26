@@ -23,6 +23,11 @@ module.exports = {
       status: "done",
       notes:
         "Completed by live SOTC baseline acceptance on 2026-08-25. Operators can see Cooling Down with remaining time, Manual/Auto mode behavior, effective Gathering composition through compact OMW/NRBY/STALE subcounts, and Apply Flow/recovery behavior without treating raw stale Gathering as active capacity. Not Here and Return to Waiting were verified through cooldown back to ordinary Waiting. Effective Gathering replenishment was verified in Manual and Auto, including stale guests not starving invitations. Final On My Way acceptance also confirmed fresh OMW counts toward effective Target/Max while remaining non-callable until Nearby, and expired OMW becomes stale/recoverable rather than continuing to block capacity."
+    },
+    "story-station-operational-control-visibility": {
+      status: "done",
+      notes:
+        "Completed by Product Owner live acceptance on 2026-08-25. Event Admin/Superadmin Settings exposes Join Status, Run mode, Gathering Target/Max, Gathering stale timing, Not Here cooldown, and Active Released with explanatory copy. Product review clarified that station/check-in staff do not need read-only access to underlying queue configuration merely to operate the station; their Live Line already exposes the current operational condition through queue totals, OMW/NRBY/STALE readiness detail, Released active, guest Stage/State/timestamps, cooldown visibility, search/order, and authorized actions. Product principle: station operators should understand the current operational condition without needing access to the configuration that produces it. Final consistency acceptance added fresh OMW to the compact higher-level queue summary only when nonzero; live testing confirmed OMW appears while fresh and disappears on expiry while Gathering and Nearby totals remain correct."
     }
   },
   additions: [

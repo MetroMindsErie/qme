@@ -83,6 +83,34 @@ const QME_ROADMAP = {
   ],
   "completedSprints": [
     {
+      "id": "completed-sprint-3-post-sotc-operational-hardening",
+      "title": "Completed: Sprint 3 Post-SOTC Operational Hardening",
+      "completedDate": "2026-08-25",
+      "goal": "Turn the July 22 SOTC production learning into a more reliable operating system: preserve production evidence, create an internal full-data baseline, improve guest recovery, add admin CSV exports, evaluate SMS costs/compliance, and make operator controls more visible without starting broad new platform expansion.",
+      "summary": "Sprint 3 converted Rock Hall production evidence into a substantially more operable qME baseline. Production data is preserved and resettable for testing; attendance and Headshot activity can be exported; lost browser identity can reconnect to authoritative server-side participation; queue Stage/State/history, authorized overrides, cooldown, stale Gathering, Manual/Auto flow, On My Way, Nearby, and capacity behavior were exercised live; and operators now see meaningful queue conditions without needing unnecessary configuration access. SMS feasibility was resolved as a future event-triggered GO rather than an immediate implementation. One storage-health/contact prompt was intentionally deferred after testing showed recovery identity and browser persistence are separate problems.",
+      "storyIds": [
+        "story-sotc-production-archive-and-baselines",
+        "story-sotc-admin-csv-exports",
+        "story-guest-session-persistence-diagnostics",
+        "story-already-checked-in-recovery",
+        "story-storage-health-recovery-contact-prompt",
+        "story-sms-cost-compliance-feasibility",
+        "story-admin-guest-search-state-reconciliation",
+        "story-authorized-queue-state-overrides",
+        "story-queue-automation-observability",
+        "story-station-operational-control-visibility",
+        "story-guest-on-my-way-action"
+      ],
+      "notes": [
+        "Archive/Baseline and reporting work preserved the July 22 SOTC record while keeping sotc-rockhall usable as an internal full-data acceptance environment.",
+        "Guest recovery now treats browser/localStorage identity as a hint and authoritative server-side check-in, queue, credit, and completion data as truth.",
+        "Queue operations were live-accepted across Waiting, Gathering, On My Way, Nearby, Your Turn, Completed, Not Here, Return to Waiting/cooldown, stale recovery, and authorized overrides.",
+        "Fresh On My Way is an affirmative Gathering commitment that counts toward effective Target/Max but is not callable until Nearby; expired OMW becomes stale/recoverable and no longer displays as current OMW.",
+        "Station staff remain focused on current operational condition rather than underlying Event Admin configuration; compact summaries and Live Line expose the readiness information needed to operate.",
+        "The storage-health/recovery-contact prompt is intentionally deferred; SMS remains a future event-need-driven implementation rather than active Sprint 3 delivery."
+      ]
+    },
+    {
       "id": "completed-sprint-2-foundation",
       "title": "Completed: Sprint 2 Organization, Roles, Auth, and RLS Foundation",
       "completedDate": "2026-07-01",

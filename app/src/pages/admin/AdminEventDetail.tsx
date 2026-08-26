@@ -52,6 +52,7 @@ type CheckInSummary = {
 type QueueSummary = {
   waiting: number;
   gathering: number;
+  onMyWay: number;
   nearby: number;
   released: number;
   completed: number;
@@ -60,10 +61,12 @@ type QueueSummary = {
 type AdminEventTab = 'operations' | 'staff' | 'setup';
 
 const EVENT_STAFF_ROLE = 'check_in_staff' as const;
+const DEFAULT_GATHERING_STALE_SECONDS = 15;
 
 const emptyQueueSummary: QueueSummary = {
   waiting: 0,
   gathering: 0,
+  onMyWay: 0,
   nearby: 0,
   released: 0,
   completed: 0,
@@ -80,7 +83,29 @@ function summarizeCheckIns(checkIns: EventCheckIn[]): CheckInSummary {
   );
 }
 
-function summarizeQueueTickets(tickets: Ticket[]): QueueSummary {
+function isInactiveQueueTicket(ticket: Ticket) {
+  const stage = ticket.stage ?? 'waiting';
+  return ticket.status === 'left' || ticket.status === 'served' || stage === 'left' || stage === 'cancelled';
+}
+
+function ticketHasCurrentOnMyWay(ticket: Ticket, staleAfterSeconds: number, nowMs = Date.now()) {
+  if (
+    (ticket.stage ?? 'waiting') !== 'standby'
+    || !ticket.on_my_way_at
+    || ticket.nearby_confirmed_at
+    || staleAfterSeconds <= 0
+  ) return false;
+  const onMyWayTime = Date.parse(ticket.on_my_way_at);
+  return Number.isFinite(onMyWayTime)
+    ? onMyWayTime >= nowMs - staleAfterSeconds * 1000
+    : false;
+}
+
+function summarizeQueueTickets(
+  tickets: Ticket[],
+  staleAfterSeconds = DEFAULT_GATHERING_STALE_SECONDS,
+  nowMs = Date.now()
+): QueueSummary {
   return tickets.reduce<QueueSummary>(
     (summary, ticket) => {
       const stage = ticket.stage ?? 'waiting';
@@ -88,11 +113,13 @@ function summarizeQueueTickets(tickets: Ticket[]): QueueSummary {
         summary.completed += 1;
         return summary;
       }
-      if (ticket.status === 'left' || ticket.status === 'served') return summary;
-      if (stage === 'left' || stage === 'cancelled') return summary;
+      if (isInactiveQueueTicket(ticket)) return summary;
       if (stage === 'waiting') summary.waiting += 1;
       if (stage === 'standby' && ticket.nearby_confirmed_at) summary.nearby += 1;
-      if (stage === 'standby' && !ticket.nearby_confirmed_at) summary.gathering += 1;
+      if (stage === 'standby' && !ticket.nearby_confirmed_at) {
+        summary.gathering += 1;
+        if (ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)) summary.onMyWay += 1;
+      }
       if (stage === 'released') summary.released += 1;
       return summary;
     },
@@ -183,14 +210,23 @@ export default function AdminEventDetail() {
       ]);
       const queueSummaryPairs = await Promise.all(
         qs.map(async (queue) => {
+          const staleAfterSeconds = queue.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS;
           try {
             const summary = await getQueueStageSummary(queue.id);
-            return [queue.id, summary] as const;
+            const tickets = await listQueuePilotTickets(queue.id);
+            return [
+              queue.id,
+              {
+                ...emptyQueueSummary,
+                ...summary,
+                onMyWay: summarizeQueueTickets(tickets, staleAfterSeconds).onMyWay,
+              },
+            ] as const;
           } catch (error) {
             console.warn('Could not load queue summary', queue.id, error);
             try {
               const tickets = await listQueuePilotTickets(queue.id);
-              return [queue.id, summarizeQueueTickets(tickets)] as const;
+              return [queue.id, summarizeQueueTickets(tickets, staleAfterSeconds)] as const;
             } catch {
               return [queue.id, { ...emptyQueueSummary }] as const;
             }
@@ -795,6 +831,9 @@ export default function AdminEventDetail() {
                   <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.65rem' }}>
                     <StatusPill label="Waiting" value={queueSummary.waiting} tone={queueSummary.waiting > 0 ? 'attention' : 'default'} />
                     <StatusPill label="Gathering" value={queueSummary.gathering} tone={queueSummary.gathering > 0 ? 'active' : 'default'} />
+                    {queueSummary.onMyWay > 0 && (
+                      <StatusPill label="OMW" value={queueSummary.onMyWay} tone="active" />
+                    )}
                     <StatusPill label="Nearby" value={queueSummary.nearby} tone={queueSummary.nearby > 0 ? 'ready' : 'default'} />
                     <StatusPill label="Your Turn" value={queueSummary.released} tone={queueSummary.released > 0 ? 'active' : 'default'} />
                     <StatusPill label="Done" value={queueSummary.completed} tone="done" />

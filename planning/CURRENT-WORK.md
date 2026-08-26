@@ -76,3 +76,9 @@ No SQL changes are expected. Do not apply SQL to Supabase.
 Report exact files changed, validation results, commit SHA, and whether any unexpected permission/configuration change was necessary.
 
 Do not mark the story done. Product Owner will close **Make station operational controls visible and understandable** after live acceptance of the compact OMW summary.
+
+## Current Slice Status Update
+
+- Compact admin event overview queue summaries now include an `OMW` chip only when one or more fresh/current On My Way guests exist.
+- The OMW count uses the accepted current-state freshness rule from `on_my_way_at` and the queue Gathering stale seconds; expired OMW drops out of the chip.
+- No Settings tab, permission, queue-flow, or SQL changes were made.

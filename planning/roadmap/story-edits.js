@@ -18,6 +18,11 @@ module.exports = {
       status: "done",
       notes:
         "Sprint 3 discovery complete 2026-08-21. Product decision: GO when a confirmed event need warrants SMS recall; do not implement or purchase sender infrastructure now. Twilio Programmable Messaging is technically appropriate for backend-triggered queue-status alerts, and expected per-message operating cost is low enough that cost is not a blocker at qME event scale. SMS should remain an optional recall/notification channel; in-app/server-side queue state remains authoritative. Future implementation should use explicit guest opt-in, STOP/HELP handling, secure server-side sends, delivery logging, and duplicate-send prevention. July 14 Twilio correspondence stated that the submitted queue-status A2P 10DLC use case/campaign had been approved, but the Twilio console reviewed on 2026-08-21 is still a Trial account and currently shows no Twilio phone number, no Messaging Service, and no visible A2P campaign; resolve that account/setup discrepancy only when SMS is actually needed. The Twilio account used for this work is under ebcooper@growU.biz. No Twilio upgrade, number purchase, or Messaging Service creation is authorized at this time."
+    },
+    "story-queue-automation-observability": {
+      status: "done",
+      notes:
+        "Completed by live SOTC baseline acceptance on 2026-08-25. Operators can see Cooling Down with remaining time, Manual/Auto mode behavior, effective Gathering composition through compact OMW/NRBY/STALE subcounts, and Apply Flow/recovery behavior without treating raw stale Gathering as active capacity. Not Here and Return to Waiting were verified through cooldown back to ordinary Waiting. Effective Gathering replenishment was verified in Manual and Auto, including stale guests not starving invitations. Final On My Way acceptance also confirmed fresh OMW counts toward effective Target/Max while remaining non-callable until Nearby, and expired OMW becomes stale/recoverable rather than continuing to block capacity."
     }
   },
   additions: [
@@ -40,7 +45,7 @@ module.exports = {
         id: "story-guest-on-my-way-action",
         title: "Let Gathering guests say On My Way",
         summary: "Give a guest who has been invited to Gathering an explicit On My Way action so qME can distinguish an acknowledged commitment from an unanswered invitation before the guest becomes Nearby.",
-        status: "current",
+        status: "done",
         sprint: "now",
         acceptanceCriteria: [
           "A guest in Gathering can explicitly mark On My Way before marking Nearby.",
@@ -50,7 +55,7 @@ module.exports = {
           "Admin history records the guest On My Way transition consistently with other Stage/State transitions.",
           "Initial implementation may use the existing Gathering stale timing; a distinct longer On My Way stale policy should be introduced only if event evidence justifies it."
         ],
-        notes: "Pulled into Sprint 3 on 2026-08-25 after acceptance testing exposed a real mismatch: admin/UI could show On My Way, but `run_queue_pilot_flow` did not explicitly count current On My Way as effective Gathering, so Apply Flow replenished as if that commitment did not exist. Complete the guest-facing action and align queue-flow capacity semantics now so On My Way is a real operational signal end to end. Product intent remains Invited/unconfirmed -> On My Way -> Nearby, with On My Way representing an affirmative commitment that counts toward effective Gathering but is not callable."
+        notes: "Completed by live SOTC acceptance on 2026-08-25. Guest-facing I'm On My Way is available from Gathering, starts a fresh OMW window using the configured Gathering stale duration, counts toward effective Target/Max while fresh, remains non-callable until Nearby, and transitions cleanly OMW -> Nearby. Capacity acceptance with 1 OMW + 2 Nearby + 4 stale confirmed one Nearby released and exactly five new invitations, proving OMW counted correctly. Expired OMW remains Gathering/recoverable, moves from OMW to STALE operationally, no longer displays as current On My Way, and open guest/main-event surfaces now re-evaluate automatically at the freshness deadline. Approved Gathering guidance is: Let us know when you're heading over by tapping I'm On My Way. When you arrive at the station, tap I'm Nearby."
       }
     }
   ],

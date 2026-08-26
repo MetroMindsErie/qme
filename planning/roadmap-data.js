@@ -1554,7 +1554,7 @@ const QME_ROADMAP = {
             {
               "id": "story-station-operational-control-visibility",
               "title": "Make station operational controls visible and understandable",
-              "status": "current",
+              "status": "done",
               "sprint": "now",
               "summary": "Expose station-level operating settings in a way staff can understand, while preserving edit permissions for the appropriate authority level.",
               "acceptanceCriteria": [
@@ -1565,7 +1565,7 @@ const QME_ROADMAP = {
                 "Read-only controls explain why they are locked for the current role.",
                 "Settings use operational labels that match the guest queue language."
               ],
-              "notes": "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed that hidden queue settings made correct behavior look broken. Station staff need to understand why the line behaves as it does, even when only Event Admin or higher can change the controls."
+              "notes": "Completed by Product Owner live acceptance on 2026-08-25. Event Admin/Superadmin Settings exposes Join Status, Run mode, Gathering Target/Max, Gathering stale timing, Not Here cooldown, and Active Released with explanatory copy. Product review clarified that station/check-in staff do not need read-only access to underlying queue configuration merely to operate the station; their Live Line already exposes the current operational condition through queue totals, OMW/NRBY/STALE readiness detail, Released active, guest Stage/State/timestamps, cooldown visibility, search/order, and authorized actions. Product principle: station operators should understand the current operational condition without needing access to the configuration that produces it. Final consistency acceptance added fresh OMW to the compact higher-level queue summary only when nonzero; live testing confirmed OMW appears while fresh and disappears on expiry while Gathering and Nearby totals remain correct."
             },
             {
               "id": "story-queue-automation-observability",

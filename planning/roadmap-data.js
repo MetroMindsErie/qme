@@ -338,7 +338,7 @@ const QME_ROADMAP = {
               "id": "story-guest-on-my-way-action",
               "title": "Let Gathering guests say On My Way",
               "summary": "Give a guest who has been invited to Gathering an explicit On My Way action so qME can distinguish an acknowledged commitment from an unanswered invitation before the guest becomes Nearby.",
-              "status": "current",
+              "status": "done",
               "sprint": "now",
               "acceptanceCriteria": [
                 "A guest in Gathering can explicitly mark On My Way before marking Nearby.",
@@ -348,7 +348,7 @@ const QME_ROADMAP = {
                 "Admin history records the guest On My Way transition consistently with other Stage/State transitions.",
                 "Initial implementation may use the existing Gathering stale timing; a distinct longer On My Way stale policy should be introduced only if event evidence justifies it."
               ],
-              "notes": "Pulled into Sprint 3 on 2026-08-25 after acceptance testing exposed a real mismatch: admin/UI could show On My Way, but `run_queue_pilot_flow` did not explicitly count current On My Way as effective Gathering, so Apply Flow replenished as if that commitment did not exist. Complete the guest-facing action and align queue-flow capacity semantics now so On My Way is a real operational signal end to end. Product intent remains Invited/unconfirmed -> On My Way -> Nearby, with On My Way representing an affirmative commitment that counts toward effective Gathering but is not callable."
+              "notes": "Completed by live SOTC acceptance on 2026-08-25. Guest-facing I'm On My Way is available from Gathering, starts a fresh OMW window using the configured Gathering stale duration, counts toward effective Target/Max while fresh, remains non-callable until Nearby, and transitions cleanly OMW -> Nearby. Capacity acceptance with 1 OMW + 2 Nearby + 4 stale confirmed one Nearby released and exactly five new invitations, proving OMW counted correctly. Expired OMW remains Gathering/recoverable, moves from OMW to STALE operationally, no longer displays as current On My Way, and open guest/main-event surfaces now re-evaluate automatically at the freshness deadline. Approved Gathering guidance is: Let us know when you're heading over by tapping I'm On My Way. When you arrive at the station, tap I'm Nearby."
             }
           ]
         }
@@ -1570,7 +1570,7 @@ const QME_ROADMAP = {
             {
               "id": "story-queue-automation-observability",
               "title": "Explain queue automation blockers to operators",
-              "status": "current",
+              "status": "done",
               "sprint": "now",
               "summary": "When automation does not move a guest, show the reason so staff know whether the queue is working, cooling down, paused, full, or blocked by eligibility.",
               "acceptanceCriteria": [
@@ -1581,7 +1581,7 @@ const QME_ROADMAP = {
                 "Apply Flow feedback reports when no movement happened and why.",
                 "Not Here recovery follows the policy: cooldown, return to active Waiting, then normal progression by original queue order with no extra punishment."
               ],
-              "notes": "Added from July 8 Alpha 2/Product Discovery review. Alpha testing showed the queue engine could be behaving correctly while operators thought it was stuck because the cooldown timer and other blockers were invisible. qME should explain automation decisions, not make staff infer them."
+              "notes": "Completed by live SOTC baseline acceptance on 2026-08-25. Operators can see Cooling Down with remaining time, Manual/Auto mode behavior, effective Gathering composition through compact OMW/NRBY/STALE subcounts, and Apply Flow/recovery behavior without treating raw stale Gathering as active capacity. Not Here and Return to Waiting were verified through cooldown back to ordinary Waiting. Effective Gathering replenishment was verified in Manual and Auto, including stale guests not starving invitations. Final On My Way acceptance also confirmed fresh OMW counts toward effective Target/Max while remaining non-callable until Nearby, and expired OMW becomes stale/recoverable rather than continuing to block capacity."
             },
             {
               "id": "story-stale-queue-blocker-recovery",

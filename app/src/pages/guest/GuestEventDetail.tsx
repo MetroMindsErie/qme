@@ -37,6 +37,7 @@ interface QueueWithMeta extends Queue {
   _myTicket?: string;
   _myStage?: Ticket['stage'];
   _myStateLabel?: string;
+  _myTicketRow?: Ticket;
   _nowServing?: number;
   _waitingCount?: number;
 }
@@ -239,11 +240,12 @@ function ticketHasCurrentOnMyWay(
 
 function queueTicketStateStatus(
   ticket: Ticket | null | undefined,
-  staleAfterSeconds: number
+  staleAfterSeconds: number,
+  nowMs = Date.now()
 ): string {
   const stage = ticket?.stage ?? 'waiting';
   if (stage === 'standby' && ticket?.nearby_confirmed_at) return 'Nearby';
-  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds)) return 'On My Way';
+  if (stage === 'standby' && ticketHasCurrentOnMyWay(ticket, staleAfterSeconds, nowMs)) return 'On My Way';
   return queueStageStatus(stage);
 }
 
@@ -462,6 +464,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
 
   const [event, setEvent] = useState<QEvent | null>(null);
   const [queues, setQueues] = useState<QueueWithMeta[]>([]);
+  const [freshnessNowMs, setFreshnessNowMs] = useState(() => Date.now());
   const [eces, setEces] = useState<Ece[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState('just now');
@@ -542,6 +545,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             let ticket = getStoredQueueTicketNumber(q.id);
             let ticketStage: Ticket['stage'];
             let ticketStateLabel: string | undefined;
+            let currentTicketRow: Ticket | undefined;
             let tickets: Ticket[] = [];
             let didLoadTickets = false;
             try {
@@ -559,6 +563,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 } else {
                   ticket = String(ticketRow.ticket_number ?? ticketRow.id);
                   ticketStage = ticketRow.stage;
+                  currentTicketRow = ticketRow;
                   ticketStateLabel = queueTicketStateStatus(
                     ticketRow,
                     q.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS
@@ -577,6 +582,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 if (isAdoptableQueueTicket(recoveredTicket)) {
                   ticket = String(recoveredTicket.ticket_number ?? recoveredTicket.id);
                   ticketStage = recoveredTicket.stage;
+                  currentTicketRow = recoveredTicket;
                   ticketStateLabel = queueTicketStateStatus(
                     recoveredTicket,
                     q.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS
@@ -602,7 +608,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 waitingCount = Math.max(0, Number(ticket || 0) - ns + 1);
               }
             }
-            return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _myStateLabel: ticketStateLabel, _nowServing: ns, _waitingCount: waitingCount };
+            return { ...q, _myTicket: ticket || undefined, _myStage: ticketStage, _myStateLabel: ticketStateLabel, _myTicketRow: currentTicketRow, _nowServing: ns, _waitingCount: waitingCount };
           })
       );
       const nextQueues = enriched.filter((q) => {
@@ -651,6 +657,32 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
   const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
   const checkInConfig = getEventCheckInConfig(event);
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
+
+  useEffect(() => {
+    const nextDelayMs = queues.reduce<number | null>((nextDelay, queue) => {
+      const ticket = queue._myTicketRow;
+      const staleAfterSeconds = queue.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS;
+      if (
+        !ticket
+        || (ticket.stage ?? 'waiting') !== 'standby'
+        || !ticket.on_my_way_at
+        || ticket.nearby_confirmed_at
+        || staleAfterSeconds <= 0
+        || !ticketHasCurrentOnMyWay(ticket, staleAfterSeconds)
+      ) return nextDelay;
+
+      const onMyWayTime = Date.parse(ticket.on_my_way_at);
+      if (!Number.isFinite(onMyWayTime)) return nextDelay;
+
+      const delayMs = Math.max(0, onMyWayTime + staleAfterSeconds * 1000 - Date.now() + 50);
+      return nextDelay === null ? delayMs : Math.min(nextDelay, delayMs);
+    }, null);
+
+    if (nextDelayMs === null) return;
+
+    const timeout = window.setTimeout(() => setFreshnessNowMs(Date.now()), nextDelayMs);
+    return () => window.clearTimeout(timeout);
+  }, [queues, freshnessNowMs]);
   const isEventCheckInRemoved = eventCheckInStatus === 'cancelled';
   const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus && !isEventCheckInRemoved);
   const isWaitingForHostCheckIn = hasSubmittedEventCheckIn && !hasEventCheckIn;
@@ -768,10 +800,17 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             const creditUsed = isHeadshot && headshotCreditStatus === 'used' && !hasTicket;
             const joinPaused = (q.join_status ?? 'open') !== 'open' && !hasTicket;
             const canJoin = !hasTicket && !isCompleted && !participationLocked && !creditLocked && !creditUsed && !joinPaused;
+            const stateLabel = q._myTicketRow
+              ? queueTicketStateStatus(
+                  q._myTicketRow,
+                  q.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS,
+                  freshnessNowMs
+                )
+              : q._myStateLabel;
             const statusLine = queueCardStatusLine({
               hasTicket,
               stage: q._myStage,
-              stateLabel: q._myStateLabel,
+              stateLabel,
               creditUsed,
               participationLocked,
               creditLocked,
@@ -868,10 +907,17 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             const homeItemsLayout = getEceHomeItemsLayout(exp);
             const homeItems = getEceHomeItems(exp);
             const hasLogoLinks = homeItemsLayout === 'logo_links';
+            const stateLabel = linkedQueue?._myTicketRow
+              ? queueTicketStateStatus(
+                  linkedQueue._myTicketRow,
+                  linkedQueue.gathering_stale_after_seconds ?? DEFAULT_GATHERING_STALE_SECONDS,
+                  freshnessNowMs
+                )
+              : linkedQueue?._myStateLabel;
             const statusLine = linkedQueue ? queueCardStatusLine({
               hasTicket,
               stage: linkedQueue._myStage,
-              stateLabel: linkedQueue._myStateLabel,
+              stateLabel,
               creditUsed,
               participationLocked,
               creditLocked,

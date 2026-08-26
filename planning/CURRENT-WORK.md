@@ -131,4 +131,5 @@ Do not mark either roadmap story done. Product Owner will close **Explain queue 
 - Live OMW -> Nearby acceptance passed.
 - Live 60-second stale test passed for headline/capacity semantics: OMW dropped out, STALE increased, raw Gathering stayed unchanged.
 - Final app-only copy/current-state helper fixes committed in `1cf540c`; Vercel deployment succeeded.
-- New live acceptance result after `1cf540c`: admin headline correctly ages OMW to STALE, but an already-open guest ticket still displays `On My Way` after the deadline. This final rerender/invalidation defect remains open.
+- Final time-based invalidation fix implemented: already-open guest ticket and main event card surfaces schedule a lightweight client rerender at the OMW freshness deadline so current display re-evaluates from `on_my_way_at` without refresh or server mutation.
+- No SQL changes were made for this final fix; no Supabase SQL rerun is expected.

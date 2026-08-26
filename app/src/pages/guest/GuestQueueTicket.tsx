@@ -206,6 +206,7 @@ export default function GuestQueueTicketPage() {
   const [guestLastName, setGuestLastName] = useState('');
   const [guestNameSaved, setGuestNameSaved] = useState(false);
   const [pilotTicket, setPilotTicket] = useState<Ticket | null>(null);
+  const [freshnessNowMs, setFreshnessNowMs] = useState(() => Date.now());
   const [completionCode, setCompletionCode] = useState('');
   const [completionError, setCompletionError] = useState('');
   const [completionSaving, setCompletionSaving] = useState(false);
@@ -341,6 +342,30 @@ export default function GuestQueueTicketPage() {
     setReturnToWaitingNoticeActive(false);
     if (tId) localStorage.removeItem(returnToWaitingStorageKey(tId));
   }, [ticketId]);
+
+  useEffect(() => {
+    const ticket = pilotTicket;
+    if (
+      !ticket
+      || (ticket.stage ?? 'waiting') !== 'standby'
+      || !ticket.on_my_way_at
+      || ticket.nearby_confirmed_at
+      || gatheringStaleAfterSeconds <= 0
+      || !ticketHasCurrentOnMyWay(ticket, gatheringStaleAfterSeconds)
+    ) return;
+
+    const onMyWayTime = Date.parse(ticket.on_my_way_at);
+    if (!Number.isFinite(onMyWayTime)) return;
+
+    const delayMs = Math.max(0, onMyWayTime + gatheringStaleAfterSeconds * 1000 - Date.now() + 50);
+    const timeout = window.setTimeout(() => setFreshnessNowMs(Date.now()), delayMs);
+    return () => window.clearTimeout(timeout);
+  }, [
+    pilotTicket?.stage,
+    pilotTicket?.on_my_way_at,
+    pilotTicket?.nearby_confirmed_at,
+    gatheringStaleAfterSeconds,
+  ]);
 
   useEffect(() => {
     if (!queue) return;
@@ -1203,12 +1228,12 @@ export default function GuestQueueTicketPage() {
     const isCurrentOnMyWay = ticketHasCurrentOnMyWay(
       pilotTicket,
       gatheringStaleAfterSeconds,
-      Date.now()
+      freshnessNowMs
     );
     const guestDisplayState = getPilotDisplayState(
       pilotTicket,
       gatheringStaleAfterSeconds,
-      Date.now()
+      freshnessNowMs
     );
     const needsNearbyConfirmation = pilotStage === 'standby' && hasNearbyField && !nearbyConfirmed;
     const canMarkOnMyWay = pilotStage === 'standby' && !nearbyConfirmed && !isCurrentOnMyWay;

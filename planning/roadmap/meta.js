@@ -1,8 +1,8 @@
 module.exports = {
   "product": "qME",
   "workspace": "Product roadmap and sprint planning",
-  "updated": "2026-08-19",
-  "immediateGoal": "Use the July 22 SOTC Rock Hall production event as the evidence base for Sprint 3: operational hardening, recovery, reporting, archive/baseline setup, and selective product discovery before adding broad new platform features.",
+  "updated": "2026-08-31",
+  "immediateGoal": "With Sprint 3 operational hardening complete, review concrete experience types and decide which configuration deserves productization, starting with Check-In, Headshots, Food & Beverage, Resume Reviews, and lightweight event content.",
   "eventAnchor": {
     "organization": "Summer on the Cuyahoga",
     "event": "SOTC Rock Hall Mixer",

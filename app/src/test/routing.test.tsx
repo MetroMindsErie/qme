@@ -20,6 +20,7 @@ vi.mock('../pages/admin/AdminGroupOrderDashboard', () => ({ default: () => <div 
 
 vi.mock('../pages/guest/GuestEventDetail', () => ({ default: () => <div data-testid="guest-event-detail" /> }));
 vi.mock('../pages/guest/GuestEventCheckIn', () => ({ default: () => <div data-testid="guest-event-check-in" /> }));
+vi.mock('../pages/guest/GuestEventList', () => ({ default: () => <div data-testid="guest-event-list" /> }));
 vi.mock('../pages/guest/GuestQueueTicket', () => ({ default: () => <div data-testid="guest-queue-ticket" /> }));
 vi.mock('../pages/demo/KioskDisplay', () => ({ default: () => <div data-testid="kiosk-display" /> }));
 
@@ -78,8 +79,13 @@ describe('App routing', () => {
     mockGetCurrentAdminPrincipal.mockReset();
   });
 
-  it('/ and /demo land on the demo event', () => {
+  it('/ renders the event directory', () => {
     renderAt('/');
+    expect(screen.getByTestId('guest-event-list')).toBeInTheDocument();
+  });
+
+  it('/demo lands on the demo event', () => {
+    renderAt('/demo');
     expect(screen.getByTestId('guest-event-detail')).toBeInTheDocument();
   });
 
@@ -88,7 +94,7 @@ describe('App routing', () => {
     expect(screen.getByTestId('guest-event-detail')).toBeInTheDocument();
   });
 
-  it('/events/:slug redirects non-demo events to the demo event', () => {
+  it('/events/:slug renders event detail for any event slug', () => {
     renderAt('/events/food-truck-fest');
     expect(screen.getByTestId('guest-event-detail')).toBeInTheDocument();
   });

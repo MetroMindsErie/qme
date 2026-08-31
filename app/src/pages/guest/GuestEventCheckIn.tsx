@@ -72,11 +72,17 @@ export default function GuestEventCheckIn({
   const [registrationSearching, setRegistrationSearching] = useState(false);
   const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
   const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
-  const useImportedRegistrationLookup = !checkInCode && isSotcEventSlug(event?.slug);
-  const pageIntro = useImportedRegistrationLookup
+  const checkInConfig = getEventCheckInConfig(event);
+  const useImportedRegistrationLookup = !checkInCode
+    && (checkInConfig.importedRegistrationLookupEnabled || isSotcEventSlug(event?.slug));
+  const useSelfRegistrationFallback = useImportedRegistrationLookup && checkInConfig.selfRegistrationFallbackEnabled;
+  const selfRegistrationRequiresEmail = checkInConfig.selfRegistrationRequiredFields.includes('email');
+  const pageIntro = useImportedRegistrationLookup && isSotcEventSlug(event?.slug)
     ? 'Find your registration to self check in. After checking in, stop at the registration desk to pick up your name tag.'
+    : useImportedRegistrationLookup
+    ? 'Find your registration to self check in.'
     : intro;
-  const completedConfirmation = useImportedRegistrationLookup
+  const completedConfirmation = useImportedRegistrationLookup && isSotcEventSlug(event?.slug)
     ? 'You are checked in. Please stop at the registration desk to pick up your name tag. If your registration includes a headshot, join the Headshot Photographer queue when you are ready.'
     : confirmation;
 
@@ -143,6 +149,10 @@ export default function GuestEventCheckIn({
         setError('Please enter a valid email address or leave email blank.');
         return;
       }
+      if (selfRegistrationRequiresEmail && !trimmedEmail) {
+        setError('Please enter the email address for this registration.');
+        return;
+      }
       if (trimmedPhone && !isValidPhone(trimmedPhone)) {
         setError('Please enter a 10-digit U.S. phone number, an international number starting with +, or leave phone blank.');
         return;
@@ -154,7 +164,7 @@ export default function GuestEventCheckIn({
         code: checkInCode,
         email: trimmedEmail || null,
         phone: normalizedPhone || null,
-        needsHelp: useImportedRegistrationLookup,
+        needsHelp: useImportedRegistrationLookup && !useSelfRegistrationFallback,
       });
       const row = shouldAutoComplete
         ? await checkInEventGuest(created.id, 'general', event.id)
@@ -217,7 +227,9 @@ export default function GuestEventCheckIn({
       const results = await searchImportedRegistrationsForGuest(event.id, trimmedQuery);
       setRegistrationResults(results);
       if (results.length === 0) {
-        setError('No matching registration was found. Try your first or last name, or see the event team.');
+        setError(useSelfRegistrationFallback
+          ? 'No matching registration was found. Try your first or last name, or register below.'
+          : 'No matching registration was found. Try your first or last name, or see the event team.');
       }
     } catch (err) {
       console.error('Registration search failed', err);
@@ -340,7 +352,6 @@ export default function GuestEventCheckIn({
     setError('');
   }
 
-  const checkInConfig = getEventCheckInConfig(event);
   const isRemovedCheckIn = checkIn?.status === 'cancelled';
   const isWaitingForHostCheckIn = submitted
     && checkInConfig.requireCompletedForParticipation
@@ -566,8 +577,29 @@ export default function GuestEventCheckIn({
                   style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
                 />
 
+                {useSelfRegistrationFallback && (
+                  <>
+                    <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+                      Email {selfRegistrationRequiresEmail ? null : <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span>}
+                    </label>
+                    <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      placeholder="name@example.com"
+                      required={selfRegistrationRequiresEmail}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
+                    />
+                    <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
+                      Used only for this event registration and check-in recovery.
+                    </div>
+                  </>
+                )}
+
                 <button className="actionBtn actionBtn-primary" type="submit" style={{ margin: 0 }} disabled={saving}>
-                  {saving ? 'Submitting...' : 'Ask event team for help'}
+                  {saving ? 'Submitting...' : useSelfRegistrationFallback ? 'Register & Check In' : 'Ask event team for help'}
                 </button>
               </form>
             </details>

@@ -110,3 +110,16 @@ Report:
 - concise live acceptance steps.
 
 Do not mark the i-Pitch story done until Product Owner live acceptance and the real Eventbrite list have been loaded/verified.
+
+## Current Slice Status Update
+
+- Pulled latest `origin/main` on 2026-08-31 and inspected the Check-In/i-Pitch story plus the existing Check-In guest/admin implementation.
+- Existing Check-In Mode is configured on event `metadata.check_in` as `completion_mode` (`auto`, `staff`, or `none`) plus `require_completed_for_participation`, exposed on event setup and admin Check-In Settings.
+- Imported registration lookup already exists through `search_event_imported_registrations_for_guest`, claim through `create_event_check_in_from_imported_registration_for_guest`, and recovery through `reconnect_event_check_in_from_imported_registration_for_guest`; duplicate-name selections require email confirmation, and already-linked registrations reconnect only for the same guest session or fail closed.
+- Prior to this slice, imported-registration lookup was effectively SOTC-specific in the guest UI, and the "Can't find your registration?" path created a Needs Help waiting row instead of letting an unlisted guest self-register and immediately complete check-in.
+- Implemented a generic Check-In configuration extension for imported-registration lookup and self-registration fallback: admins can enable imported lookup, enable unlisted self-registration, and require email for self-registration. For i-Pitch, set Check-In Mode to `auto`, enable imported lookup, enable self-registration fallback, and require email.
+- The reusable guest fallback now uses first name, last name, and configured email, then creates the normal guest event check-in; in `auto` mode it immediately completes the check-in as `general`, making the unlisted guest visible in the same admin attendance/history shape as imported-registration check-ins.
+- Preserved SOTC-specific behavior where its existing hard-coded lookup still works and its no-match fallback remains Needs Help unless the new generic self-registration setting is explicitly enabled.
+- Added local attendance search to the admin Check-In live/history views for registration-only monitoring.
+- No SQL changes were made. The existing Eventbrite import remains file-driven; final mapping/import still waits for the actual organizer export.
+- Validation so far: `npx tsc -b` passed; focused `npx vitest run src\test\eventConfig.test.ts` passed; full `npx vitest run` passed; `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed. A normal `npx vite build` attempt hit `EBUSY` removing the existing Dropbox-managed `app\dist\images`, so the successful Vite build used a temporary output directory to verify the production bundle without touching the locked dist folder.

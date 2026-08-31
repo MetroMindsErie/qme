@@ -63,6 +63,7 @@ export default function AdminEventCheckIns({
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsStatus, setSettingsStatus] = useState('');
   const [removingCheckInIds, setRemovingCheckInIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
 
   const refresh = useCallback(async () => {
     if (!eventId) return;
@@ -218,6 +219,9 @@ export default function AdminEventCheckIns({
     patch: Partial<{
       completionMode: EventCheckInCompletionMode;
       requireCompletedForParticipation: boolean;
+      importedRegistrationLookupEnabled: boolean;
+      selfRegistrationFallbackEnabled: boolean;
+      selfRegistrationRequiresEmail: boolean;
     }>
   ) {
     if (!event) return;
@@ -230,6 +234,14 @@ export default function AdminEventCheckIns({
     const requireCompletedForParticipation = enabled
       ? patch.requireCompletedForParticipation ?? current.requireCompletedForParticipation
       : false;
+    const importedRegistrationLookupEnabled = enabled
+      ? patch.importedRegistrationLookupEnabled ?? current.importedRegistrationLookupEnabled
+      : false;
+    const selfRegistrationFallbackEnabled = enabled
+      ? patch.selfRegistrationFallbackEnabled ?? current.selfRegistrationFallbackEnabled
+      : false;
+    const selfRegistrationRequiresEmail = patch.selfRegistrationRequiresEmail
+      ?? current.selfRegistrationRequiredFields.includes('email');
 
     const nextMetadata = {
       ...metadata,
@@ -238,6 +250,14 @@ export default function AdminEventCheckIns({
         enabled,
         completion_mode: completionMode,
         require_completed_for_participation: requireCompletedForParticipation,
+        imported_registration_lookup_enabled: importedRegistrationLookupEnabled,
+        self_registration: {
+          ...asRecord(currentCheckIn.self_registration),
+          enabled: selfRegistrationFallbackEnabled,
+          required_fields: selfRegistrationRequiresEmail
+            ? ['first_name', 'last_name', 'email']
+            : ['first_name', 'last_name'],
+        },
       },
     };
 
@@ -260,6 +280,24 @@ export default function AdminEventCheckIns({
   const waiting = checkIns.filter((row) => row.status === 'waiting');
   const completed = checkIns.filter((row) => row.status === 'completed');
   const history = checkIns.filter((row) => row.status === 'completed' || row.status === 'cancelled');
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const matchesSearch = useCallback((row: EventCheckIn) => {
+    if (!normalizedSearchQuery) return true;
+    const metadata = asRecord(row.metadata);
+    return [
+      row.first_name,
+      row.last_name,
+      `${row.first_name} ${row.last_name}`,
+      row.status,
+      row.ticket_type,
+      asCsvString(checkInField(row, 'email')),
+      asCsvString(checkInField(row, 'phone')),
+      asCsvString(metadata.registration_match_status),
+      asCsvString(metadata.import_source),
+    ].some((value) => asCsvString(value).toLowerCase().includes(normalizedSearchQuery));
+  }, [normalizedSearchQuery]);
+  const visibleWaiting = waiting.filter(matchesSearch);
+  const visibleHistory = history.filter(matchesSearch);
   const checkInConfig = useMemo(() => getEventCheckInConfig(event), [event]);
   const canManageThisEvent = event ? canManageEvent(currentAdmin, event) : false;
   const eventLogoSrc = isSotcEventSlug(event?.slug)
@@ -320,6 +358,20 @@ export default function AdminEventCheckIns({
           )}
         </div>
 
+        {(activeTab === 'live' || activeTab === 'history') && (
+          <div style={{ margin: '0 0 1rem' }}>
+            <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: 6 }}>
+              Search attendance
+            </label>
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by guest name or status"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem 0.75rem', border: '1.5px solid #d1d5db', borderRadius: 8 }}
+            />
+          </div>
+        )}
+
         {activeTab === 'live' && (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', marginBottom: '1rem' }}>
@@ -333,13 +385,13 @@ export default function AdminEventCheckIns({
               </div>
             </div>
 
-            {waiting.length === 0 && !error && (
+            {visibleWaiting.length === 0 && !error && (
               <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
-                No guests are waiting for staff check-in.
+                {searchQuery.trim() ? 'No live check-ins match this search.' : 'No guests are waiting for staff check-in.'}
               </p>
             )}
 
-            {waiting.map((row) => {
+            {visibleWaiting.map((row) => {
               const rowMetadata = asRecord(row.metadata);
               const needsHelp = rowMetadata.needs_help === true || rowMetadata.registration_match_status === 'needs_help';
               const isImportedMatch = Boolean(rowMetadata.imported_registration_id);
@@ -418,14 +470,14 @@ export default function AdminEventCheckIns({
         {activeTab === 'history' && (
           <>
             <h2 style={{ fontSize: '1rem', margin: '0 0 0.75rem', color: '#2f3e4f' }}>
-              Check-In History ({history.length})
+              Check-In History ({visibleHistory.length})
             </h2>
-            {history.length === 0 && (
+            {visibleHistory.length === 0 && (
               <p style={{ color: '#999', padding: '2rem 0', textAlign: 'center' }}>
-                No check-in history yet.
+                {searchQuery.trim() ? 'No check-in history matches this search.' : 'No check-in history yet.'}
               </p>
             )}
-            {history.map((row) => {
+            {visibleHistory.map((row) => {
               const isCancelled = row.status === 'cancelled';
               const hasFlowersAccess = row.ticket_type === 'flowers';
               const photoCredit = photoCredits.find((credit) => credit.check_in_id === row.id);
@@ -507,6 +559,36 @@ export default function AdminEventCheckIns({
                   style={{ marginTop: '0.25rem' }}
                 />
                 <span>Require completed check-in before guests can use event features</span>
+              </label>
+              <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', color: '#2f3e4f', fontWeight: 800, marginTop: '0.75rem' }}>
+                <input
+                  type="checkbox"
+                  checked={checkInConfig.importedRegistrationLookupEnabled}
+                  disabled={savingSettings || checkInConfig.completionMode === 'none'}
+                  onChange={(e) => updateCheckInSettings({ importedRegistrationLookupEnabled: e.target.checked })}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>Let guests search an imported registration list</span>
+              </label>
+              <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', color: '#2f3e4f', fontWeight: 800, marginTop: '0.75rem' }}>
+                <input
+                  type="checkbox"
+                  checked={checkInConfig.selfRegistrationFallbackEnabled}
+                  disabled={savingSettings || checkInConfig.completionMode === 'none' || !checkInConfig.importedRegistrationLookupEnabled}
+                  onChange={(e) => updateCheckInSettings({ selfRegistrationFallbackEnabled: e.target.checked })}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>Let unlisted guests self-register after search</span>
+              </label>
+              <label style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', color: '#2f3e4f', fontWeight: 800, marginTop: '0.75rem' }}>
+                <input
+                  type="checkbox"
+                  checked={checkInConfig.selfRegistrationRequiredFields.includes('email')}
+                  disabled={savingSettings || checkInConfig.completionMode === 'none' || !checkInConfig.selfRegistrationFallbackEnabled}
+                  onChange={(e) => updateCheckInSettings({ selfRegistrationRequiresEmail: e.target.checked })}
+                  style={{ marginTop: '0.25rem' }}
+                />
+                <span>Require email for self-registration</span>
               </label>
               <p style={{ color: '#667085', fontSize: '0.82rem', lineHeight: 1.45, margin: '0.75rem 0 0' }}>
                 Use staff check-in for SOTC-style control. Auto check-in is useful for lightweight tests where guests should enter immediately.

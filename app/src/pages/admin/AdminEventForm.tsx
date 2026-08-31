@@ -133,6 +133,9 @@ export default function AdminEventForm() {
     patch: Partial<{
       completionMode: EventCheckInCompletionMode;
       requireCompletedForParticipation: boolean;
+      importedRegistrationLookupEnabled: boolean;
+      selfRegistrationFallbackEnabled: boolean;
+      selfRegistrationRequiresEmail: boolean;
     }>
   ) {
     setForm((prev) => {
@@ -160,6 +163,14 @@ export default function AdminEventForm() {
       const requireCompletedForParticipation = enabled
         ? patch.requireCompletedForParticipation ?? current.requireCompletedForParticipation
         : false;
+      const importedRegistrationLookupEnabled = enabled
+        ? patch.importedRegistrationLookupEnabled ?? current.importedRegistrationLookupEnabled
+        : false;
+      const selfRegistrationFallbackEnabled = enabled
+        ? patch.selfRegistrationFallbackEnabled ?? current.selfRegistrationFallbackEnabled
+        : false;
+      const selfRegistrationRequiresEmail = patch.selfRegistrationRequiresEmail
+        ?? current.selfRegistrationRequiredFields.includes('email');
 
       return {
         ...prev,
@@ -170,6 +181,14 @@ export default function AdminEventForm() {
             enabled,
             completion_mode: completionMode,
             require_completed_for_participation: requireCompletedForParticipation,
+            imported_registration_lookup_enabled: importedRegistrationLookupEnabled,
+            self_registration: {
+              ...asRecord(existingCheckIn.self_registration),
+              enabled: selfRegistrationFallbackEnabled,
+              required_fields: selfRegistrationRequiresEmail
+                ? ['first_name', 'last_name', 'email']
+                : ['first_name', 'last_name'],
+            },
           },
         },
       };
@@ -429,6 +448,36 @@ export default function AdminEventForm() {
               style={{ marginTop: 3 }}
             />
             Require completed check-in before guests can use event features
+          </label>
+          <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', color: '#334155', fontWeight: 700, lineHeight: 1.4, marginTop: '0.75rem' }}>
+            <input
+              type="checkbox"
+              checked={checkInConfig.importedRegistrationLookupEnabled}
+              disabled={!checkInConfig.enabled}
+              onChange={(e) => updateCheckInSettings({ importedRegistrationLookupEnabled: e.target.checked })}
+              style={{ marginTop: 3 }}
+            />
+            Let guests search an imported registration list
+          </label>
+          <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', color: '#334155', fontWeight: 700, lineHeight: 1.4, marginTop: '0.75rem' }}>
+            <input
+              type="checkbox"
+              checked={checkInConfig.selfRegistrationFallbackEnabled}
+              disabled={!checkInConfig.enabled || !checkInConfig.importedRegistrationLookupEnabled}
+              onChange={(e) => updateCheckInSettings({ selfRegistrationFallbackEnabled: e.target.checked })}
+              style={{ marginTop: 3 }}
+            />
+            Let unlisted guests self-register after search
+          </label>
+          <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', color: '#334155', fontWeight: 700, lineHeight: 1.4, marginTop: '0.75rem' }}>
+            <input
+              type="checkbox"
+              checked={checkInConfig.selfRegistrationRequiredFields.includes('email')}
+              disabled={!checkInConfig.enabled || !checkInConfig.selfRegistrationFallbackEnabled}
+              onChange={(e) => updateCheckInSettings({ selfRegistrationRequiresEmail: e.target.checked })}
+              style={{ marginTop: 3 }}
+            />
+            Require email for self-registration
           </label>
           <p style={{ margin: '0.65rem 0 0', color: '#64748b', fontSize: '0.84rem', fontWeight: 700, lineHeight: 1.45 }}>
             Auto is best for lightweight tests. Staff approval is best when someone needs to verify arrivals, grant access, or control who can use stations.

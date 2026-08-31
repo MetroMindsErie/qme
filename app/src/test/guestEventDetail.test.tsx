@@ -1,0 +1,118 @@
+import { render, screen, waitFor } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import GuestEventDetail from '../pages/guest/GuestEventDetail';
+import type { EventCheckIn, QEvent } from '../types';
+
+const event: QEvent = {
+  id: 'event-1',
+  organization_id: null,
+  name: 'SOTC Test Event',
+  slug: 'sotc-rockhall',
+  description: 'Registration and event home',
+  location: 'Akron',
+  image_url: '',
+  event_date: '2026-09-03',
+  start_time: '17:00',
+  end_time: '20:00',
+  timezone: 'ET',
+  status: 'active',
+  metadata: {
+    check_in: {
+      enabled: true,
+      completion_mode: 'staff',
+      require_completed_for_participation: true,
+    },
+  },
+  created_at: '',
+  updated_at: '',
+};
+
+const completedCheckIn: EventCheckIn = {
+  id: 'check-in-1',
+  event_id: 'event-1',
+  guest_session_id: 'guest-session-1',
+  first_name: 'Hannah',
+  last_name: 'Oswick',
+  code: null,
+  ticket_type: 'general',
+  status: 'completed',
+  metadata: {},
+  created_at: '',
+  updated_at: '',
+};
+
+const mockGetEventBySlug = vi.fn();
+const mockGetEventCheckIn = vi.fn();
+
+vi.mock('../lib/eventService', () => ({
+  getEventBySlug: (...args: unknown[]) => mockGetEventBySlug(...args),
+}));
+
+vi.mock('../lib/queueService', () => ({
+  getActiveQueueTicketForGuest: vi.fn(),
+  getAuthoritativeQueueTicketForGuest: vi.fn(),
+  getActiveTicketCountForQueue: vi.fn(),
+  getNowServing: vi.fn(),
+  isAdoptableQueueTicket: vi.fn(() => false),
+  listQueuePilotTickets: vi.fn(() => Promise.resolve([])),
+  listQueuesForEvent: vi.fn(() => Promise.resolve([])),
+}));
+
+vi.mock('../lib/eceService', () => ({
+  listActiveEcesForEvent: vi.fn(() => Promise.resolve([])),
+}));
+
+vi.mock('../lib/checkInService', () => ({
+  getEventCheckIn: (...args: unknown[]) => mockGetEventCheckIn(...args),
+}));
+
+vi.mock('../lib/guestCreditService', () => ({
+  getGuestCreditForCheckIn: vi.fn(() => Promise.resolve(null)),
+}));
+
+vi.mock('../lib/guestResetService', () => ({
+  clearGuestStateAfterEventReset: vi.fn(() => false),
+  getEventTestDataResetMarker: vi.fn(() => ''),
+}));
+
+function renderEventDetail(path = '/events/sotc-rockhall') {
+  return render(
+    <MemoryRouter initialEntries={[path]}>
+      <Routes>
+        <Route path="/events/:eventSlug" element={<GuestEventDetail />} />
+      </Routes>
+    </MemoryRouter>
+  );
+}
+
+describe('GuestEventDetail', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+    mockGetEventBySlug.mockResolvedValue(event);
+    mockGetEventCheckIn.mockResolvedValue(completedCheckIn);
+  });
+
+  it('renders the event home after loading for a fresh unrecognized guest', async () => {
+    renderEventDetail();
+
+    expect(await screen.findByText('SOTC Test Event')).toBeInTheDocument();
+    expect(screen.getByText('Event Check-In')).toBeInTheDocument();
+  });
+
+  it('renders after adopting an existing checked-in guest from browser storage', async () => {
+    localStorage.setItem('qme:eventCheckIn:event-1', JSON.stringify({
+      id: completedCheckIn.id,
+      firstName: completedCheckIn.first_name,
+      lastName: completedCheckIn.last_name,
+    }));
+
+    renderEventDetail();
+
+    await waitFor(() => {
+      expect(mockGetEventCheckIn).toHaveBeenCalledWith(completedCheckIn.id, event.id);
+    });
+    expect(await screen.findByText('SOTC Test Event')).toBeInTheDocument();
+  });
+});

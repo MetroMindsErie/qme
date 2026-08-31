@@ -634,30 +634,6 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
     return () => clearInterval(interval);
   }, [refresh]);
 
-  if (loading) {
-    return (
-      <div className="card">
-        <p style={{ textAlign: 'center', padding: '3rem' }}>Loading…</p>
-      </div>
-    );
-  }
-
-  if (!event) {
-    return (
-      <div className="card">
-        <p style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Event not found.</p>
-        <div style={{ textAlign: 'center', paddingBottom: '2rem' }}>
-          <button className="actionBtn" style={{ width: 'auto', padding: '0.5rem 1.5rem' }}
-            onClick={() => navigate('/demo')}>← Back</button>
-        </div>
-      </div>
-    );
-  }
-
-  const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
-  const checkInConfig = getEventCheckInConfig(event);
-  const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
-
   useEffect(() => {
     const nextDelayMs = queues.reduce<number | null>((nextDelay, queue) => {
       const ticket = queue._myTicketRow;
@@ -683,6 +659,31 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
     const timeout = window.setTimeout(() => setFreshnessNowMs(Date.now()), nextDelayMs);
     return () => window.clearTimeout(timeout);
   }, [queues, freshnessNowMs]);
+
+  if (loading) {
+    return (
+      <div className="card">
+        <p style={{ textAlign: 'center', padding: '3rem' }}>Loading…</p>
+      </div>
+    );
+  }
+
+  if (!event) {
+    return (
+      <div className="card">
+        <p style={{ textAlign: 'center', padding: '3rem', color: '#888' }}>Event not found.</p>
+        <div style={{ textAlign: 'center', paddingBottom: '2rem' }}>
+          <button className="actionBtn" style={{ width: 'auto', padding: '0.5rem 1.5rem' }}
+            onClick={() => navigate('/demo')}>← Back</button>
+        </div>
+      </div>
+    );
+  }
+
+  const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
+  const checkInConfig = getEventCheckInConfig(event);
+  const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
+
   const isEventCheckInRemoved = eventCheckInStatus === 'cancelled';
   const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus && !isEventCheckInRemoved);
   const isWaitingForHostCheckIn = hasSubmittedEventCheckIn && !hasEventCheckIn;

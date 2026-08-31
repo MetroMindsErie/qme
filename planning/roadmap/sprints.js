@@ -1,24 +1,7 @@
 module.exports = [
   {
     "id": "now",
-    "title": "Sprint 3: Post-SOTC Operational Hardening",
-    "goal": "Turn the July 22 SOTC production learning into a more reliable operating system: preserve production evidence, create an internal full-data baseline, improve guest recovery, add admin CSV exports, evaluate SMS costs/compliance, and make operator controls more visible without starting broad new platform expansion.",
-    "storyIds": [
-      "story-sotc-production-archive-and-baselines",
-      "story-sotc-admin-csv-exports",
-      "story-guest-session-persistence-diagnostics",
-      "story-already-checked-in-recovery",
-      "story-storage-health-recovery-contact-prompt",
-      "story-sms-cost-compliance-feasibility",
-      "story-admin-guest-search-state-reconciliation",
-      "story-authorized-queue-state-overrides",
-      "story-queue-automation-observability",
-      "story-station-operational-control-visibility"
-    ]
-  },
-  {
-    "id": "next",
-    "title": "Next: Experience Type Review and Configuration",
+    "title": "Experience Type Review and Configuration",
     "goal": "After Sprint 3 hardening, review concrete experience types and decide which configuration deserves productization, starting with Check-In, Headshots, Food & Beverage, Resume Reviews, and lightweight event content.",
     "storyIds": [
       "story-remove-hardcoded-demo-assumptions",

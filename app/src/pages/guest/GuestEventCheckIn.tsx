@@ -73,6 +73,7 @@ export default function GuestEventCheckIn({
   const [registrationSearching, setRegistrationSearching] = useState(false);
   const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
   const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
+  const [selfRegistrationEmailError, setSelfRegistrationEmailError] = useState('');
   const checkInConfig = getEventCheckInConfig(event);
   const useImportedRegistrationLookup = !checkInCode
     && (checkInConfig.importedRegistrationLookupEnabled || isSotcEventSlug(event?.slug));
@@ -144,6 +145,7 @@ export default function GuestEventCheckIn({
     const shouldAutoComplete = checkInConfig.completionMode === 'auto';
     setSaving(true);
     setError('');
+    setSelfRegistrationEmailError('');
     try {
       const trimmedEmail = email.trim();
       const trimmedPhone = phone.trim();
@@ -157,7 +159,7 @@ export default function GuestEventCheckIn({
         return;
       }
       if (selfRegistrationRequiresEmail && trimmedEmail.toLowerCase() !== emailConfirmation.trim().toLowerCase()) {
-        setError('Email and confirm email must match.');
+        setSelfRegistrationEmailError('Email and confirm email must match.');
         return;
       }
       if (trimmedPhone && !isValidPhone(trimmedPhone)) {
@@ -598,7 +600,10 @@ export default function GuestEventCheckIn({
                     </label>
                     <input
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (selfRegistrationEmailError) setSelfRegistrationEmailError('');
+                      }}
                       aria-label="Email"
                       type="email"
                       inputMode="email"
@@ -614,16 +619,37 @@ export default function GuestEventCheckIn({
                         </label>
                         <input
                           value={emailConfirmation}
-                          onChange={(e) => setEmailConfirmation(e.target.value)}
+                          onChange={(e) => {
+                            setEmailConfirmation(e.target.value);
+                            if (selfRegistrationEmailError) setSelfRegistrationEmailError('');
+                          }}
                           aria-label="Confirm email"
                           type="email"
                           inputMode="email"
                           autoComplete="email"
                           placeholder="name@example.com"
                           required
-                          style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
+                          aria-invalid={Boolean(selfRegistrationEmailError)}
+                          aria-describedby={selfRegistrationEmailError ? 'self-registration-email-error' : undefined}
+                          style={{
+                            width: '100%',
+                            boxSizing: 'border-box',
+                            padding: '0.75rem',
+                            borderRadius: 8,
+                            border: `1px solid ${selfRegistrationEmailError ? '#B71C1C' : '#ddd'}`,
+                            marginBottom: '0.35rem',
+                          }}
                         />
                       </>
+                    )}
+                    {selfRegistrationEmailError && (
+                      <div
+                        id="self-registration-email-error"
+                        role="alert"
+                        style={{ color: '#B71C1C', fontSize: '0.82rem', fontWeight: 800, lineHeight: 1.35, marginBottom: '0.5rem' }}
+                      >
+                        {selfRegistrationEmailError}
+                      </div>
                     )}
                     <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
                       Used only for this event registration and check-in recovery.

@@ -47,6 +47,13 @@ function checkInField(row: EventCheckIn, key: string): unknown {
   return (row as unknown as Record<string, unknown>)[key];
 }
 
+export function getCheckInRegistrationSource(row: EventCheckIn): 'imported' | 'self_registered' | 'needs_help' {
+  const metadata = asRecord(row.metadata);
+  if (metadata.imported_registration_id) return 'imported';
+  if (metadata.needs_help === true || metadata.registration_match_status === 'needs_help') return 'needs_help';
+  return 'self_registered';
+}
+
 export default function AdminEventCheckIns({
   checkInCode = null,
   title = 'Event Check-In',
@@ -198,6 +205,7 @@ export default function AdminEventCheckIns({
       { header: 'phone', value: (row) => asCsvString(checkInField(row, 'phone')) },
       { header: 'imported_registration_id', value: (row) => asCsvString(asRecord(row.metadata).imported_registration_id) },
       { header: 'registration_match_status', value: (row) => asCsvString(asRecord(row.metadata).registration_match_status) },
+      { header: 'registration_source', value: (row) => getCheckInRegistrationSource(row) },
       { header: 'needs_help', value: (row) => asRecord(row.metadata).needs_help === true ? 'yes' : 'no' },
       {
         header: 'headshot_credit_status',

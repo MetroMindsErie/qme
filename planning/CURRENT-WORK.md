@@ -112,3 +112,12 @@ Update this file with:
 - concise Product Owner live acceptance step if another UI check is needed.
 
 Do not mark the i-Pitch readiness story done. Generic Check-In can be considered accepted after this cleanup, but final i-Pitch readiness still requires the real Eventbrite export, event-specific setup/import, and production smoke test.
+
+## Cleanup Status Update
+
+- Inline Confirm Email validation cleanup is complete. Mismatched self-registration email now renders `Email and confirm email must match.` directly in the expanded self-registration form beneath Confirm email, marks Confirm email invalid, and leaves page-level/global errors reserved for server/general failures.
+- Registration provenance inspection: imported-registration check-ins already persist `metadata.imported_registration_id`, `registration_match_status: matched`, import source, and related import metadata. Generic qME walk-up self-registration has no imported-registration linkage and persists the normal guest self-check-in/manual metadata path. Existing CSV already exposed imported linkage and match status, but not a single clear source column.
+- CSV export now includes `registration_source` with stable values: `imported` when `metadata.imported_registration_id` exists, `needs_help` for unresolved not-found fallback rows, and `self_registered` for qME-created non-imported check-ins. No Live/History row badges were added.
+- Files changed in cleanup: `app/src/pages/guest/GuestEventCheckIn.tsx`, `app/src/pages/admin/AdminEventCheckIns.tsx`, `app/src/test/guestEventCheckIn.test.tsx`, `app/src/test/adminEventCheckIns.test.ts`, and `planning/CURRENT-WORK.md`.
+- Validation: `npx tsc -b` passed; focused `npx vitest run src\test\guestEventCheckIn.test.tsx src\test\adminEventCheckIns.test.ts src\test\checkInService.test.ts` passed; full `npx vitest run` passed with 122 tests; `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed.
+- No new SQL or manual production action remains for this cleanup. Product Owner live check, if desired, should verify the mismatched Confirm email message appears next to the form controls on mobile and that exported Check-In CSV includes `registration_source`.

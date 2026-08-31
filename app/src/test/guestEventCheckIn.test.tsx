@@ -118,7 +118,10 @@ describe('GuestEventCheckIn', () => {
     await user.type(screen.getByLabelText('Confirm email'), 'typo@example.com');
     await user.click(screen.getByRole('button', { name: 'Register & Check In' }));
 
-    expect(await screen.findByText('Email and confirm email must match.')).toBeInTheDocument();
+    const inlineError = await screen.findByText('Email and confirm email must match.');
+    expect(inlineError).toBeInTheDocument();
+    expect(inlineError.closest('form')).toContainElement(screen.getByRole('button', { name: 'Register & Check In' }));
+    expect(screen.getByLabelText('Confirm email')).toHaveAttribute('aria-invalid', 'true');
     expect(mockCreateEventCheckIn).not.toHaveBeenCalled();
   });
 

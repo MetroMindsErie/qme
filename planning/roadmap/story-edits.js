@@ -28,6 +28,18 @@ module.exports = {
       status: "done",
       notes:
         "Completed by Product Owner live acceptance on 2026-08-25. Event Admin/Superadmin Settings exposes Join Status, Run mode, Gathering Target/Max, Gathering stale timing, Not Here cooldown, and Active Released with explanatory copy. Product review clarified that station/check-in staff do not need read-only access to underlying queue configuration merely to operate the station; their Live Line already exposes the current operational condition through queue totals, OMW/NRBY/STALE readiness detail, Released active, guest Stage/State/timestamps, cooldown visibility, search/order, and authorized actions. Product principle: station operators should understand the current operational condition without needing access to the configuration that produces it. Final consistency acceptance added fresh OMW to the compact higher-level queue summary only when nonzero; live testing confirmed OMW appears while fresh and disappears on expiry while Gathering and Nearby totals remain correct."
+    },
+    "story-remove-hardcoded-demo-assumptions": {
+      sprint: "now"
+    },
+    "story-sotc-notification-july-fallback": {
+      sprint: "now"
+    },
+    "story-headshot-low-staff-operating-model": {
+      sprint: "now"
+    },
+    "story-headshot-service-start-acknowledgement": {
+      sprint: "now"
     }
   },
   additions: [
@@ -51,7 +63,6 @@ module.exports = {
         title: "Let Gathering guests say On My Way",
         summary: "Give a guest who has been invited to Gathering an explicit On My Way action so qME can distinguish an acknowledged commitment from an unanswered invitation before the guest becomes Nearby.",
         status: "done",
-        sprint: "now",
         acceptanceCriteria: [
           "A guest in Gathering can explicitly mark On My Way before marking Nearby.",
           "On My Way remains Stage = Gathering and is shown as State = On My Way on guest and admin surfaces.",
@@ -69,11 +80,6 @@ module.exports = {
       sprintId: "future",
       add: ["story-reconnect-confirmation-and-event-refresh"],
       remove: ["story-guest-on-my-way-action"]
-    },
-    {
-      sprintId: "now",
-      add: ["story-guest-on-my-way-action"],
-      remove: []
     }
   ]
 };

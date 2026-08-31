@@ -94,14 +94,32 @@ module.exports = {
           "A production-readiness pass confirms event name/date/location, guest-facing copy, check-in mode, import counts, QR/link entry, and basic mobile behavior before September 3.",
           "No Headshot queue, credits, SMS, workshops, or other Sprint 4 experience work is required to make i-Pitch registration operational."
         ],
-        notes: "Added 2026-08-31 from a near-term live opportunity. Kelly and Tricia expect to use qME for i-Pitch on September 3, 2026, 5:00-8:00 PM at Missing Falls Brewery in Akron, currently for registration/check-in only. Organizer is expected to provide an Eventbrite attendee list. Screenshot of the Eventbrite checkout shows a very simple General Admission registration collecting first name, last name, email, and email confirmation; use the actual Eventbrite export as source of truth when received rather than assuming its final columns. This story is deliberately narrow so Sprint 4 can proceed in parallel while qME becomes production-ready for i-Pitch within the next 1-2 days."
+        notes: "Added 2026-08-31 from a near-term live opportunity. Generic Check-In behavior was live-accepted on the SOTC baseline on 2026-08-31: imported attendee lookup/check-in works; unlisted guest self-registration with required email + confirm email works and Auto-completes; admin History shows the completed guest; imported search supports name/email; field-level email mismatch validation is inline; CSV reporting now exposes registration_source as imported, self_registered, or needs_help without adding live-row UI noise. Required email-search SQL was applied to production. Generic Check-In is accepted; this story remains open only for the actual i-Pitch Eventbrite export, event-specific configuration/import, QR/link/mobile smoke test, and final production readiness verification."
+      }
+    },
+    {
+      epicId: "epic-experiences",
+      themeId: "theme-experience-model",
+      story: {
+        id: "story-checkin-recovery-phone-product-review",
+        title: "Review whether recovery phone belongs in generic Check-In",
+        summary: "Revisit the purpose and timing of optional recovery-phone collection in the generic Check-In experience so guests are not asked for a field whose value is unclear for the event or imported registration source.",
+        status: "ready",
+        sprint: "future",
+        acceptanceCriteria: [
+          "Clarify the product purpose of recovery phone in Check-In: session recovery, identity verification, future recall/notification, or another explicit need.",
+          "Decide whether phone should be omitted by default, event-configurable, or requested only after check-in/recovery need is established.",
+          "Do not imply phone is used to search an imported registration list unless the active import actually supports phone lookup.",
+          "Preserve a low-friction registration-only flow when email already provides the event's useful registration/recovery identity."
+        ],
+        notes: "Added from live Sprint 4 Check-In acceptance on 2026-08-31. The optional Recovery phone field was understandable after copy clarification but still prompted the Product Owner question: why is this field needed here? It is not blocking i-Pitch and should not delay the accepted generic Check-In flow. Review later as a product/configuration decision rather than continuing to polish it during the i-Pitch readiness slice."
       }
     }
   ],
   sprintMembership: [
     {
       sprintId: "future",
-      add: ["story-reconnect-confirmation-and-event-refresh"],
+      add: ["story-reconnect-confirmation-and-event-refresh", "story-checkin-recovery-phone-product-review"],
       remove: ["story-guest-on-my-way-action"]
     },
     {

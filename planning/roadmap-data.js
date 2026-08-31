@@ -36,7 +36,8 @@ const QME_ROADMAP = {
         "story-headshot-service-start-acknowledgement",
         "story-resume-review-queue",
         "story-resource-cards",
-        "story-passport-activity"
+        "story-passport-activity",
+        "story-ipitch-2026-checkin-readiness"
       ]
     },
     {
@@ -1153,6 +1154,25 @@ const QME_ROADMAP = {
                 "Suspended queues stop new joins but preserve existing tickets.",
                 "Admin can restore an experience."
               ]
+            },
+            {
+              "id": "story-ipitch-2026-checkin-readiness",
+              "title": "Prepare i-Pitch for registration-only qME check-in",
+              "summary": "Prepare a simple production event for the September 3 i-Pitch competition using qME only for attendee registration/check-in: import the Eventbrite attendee list, let listed guests self check in, and let guests who cannot find themselves self-register and check in without introducing queue or broader experience complexity.",
+              "status": "current",
+              "sprint": "now",
+              "acceptanceCriteria": [
+                "An i-Pitch event can be configured in qME as a registration/check-in-only event without requiring queue experiences.",
+                "The Eventbrite attendee export can be imported using the actual file supplied by the organizer, with at minimum first name, last name, and email mapped where present.",
+                "An imported guest can find their registration and self check in from the guest flow.",
+                "A guest who does not find a matching imported registration has a clear self-registration path and can complete check-in without staff creating the record for them.",
+                "For the initial i-Pitch fallback form, collect only the fields justified by the event registration need; the current Eventbrite checkout evidence shows first name, last name, and email as the core attendee fields.",
+                "Self-registration and imported-registration check-in produce the same usable checked-in event participation and do not create duplicate check-ins when an existing registration is selected.",
+                "Event staff can see/search checked-in guests and use the existing check-in admin workflow during the event.",
+                "A production-readiness pass confirms event name/date/location, guest-facing copy, check-in mode, import counts, QR/link entry, and basic mobile behavior before September 3.",
+                "No Headshot queue, credits, SMS, workshops, or other Sprint 4 experience work is required to make i-Pitch registration operational."
+              ],
+              "notes": "Added 2026-08-31 from a near-term live opportunity. Kelly and Tricia expect to use qME for i-Pitch on September 3, 2026, 5:00-8:00 PM at Missing Falls Brewery in Akron, currently for registration/check-in only. Organizer is expected to provide an Eventbrite attendee list. Screenshot of the Eventbrite checkout shows a very simple General Admission registration collecting first name, last name, email, and email confirmation; use the actual Eventbrite export as source of truth when received rather than assuming its final columns. This story is deliberately narrow so Sprint 4 can proceed in parallel while qME becomes production-ready for i-Pitch within the next 1-2 days."
             }
           ]
         },

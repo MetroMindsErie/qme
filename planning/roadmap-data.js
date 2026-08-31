@@ -2,8 +2,8 @@ const QME_ROADMAP = {
   "meta": {
     "product": "qME",
     "workspace": "Product roadmap and sprint planning",
-    "updated": "2026-08-19",
-    "immediateGoal": "Use the July 22 SOTC Rock Hall production event as the evidence base for Sprint 3: operational hardening, recovery, reporting, archive/baseline setup, and selective product discovery before adding broad new platform features.",
+    "updated": "2026-08-31",
+    "immediateGoal": "With Sprint 3 operational hardening complete, review concrete experience types and decide which configuration deserves productization, starting with Check-In, Headshots, Food & Beverage, Resume Reviews, and lightweight event content.",
     "eventAnchor": {
       "organization": "Summer on the Cuyahoga",
       "event": "SOTC Rock Hall Mixer",
@@ -24,25 +24,7 @@ const QME_ROADMAP = {
   "sprints": [
     {
       "id": "now",
-      "title": "Sprint 3: Post-SOTC Operational Hardening",
-      "goal": "Turn the July 22 SOTC production learning into a more reliable operating system: preserve production evidence, create an internal full-data baseline, improve guest recovery, add admin CSV exports, evaluate SMS costs/compliance, and make operator controls more visible without starting broad new platform expansion.",
-      "storyIds": [
-        "story-sotc-production-archive-and-baselines",
-        "story-sotc-admin-csv-exports",
-        "story-guest-session-persistence-diagnostics",
-        "story-already-checked-in-recovery",
-        "story-storage-health-recovery-contact-prompt",
-        "story-sms-cost-compliance-feasibility",
-        "story-admin-guest-search-state-reconciliation",
-        "story-authorized-queue-state-overrides",
-        "story-queue-automation-observability",
-        "story-station-operational-control-visibility",
-        "story-guest-on-my-way-action"
-      ]
-    },
-    {
-      "id": "next",
-      "title": "Next: Experience Type Review and Configuration",
+      "title": "Experience Type Review and Configuration",
       "goal": "After Sprint 3 hardening, review concrete experience types and decide which configuration deserves productization, starting with Check-In, Headshots, Food & Beverage, Resume Reviews, and lightweight event content.",
       "storyIds": [
         "story-remove-hardcoded-demo-assumptions",
@@ -367,7 +349,6 @@ const QME_ROADMAP = {
               "title": "Let Gathering guests say On My Way",
               "summary": "Give a guest who has been invited to Gathering an explicit On My Way action so qME can distinguish an acknowledged commitment from an unanswered invitation before the guest becomes Nearby.",
               "status": "done",
-              "sprint": "now",
               "acceptanceCriteria": [
                 "A guest in Gathering can explicitly mark On My Way before marking Nearby.",
                 "On My Way remains Stage = Gathering and is shown as State = On My Way on guest and admin surfaces.",
@@ -482,7 +463,7 @@ const QME_ROADMAP = {
               "id": "story-remove-hardcoded-demo-assumptions",
               "title": "Remove or generalize hard-coded demo assumptions",
               "status": "ready",
-              "sprint": "next",
+              "sprint": "now",
               "summary": "Replace audited hard-coded demo assumptions with organization/event/experience data once the foundation exists.",
               "acceptanceCriteria": [
                 "Only items classified for removal or generalization are changed.",
@@ -1666,7 +1647,7 @@ const QME_ROADMAP = {
               "id": "story-sotc-notification-july-fallback",
               "title": "Define July notification fallback for SOTC queues",
               "status": "current",
-              "sprint": "next",
+              "sprint": "now",
               "summary": "Determine and implement the reliable July notification behavior for Headshots and other SOTC queues before committing to SMS or web push.",
               "acceptanceCriteria": [
                 "Guest receives clear in-app modal/banner messaging for Waiting to Gathering, Your Turn, Not Here, and Return to Waiting/Cooldown events while the guest page is open.",
@@ -1714,7 +1695,7 @@ const QME_ROADMAP = {
               "id": "story-headshot-low-staff-operating-model",
               "title": "Explore low-staff Headshot operating model",
               "status": "current",
-              "sprint": "next",
+              "sprint": "now",
               "summary": "Review safe Headshot workflows where qME can advance the queue and the photographer may not need to operate qME directly.",
               "acceptanceCriteria": [
                 "At least two operating models are documented for Tanya/Eric discussion.",
@@ -1729,7 +1710,7 @@ const QME_ROADMAP = {
               "id": "story-headshot-service-start-acknowledgement",
               "title": "Prototype Headshot guest-called completion",
               "status": "done",
-              "sprint": "next",
+              "sprint": "now",
               "summary": "Add a Headshot-only guest action after Your Turn so the guest can confirm they were called by the photographer; for the low-staff pilot this completes the Headshot queue ticket and frees the next guest.",
               "acceptanceCriteria": [
                 "I’ve Been Called appears only for Headshot guests in Your Turn.",

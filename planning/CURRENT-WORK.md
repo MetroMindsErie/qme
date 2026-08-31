@@ -125,3 +125,57 @@ Do not mark the i-Pitch story done until Product Owner live acceptance and the r
 - Validation so far: `npx tsc -b` passed; focused `npx vitest run src\test\eventConfig.test.ts` passed; full `npx vitest run` passed; `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed. A normal `npx vite build` attempt hit `EBUSY` removing the existing Dropbox-managed `app\dist\images`, so the successful Vite build used a temporary output directory to verify the production bundle without touching the locked dist folder.
 - Blocking regression found after `2c29a67`: SOTC guest event home could blank with React error #310 after a fresh/unrecognized state transition because `GuestEventDetail` called the OMW freshness `useEffect` after the loading/event-not-found conditional returns. Fixed by moving that hook above all conditional returns so fresh guest entry and recovered checked-in guest Back to Event use the same hook order on every render.
 - Added regression coverage for `GuestEventDetail` loading into the event home from both fresh/unrecognized guest state and existing checked-in browser storage. Validation after the fix: `npx tsc -b` passed; focused `npx vitest run src\test\guestEventDetail.test.tsx src\test\eventConfig.test.ts` passed; full `npx vitest run` passed with 115 tests; `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed. New Check-In configuration behavior from `2c29a67` was preserved.
+
+## Live Acceptance Findings — 2026-08-31
+
+Product Owner live-tested the new generic Check-In configuration on the SOTC baseline using:
+- Check-In Mode = Auto;
+- imported-registration lookup enabled;
+- self-registration fallback enabled;
+- email required for self-registration;
+- completed check-in required for participation.
+
+### Passed
+
+- Fresh/unrecognized guest Check-In renders correctly after the hook-order regression fix.
+- Existing checked-in guest can return Back to Event without the prior blank-screen React #310 failure.
+- Imported-registration path passed end-to-end: guest searched the imported list, found an attendee who had not yet checked in, selected the registration, completed self check-in, and the guest appeared as checked in in Admin Check-In History.
+- No-match search correctly offers the self-registration fallback.
+
+### Blocking defect: self-registration does not save
+
+The first live unlisted/walk-up self-registration attempt failed after entering first name, last name, and email and pressing **Register & Check In**. Guest UI showed:
+
+`Check-in could not be saved. Please see the mobile bar team.`
+
+This is a blocker for i-Pitch readiness. Diagnose the exact failing operation rather than assuming the cause. Determine whether failure occurs in `create_event_check_in_for_guest`, the subsequent Auto completion (`complete_event_check_in_for_guest`), or another guest/session/config guard. Preserve the successful imported-registration path and existing SOTC recovery behavior.
+
+Also replace the obsolete generic error wording `mobile bar team` with event-neutral copy such as `Please see the event team.`
+
+### UX refinements discovered during acceptance
+
+Keep these in the same bounded Check-In slice after the blocking self-registration save defect is fixed:
+
+1. **Explain the expanded fallback.** When the guest expands **Can't find your registration?**, add a short sentence before the form, preferably:
+   `Please provide your information below to register for the event and check in now.`
+
+2. **Imported lookup must support email.** i-Pitch Eventbrite registration provides email and may not provide phone. The main registration search should accept first name, last name, or email. Use guest-facing guidance/placeholder such as:
+   `First name, last name, or email`
+   Do not make phone a prerequisite for imported-registration lookup.
+
+3. **Email confirmation for walk-up self-registration.** When email is configured as required, add a Confirm email field and require the two email values to match before submission. This is justified because the email becomes registration/recovery identity and the source Eventbrite flow itself asks for email twice. Do not require confirm-email for simply searching an imported list.
+
+4. **Phone remains optional, but clarify its purpose.** Generic Check-In may continue to allow an optional phone number for recovery. For i-Pitch it will not help find an imported registration because the source list is not expected to contain phone. Avoid positioning the phone field as a lookup criterion. Prefer clearly labeling it as optional recovery contact and keep imported-list search based on fields actually present in the import.
+
+### Required next validation
+
+After the fix/refinement deployment, repeat live acceptance with:
+1. imported guest search by name;
+2. imported guest search by email;
+3. no-match search -> expanded self-registration explanation;
+4. self-register with mismatched email confirmation and verify submission is blocked locally;
+5. self-register with matching first name / last name / email / confirm email and verify immediate Auto completion;
+6. verify the walk-up guest appears in Admin History as a normal completed check-in and is distinguishable from an imported-registration check-in where appropriate;
+7. verify no new SQL/manual production action is required, or report the exact SQL if diagnosis proves otherwise.
+
+Steve is authorized to implement, validate, update this file, commit, and push this bounded Check-In slice to `main`. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.

@@ -62,6 +62,7 @@ export default function GuestEventCheckIn({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
+  const [emailConfirmation, setEmailConfirmation] = useState('');
   const [phone, setPhone] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [checkIn, setCheckIn] = useState<EventCheckIn | null>(null);
@@ -110,9 +111,11 @@ export default function GuestEventCheckIn({
           setLastName(saved.lastName || '');
           if (saved.email || saved.phone) {
             setEmail(saved.email || '');
+            setEmailConfirmation(saved.email || '');
             setPhone(saved.phone || '');
           } else if (saved.contact) {
             setEmail(saved.contact.includes('@') ? saved.contact : '');
+            setEmailConfirmation(saved.contact.includes('@') ? saved.contact : '');
             setPhone(saved.contact.includes('@') ? '' : saved.contact);
           }
           setSubmitted(true);
@@ -153,6 +156,10 @@ export default function GuestEventCheckIn({
         setError('Please enter the email address for this registration.');
         return;
       }
+      if (selfRegistrationRequiresEmail && trimmedEmail.toLowerCase() !== emailConfirmation.trim().toLowerCase()) {
+        setError('Email and confirm email must match.');
+        return;
+      }
       if (trimmedPhone && !isValidPhone(trimmedPhone)) {
         setError('Please enter a 10-digit U.S. phone number, an international number starting with +, or leave phone blank.');
         return;
@@ -181,7 +188,7 @@ export default function GuestEventCheckIn({
       setSubmitted(true);
     } catch (err) {
       console.error('Check-in failed', err);
-      setError('Check-in could not be saved. Please see the mobile bar team.');
+      setError('Check-in could not be saved. Please see the event team.');
     } finally {
       setSaving(false);
     }
@@ -244,7 +251,7 @@ export default function GuestEventCheckIn({
     } finally {
       setRegistrationSearching(false);
     }
-  }, [event]);
+  }, [event, useSelfRegistrationFallback]);
 
   useEffect(() => {
     if (!event || submitted || !useImportedRegistrationLookup) return;
@@ -469,7 +476,7 @@ export default function GuestEventCheckIn({
               <input
                 value={registrationQuery}
                 onChange={(e) => setRegistrationQuery(e.target.value)}
-                placeholder="Type your first or last name"
+                placeholder="First name, last name, or email"
                 autoComplete="name"
                 style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.5rem' }}
               />
@@ -479,7 +486,7 @@ export default function GuestEventCheckIn({
             </form>
 
             <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
-              Phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span>
+              Recovery phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span>
             </label>
             <input
               value={phone}
@@ -490,7 +497,7 @@ export default function GuestEventCheckIn({
               style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
             />
             <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
-              Optional. Used only to help recover your check-in later.
+              Optional. Used only to help recover your check-in later, not to search the imported list.
             </div>
 
             {registrationResults.map((result) => (
@@ -561,10 +568,16 @@ export default function GuestEventCheckIn({
             <details style={{ marginTop: '1rem', color: '#666' }}>
               <summary style={{ cursor: 'pointer', fontWeight: 800 }}>Can&apos;t find your registration?</summary>
               <form onSubmit={handleSubmit} style={{ marginTop: '1rem' }}>
+                {useSelfRegistrationFallback && (
+                  <p style={{ color: '#64748b', fontSize: '0.9rem', fontWeight: 700, lineHeight: 1.45, margin: '0 0 1rem' }}>
+                    Please provide your information below to register for the event and check in now.
+                  </p>
+                )}
                 <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>First name</label>
                 <input
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
+                  aria-label="First name"
                   required
                   style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.9rem' }}
                 />
@@ -573,6 +586,7 @@ export default function GuestEventCheckIn({
                 <input
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
+                  aria-label="Last name"
                   required
                   style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '1rem' }}
                 />
@@ -585,6 +599,7 @@ export default function GuestEventCheckIn({
                     <input
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
+                      aria-label="Email"
                       type="email"
                       inputMode="email"
                       autoComplete="email"
@@ -592,6 +607,24 @@ export default function GuestEventCheckIn({
                       required={selfRegistrationRequiresEmail}
                       style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
                     />
+                    {selfRegistrationRequiresEmail && (
+                      <>
+                        <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+                          Confirm email
+                        </label>
+                        <input
+                          value={emailConfirmation}
+                          onChange={(e) => setEmailConfirmation(e.target.value)}
+                          aria-label="Confirm email"
+                          type="email"
+                          inputMode="email"
+                          autoComplete="email"
+                          placeholder="name@example.com"
+                          required
+                          style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
+                        />
+                      </>
+                    )}
                     <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
                       Used only for this event registration and check-in recovery.
                     </div>

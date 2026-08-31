@@ -5,6 +5,16 @@ import { supabase } from './supabase';
 import { getGuestSessionToken } from './guestSessionService';
 import type { CreateEventCheckInInput, EventCheckIn, ImportedRegistrationSearchResult } from '../types';
 
+function isMissingRpc(error: unknown): boolean {
+  const record = error && typeof error === 'object' ? error as Record<string, unknown> : {};
+  const code = typeof record.code === 'string' ? record.code : '';
+  const message = typeof record.message === 'string' ? record.message.toLowerCase() : '';
+  return code === 'PGRST202' ||
+    code === '42883' ||
+    message.includes('could not find the function') ||
+    message.includes('function') && message.includes('does not exist');
+}
+
 export async function createEventCheckIn(
   input: CreateEventCheckInInput
 ): Promise<EventCheckIn> {
@@ -35,8 +45,22 @@ export async function createEventCheckIn(
     p_code: input.code?.trim() || null,
     p_email: input.email?.trim() || null,
     p_phone: input.phone?.trim() || null,
+    p_needs_help: input.needsHelp === true,
   });
   if (!scopedError) return scopedData as EventCheckIn;
+  if (isMissingRpc(scopedError)) {
+    const { data: legacyData, error: legacyError } = await supabase.rpc('create_event_check_in_for_guest', {
+      p_event_id: input.event_id,
+      p_guest_token: guestToken,
+      p_first_name: input.first_name,
+      p_last_name: input.last_name,
+      p_code: input.code?.trim() || null,
+      p_email: input.email?.trim() || null,
+      p_phone: input.phone?.trim() || null,
+    });
+    if (!legacyError) return legacyData as EventCheckIn;
+    throw legacyError;
+  }
   throw scopedError;
 }
 

@@ -1,0 +1,76 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const mockRpc = vi.fn();
+const mockFrom = vi.fn();
+const mockChannel = vi.fn();
+const mockRemoveChannel = vi.fn();
+
+vi.mock('../lib/supabase', () => ({
+  supabase: {
+    rpc: (...args: unknown[]) => mockRpc(...args),
+    from: (...args: unknown[]) => mockFrom(...args),
+    channel: (...args: unknown[]) => mockChannel(...args),
+    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
+  },
+}));
+
+import { createEventCheckIn } from '../lib/checkInService';
+
+describe('checkInService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    localStorage.clear();
+  });
+
+  describe('createEventCheckIn', () => {
+    it('passes p_needs_help so PostgREST selects the current guest check-in RPC overload', async () => {
+      const row = { id: 'check-in-1', event_id: 'event-1', first_name: 'Ada', last_name: 'Lovelace' };
+      mockRpc.mockResolvedValueOnce({ data: row, error: null });
+
+      const result = await createEventCheckIn({
+        event_id: 'event-1',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+        email: 'ada@example.com',
+        phone: null,
+        needsHelp: false,
+      });
+
+      expect(result).toEqual(row);
+      expect(mockRpc).toHaveBeenCalledWith('create_event_check_in_for_guest', {
+        p_event_id: 'event-1',
+        p_guest_token: expect.any(String),
+        p_first_name: 'Ada',
+        p_last_name: 'Lovelace',
+        p_code: null,
+        p_email: 'ada@example.com',
+        p_phone: null,
+        p_needs_help: false,
+      });
+    });
+
+    it('falls back to the legacy guest check-in RPC shape only when the current overload is missing', async () => {
+      const row = { id: 'check-in-legacy', event_id: 'event-1', first_name: 'Grace', last_name: 'Hopper' };
+      mockRpc
+        .mockResolvedValueOnce({ data: null, error: { code: 'PGRST202', message: 'Could not find the function' } })
+        .mockResolvedValueOnce({ data: row, error: null });
+
+      const result = await createEventCheckIn({
+        event_id: 'event-1',
+        first_name: 'Grace',
+        last_name: 'Hopper',
+      });
+
+      expect(result).toEqual(row);
+      expect(mockRpc).toHaveBeenNthCalledWith(2, 'create_event_check_in_for_guest', {
+        p_event_id: 'event-1',
+        p_guest_token: expect.any(String),
+        p_first_name: 'Grace',
+        p_last_name: 'Hopper',
+        p_code: null,
+        p_email: null,
+        p_phone: null,
+      });
+    });
+  });
+});

@@ -2,122 +2,147 @@
 
 ## Current Slice
 
-Finish the **Sprint 4 Check-In / i-Pitch generic-flow acceptance cleanup**. Core generic Check-In behavior has now passed live Product Owner testing. Keep this slice very small: improve field-validation placement and verify/preserve registration-source provenance for post-event reporting.
+Prepare a **real i-Pitch September 3 event in qME** for Product Owner review with Kelly and Tricia, while beginning a bounded **digital voting prototype** that demonstrates qME as an interactive event platform beyond registration.
 
 Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
 
-Do not broaden into i-Pitch event creation, Eventbrite import mapping, queues, Headshots, SMS, workshops, credits, or unrelated Sprint 4 work. The real i-Pitch attendee export has not arrived yet.
+The Product Owner has a call with Kelly and Tricia today, two days before the event. Prioritize something real and demonstrable. **Registration/check-in is the production must-have and must not be endangered by voting work.**
 
-## Live Context
+## Product Direction
 
-The generic Check-In experience is being accepted on the SOTC baseline as an i-Pitch-style registration-only configuration:
+qME is evolving from a product focused on avoiding physical lines into a platform focused on **removing friction throughout the guest's event journey**. Queueing remains an important capability, but is not the definition of an Experience.
+
+For this immediate slice, do not attempt to implement the broader Experience Model. Use i-Pitch to prove two concrete experience shapes:
+1. registration/check-in — already generically accepted;
+2. interactive voting — a bounded prototype using reusable credit/allocation concepts where practical.
+
+## Part A — Create / Configure the Actual i-Pitch Event
+
+Create or prepare the production event through existing qME event/admin mechanisms. Do not hard-code i-Pitch behavior into shared code.
+
+Known event information:
+- Event: i-Pitch
+- Date: September 3, 2026
+- Time: 5:00-8:00 PM
+- Location: Missing Falls Brewery, Akron
+- Current production commitment: registration/check-in
+
+Configure Check-In using the already accepted generic behavior:
 - Check-In Mode = Auto;
 - imported-registration lookup enabled;
 - unlisted self-registration fallback enabled;
 - email required for self-registration;
 - completed check-in required for participation.
 
-The required production SQL for imported-registration email search (`supabase-checkin-imported-registration-email-search.sql`) has now been manually applied by the Product Owner.
+The actual Eventbrite attendee export has **not yet been received**. Do not invent its schema or fake a production import. Prepare the event so the real export can be mapped/imported quickly when Kelly/Tricia provide it.
 
-## Live Acceptance — Passed
+Use appropriate i-Pitch guest-facing branding/copy without inventing organizer claims. If an image/logo is not already available in repo/event data, use an existing neutral qME/event treatment rather than blocking setup.
 
-The following have passed live Product Owner testing:
+Before handoff, report:
+- whether the event was created/configured and its slug/link;
+- any fields/configuration still requiring Product Owner entry;
+- the exact existing import workflow to use when the Eventbrite export arrives;
+- how to generate/use the guest QR/direct link;
+- any SQL/manual production action required.
 
-1. Fresh/unrecognized guest Check-In renders correctly after the React #310 hook-order fix.
-2. Existing checked-in guest can return Back to Event without blanking.
-3. Imported registration can be found by name and self checked in; the resulting guest appears completed in Admin Check-In History.
-4. No-match search offers the generic self-registration fallback.
-5. Expanded fallback explains: `Please provide your information below to register for the event and check in now.`
-6. Walk-up form presents First name, Last name, Email, Confirm email when email is required.
-7. Intentionally mismatched Email / Confirm email is blocked locally with `Email and confirm email must match.`
-8. After correcting the email confirmation, walk-up self-registration succeeds and Auto check-in completes successfully.
-9. The resulting walk-up test guest (Tiny Archibald) appears as `CHECKED IN` in Admin Check-In History.
-10. The prior self-registration save blocker was fixed by explicitly selecting the current `create_event_check_in_for_guest` RPC overload; the failure occurred on initial create, not Auto completion.
+## Part B — Bounded i-Pitch Digital Voting Prototype
 
-The core generic Check-In acceptance target is therefore functionally met. Do not reopen or redesign the successful flows in this cleanup.
+Inspect existing credits, Passport/Scan Code Adventure, guest actions, event metadata/configuration, and admin patterns first. Reuse existing primitives where sensible; do not distort the architecture merely to ship a demo.
 
-## Remaining Cleanup 1 — Inline Confirm Email Validation
+### Event voting concept
 
-Live testing found a UX problem with the otherwise-correct mismatch validation.
+The physical i-Pitch activity uses balls to vote for speakers/companies. The digital prototype should preserve that mental model while implementing it as a configurable interactive allocation activity.
 
-On mobile, the guest is working near the bottom of the expanded self-registration form. After pressing **Register & Check In** with mismatched email values, the validation message is rendered in the global error area near the top of the Check-In page. The guest remains scrolled near the form, so the message can be completely off-screen and the action can appear to have done nothing.
+Each eligible **checked-in guest receives 2 vote credits / digital balls**.
 
-### Required behavior
+For this event, the four configured choices are:
 
-For Email / Confirm email mismatch:
-- show the validation message **inline with the self-registration form**, preferably directly beneath Confirm email or immediately above `Register & Check In`;
-- keep the guest at the form; do **not** solve this by scrolling/jumping them to the top;
-- an error border/state on Confirm email is appropriate if consistent with existing styling, but keep the implementation small;
-- retain the global error area for server/general failures that are not tied to one field;
-- preserve the existing text `Email and confirm email must match.` unless there is a compelling implementation reason to change it.
+1. **VeeSafe**
+   `VeeSafe Technology provides practical cybersecurity and compliance guidance for small businesses, startups, and technical founders. Our goal is to make security make sense by turning confusing requirements into clear actions businesses can actually use.`
 
-Add/update focused regression coverage so a mismatch is blocked and the validation is rendered in/adjacent to the self-registration form rather than only in the page-level error area.
+2. **Quantum Fluent**
+   `Technical leaders and developers often struggle to find content that is both easy to understand and technically useful. Quantum Fluent helps them move forward with clear executive summaries for decision-makers and practical, hands-on technical content for builders.`
 
-## Remaining Cleanup 2 — Registration Source / Provenance
+3. **Vettor**
+   `What if you walked into the dealership already knowing more than the salesperson? Vettor is the AI powered car-buying advocate in your pocket. Snap a photo of any offer and in seconds see every hidden fee, plus a deal score that shows exactly how your price stacks up against what real buyers actually paid. No more guessing. Know the price, skip the haggle, and save thousands.`
 
-The live Admin Check-In list correctly shows the walk-up guest simply as `CHECKED IN`. Product decision: **do not add SELF-REGISTERED badges/noise to every live/history row.** Operators primarily need to know that the person is checked in.
+4. **corVita**
+   `corVita is a medical device startup developing corConnect, a universal adapter designed to improve compatibility between AED and defibrillator electrode pads. By reducing equipment-change delays during cardiac emergencies, corConnect aims to support faster, more seamless continuity of care from EMS arrival through hospital treatment.`
 
-However, post-event reporting should be able to distinguish:
-- guest claimed/checked in from an imported registration (for i-Pitch, Eventbrite attendee);
-- guest self-registered directly in qME as an unlisted/walk-up attendee.
+### Voting behavior for i-Pitch
 
-### Required inspection
+- eligibility: checked-in guest;
+- allocation: 2 total votes/balls per eligible guest;
+- guest may allocate both votes to one competitor or split 1 + 1;
+- voting may be open from the beginning of the event;
+- while voting is open, guest can change/reallocate their own votes;
+- once voting is closed, allocations lock;
+- guest can always see their own current allocation;
+- aggregate totals are **not visible to guests while hidden**;
+- voting state and results visibility are separate controls;
+- admin can switch aggregate results from Hidden to Visible;
+- desired reveal metaphor: **four glass cylinders of balls**, one for each competitor; before reveal do not leak aggregate totals, after reveal visualize aggregate balls/totals across the four cylinders.
 
-Determine whether this distinction is already durably available from the current check-in data/metadata and existing Check-In CSV export.
+Treat the glass-cylinder visualization as an important prototype goal, but do not sacrifice data correctness, eligibility, allocation limits, or registration stability for visual polish.
 
-- Imported-registration check-ins already carry imported-registration linkage/metadata; verify exactly what is persisted/exported.
-- Inspect a generic self-registration check-in and determine whether absence of imported linkage is sufficient and unambiguous, or whether a small explicit source marker is warranted.
-- Inspect the existing Check-In CSV shape and report whether an organizer can already distinguish imported vs qME self-registered attendees after the event.
+### Admin controls / visibility
 
-### Product decision
+At minimum inspect/prototype:
+- voting Open / Closed;
+- results Hidden / Visible;
+- aggregate totals visible to authorized admin even when hidden from guests;
+- four configured choices and descriptions;
+- ability to verify an individual guest cannot exceed 2 total allocated votes.
 
-- If provenance is already unambiguous and exported in a useful way, **do not add new data fields or UI**. Document the existing behavior.
-- If provenance is persisted but the CSV does not expose it clearly, add the smallest useful CSV column, e.g. `registration_source`, with stable human-readable values such as `imported` / `self_registered` (use names consistent with existing metadata if they already exist).
-- If self-registration provenance is not durably distinguishable at all, add the smallest durable marker at creation time and expose it in the admin export. Avoid a schema/table migration if metadata is already the established extensibility mechanism.
-- Do not add source badges to the normal Live/History guest rows in this slice.
+Do not add SMS, external identity, payment, prizes, or unrelated features.
 
-If any SQL would be required, stop and report the exact reason/file rather than assuming Product Owner authorization to apply it. Prefer no SQL if the existing authoritative data can support the reporting distinction cleanly.
+### Architecture guardrail
 
-## Preserve Existing Accepted UX
+Do not hard-code a one-off `VeeSafe/Quantum Fluent/Vettor/corVita` voting engine if a small reusable model is practical. The underlying concept should be recognizable as:
 
-Do not regress:
-- imported search by first name, last name, or email;
-- `Recovery phone (optional)` and its explanation that it is not used to search the imported list;
-- self-registration explanatory copy;
-- required Confirm email;
-- successful imported-registration claim/reconnect behavior;
-- successful walk-up self-registration + Auto completion;
-- event-neutral server failure copy (`Please see the event team.`);
-- SOTC hook-order regression fix.
+> Allocate N event-issued credits among configured choices; optionally allow reallocation while activity is open; independently control aggregate-result visibility.
 
-## Validation
+The i-Pitch rendering may use digital balls/glass cylinders. A future activity could render the same allocation primitive differently.
 
-At minimum:
-- focused Check-In guest tests for inline mismatch validation;
-- relevant Check-In service/export tests if provenance/export changes;
-- TypeScript;
-- full test suite where practical;
-- production Vite build using the established temporary output directory if Dropbox still locks `app/dist`.
+If implementing the reusable primitive safely requires more work than is appropriate before today's call, build the smallest honest prototype and document what is prototype-only versus reusable. **Do not jeopardize Check-In.**
+
+## Live Acceptance / Demo Target
+
+For today's Kelly/Tricia call, optimize for demonstrating:
+1. the actual i-Pitch event in qME;
+2. the accepted guest registration/check-in flow, with the explanation that their Eventbrite list will populate lookup once supplied;
+3. if feasible in the available time, a guest-facing i-Pitch voting prototype showing the four competitors and two digital votes/balls;
+4. an admin concept/control for opening/closing voting and hiding/revealing results.
+
+Production registration is required. Voting can remain explicitly experimental until Product Owner acceptance.
+
+## Broader Sprint 4 Thinking — Do Not Implement in This Slice
+
+Preserve these principles for later Experience Model work:
+- qME removes friction across the guest journey; queues are one orchestration strategy, not the product definition;
+- Check-In can itself be a queue/service flow when staff action is required even when self-service can collapse the physical wait;
+- party size is first-class demand information: one waiting party may represent one or many people;
+- service time, party size/load, active service capacity, and resource compatibility can improve wait prediction beyond raw line length;
+- an Experience may combine eligibility, capacity, admission/commitment, service/participation, interaction, completion, recovery/exception handling, and guest guidance;
+- Scan Code Adventure is a placeholder/example for interactive activities, not a queue;
+- credits are reusable event-issued entitlements: vote credits, drink credits, headshot credits, tasting credits, etc.;
+- food/bar can eventually support guest ordering, host receipt/confirmation/editing, internal fulfillment, Ready notification, credits, and demand/service-time estimation without requiring qME to replace the establishment's internal POS/process;
+- restaurant/table wait management should consider party size and table/resource compatibility; advance reservations are a future consideration and **not to be acted upon now**;
+- Perfect Phit-style tag matching may later connect guest interests/goals with tagged booths, speakers, people, products, and activities;
+- future journey orchestration can combine interests/goals, matching, guest history, current location, maps/travel time, schedule, waits, service times, commitments, and remaining event time to recommend what the guest should do next;
+- digital waits may eventually be dynamically/spontaneously enabled for booths/services when demand develops rather than requiring every experience to be defined as a queue in advance;
+- host-side matching/priority is a separate policy question: matching information may be useful to hosts, but opaque 'interesting guest jumps the line' behavior must not become the default.
 
 ## Handoff
 
 Update this file with:
-- exact validation-placement change;
-- what registration provenance already existed;
-- whether CSV was changed and its final source semantics;
-- files changed;
+- actual i-Pitch event setup status and link/slug;
+- voting implementation/prototype status;
+- exact files changed;
+- what was reused versus newly introduced;
 - tests/build results;
-- whether any SQL/manual production action remains;
+- SQL/manual actions, if any;
 - commit SHA;
-- concise Product Owner live acceptance step if another UI check is needed.
+- concise demo steps for Product Owner before the Kelly/Tricia call.
 
-Do not mark the i-Pitch readiness story done. Generic Check-In can be considered accepted after this cleanup, but final i-Pitch readiness still requires the real Eventbrite export, event-specific setup/import, and production smoke test.
-
-## Cleanup Status Update
-
-- Inline Confirm Email validation cleanup is complete. Mismatched self-registration email now renders `Email and confirm email must match.` directly in the expanded self-registration form beneath Confirm email, marks Confirm email invalid, and leaves page-level/global errors reserved for server/general failures.
-- Registration provenance inspection: imported-registration check-ins already persist `metadata.imported_registration_id`, `registration_match_status: matched`, import source, and related import metadata. Generic qME walk-up self-registration has no imported-registration linkage and persists the normal guest self-check-in/manual metadata path. Existing CSV already exposed imported linkage and match status, but not a single clear source column.
-- CSV export now includes `registration_source` with stable values: `imported` when `metadata.imported_registration_id` exists, `needs_help` for unresolved not-found fallback rows, and `self_registered` for qME-created non-imported check-ins. No Live/History row badges were added.
-- Files changed in cleanup: `app/src/pages/guest/GuestEventCheckIn.tsx`, `app/src/pages/admin/AdminEventCheckIns.tsx`, `app/src/test/guestEventCheckIn.test.tsx`, `app/src/test/adminEventCheckIns.test.ts`, and `planning/CURRENT-WORK.md`.
-- Validation: `npx tsc -b` passed; focused `npx vitest run src\test\guestEventCheckIn.test.tsx src\test\adminEventCheckIns.test.ts src\test\checkInService.test.ts` passed; full `npx vitest run` passed with 122 tests; `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed.
-- No new SQL or manual production action remains for this cleanup. Product Owner live check, if desired, should verify the mismatched Confirm email message appears next to the form controls on mobile and that exported Check-In CSV includes `registration_source`.
+Do not mark the i-Pitch readiness story done until the real Eventbrite export is imported and the production guest flow is smoke-tested. Do not mark voting production-ready until Product Owner live acceptance.

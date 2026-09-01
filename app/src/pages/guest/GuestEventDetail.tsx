@@ -19,6 +19,7 @@ import { getEventCheckIn } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
+import { getVoteAllocationConfig } from '../../lib/votingConfig';
 import { isSotcEventSlug } from '../../lib/sotc';
 import { formatTime } from '../../lib/utils';
 import {
@@ -46,6 +47,10 @@ type CreditStatus = 'none' | 'available' | 'used';
 
 function isGroupOrderEce(ece: Ece): boolean {
   return ece.metadata?.interaction_mode === 'group_order';
+}
+
+function isVoteAllocationEce(ece: Ece): boolean {
+  return getVoteAllocationConfig(ece).enabled;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -925,11 +930,17 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               joinPaused,
             }) : '';
             const isGroupOrder = isGroupOrderEce(exp);
+            const isVoteAllocation = isVoteAllocationEce(exp);
             const groupOrderStatusLine = isGroupOrder
               ? hasEventCheckIn ? 'Ready to order' : isWaitingForHostCheckIn ? 'Waiting for host check-in' : 'Check in first'
               : '';
+            const voteStatusLine = isVoteAllocation
+              ? hasEventCheckIn ? 'Ready to vote' : isWaitingForHostCheckIn ? 'Waiting for host check-in' : 'Check in first'
+              : '';
             const actionHref = isGroupOrder
               ? `/events/${eventSlug}/group-order`
+              : isVoteAllocation
+              ? `/events/${eventSlug}/vote/${exp.slug}`
               : exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
@@ -964,6 +975,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               ? ''
               : isGroupOrder
               ? homeActionLabel || 'Order'
+              : isVoteAllocation
+              ? homeActionLabel || 'Vote'
               : linkedQueue
               ? homeActionLabel || 'Join'
               : homeUrl
@@ -1011,9 +1024,9 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                     <span>Starts {formatTime(event.start_time)}</span>
                   </div>
                 )}
-                {(linkedQueue || groupOrderStatusLine) && (
+                {(linkedQueue || groupOrderStatusLine || voteStatusLine) && (
                   <div className="ed-ticket-note">
-                    {linkedQueue ? statusLine : groupOrderStatusLine}
+                    {linkedQueue ? statusLine : groupOrderStatusLine || voteStatusLine}
                   </div>
                 )}
                 {homeItems.length > 0 && (

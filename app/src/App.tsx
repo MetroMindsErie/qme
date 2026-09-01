@@ -20,6 +20,7 @@ import AdminGate from './components/AdminGate';
 import GuestEventDetail from './pages/guest/GuestEventDetail';
 import GuestEventCheckIn from './pages/guest/GuestEventCheckIn';
 import GuestGroupOrder from './pages/guest/GuestGroupOrder';
+import GuestVoteAllocation from './pages/guest/GuestVoteAllocation';
 import GuestQueueTicket from './pages/guest/GuestQueueTicket';
 import GuestEventList from './pages/guest/GuestEventList';
 import SotcEntrySign from './pages/guest/SotcEntrySign';
@@ -99,6 +100,7 @@ function App() {
         <Route path="/events/:eventSlug" element={<EventPage />} />
         <Route path="/events/:eventSlug/check-in" element={<EventCheckInPage />} />
         <Route path="/events/:eventSlug/group-order" element={<EventGroupOrderPage />} />
+        <Route path="/events/:eventSlug/vote/:eceSlug" element={<GuestVoteAllocation />} />
         {/* Queue landing skipped — jumps straight to ticket */}
         <Route path="/events/:eventSlug/q/:queueSlug" element={<QueueSkip />} />
         {/* Ticket page — guarded to demo queue only */}

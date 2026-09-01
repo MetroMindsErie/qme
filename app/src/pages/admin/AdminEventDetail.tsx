@@ -14,6 +14,7 @@ import { createAdminUserWithAuth, resetStaffPasswordWithAuth } from '../../lib/a
 import { getEvent, resetEventTestData } from '../../lib/eventService';
 import { deleteEce, listEcesForEvent } from '../../lib/eceService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
+import { getVoteAllocationConfig } from '../../lib/votingConfig';
 import {
   addEventStaffAssignment,
   archiveEventStaffAssignment,
@@ -30,6 +31,10 @@ import '../../styles/admin.css';
 
 function isGroupOrderEce(ece: Ece): boolean {
   return ece.metadata?.interaction_mode === 'group_order';
+}
+
+function isVoteAllocationEce(ece: Ece): boolean {
+  return getVoteAllocationConfig(ece).enabled;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -796,6 +801,7 @@ export default function AdminEventDetail() {
           {visibleEces.map((exp) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
             const queueSummary = linkedQueue ? queueSummaries[linkedQueue.id] ?? emptyQueueSummary : null;
+            const votingConfig = isVoteAllocationEce(exp) ? getVoteAllocationConfig(exp) : null;
 
             return (
               <div
@@ -837,6 +843,12 @@ export default function AdminEventDetail() {
                     <StatusPill label="Nearby" value={queueSummary.nearby} tone={queueSummary.nearby > 0 ? 'ready' : 'default'} />
                     <StatusPill label="Your Turn" value={queueSummary.released} tone={queueSummary.released > 0 ? 'active' : 'default'} />
                     <StatusPill label="Done" value={queueSummary.completed} tone="done" />
+                  </div>
+                )}
+                {votingConfig && (
+                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.65rem' }}>
+                    <StatusPill label={votingConfig.open ? 'Voting Open' : 'Voting Closed'} value={votingConfig.creditLimit} tone={votingConfig.open ? 'ready' : 'attention'} />
+                    <StatusPill label={votingConfig.resultsVisible ? 'Results Visible' : 'Results Hidden'} value={votingConfig.choices.length} tone={votingConfig.resultsVisible ? 'active' : 'default'} />
                   </div>
                 )}
               </div>

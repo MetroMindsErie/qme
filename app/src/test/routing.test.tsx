@@ -21,6 +21,7 @@ vi.mock('../pages/admin/AdminGroupOrderDashboard', () => ({ default: () => <div 
 vi.mock('../pages/guest/GuestEventDetail', () => ({ default: () => <div data-testid="guest-event-detail" /> }));
 vi.mock('../pages/guest/GuestEventCheckIn', () => ({ default: () => <div data-testid="guest-event-check-in" /> }));
 vi.mock('../pages/guest/GuestEventList', () => ({ default: () => <div data-testid="guest-event-list" /> }));
+vi.mock('../pages/guest/GuestVoteAllocation', () => ({ default: () => <div data-testid="guest-vote-allocation" /> }));
 vi.mock('../pages/guest/GuestQueueTicket', () => ({ default: () => <div data-testid="guest-queue-ticket" /> }));
 vi.mock('../pages/demo/KioskDisplay', () => ({ default: () => <div data-testid="kiosk-display" /> }));
 
@@ -102,6 +103,11 @@ describe('App routing', () => {
   it('/events/peony-festival/check-in renders event check-in', () => {
     renderAt('/events/peony-festival/check-in');
     expect(screen.getByTestId('guest-event-check-in')).toBeInTheDocument();
+  });
+
+  it('/events/:slug/vote/:eceSlug renders vote allocation', () => {
+    renderAt('/events/ipitch-2026/vote/ipitch-voting');
+    expect(screen.getByTestId('guest-vote-allocation')).toBeInTheDocument();
   });
 
   it('/events/peony-festival/q/:queueSlug redirects to the ticket page', () => {

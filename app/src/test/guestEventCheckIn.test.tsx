@@ -60,6 +60,8 @@ const mockSearchImportedRegistrationsForGuest = vi.fn();
 const mockCreateEventCheckIn = vi.fn();
 const mockCheckInEventGuest = vi.fn();
 const mockGetEventCheckIn = vi.fn();
+const mockCreateImportedRegistrationCheckInForGuest = vi.fn();
+const mockReconnectImportedRegistrationCheckInForGuest = vi.fn();
 
 vi.mock('../components/Header', () => ({
   default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
@@ -74,9 +76,9 @@ vi.mock('../lib/eventService', () => ({
 vi.mock('../lib/checkInService', () => ({
   checkInEventGuest: (...args: unknown[]) => mockCheckInEventGuest(...args),
   createEventCheckIn: (...args: unknown[]) => mockCreateEventCheckIn(...args),
-  createImportedRegistrationCheckInForGuest: vi.fn(),
+  createImportedRegistrationCheckInForGuest: (...args: unknown[]) => mockCreateImportedRegistrationCheckInForGuest(...args),
   getEventCheckIn: (...args: unknown[]) => mockGetEventCheckIn(...args),
-  reconnectImportedRegistrationCheckInForGuest: vi.fn(),
+  reconnectImportedRegistrationCheckInForGuest: (...args: unknown[]) => mockReconnectImportedRegistrationCheckInForGuest(...args),
   searchImportedRegistrationsForGuest: (...args: unknown[]) => mockSearchImportedRegistrationsForGuest(...args),
 }));
 
@@ -100,6 +102,8 @@ describe('GuestEventCheckIn', () => {
     mockCreateEventCheckIn.mockResolvedValue(createdCheckIn);
     mockCheckInEventGuest.mockResolvedValue(completedCheckIn);
     mockGetEventCheckIn.mockResolvedValue(completedCheckIn);
+    mockCreateImportedRegistrationCheckInForGuest.mockResolvedValue(completedCheckIn);
+    mockReconnectImportedRegistrationCheckInForGuest.mockResolvedValue(completedCheckIn);
   });
 
   afterEach(() => {
@@ -154,6 +158,58 @@ describe('GuestEventCheckIn', () => {
     });
     expect(await screen.findByText(/Thanks, Walk!/)).toBeInTheDocument();
     expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();
+    expect(screen.getByText('Total guests: 1')).toBeInTheDocument();
+  });
+
+  it.each([
+    [1, 'Thanks, Paul! You are checked in.', 'Total guests: 1'],
+    [2, 'Thanks, Paul! You and your 1 guest are checked in.', 'Total guests: 2'],
+    [4, 'Thanks, Paul! You and your 3 guests are checked in.', 'Total guests: 4'],
+  ])('shows party-size confirmation for imported registration with Tickets=%s', async (partySize, message, totalGuests) => {
+    const user = userEvent.setup();
+    mockSearchImportedRegistrationsForGuest.mockResolvedValue([{
+      id: `registration-${partySize}`,
+      first_name: 'Paul',
+      last_name: 'Pitch',
+      email_hint: 'pa**@example.com',
+      ticket_hint: 'General Admission',
+      party_size: partySize,
+      external_order_id: `order-${partySize}`,
+      headshot_entitled: false,
+      already_checked_in: false,
+      requires_email_confirmation: false,
+    }]);
+    mockCreateImportedRegistrationCheckInForGuest.mockResolvedValue({
+      ...completedCheckIn,
+      first_name: 'Paul',
+      last_name: 'Pitch',
+      metadata: {
+        imported_registration_id: `registration-${partySize}`,
+        external_order_id: `order-${partySize}`,
+        party_size: partySize,
+      },
+    });
+    mockGetEventCheckIn.mockResolvedValue({
+      ...completedCheckIn,
+      first_name: 'Paul',
+      last_name: 'Pitch',
+      metadata: {
+        imported_registration_id: `registration-${partySize}`,
+        external_order_id: `order-${partySize}`,
+        party_size: partySize,
+      },
+    });
+
+    renderCheckIn();
+
+    const searchInput = await screen.findByPlaceholderText('First name, last name, or email');
+    fireEvent.change(searchInput, { target: { value: 'Paul' } });
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.click(await screen.findByRole('button', { name: 'This is me' }));
+
+    expect(await screen.findByText(new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeInTheDocument();
+    expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();
+    expect(screen.getByText(totalGuests)).toBeInTheDocument();
   });
 
   it('clears prior guest identity and starts clean for shared-device Next Guest', async () => {

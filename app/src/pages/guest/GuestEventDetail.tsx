@@ -16,6 +16,7 @@ import {
 } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
+import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySize';
 import { getContentListConfig } from '../../lib/contentListConfig';
 import { getCompletedEventCheckInMessage, getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
@@ -479,6 +480,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
   const [hasEventCheckIn, setHasEventCheckIn] = useState(false);
   const [eventCheckInStatus, setEventCheckInStatus] = useState<EventCheckIn['status'] | null>(null);
   const [eventCheckInTicketType, setEventCheckInTicketType] = useState<'general' | 'flowers' | null>(null);
+  const [eventCheckInPartySize, setEventCheckInPartySize] = useState(1);
   const [headshotCreditStatus, setHeadshotCreditStatus] = useState<CreditStatus>('none');
   const isPeonyEvent = eventSlug === PEONY_EVENT_SLUG;
 
@@ -515,6 +517,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
       let checkInTicketType: 'general' | 'flowers' | null = null;
       let nextEventCheckInStatus: EventCheckIn['status'] | null = null;
       let nextHasEventCheckIn = false;
+      let nextEventCheckInPartySize = 1;
       let nextHeadshotCreditStatus: CreditStatus = 'none';
       if (storedCheckIn) {
         try {
@@ -522,6 +525,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
           if (saved.id) {
             const row = await getEventCheckIn(saved.id, ev.id);
             nextEventCheckInStatus = row.status;
+            nextEventCheckInPartySize = getCheckInPartySize(row);
             if (!checkInConfig.requireCompletedForParticipation || row.status === 'completed') {
               checkInTicketType = row.ticket_type;
               nextHasEventCheckIn = true;
@@ -539,6 +543,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
       }
       setEventCheckInStatus((current) => current === nextEventCheckInStatus ? current : nextEventCheckInStatus);
       setEventCheckInTicketType((current) => current === checkInTicketType ? current : checkInTicketType);
+      setEventCheckInPartySize((current) => current === nextEventCheckInPartySize ? current : nextEventCheckInPartySize);
       setHasEventCheckIn((current) => current === nextHasEventCheckIn ? current : nextHasEventCheckIn);
       setHeadshotCreditStatus((current) =>
         current === nextHeadshotCreditStatus ? current : nextHeadshotCreditStatus
@@ -787,6 +792,9 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                   ? 'You are checked in with flowers access. Use the Bouquet Bar option below when ready.'
                   : 'Enter your name when you arrive so the team can prepare your admission and bouquet access.'}
               </div>
+              {hasEventCheckIn && !isEventCheckInRemoved && (
+                <div className="ed-ticket-note">{formatTotalGuests(eventCheckInPartySize)}</div>
+              )}
             </div>
             <div className="ed-activity-right">
               <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">

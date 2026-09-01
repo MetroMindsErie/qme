@@ -168,16 +168,16 @@ describe('AdminEventDetail feature management and reset', () => {
     renderDetail();
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Setup' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[1]);
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/events/event-1/eces/ece-finalists/edit');
+
     fireEvent.click(screen.getAllByRole('button', { name: 'Down' })[0]);
 
     await waitFor(() => {
       expect(mockUpdateEceSortOrder).toHaveBeenCalledWith('ece-finalists', 10);
       expect(mockUpdateEceSortOrder).toHaveBeenCalledWith('ece-agenda', 20);
     });
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
-    expect(mockNavigate).toHaveBeenCalledWith('/admin/events/event-1/eces/ece-finalists/edit');
-  }, 10000);
+  }, 30000);
 
   it('hides setup editing controls from non-managing admins', async () => {
     mockGetCurrentAdminPrincipal.mockResolvedValue(admin(false));

@@ -265,6 +265,8 @@ export interface ImportedRegistrationSearchResult {
   last_name: string;
   email_hint: string | null;
   ticket_hint?: string | null;
+  party_size?: number | null;
+  external_order_id?: string | null;
   headshot_entitled: boolean;
   already_checked_in: boolean;
   requires_email_confirmation: boolean;

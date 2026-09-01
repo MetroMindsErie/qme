@@ -42,6 +42,15 @@ const completedCheckIn: EventCheckIn = {
   updated_at: '',
 };
 
+const partyCheckIn: EventCheckIn = {
+  ...completedCheckIn,
+  metadata: {
+    imported_registration_id: 'registration-1',
+    external_order_id: 'order-4',
+    party_size: 4,
+  },
+};
+
 const mockGetEventBySlug = vi.fn();
 const mockGetEventCheckIn = vi.fn();
 const mockListActiveEcesForEvent = vi.fn();
@@ -145,6 +154,33 @@ describe('GuestEventDetail', () => {
     expect(await screen.findByText('i-Pitch')).toBeInTheDocument();
     expect(screen.getByText('You are checked in. Please go to the check-in desk to receive your event package.')).toBeInTheDocument();
     expect(screen.queryByText(/schedule, resources, and headshots/)).not.toBeInTheDocument();
+  });
+
+  it('preserves total guests on the checked-in event card', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+      metadata: {
+        check_in: {
+          enabled: true,
+          completion_mode: 'auto',
+          require_completed_for_participation: true,
+          post_check_in_instruction: 'Please go to the check-in desk to receive your event package.',
+        },
+      },
+    });
+    mockGetEventCheckIn.mockResolvedValue(partyCheckIn);
+    localStorage.setItem('qme:eventCheckIn:event-1', JSON.stringify({
+      id: partyCheckIn.id,
+      firstName: partyCheckIn.first_name,
+      lastName: partyCheckIn.last_name,
+    }));
+
+    renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('i-Pitch')).toBeInTheDocument();
+    expect(screen.getByText('Total guests: 4')).toBeInTheDocument();
   });
 
   it('uses mode-aware Check-In card copy and neutral feature taxonomy', async () => {

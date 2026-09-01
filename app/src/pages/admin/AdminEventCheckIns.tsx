@@ -6,7 +6,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { getEvent, updateEvent } from '../../lib/eventService';
 import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
+import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySize';
 import { downloadCsv, formatCsvTimestamp, safeCsvFilename } from '../../lib/csvExport';
+import { importEventbriteRegistrationsForEvent, type EventbriteRegistrationImportResult } from '../../lib/eventbriteRegistrationImport';
 import {
   canManageEvent,
   getCurrentAdminPrincipal,
@@ -69,6 +71,9 @@ export default function AdminEventCheckIns({
   const [activeTab, setActiveTab] = useState<CheckInAdminTab>('live');
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsStatus, setSettingsStatus] = useState('');
+  const [importingEventbrite, setImportingEventbrite] = useState(false);
+  const [eventbriteImportStatus, setEventbriteImportStatus] = useState('');
+  const [eventbriteImportResult, setEventbriteImportResult] = useState<EventbriteRegistrationImportResult | null>(null);
   const [removingCheckInIds, setRemovingCheckInIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -206,6 +211,9 @@ export default function AdminEventCheckIns({
       { header: 'imported_registration_id', value: (row) => asCsvString(asRecord(row.metadata).imported_registration_id) },
       { header: 'registration_match_status', value: (row) => asCsvString(asRecord(row.metadata).registration_match_status) },
       { header: 'registration_source', value: (row) => getCheckInRegistrationSource(row) },
+      { header: 'external_order_id', value: (row) => asCsvString(asRecord(row.metadata).external_order_id || asRecord(row.metadata).eventbrite_order_id) },
+      { header: 'party_size', value: (row) => getCheckInPartySize(row) },
+      { header: 'guests_represented', value: (row) => getCheckInPartySize(row) },
       { header: 'needs_help', value: (row) => asRecord(row.metadata).needs_help === true ? 'yes' : 'no' },
       {
         header: 'headshot_credit_status',
@@ -285,9 +293,33 @@ export default function AdminEventCheckIns({
     }
   }
 
+  async function handleEventbriteImport(file: File | null) {
+    if (!event || !file) return;
+    setImportingEventbrite(true);
+    setEventbriteImportStatus('Importing...');
+    setEventbriteImportResult(null);
+    try {
+      const csvText = await file.text();
+      const result = await importEventbriteRegistrationsForEvent({
+        eventId: event.id,
+        sourceFileName: file.name,
+        csvText,
+      });
+      setEventbriteImportResult(result);
+      setEventbriteImportStatus(`Imported ${result.insertedCount}; skipped ${result.skippedExistingCount}; invalid ${result.invalidRows.length}.`);
+    } catch (e) {
+      console.error('Eventbrite import failed', e);
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      setEventbriteImportStatus(`Import failed: ${message}`);
+    } finally {
+      setImportingEventbrite(false);
+    }
+  }
+
   const waiting = checkIns.filter((row) => row.status === 'waiting');
   const completed = checkIns.filter((row) => row.status === 'completed');
   const history = checkIns.filter((row) => row.status === 'completed' || row.status === 'cancelled');
+  const completedGuestsRepresented = completed.reduce((sum, row) => sum + getCheckInPartySize(row), 0);
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
   const matchesSearch = useCallback((row: EventCheckIn) => {
     if (!normalizedSearchQuery) return true;
@@ -382,7 +414,7 @@ export default function AdminEventCheckIns({
 
         {activeTab === 'live' && (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.65rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.65rem', marginBottom: '1rem' }}>
               <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
                 <div style={{ color: '#8B5A00', fontSize: '1.35rem', fontWeight: 900 }}>{waiting.length}</div>
                 <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>Waiting for staff</div>
@@ -390,6 +422,10 @@ export default function AdminEventCheckIns({
               <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
                 <div style={{ color: '#00a344', fontSize: '1.35rem', fontWeight: 900 }}>{completed.length}</div>
                 <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>Checked in</div>
+              </div>
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: '0.75rem', textAlign: 'center' }}>
+                <div style={{ color: '#223247', fontSize: '1.35rem', fontWeight: 900 }}>{completedGuestsRepresented}</div>
+                <div style={{ color: '#64748b', fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase' }}>Guests represented</div>
               </div>
             </div>
 
@@ -541,6 +577,35 @@ export default function AdminEventCheckIns({
               >
                 Export Check-Ins
               </button>
+            </div>
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: '#fafafa' }}>
+              <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Eventbrite Import</h2>
+              <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>
+                Eventbrite CSV
+              </label>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                disabled={importingEventbrite}
+                onChange={(e) => {
+                  void handleEventbriteImport(e.target.files?.[0] ?? null);
+                  e.currentTarget.value = '';
+                }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem', border: '1px solid #d0d7de', borderRadius: 8, background: '#fff' }}
+              />
+              <p style={{ color: '#667085', fontSize: '0.82rem', lineHeight: 1.45, margin: '0.75rem 0 0' }}>
+                Uses Eventbrite Order ID for repeat-import safety and Tickets as the total guests represented by one registration.
+              </p>
+              {eventbriteImportStatus && (
+                <p style={{ color: eventbriteImportStatus.startsWith('Import failed') ? '#B71C1C' : '#00a344', fontWeight: 800, margin: '0.75rem 0 0' }}>
+                  {eventbriteImportStatus}
+                </p>
+              )}
+              {eventbriteImportResult && (
+                <div style={{ color: '#475467', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.5rem' }}>
+                  Rows processed: {eventbriteImportResult.processedCount}. New registrations: {eventbriteImportResult.insertedCount}. Existing Order IDs skipped: {eventbriteImportResult.skippedExistingCount}. Invalid rows: {eventbriteImportResult.invalidRows.length}.
+                </div>
+              )}
             </div>
             <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: '#fafafa' }}>
               <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Check-In Behavior</h2>

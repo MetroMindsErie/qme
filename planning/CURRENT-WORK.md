@@ -1,211 +1,146 @@
 # Current Work
 
-## Current Slice
+## Current Slice Status
 
-Implement the **production i-Pitch Eventbrite registration import + party-size Check-In behavior** using the actual Eventbrite export supplied by the Product Owner.
-
-Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
+Eventbrite import + party-size Check-In implementation is complete, validated locally, committed, and ready for Product Owner SQL/import acceptance.
 
 ## Production Event
 
-- organization: **University of Akron Research Foundation**
-- event: **i-Pitch - September, 2026**
+- organization: University of Akron Research Foundation
+- event: i-Pitch - September, 2026
 - slug: `ipitch-092026`
 - September 3, 2026, 5:00-8:00 PM ET
 - Missing Falls Brewery, 540 S Main St., Akron, OH 44311
 
-Accepted event-day Check-In model:
-- guests primarily check in on their own phones via event QR;
-- imported guests search for their Eventbrite registration;
-- guests not found may self-register with name + email and check in;
-- shared iPad at front desk is backup;
-- after Check-In, guest shows the checked-in phone state at the front-entrance check-in desk and receives the evening's event package;
-- Tricia will not rely on an admin console during guest fulfillment; the **guest phone confirmation itself must clearly communicate the number of people represented by that check-in**.
+Digital voting remains inactive/not visible for production i-Pitch. Physical balls remain the production voting method.
 
-Approved event Post-Check-In Instruction remains:
-`Please go to the check-in desk by the front entrance to receive your evening's event package.`
+## Eventbrite Mapping
 
-Physical balls remain Thursday's production voting method. Do not make digital voting visible for production i-Pitch.
+Actual Eventbrite CSV columns used:
+- `Order ID` -> durable external/source order identity
+- `Tickets` -> total people represented by this one imported registration/check-in
+- `First Name` -> registration first name
+- `Last Name` -> registration last name
+- `Email` -> registration email/normalized email
+- `Ticket Type` or `Ticket Class`/`Ticket Name` when present -> source ticket type hint
 
-## Actual Eventbrite File / Business Rule
+Quantity rule:
+- `Tickets = 1` means party size 1.
+- `Tickets = 2` means party size 2, shown as purchaser + 1 guest.
+- `Tickets = 4` means party size 4, shown as purchaser + 3 guests.
+- Missing/zero numeric quantities normalize to at least 1.
+- Non-numeric quantities are invalid rows.
 
-The first production Eventbrite CSV has been supplied. It includes at least:
-- `Order ID`
-- `Tickets`
-- purchaser/guest first name
-- purchaser/guest last name
-- email address
+One Eventbrite row/order remains one qME imported registration. The importer does not create companion/fake records.
 
-The export can contain `Tickets > 1` while only the purchaser/main guest is named.
+## Storage / SQL
 
-For this event, proceed with the following bounded model:
+Schema/RPC SQL is required before production import.
 
-> **One Eventbrite CSV row/order becomes one qME imported registration. `Tickets` is the total number of people represented by that registration/check-in. Do not create invented companion names or separate companion attendee records.**
+Prepared SQL:
+- `supabase-eventbrite-party-size-checkin.sql`
 
-Examples:
-- `Tickets = 1` -> one imported registration representing one guest.
-- `Tickets = 2` -> one imported registration representing purchaser + 1 guest.
-- `Tickets = 4` -> one imported registration representing purchaser + 3 guests.
+It adds:
+- `event_imported_registrations.external_order_id`
+- `event_imported_registrations.party_size`
+- check constraint `party_size >= 1`
+- unique Eventbrite Order ID protection on `(event_id, import_source, external_order_id)`
+- updated guest search/claim/reconnect RPCs that return/preserve `party_size` and `external_order_id`
 
-Preserve `Order ID` as external/source registration provenance/identity where the existing schema can support it honestly. Preserve `Tickets` as party/guest quantity. Prefer a generic field/model such as `party_size` / registration quantity rather than an i-Pitch-specific field name.
+The SQL uses existing guest-session token handling via `ensure_guest_session(...)`; it does not depend on storing raw browser tokens.
 
-Self-registered qME guests have no Eventbrite Order ID and default to a represented guest quantity of **1** for this event unless a future product decision explicitly adds party size to self-registration. Do not fabricate an Eventbrite-like Order ID for self-registration.
+Manual production step required:
+1. Product Owner runs `supabase-eventbrite-party-size-checkin.sql` against production Supabase.
+2. After SQL succeeds and automated deployment from `main` is live, import the actual Eventbrite CSV from Admin -> Event Check-In -> Settings -> Eventbrite Import.
+3. Do not run production import before the SQL is applied.
 
-Do not attempt to merge/reconcile an Eventbrite imported registration with a qME self-registration based on name/email. They remain separate records if that unusual edge case occurs.
+## Import / Re-Import Semantics
 
-## Part A — Import / Re-Import Safety
+- Existing Eventbrite `Order ID`s are skipped, not duplicated.
+- New `Order ID`s in later Eventbrite files are inserted.
+- Re-import does not update, delete, or reset existing imported registrations/check-ins.
+- No destructive sync occurs when a previously imported order is absent from a later export.
+- No qME self-registration reconciliation/merge is attempted by name or email.
+- Import reports rows processed, new registrations, existing Order IDs skipped, and invalid rows.
 
-Use the actual existing imported-registration workflow and make the smallest production-safe extension needed for this file.
+## Check-In Behavior
 
-Required:
-- map first name, last name, email using the actual Eventbrite column names;
-- preserve Eventbrite `Order ID` as external/source provenance where possible;
-- preserve `Tickets` as total represented guest quantity/party size;
-- normalize/validate quantity to a minimum of 1;
-- one CSV row creates at most one imported registration;
-- do not expand quantity into anonymous/fake companion records;
-- do not alter existing check-in state merely because a file is imported again;
-- subsequent Eventbrite exports may be supplied up until shortly before the event;
-- a registration already imported from the same Eventbrite `Order ID` must be skipped rather than duplicated;
-- a new Order ID in a later file should be added;
-- do not perform destructive synchronization/deletion merely because a prior registration is absent from a later export;
-- do not identity-merge against qME self-registered records.
+Imported Eventbrite registration check-in now uses `party_size` for guest-facing fulfillment copy:
+- party size 1: `Thanks, Paul! You are checked in.`
+- party size 2: `Thanks, Paul! You and your 1 guest are checked in.`
+- party size 4: `Thanks, Paul! You and your 3 guests are checked in.`
 
-Return/report useful import results such as rows processed, new registrations added, already-imported/skipped, and invalid rows where the current architecture supports it.
+Then it shows the configured event post-check-in instruction and a visible `Total guests: N`.
 
-If the current schema cannot safely persist Order ID and/or party size, prepare the **exact SQL migration/RPC change** and report it. Do not silently overload an unrelated field. If production SQL is required before import can run safely, stop before importing and tell the Product Owner exactly what to execute.
+The checked-in Event Check-In card on guest event home also shows `Total guests: N`.
 
-## Part B — Party-Size-Aware Check-In Confirmation
+Self-registered qME guests default to party size 1 and have no Eventbrite Order ID.
 
-When an imported Eventbrite registration checks in, use its total represented guest quantity.
+## Reporting / Admin
 
-### Quantity = 1
+- Check-In CSV export now includes:
+  - `external_order_id`
+  - `party_size`
+  - `guests_represented`
+- Admin live Check-In now distinguishes registration/check-in count from represented guests with a `Guests represented` count.
+- Existing `registration_source` behavior is preserved.
 
-Keep natural single-person confirmation, equivalent to:
+## Preserved
 
-`Thanks, Paul! You are checked in.`
+- Auto Check-In
+- imported registration lookup by first/last/email
+- self-registration fallback
+- required email + Confirm email
+- inline email mismatch validation
+- event-configured post-check-in instruction
+- shared-device no-menu mode
+- Next Guest + 15-second auto-reset
+- personal-device session preservation
+- SOTC behavior
+- accepted i-Pitch content: Check-In, Agenda, Finalists summary -> detail, Meet the Judges
 
-Then show the configured event instruction.
+## Files Changed
 
-Also show a clear fulfillment count:
-
-`Total guests: 1`
-
-### Quantity > 1
-
-Calculate additional guests as `Tickets - 1`.
-
-Examples:
-- total 2 -> `Thanks, Paul! You and your 1 guest are checked in.`
-- total 3 -> `Thanks, Paul! You and your 2 guests are checked in.`
-- total 4 -> `Thanks, Paul! You and your 3 guests are checked in.`
-
-Use correct singular/plural grammar.
-
-Then show the configured event instruction and a clearly visible:
-
-`Total guests: N`
-
-The purpose is operational: Tricia can glance at the guest's phone and immediately know how many evening event packages that check-in represents.
-
-The **checked-in Event Check-In card on the guest event home** must also preserve/display `Total guests: N`, because the guest may return to the event home before reaching the front desk.
-
-Do not hard-code Tricia or i-Pitch names into shared Check-In rendering. Party-size behavior should be reusable for other imported-registration events.
-
-## Part C — Counts / Reporting Semantics
-
-Do not create fake attendee records merely to make counts equal people represented.
-
-Where the current UI/reporting already shows registration/check-in counts, preserve truthful semantics. If practical within this slice, distinguish:
-- **registrations/check-ins** = number of qME registration records checked in;
-- **guests represented** = sum of party sizes for checked-in registrations.
-
-At minimum, preserve party size in export/reporting so event operators can determine represented attendance after the event.
-
-Do not undertake a broad analytics redesign in this slice.
-
-## Part D — Existing i-Pitch Content / Voting Position
-
-Preserve the accepted event companion:
-- Check-In;
-- Agenda expanded on home;
-- i-Pitch Finalists child cards with summary -> full detail;
-- Meet the Judges content.
-
-Digital voting prototype remains inactive/not visible in production. Physical balls are the production voting method Thursday.
-
-The latest child-card regression is accepted:
-- no broken image/placeholders when image URL absent;
-- home shows summary;
-- child detail shows full detail.
-
-## Preserve Accepted Check-In Behavior
-
-Do not regress:
-- Auto Check-In;
-- registration lookup by first/last/email;
-- self-registration fallback;
-- required email + Confirm email;
-- inline email mismatch validation;
-- event-configured post-check-in instruction;
-- checked-in event-home card using that instruction;
-- shared-device no-menu mode;
-- Next Guest + 15-second auto-reset;
-- personal-device session preservation;
-- History/search/export and `registration_source` visibility;
-- reusable admin test-data reset;
-- SOTC behavior.
+- `app/src/lib/checkInPartySize.ts`
+- `app/src/lib/eventbriteRegistrationImport.ts`
+- `app/src/pages/admin/AdminEventCheckIns.tsx`
+- `app/src/pages/guest/GuestEventCheckIn.tsx`
+- `app/src/pages/guest/GuestEventDetail.tsx`
+- `app/src/test/adminEventDetail.test.tsx`
+- `app/src/test/eventbriteRegistrationImport.test.ts`
+- `app/src/test/guestEventCheckIn.test.tsx`
+- `app/src/test/guestEventDetail.test.tsx`
+- `app/src/types/index.ts`
+- `supabase-eventbrite-party-size-checkin.sql`
+- `planning/CURRENT-WORK.md`
 
 ## Validation
 
-At minimum:
-- parser/import test using the actual Eventbrite header names;
-- Tickets 1 / 2 / 4 mapping tests;
-- Order ID duplicate/re-import test;
-- later file with existing + new Order IDs adds only new registrations;
-- prove re-import does not reset checked-in state;
-- prove no companion/fake records are created for quantity > 1;
-- self-registration defaults to party size 1 and has no Eventbrite Order ID;
-- guest confirmation tests for 1, 2, and 4 total guests with correct grammar;
-- checked-in event-home card preserves Total guests;
-- export/reporting preserves party size if implemented;
-- TypeScript;
-- full test suite;
-- production Vite build.
+Passed:
+- `npx tsc -b`
+- `npx vitest run src\test\eventbriteRegistrationImport.test.ts src\test\guestEventCheckIn.test.tsx src\test\guestEventDetail.test.tsx src\test\adminEventCheckIns.test.ts`
+- `npx vitest run --testTimeout 30000`
+- `npx vite build --outDir ..\tmp\vite-build-check-eventbrite-party --emptyOutDir`
 
-## Production Import / Product Owner Acceptance
+The first full test run at default timeout had environment/load timeouts in several already-slow UI tests; rerunning with `--testTimeout 30000` passed all 20 files / 164 tests. Vite emitted the existing large chunk warning; build completed successfully.
 
-Do **not** claim the production list is imported merely because import code/tests pass.
+## Production Import Status
 
-Handoff must state whether:
-1. schema/SQL changes are required;
-2. Product Owner must execute SQL first;
-3. actual production CSV can then be imported through admin;
-4. exact import steps and expected counts/results.
+Production Eventbrite list has not been imported by this implementation turn.
 
-After production import, Product Owner acceptance should include:
-- search/find a known `Tickets = 1` registration and check in;
-- verify single-person confirmation + `Total guests: 1`;
-- reset test data if needed;
-- search/find a known multi-ticket registration and check in;
-- verify `You and your N guests` wording and correct `Total guests`;
-- return to event home and verify Total guests remains visible;
-- verify admin/export retains Eventbrite source/Order ID/party size as appropriate;
-- run a controlled repeat import and verify existing Order IDs are skipped, not duplicated.
-
-## Handoff
-
-Update this file with:
-- exact Eventbrite CSV mapping;
-- schema/storage fields used for Order ID and party size;
-- duplicate/re-import semantics;
-- party-size confirmation implementation;
-- reporting/export behavior;
-- SQL/manual production steps if required;
-- files changed;
-- tests/build results;
-- actual production import status (not assumed);
-- commit SHA;
-- concise Product Owner acceptance steps.
+Product Owner acceptance after SQL + import:
+1. Import the actual Eventbrite CSV and confirm result counts: processed, new, skipped existing, invalid.
+2. Search/find a known `Tickets = 1` registration and check in.
+3. Verify single-person confirmation plus `Total guests: 1`.
+4. Reset test data if needed.
+5. Search/find a known multi-ticket registration and check in.
+6. Verify `You and your N guests` wording and correct `Total guests`.
+7. Return to event home and verify `Total guests` remains visible.
+8. Export check-ins and verify Eventbrite source, Order ID, party size, and represented guest count.
+9. Run a controlled repeat import and verify existing Order IDs are skipped, not duplicated.
 
 Do not mark i-Pitch production readiness done until the real Eventbrite list is imported and the production guest flow is smoke-tested.
+
+Implementation commit SHA: this commit.
+
+Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.

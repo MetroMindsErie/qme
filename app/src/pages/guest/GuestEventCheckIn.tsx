@@ -13,7 +13,8 @@ import {
   reconnectImportedRegistrationCheckInForGuest,
   searchImportedRegistrationsForGuest,
 } from '../../lib/checkInService';
-import { getCompletedEventCheckInMessage, getEventCheckInConfig } from '../../lib/eventConfig';
+import { formatCompletedCheckInConfirmation, formatTotalGuests, getCheckInPartySize, getSearchResultPartySize } from '../../lib/checkInPartySize';
+import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import { clearGuestSessionToken } from '../../lib/guestSessionService';
 import { isSotcEventSlug } from '../../lib/sotc';
@@ -90,9 +91,9 @@ export default function GuestEventCheckIn({
     : useImportedRegistrationLookup
     ? 'Find your registration to self check in.'
     : intro;
-  const completedConfirmation = checkInConfig.postCheckInInstruction
-    ? getCompletedEventCheckInMessage(checkInConfig)
-    : confirmation;
+  const completedInstruction = checkInConfig.postCheckInInstruction
+    || confirmation.replace(/^You are checked in\.\s*/i, '');
+  const checkInPartySize = getCheckInPartySize(checkIn);
 
   const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
@@ -350,6 +351,10 @@ export default function GuestEventCheckIn({
       const row = result.already_checked_in
         ? await reconnectImportedRegistrationCheckInForGuest(input)
         : await createImportedRegistrationCheckInForGuest(input);
+      const resultPartySize = getSearchResultPartySize(result);
+      const displayRow = resultPartySize > 1 && getCheckInPartySize(row) === 1
+        ? { ...row, metadata: { ...(row.metadata ?? {}), party_size: resultPartySize } }
+        : row;
       setFirstName(row.first_name);
       setLastName(row.last_name);
       localStorage.setItem(storageKey(event.id), JSON.stringify({
@@ -357,11 +362,12 @@ export default function GuestEventCheckIn({
         firstName: row.first_name,
         lastName: row.last_name,
         phone: normalizedPhone,
+        partySize: getCheckInPartySize(displayRow),
         importedRegistrationId: result.id,
         recovered: result.already_checked_in,
         ts: Date.now(),
       }));
-      setCheckIn(row);
+      setCheckIn(displayRow);
       setSubmitted(true);
     } catch (err) {
       console.error('Imported registration check-in failed', err);
@@ -491,8 +497,13 @@ export default function GuestEventCheckIn({
                 ? 'This check-in request was removed by the event team. Please check in again or see the event team for help.'
                 : isWaitingForHostCheckIn
                 ? `Thanks, ${firstName || 'guest'}. Your name has been submitted. Please wait for the host to officially check you in before using event features.`
-                : `Thanks, ${firstName || 'guest'}! ${completedConfirmation}`}
+                : formatCompletedCheckInConfirmation(firstName, checkInPartySize, completedInstruction)}
             </div>
+            {!isRemovedCheckIn && !isWaitingForHostCheckIn && (
+              <div style={{ color: '#223247', fontWeight: 900, margin: '0.2rem 0 0.75rem', textAlign: 'center' }}>
+                {formatTotalGuests(checkInPartySize)}
+              </div>
+            )}
             {isRemovedCheckIn && (
               <button
                 className="actionBtn actionBtn-primary"

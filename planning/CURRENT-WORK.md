@@ -1,168 +1,170 @@
 # Current Work
 
-## Current Slice Status
+## Current Slice
 
-Checked-in Event Check-In copy cleanup is implemented and validated.
+Prepare the actual i-Pitch event for continued Product Owner testing over the next two days while waiting on Tricia's answer about multi-ticket Eventbrite orders.
 
-The guest event-home **CHECKED IN** Event Check-In card now uses the event-configured `metadata.check_in.post_check_in_instruction`, matching the successful Check-In screen behavior. For i-Pitch, that resolves to: `You are checked in. Please go to the check-in desk to receive your event package.`
+Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
 
-Events without a configured post-check-in instruction now use a neutral fallback on the checked-in card: `You are checked in. Return to the event page for next steps.`
+## Settled i-Pitch Operating Model
 
-Shared-device kiosk navigation cleanup remains complete: in guest Check-In shared mode (`?mode=shared` or `?shared=1`), the qMe hamburger/navigation menu is hidden so the kiosk surface contains only the event/check-in experience. Normal personal-device guest pages keep the existing navigation. **Next Guest** and the 15-second shared-device auto-reset are preserved.
-
-Files changed:
-- `app/src/lib/eventConfig.ts`
-- `app/src/pages/guest/GuestEventCheckIn.tsx`
-- `app/src/pages/guest/GuestEventDetail.tsx`
-- `app/src/test/eventConfig.test.ts`
-- `app/src/test/guestEventCheckIn.test.tsx`
-- `app/src/test/guestEventDetail.test.tsx`
-- `planning/CURRENT-WORK.md`
-
-Validation:
-- `npx tsc -b` passed
-- `npx vitest run src\test\eventConfig.test.ts src\test\guestEventDetail.test.tsx src\test\guestEventCheckIn.test.tsx src\test\components.test.tsx` passed
-- `npx vitest run` passed
-- `npx vite build --outDir ..\tmp\vite-build-check-acceptance --emptyOutDir` passed with the existing large chunk warning
-
-Notes:
-- The first full `npx vitest run` hit the known slow `guestEventCheckIn` timing edge at the default 5-second per-test timeout; after replacing one slow `userEvent` interaction with `fireEvent`, the full suite passed.
-- The older temporary Vite output folder under `tmp/vite-build-check` and the acceptance output folder under `tmp/vite-build-check-acceptance` are not part of the implementation and were not staged. Windows/Dropbox reported them temporarily locked during cleanup.
-
-Acceptance checks:
-- i-Pitch checked-in event-home card uses the configured package pickup instruction.
-- Events without configured instruction use the neutral fallback, not SOTC-specific copy.
-- Shared Check-In URL hides the hamburger/menu.
-- Personal Check-In URL still shows the hamburger/menu.
-- Shared mode still supports **Next Guest** and auto-reset.
-
-Implementation commit SHA: this commit.
-
-Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
-
-## Previous Shared Reset And Finalists Handoff
-
-Bounded shared-device auto-reset and i-Pitch Finalists slice is implemented and validated.
-
-Registration/check-in remains the production must-have. Accepted Check-In mechanics were preserved. No production voting work was continued or enabled.
-
-## Live Production Context
-
-Actual production event:
+Actual event:
 - organization: **University of Akron Research Foundation**
 - event: **i-Pitch - September, 2026**
 - slug: `ipitch-092026`
-- date/time: September 3, 2026, 5:00-8:00 PM ET
-- location: Missing Falls Brewery, 540 S Main St., Akron, OH 44311
+- September 3, 2026, 5:00-8:00 PM ET
+- Missing Falls Brewery, 540 S Main St., Akron, OH 44311
 - logo: `/images/i-pitch.png`
 
-Already accepted:
-- actual i-Pitch walk-up self-registration succeeds and Auto checks in;
-- event-configured post-check-in instruction displays correctly;
-- shared-device mode `/events/ipitch-092026/check-in?mode=shared` works;
-- **Next Guest** clears the prior guest and returns to a clean Check-In screen;
-- personal-device and shared-device flows both use the same event instruction.
+Check-In operations agreed with Kelly/Tricia:
+- guests should primarily check in on **their own phones** using the event QR;
+- if a guest is not on the imported registration list, they may self-register on their phone using name + email and check in;
+- the shared iPad at the front check-in desk is backup for guests who prefer not to use their phone;
+- there is also a back entrance with an intern assisting and directing guests onward;
+- after check-in, guests go to the **check-in desk by the front entrance** and receive the evening's event package;
+- the Product Owner has updated the event Post-Check-In Instruction to the agreed wording: `Please go to the check-in desk by the front entrance to receive your evening's event package.`;
+- Tricia's preferred role is to see the checked-in state and hand the guest their package, not perform routine data entry;
+- physical balls remain the production voting method for Thursday; digital voting is not in production scope for i-Pitch.
 
-The Eventbrite export is still outstanding. Do not fabricate imported attendees.
+Existing accepted shared-device behavior remains:
+- `/events/ipitch-092026/check-in?mode=shared`;
+- no hamburger/menu in shared mode;
+- **Next Guest** reset;
+- 15-second auto-reset using the same reset semantics;
+- personal-device sessions are preserved.
 
-## Implemented
+## Part A — Generalize/Admin-Expose Event Test Data Reset
 
-Shared-device 15-second auto-reset:
-- Applies only when the Check-In URL has `?mode=shared` or `?shared=1`.
-- The existing **Next Guest** button remains available for immediate reset.
-- Shared-device success now shows `Next guest in 15 seconds...`.
-- The countdown invokes the same reset behavior as **Next Guest** after 15 seconds.
-- Reset clears the event check-in local record, event guest-session token, event-scoped local vote-allocation records, and in-memory form/search/result state.
-- The timer is cleaned up when the success state/component is left before expiry.
-- Personal-device check-in does not show a countdown and does not auto-clear identity.
+The Product Owner needs to repeatedly test i-Pitch over the next couple of days without rebuilding event configuration.
 
-i-Pitch Finalists informational feature:
-- Added a reusable content-list eCe metadata reader.
-- Added a generic guest content-list route: `/events/:eventSlug/content/:eceSlug`.
-- Event-home eCes with `metadata.interaction_mode = "content_list"` open the content-list view.
-- The content list is informational content, independent from voting.
-- The existing voting prototype remains in code but was not expanded and is not required for Finalists.
+Inspect the existing SOTC/reset behavior first and reuse/generalize it rather than creating an i-Pitch-only reset.
 
-Admin/configuration mechanism:
-- Added a bounded **Guest Detail List** section to the normal Event eCe Create/Edit form for info/resource/session eCes.
-- It stores configuration in existing eCe metadata:
-  - `metadata.interaction_mode = "content_list"`
-  - `metadata.home_action_label`
-  - `metadata.content_list.enabled`
-  - `metadata.content_list.title`
-  - `metadata.content_list.items`
-- Items are configured as one line each: `Name | Description | optional image URL`.
-- No SQL/schema change is required.
+Required behavior:
+- Event Admin/Superadmin only;
+- clear/reset event participation/test state needed for another clean test run;
+- reset check-in state for imported registrations but **preserve the imported registration list**;
+- remove/clear self-registered test participation records for the event as appropriate so repeated walk-up/self-registration tests can start clean;
+- preserve event configuration, organization assignment, event metadata, Check-In configuration, content eCes, Finalists, Agenda/Judges content, and other setup;
+- preserve source/provenance fields on imported registrations;
+- do not delete the event or imported Eventbrite registration list;
+- if any voting data exists only in browser localStorage, do not pretend an admin reset cleared server-side voting that does not exist; document any client-side limitation separately;
+- provide a clear confirmation/warning before destructive reset and a clear success result after completion.
 
-## Exact Admin Steps For i-Pitch Finalists
+The goal is a reusable **Reset Test/Event Participation Data** control, not an i-Pitch special case.
 
-1. Open the University of Akron Research Foundation organization.
-2. If no reusable content/info expie exists yet, create an Expie such as:
-   - name: `Event Content List`
-   - slug: `event-content-list`
-   - type: `Info`
-   - status: `Active`
-3. Open the `ipitch-092026` event and add an eCe from that expie.
-4. Set:
-   - eCe Name: `i-Pitch Finalists`
-   - Slug: `ipitch-finalists`
-   - Type: `Info`
-   - Status: `Active`
-   - Sort: desired home order
-   - Description: `Meet tonight's four finalists.`
-5. In **Guest Detail List**, enable `Open this eCe as a guest-facing list`.
-6. Set Detail View Title: `i-Pitch Finalists`.
-7. Set Card Action Label: `Open`.
-8. Paste these List Items:
+## Part B — Finish Event Companion Content Using Existing Content-List Experience
 
-```text
-VeeSafe | VeeSafe Technology provides practical cybersecurity and compliance guidance for small businesses, startups, and technical founders. Our goal is to make security make sense by turning confusing requirements into clear actions businesses can actually use.
-Quantum Fluent | Technical leaders and developers often struggle to find content that is both easy to understand and technically useful. Quantum Fluent helps them move forward with clear executive summaries for decision-makers and practical, hands-on technical content for builders.
-Vettor | What if you walked into the dealership already knowing more than the salesperson? Vettor is the AI powered car-buying advocate in your pocket. Snap a photo of any offer and in seconds see every hidden fee, plus a deal score that shows exactly how your price stacks up against what real buyers actually paid. No more guessing. Know the price, skip the haggle, and save thousands.
-corVita | corVita is a medical device startup developing corConnect, a universal adapter designed to improve compatibility between AED and defibrillator electrode pads. By reducing equipment-change delays during cardiac emergencies, corConnect aims to support faster, more seamless continuity of care from EMS arrival through hospital treatment.
-```
+Do not create new code if the existing reusable `content_list` eCe can represent these honestly. Prefer normal admin configuration and document exact steps.
 
-## Files Changed
+The supplied i-Pitch brochure confirms these event contents:
 
-- `app/src/lib/contentListConfig.ts`
-- `app/src/pages/guest/GuestContentList.tsx`
-- `app/src/App.tsx`
-- `app/src/pages/admin/AdminEceForm.tsx`
-- `app/src/pages/guest/GuestEventCheckIn.tsx`
-- `app/src/pages/guest/GuestEventDetail.tsx`
-- `app/src/test/contentListConfig.test.ts`
-- `app/src/test/guestContentList.test.tsx`
-- `app/src/test/guestEventCheckIn.test.tsx`
-- `app/src/test/guestEventDetail.test.tsx`
-- `app/src/test/routing.test.tsx`
-- `planning/CURRENT-WORK.md`
+### Agenda
+
+Create/configure an informational **Agenda** experience with:
+- `5:00 PM | Doors Open & Network`
+- `5:30 PM | Let's Begin!`
+- `7:20 PM | Award Announcements`
+- `8:00 PM | See you next I-Pitch!`
+
+Suggested event-home card:
+- Name: `Agenda`
+- Description: `Tonight's i-Pitch schedule.`
+- Detail title: `Agenda`
+- Type: Info
+- Active
+
+### Meet the Judges
+
+Create/configure an informational **Meet the Judges** experience with:
+- `Tammy Deblock | CEO - Aropha, Inc`
+- `Gary Wakeford | CEO - Sonostick`
+- `Sergio Robles PhD. | Past NSF I-Corps Instructor`
+
+Do **not** expose brochure email addresses unless Product Owner later asks for them.
+
+Suggested event-home card:
+- Name: `Meet the Judges`
+- Description: `Meet tonight's i-Pitch judges.`
+- Detail title: `Meet the Judges`
+- Type: Info
+- Active
+
+### Existing i-Pitch Finalists
+
+Keep the already built/configurable **i-Pitch Finalists** informational experience independent of voting.
+
+Do not resume production voting work. If useful for Sprint 4 testing, the existing voting eCe/prototype may remain configured **Inactive** so Product Owner can deliberately activate/deactivate it for controlled testing later, but do not make it visible in the production i-Pitch guest experience for Thursday.
+
+## Part C — Eventbrite Import: Inspect Only, Do Not Implement Multi-Ticket Behavior Yet
+
+The Product Owner now has the first Eventbrite CSV export. It includes an **Order ID** and a **Tickets** quantity. Some orders have quantity greater than 1 while only the purchaser's name appears in the current export.
+
+The Product Owner has asked Tricia how they operationally handle multi-ticket orders. **Wait for that answer before deciding how one order with quantity > 1 maps to qME attendee/check-in records.**
+
+For now:
+- inspect the existing imported-registration schema/service and document how `Order ID` could be stored as external/source provenance;
+- do not import this production CSV yet;
+- do not invent guest names for additional tickets;
+- do not reconcile Eventbrite imports against qME self-registered guests;
+- do not build identity-merging logic;
+- repeated future Eventbrite imports should eventually skip already-imported Eventbrite registrations rather than duplicate them, but hold implementation details until the multi-ticket rule is confirmed;
+- self-registered qME guests do not have an Eventbrite Order ID; preserve that distinction rather than fabricating an Eventbrite-like value.
+
+When Tricia answers, update CURRENT-WORK with the exact multi-ticket business rule before implementing the production import.
+
+## Preserve Accepted Check-In Behavior
+
+Do not regress:
+- Auto Check-In;
+- imported-registration lookup;
+- self-registration fallback;
+- required email + Confirm email;
+- inline email mismatch validation;
+- event-configurable post-check-in instruction;
+- checked-in event-home card using the same instruction;
+- shared-device no-menu mode;
+- Next Guest + 15-second reset;
+- mode-aware Check-In card copy;
+- Feature/Features taxonomy;
+- History/search/export and `registration_source` visibility;
+- SOTC behavior.
 
 ## Validation
 
-Passed:
-- `npx tsc -b`
-- `npx vitest run src\test\guestEventCheckIn.test.tsx src\test\contentListConfig.test.ts src\test\guestContentList.test.tsx src\test\guestEventDetail.test.tsx src\test\routing.test.tsx`
-- `npx vitest run`
-- `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir`
+At minimum:
+- focused tests for event-admin reset permissions and reset semantics;
+- prove imported registration definitions remain while check-in state resets;
+- prove event metadata/eCes/configuration remain;
+- prove self-registered test participation is cleared according to the chosen reusable reset semantics;
+- verify Agenda/Judges can be configured/rendered through the existing content-list path without schema changes;
+- TypeScript;
+- full test suite where practical;
+- production Vite build using the established temporary output directory if needed.
 
-Vite emitted the existing large chunk warning; build completed successfully.
+If reset requires SQL/schema/RPC work, prepare the exact SQL and report it clearly. Do not apply production SQL without explicit Product Owner instruction.
 
-## Product Owner Acceptance Steps
+## Product Owner Acceptance After Deployment
 
-1. Shared mode: check in a test guest at `/events/ipitch-092026/check-in?mode=shared`; leave the success screen untouched and verify visible countdown plus automatic clean reset at about 15 seconds.
-2. Shared mode: repeat and press **Next Guest** before expiry; verify immediate clean reset and no later stray timer behavior.
-3. Personal mode: check in from `/events/ipitch-092026/check-in`; verify the guest remains identified and is not automatically cleared.
-4. Use the normal admin steps above to add/verify **i-Pitch Finalists** on `ipitch-092026`.
-5. Guest event home: verify `i-Pitch Finalists - Meet tonight's four finalists.` appears independently of voting.
-6. Open Finalists and verify VeeSafe, Quantum Fluent, Vettor, and corVita with supplied descriptions.
-7. Confirm no production voting feature was unintentionally enabled.
+1. Use/reset actual `ipitch-092026` test data and verify event setup remains intact.
+2. Confirm imported registration records, when present later, remain available but return to not-checked-in state after reset.
+3. Confirm self-registered test guests are cleared according to the documented reset semantics.
+4. Add/verify **Agenda** on the actual event through normal admin configuration.
+5. Add/verify **Meet the Judges** through normal admin configuration.
+6. Confirm Finalists remains informational and visible independent of voting.
+7. Confirm digital voting is not visible in production i-Pitch unless explicitly activated for controlled testing.
+8. Do not import the production Eventbrite CSV until Tricia answers the multi-ticket question and Product Owner approves the mapping.
 
-## Remaining Acceptance Position
+## Handoff
 
-Do not mark i-Pitch readiness done until the real Eventbrite export is imported and production smoke-tested.
+Update this file with:
+- exact reset implementation and what is preserved/cleared;
+- permissions/confirmation behavior;
+- exact Agenda/Judges admin configuration steps if any manual setup remains;
+- Eventbrite schema/import observations, especially Order ID storage and any constraints discovered;
+- files changed;
+- tests/build results;
+- SQL/manual actions, if any;
+- commit SHA;
+- concise Product Owner acceptance steps.
 
-Do not mark voting production-ready.
-
-Implementation commit SHA: `c1f6a4c`.
-
-Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
+Do not mark i-Pitch readiness done until the production Eventbrite import rule is settled, the real list is imported, and the production guest flow is smoke-tested.

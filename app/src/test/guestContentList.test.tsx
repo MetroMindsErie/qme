@@ -144,6 +144,29 @@ describe('GuestContentList', () => {
     expect(screen.queryByRole('button', { name: /vote/i })).not.toBeInTheDocument();
   });
 
+  it('renders full child detail without summary text or optional image placeholders', async () => {
+    mockListActiveEcesForEvent.mockResolvedValue([{
+      ...finalistsEce,
+      metadata: {
+        interaction_mode: 'content_list',
+        content_list: {
+          title: 'i-Pitch Finalists',
+          presentation_mode: 'child_cards',
+          items: [
+            { name: 'VeeSafe', summary: 'Home-card summary only.', description: 'Full detail for the child page.' },
+          ],
+        },
+      },
+    }]);
+
+    renderContentList('/events/ipitch-092026/content/ipitch-finalists/veesafe');
+
+    expect(await screen.findByText('Full detail for the child page.')).toBeInTheDocument();
+    expect(screen.queryByText('Home-card summary only.')).not.toBeInTheDocument();
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Event' })).toHaveStyle({ marginTop: '1rem' });
+  });
+
   it('commits child-attached prototype votes only after confirmation', async () => {
     mockListActiveEcesForEvent.mockResolvedValue([{
       ...finalistsEce,

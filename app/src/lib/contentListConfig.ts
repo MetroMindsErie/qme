@@ -47,6 +47,11 @@ function asPositiveInteger(value: unknown, fallback: number): number {
     : fallback;
 }
 
+function looksLikeImageUrl(value: string): boolean {
+  return /^(https?:\/\/|\/|\.\/|\.\.\/|data:image\/)/i.test(value)
+    || /\.(png|jpe?g|gif|webp|svg)(\?.*)?$/i.test(value);
+}
+
 function getPresentationMode(value: unknown): ContentListPresentationMode {
   return value === 'expanded_home' || value === 'child_cards' ? value : 'detail_list';
 }
@@ -93,9 +98,10 @@ export function parseContentListItems(value: string): ContentListItem[] {
       const parts = line.split('|').map((part) => part.trim());
       const [name = '', second = '', third = '', fourth = ''] = parts;
       const hasSeparateSummary = parts.length >= 4;
-      const summary = hasSeparateSummary ? second : third ? second : '';
-      const description = hasSeparateSummary ? third : second;
-      const imageUrl = hasSeparateSummary ? fourth : third;
+      const usesLegacyImageSlot = parts.length === 3 && looksLikeImageUrl(third);
+      const summary = hasSeparateSummary || (third && !usesLegacyImageSlot) ? second : '';
+      const description = hasSeparateSummary || (third && !usesLegacyImageSlot) ? third : second;
+      const imageUrl = hasSeparateSummary ? fourth : usesLegacyImageSlot ? third : '';
       const slug = slugify(name || `item-${index + 1}`);
       return {
         id: slug || `item-${index + 1}`,

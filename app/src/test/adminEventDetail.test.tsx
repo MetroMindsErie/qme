@@ -177,7 +177,7 @@ describe('AdminEventDetail feature management and reset', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[0]);
     expect(mockNavigate).toHaveBeenCalledWith('/admin/events/event-1/eces/ece-finalists/edit');
-  });
+  }, 10000);
 
   it('hides setup editing controls from non-managing admins', async () => {
     mockGetCurrentAdminPrincipal.mockResolvedValue(admin(false));

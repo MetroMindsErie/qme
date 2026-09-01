@@ -966,6 +966,9 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             const homeItemImageCount = homeItems.filter((item) => item.imageUrl).length;
             const hasMediaRows = hasLogoLinks || homeItemsLayout === 'media_rows' || homeItemImageCount > 1;
             const cardClass = `ed-activity-card ed-activity-card-info ${hasMediaRows ? 'ed-activity-card-media-rows' : ''} ${hasLogoLinks ? 'ed-activity-card-logo-links' : ''} ${canAct ? 'ed-card-clickable' : ''} ${cardStateClass}`;
+            const shouldShowEceIcon = !hasMediaRows
+              && (!isContentList || Boolean(exp.image_url))
+              && Boolean(exp.image_url || exp.slug === 'scan-code-adventure' || exp.slug === 'headshot-photo-station');
             const handleEceOpen = () => {
               if (hasTicket && viewHref) {
                 navigate(viewHref);
@@ -1004,11 +1007,9 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               tabIndex={canAct ? 0 : undefined}
               onKeyDown={canAct ? (e) => { if (e.key === 'Enter' || e.key === ' ') handleEceOpen(); } : undefined}
             >
-              {!hasMediaRows && (
+              {shouldShowEceIcon && (
               <div className={`ed-activity-icon-wrap ${homeIconVariant === 'wide' ? 'ed-activity-icon-wrap-wide' : ''}`} style={{ background: '#E8F5E9' }}>
-                {exp.image_url || exp.slug === 'scan-code-adventure' || exp.slug === 'headshot-photo-station'
-                  ? <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.slug === 'headshot-photo-station' ? '/images/headshot-photo-station.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
-                  : <span style={{ fontSize: '1.1rem' }}>*</span>}
+                <img src={exp.slug === 'scan-code-adventure' ? '/images/dog-through-hoop.png' : exp.slug === 'headshot-photo-station' ? '/images/headshot-photo-station.png' : exp.image_url} alt={exp.name} className="ed-activity-icon-img" style={{ borderRadius: '8px' }} />
               </div>
               )}
               <div className="ed-activity-body">

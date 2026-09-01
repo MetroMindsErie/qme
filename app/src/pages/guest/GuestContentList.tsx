@@ -182,7 +182,7 @@ export default function GuestContentList() {
               )}
             </div>
           )}
-          <Link className="actionBtn actionBtn-secondary" to={`/events/${event.slug}`}>
+          <Link className="actionBtn actionBtn-secondary" style={{ marginTop: '1rem' }} to={`/events/${event.slug}`}>
             Back to Event
           </Link>
         </div>

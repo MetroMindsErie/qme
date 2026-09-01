@@ -60,12 +60,12 @@ describe('contentListConfig', () => {
   });
 
   it('parses and formats admin content list text', () => {
-    const items = parseContentListItems('VeeSafe | Cybersecurity guidance.\nQuantum Fluent | Short summary | Full profile. | /images/qf.png');
+    const items = parseContentListItems('VeeSafe | Home summary | Full profile.\nQuantum Fluent | Legacy description | /images/qf.png');
 
     expect(items).toEqual([
-      { id: 'veesafe', slug: 'veesafe', name: 'VeeSafe', summary: '', description: 'Cybersecurity guidance.', imageUrl: '' },
-      { id: 'quantum-fluent', slug: 'quantum-fluent', name: 'Quantum Fluent', summary: 'Short summary', description: 'Full profile.', imageUrl: '/images/qf.png' },
+      { id: 'veesafe', slug: 'veesafe', name: 'VeeSafe', summary: 'Home summary', description: 'Full profile.', imageUrl: '' },
+      { id: 'quantum-fluent', slug: 'quantum-fluent', name: 'Quantum Fluent', summary: '', description: 'Legacy description', imageUrl: '/images/qf.png' },
     ]);
-    expect(formatContentListItems(items)).toBe('VeeSafe |  | Cybersecurity guidance.\nQuantum Fluent | Short summary | Full profile. | /images/qf.png');
+    expect(formatContentListItems(items)).toBe('VeeSafe | Home summary | Full profile.\nQuantum Fluent |  | Legacy description | /images/qf.png');
   });
 });

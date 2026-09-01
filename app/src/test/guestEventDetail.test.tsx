@@ -320,4 +320,51 @@ describe('GuestEventDetail', () => {
     expect(screen.getByRole('link', { name: /VeeSafe/ })).toHaveAttribute('href', '/events/ipitch-092026/content/ipitch-finalists/veesafe');
     expect(screen.queryByRole('link', { name: 'Vote' })).not.toBeInTheDocument();
   });
+
+  it('maps child-card summary to event home and omits blank image placeholders', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+    });
+    mockListActiveEcesForEvent.mockResolvedValue([
+      {
+        id: 'ece-finalists',
+        event_id: event.id,
+        expie_id: null,
+        org_id: null,
+        type: 'info',
+        queue_id: null,
+        queue_behavior: '',
+        name: 'i-Pitch Finalists',
+        slug: 'ipitch-finalists',
+        description: "Meet tonight's four finalists.",
+        image_url: '',
+        location: '',
+        sort_order: 20,
+        starts_at: null,
+        ends_at: null,
+        metadata: {
+          interaction_mode: 'content_list',
+          content_list: {
+            title: 'i-Pitch Finalists',
+            presentation_mode: 'child_cards',
+            items: [
+              { name: 'VeeSafe', summary: 'Home-card summary only.', description: 'Full detail for the child page.', image_url: '' },
+            ],
+          },
+        },
+        status: 'active',
+        created_at: '',
+        updated_at: '',
+      },
+    ]);
+
+    const { container } = renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('Home-card summary only.')).toBeInTheDocument();
+    expect(screen.queryByText('Full detail for the child page.')).not.toBeInTheDocument();
+    expect(screen.queryByText('*')).not.toBeInTheDocument();
+    expect(container.querySelector('.ed-home-section-default img')).toBeNull();
+  });
 });

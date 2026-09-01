@@ -90,4 +90,6 @@ Do not mark i-Pitch readiness done until the real Eventbrite export is imported 
 
 Do not mark voting production-ready until Product Owner live acceptance and a server-side persistence/admin-control pass are explicitly authorized.
 
-Commit SHA: pending commit.
+Implementation commit SHA: `2c4633d`.
+
+Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.

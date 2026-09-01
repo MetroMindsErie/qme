@@ -5,6 +5,7 @@ interface HeaderProps {
   titleLine1?: string;
   titleLine2?: string;
   menuChildren?: React.ReactNode;
+  hideMenu?: boolean;
 }
 
 export default function Header({
@@ -12,6 +13,7 @@ export default function Header({
   titleLine1 = '',
   titleLine2 = '',
   menuChildren,
+  hideMenu = false,
 }: HeaderProps) {
   return (
     <div className="hdr">
@@ -31,8 +33,7 @@ export default function Header({
         <span className="titleLine">{titleLine2}</span>
       </div>
 
-      {/* Right: hamburger */}
-      <Menu>{menuChildren}</Menu>
+      {!hideMenu && <Menu>{menuChildren}</Menu>}
     </div>
   );
 }

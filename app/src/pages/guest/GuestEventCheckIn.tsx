@@ -437,6 +437,7 @@ export default function GuestEventCheckIn({
           logoSrc={eventLogoSrc}
           titleLine1="EVENT"
           titleLine2="INFO"
+          hideMenu={isSharedDeviceMode}
         />
         <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
           <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
@@ -463,6 +464,7 @@ export default function GuestEventCheckIn({
         logoSrc={eventLogoSrc}
         titleLine1="CHECK"
         titleLine2="IN"
+        hideMenu={isSharedDeviceMode}
       />
 
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>

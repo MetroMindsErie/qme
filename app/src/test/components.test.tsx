@@ -98,6 +98,11 @@ describe('Header', () => {
     render(<MemoryRouter><Header /></MemoryRouter>);
     expect(screen.getByLabelText('Open menu')).toBeInTheDocument();
   });
+
+  it('can hide the hamburger menu for kiosk surfaces', () => {
+    render(<MemoryRouter><Header hideMenu /></MemoryRouter>);
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+  });
 });
 
 describe('DisplayField', () => {

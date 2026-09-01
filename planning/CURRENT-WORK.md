@@ -2,6 +2,34 @@
 
 ## Current Slice Status
 
+Shared-device kiosk navigation cleanup is implemented and validated.
+
+In guest Check-In shared mode (`?mode=shared` or `?shared=1`), the qMe hamburger/navigation menu is hidden so the kiosk surface contains only the event/check-in experience. Normal personal-device guest pages keep the existing navigation. **Next Guest** and the 15-second shared-device auto-reset are preserved.
+
+Files changed:
+- `app/src/components/Header.tsx`
+- `app/src/pages/guest/GuestEventCheckIn.tsx`
+- `app/src/test/components.test.tsx`
+- `app/src/test/guestEventCheckIn.test.tsx`
+- `planning/CURRENT-WORK.md`
+
+Validation:
+- `npx tsc -b` passed
+- `npx vitest run src\test\components.test.tsx src\test\guestEventCheckIn.test.tsx` passed
+- `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed with the existing large chunk warning
+- `npx vitest run` passed on rerun; the first full run had one `guestEventCheckIn` timeout while the Vite build was running in parallel
+
+Acceptance checks:
+- Shared Check-In URL hides the hamburger/menu.
+- Personal Check-In URL still shows the hamburger/menu.
+- Shared mode still supports **Next Guest** and auto-reset.
+
+Implementation commit SHA: `db12b00`.
+
+Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
+
+## Previous Shared Reset And Finalists Handoff
+
 Bounded shared-device auto-reset and i-Pitch Finalists slice is implemented and validated.
 
 Registration/check-in remains the production must-have. Accepted Check-In mechanics were preserved. No production voting work was continued or enabled.

@@ -62,8 +62,8 @@ const mockCheckInEventGuest = vi.fn();
 const mockGetEventCheckIn = vi.fn();
 
 vi.mock('../components/Header', () => ({
-  default: ({ titleLine1, titleLine2 }: { titleLine1: string; titleLine2: string }) => (
-    <header>{titleLine1} {titleLine2}</header>
+  default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
+    <header>{titleLine1} {titleLine2}{hideMenu ? null : <button type="button" aria-label="Open menu">Menu</button>}</header>
   ),
 }));
 
@@ -162,6 +162,7 @@ describe('GuestEventCheckIn', () => {
     renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
 
     await screen.findByPlaceholderText('First name, last name, or email');
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     await user.click(screen.getByText("Can't find your registration?"));
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
@@ -220,6 +221,7 @@ describe('GuestEventCheckIn', () => {
     await act(async () => {});
 
     expect(screen.getByPlaceholderText('First name, last name, or email')).toBeInTheDocument();
+    expect(screen.getByLabelText('Open menu')).toBeInTheDocument();
     fireEvent.click(screen.getByText("Can't find your registration?"));
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });

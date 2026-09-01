@@ -68,4 +68,29 @@ describe('contentListConfig', () => {
     ]);
     expect(formatContentListItems(items)).toBe('VeeSafe | Home summary | Full profile.\nQuantum Fluent |  | Legacy description | /images/qf.png');
   });
+
+  it('recovers actual admin-saved three-field rows that were previously treated as imageUrl', () => {
+    const config = getContentListConfig(ece({
+      interaction_mode: 'content_list',
+      content_list: {
+        title: 'i-Pitch Finalists',
+        presentation_mode: 'child_cards',
+        items: [
+          {
+            name: 'VeeSafe',
+            summary: 'Cybersecurity and compliance guidance made practical for small businesses and startups.',
+            description: 'Cybersecurity and compliance guidance made practical for small businesses and startups.',
+            imageUrl: 'VeeSafe Technology provides practical cybersecurity and compliance guidance for small businesses, startups, and technical founders. Our goal is to make security make sense by turning confusing requirements into clear actions businesses can actually use.',
+          },
+        ],
+      },
+    }));
+
+    expect(config.items[0]).toMatchObject({
+      name: 'VeeSafe',
+      summary: 'Cybersecurity and compliance guidance made practical for small businesses and startups.',
+      description: 'VeeSafe Technology provides practical cybersecurity and compliance guidance for small businesses, startups, and technical founders. Our goal is to make security make sense by turning confusing requirements into clear actions businesses can actually use.',
+      imageUrl: '',
+    });
+  });
 });

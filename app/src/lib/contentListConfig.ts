@@ -70,8 +70,13 @@ export function getContentListConfig(ece: Ece | null | undefined): ContentListCo
       .map((item, index) => {
         const record = asRecord(item);
         const name = asString(record.name || record.title);
-        const description = asString(record.description || record.detail || record.full_description || record.fullDescription || record.note);
-        const summary = asString(record.summary || record.short_summary || record.shortSummary || record.subtitle) || description;
+        const rawDescription = asString(record.description || record.detail || record.full_description || record.fullDescription || record.note);
+        const rawSummary = asString(record.summary || record.short_summary || record.shortSummary || record.subtitle);
+        const rawImageUrl = asString(record.image_url || record.imageUrl);
+        const imageUrl = looksLikeImageUrl(rawImageUrl) ? rawImageUrl : '';
+        const recoveredFullDetail = rawImageUrl && !imageUrl && (!rawSummary || rawDescription === rawSummary) ? rawImageUrl : '';
+        const description = recoveredFullDetail || rawDescription;
+        const summary = rawSummary || (recoveredFullDetail ? rawDescription : description);
         const slug = asString(record.slug) || slugify(name || `item-${index + 1}`);
         return {
           id: asString(record.id) || slug || `item-${index + 1}`,
@@ -79,7 +84,7 @@ export function getContentListConfig(ece: Ece | null | undefined): ContentListCo
           name,
           summary,
           description,
-          imageUrl: asString(record.image_url || record.imageUrl),
+          imageUrl,
         };
       })
       .filter((item) => item.name || item.summary || item.description || item.imageUrl),

@@ -2,6 +2,31 @@
 
 ## Current Slice Status
 
+Superadmin organization creation is implemented and validated.
+
+Added `+ New Organization` to the Superadmin Organizations screen only. Superadmins can create an organization with Name, Slug, Description, and Status. The existing organization model supports `active`, `inactive`, and `archived`, so the create form exposes `active` and `inactive` for a bounded create path rather than inventing `draft`.
+
+After creation, the new organization is inserted through the existing `createOrganization` service, appended to the Organizations list, and will be returned by the existing `listOrganizations()` call used by the Create Event Organization dropdown. Non-superadmin organization admins still see only organizations they manage and do not see the create control.
+
+Files changed:
+- `app/src/pages/admin/AdminOrganizationList.tsx`
+- `app/src/test/adminOrganizationList.test.tsx`
+- `planning/CURRENT-WORK.md`
+
+Validation:
+- `npx tsc -b` passed
+- `npx vitest run src\test\adminOrganizationList.test.tsx src\test\routing.test.tsx` passed
+- `npx vitest run` passed on rerun; first full run had one `guestEventCheckIn` timeout while the Vite build was running in parallel
+- `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed with the existing large chunk warning
+
+Implementation commit SHA: `6a46f75`.
+
+Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
+
+## Previous i-Pitch Handoff
+
+## Current Slice Status
+
 The i-Pitch registration/check-in and bounded voting prototype slice is implemented locally and ready for Product Owner review after the required production SQL/admin setup is applied.
 
 Priority guardrail preserved: the accepted generic registration/check-in behavior was not changed. The new voting work is additive and is gated behind a completed event check-in.

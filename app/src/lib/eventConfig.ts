@@ -59,3 +59,9 @@ export function getEventCheckInCardDescription(config: EventCheckInConfig): stri
   }
   return 'Enter your name when you arrive so the event team can confirm your check-in.';
 }
+
+export function getCompletedEventCheckInMessage(config: EventCheckInConfig): string {
+  return config.postCheckInInstruction
+    ? `You are checked in. ${config.postCheckInInstruction}`
+    : 'You are checked in. Return to the event page for next steps.';
+}

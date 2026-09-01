@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getEventCheckInCardDescription, getEventCheckInConfig } from '../lib/eventConfig';
+import { getCompletedEventCheckInMessage, getEventCheckInCardDescription, getEventCheckInConfig } from '../lib/eventConfig';
 import type { QEvent } from '../types';
 
 function eventWithCheckIn(checkIn: Record<string, unknown>): QEvent {
@@ -82,5 +82,13 @@ describe('getEventCheckInConfig', () => {
     }));
 
     expect(getEventCheckInCardDescription(config)).toBe("Find your registration and check in when you arrive. If you're not on the list, you can register here.");
+  });
+
+  it('uses configured checked-in instruction with a neutral fallback', () => {
+    expect(getCompletedEventCheckInMessage(getEventCheckInConfig(eventWithCheckIn({
+      post_check_in_instruction: 'Please go to the check-in desk to receive your event package.',
+    })))).toBe('You are checked in. Please go to the check-in desk to receive your event package.');
+
+    expect(getCompletedEventCheckInMessage(getEventCheckInConfig(eventWithCheckIn({})))).toBe('You are checked in. Return to the event page for next steps.');
   });
 });

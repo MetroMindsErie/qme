@@ -13,7 +13,7 @@ import {
   reconnectImportedRegistrationCheckInForGuest,
   searchImportedRegistrationsForGuest,
 } from '../../lib/checkInService';
-import { getEventCheckInConfig } from '../../lib/eventConfig';
+import { getCompletedEventCheckInMessage, getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
 import { clearGuestSessionToken } from '../../lib/guestSessionService';
 import { isSotcEventSlug } from '../../lib/sotc';
@@ -56,7 +56,7 @@ export default function GuestEventCheckIn({
   checkInCode = null,
   title = 'Event Check-In',
   intro = 'Start here when you arrive. Enter your name so the event team can confirm your check-in.',
-  confirmation = 'You are checked in. Please return to the event page for next steps.',
+  confirmation = 'You are checked in. Return to the event page for next steps.',
 }: GuestEventCheckInProps) {
   const navigate = useNavigate();
   const { eventSlug } = useParams<{ eventSlug: string }>();
@@ -91,10 +91,8 @@ export default function GuestEventCheckIn({
     ? 'Find your registration to self check in.'
     : intro;
   const completedConfirmation = checkInConfig.postCheckInInstruction
-    ? `You are checked in. ${checkInConfig.postCheckInInstruction}`
-    : (useImportedRegistrationLookup && isSotcEventSlug(event?.slug)
-    ? 'You are checked in. Please stop at the registration desk to pick up your name tag. If your registration includes a headshot, join the Headshot Photographer queue when you are ready.'
-    : confirmation);
+    ? getCompletedEventCheckInMessage(checkInConfig)
+    : confirmation;
 
   const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;

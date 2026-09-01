@@ -107,22 +107,21 @@ describe('GuestEventCheckIn', () => {
   });
 
   it('guides imported lookup by name or email and blocks mismatched self-registration email locally', async () => {
-    const user = userEvent.setup();
     renderCheckIn();
 
     const searchInput = await screen.findByPlaceholderText('First name, last name, or email');
     fireEvent.change(searchInput, { target: { value: 'missing@example.com' } });
-    await user.click(screen.getByRole('button', { name: 'Search' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(await screen.findByText('No matching registration was found. Try your first or last name, or register below.')).toBeInTheDocument();
-    await user.click(screen.getByText("Can't find your registration?"));
+    fireEvent.click(screen.getByText("Can't find your registration?"));
 
     expect(screen.getByText('Please provide your information below to register for the event and check in now.')).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
     fireEvent.change(screen.getByLabelText('Confirm email'), { target: { value: 'typo@example.com' } });
-    await user.click(screen.getByRole('button', { name: 'Register & Check In' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Register & Check In' }));
 
     const inlineError = await screen.findByText('Email and confirm email must match.');
     expect(inlineError).toBeInTheDocument();

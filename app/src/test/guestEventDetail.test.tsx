@@ -116,6 +116,35 @@ describe('GuestEventDetail', () => {
       expect(mockGetEventCheckIn).toHaveBeenCalledWith(completedCheckIn.id, event.id);
     });
     expect(await screen.findByText('SOTC Test Event')).toBeInTheDocument();
+    expect(screen.getByText('You are checked in. Return to the event page for next steps.')).toBeInTheDocument();
+    expect(screen.queryByText(/Pick up your name tag at registration/)).not.toBeInTheDocument();
+  });
+
+  it('uses the configured post-check-in instruction on the checked-in event card', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+      metadata: {
+        check_in: {
+          enabled: true,
+          completion_mode: 'auto',
+          require_completed_for_participation: true,
+          post_check_in_instruction: 'Please go to the check-in desk to receive your event package.',
+        },
+      },
+    });
+    localStorage.setItem('qme:eventCheckIn:event-1', JSON.stringify({
+      id: completedCheckIn.id,
+      firstName: completedCheckIn.first_name,
+      lastName: completedCheckIn.last_name,
+    }));
+
+    renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('i-Pitch')).toBeInTheDocument();
+    expect(screen.getByText('You are checked in. Please go to the check-in desk to receive your event package.')).toBeInTheDocument();
+    expect(screen.queryByText(/schedule, resources, and headshots/)).not.toBeInTheDocument();
   });
 
   it('uses mode-aware Check-In card copy and neutral feature taxonomy', async () => {

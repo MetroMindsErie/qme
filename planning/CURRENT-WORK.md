@@ -2,29 +2,41 @@
 
 ## Current Slice Status
 
-Shared-device kiosk navigation cleanup is implemented and validated.
+Checked-in Event Check-In copy cleanup is implemented and validated.
 
-In guest Check-In shared mode (`?mode=shared` or `?shared=1`), the qMe hamburger/navigation menu is hidden so the kiosk surface contains only the event/check-in experience. Normal personal-device guest pages keep the existing navigation. **Next Guest** and the 15-second shared-device auto-reset are preserved.
+The guest event-home **CHECKED IN** Event Check-In card now uses the event-configured `metadata.check_in.post_check_in_instruction`, matching the successful Check-In screen behavior. For i-Pitch, that resolves to: `You are checked in. Please go to the check-in desk to receive your event package.`
+
+Events without a configured post-check-in instruction now use a neutral fallback on the checked-in card: `You are checked in. Return to the event page for next steps.`
+
+Shared-device kiosk navigation cleanup remains complete: in guest Check-In shared mode (`?mode=shared` or `?shared=1`), the qMe hamburger/navigation menu is hidden so the kiosk surface contains only the event/check-in experience. Normal personal-device guest pages keep the existing navigation. **Next Guest** and the 15-second shared-device auto-reset are preserved.
 
 Files changed:
-- `app/src/components/Header.tsx`
+- `app/src/lib/eventConfig.ts`
 - `app/src/pages/guest/GuestEventCheckIn.tsx`
-- `app/src/test/components.test.tsx`
+- `app/src/pages/guest/GuestEventDetail.tsx`
+- `app/src/test/eventConfig.test.ts`
 - `app/src/test/guestEventCheckIn.test.tsx`
+- `app/src/test/guestEventDetail.test.tsx`
 - `planning/CURRENT-WORK.md`
 
 Validation:
 - `npx tsc -b` passed
-- `npx vitest run src\test\components.test.tsx src\test\guestEventCheckIn.test.tsx` passed
-- `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed with the existing large chunk warning
-- `npx vitest run` passed on rerun; the first full run had one `guestEventCheckIn` timeout while the Vite build was running in parallel
+- `npx vitest run src\test\eventConfig.test.ts src\test\guestEventDetail.test.tsx src\test\guestEventCheckIn.test.tsx src\test\components.test.tsx` passed
+- `npx vitest run` passed
+- `npx vite build --outDir ..\tmp\vite-build-check-acceptance --emptyOutDir` passed with the existing large chunk warning
+
+Notes:
+- The first full `npx vitest run` hit the known slow `guestEventCheckIn` timing edge at the default 5-second per-test timeout; after replacing one slow `userEvent` interaction with `fireEvent`, the full suite passed.
+- The older temporary Vite output folder under `tmp/vite-build-check` and the acceptance output folder under `tmp/vite-build-check-acceptance` are not part of the implementation and were not staged. Windows/Dropbox reported them temporarily locked during cleanup.
 
 Acceptance checks:
+- i-Pitch checked-in event-home card uses the configured package pickup instruction.
+- Events without configured instruction use the neutral fallback, not SOTC-specific copy.
 - Shared Check-In URL hides the hamburger/menu.
 - Personal Check-In URL still shows the hamburger/menu.
 - Shared mode still supports **Next Guest** and auto-reset.
 
-Implementation commit SHA: `db12b00`.
+Implementation commit SHA: this commit.
 
 Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
 

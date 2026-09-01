@@ -17,7 +17,7 @@ import {
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
 import { getContentListConfig } from '../../lib/contentListConfig';
-import { getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
+import { getCompletedEventCheckInMessage, getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { getVoteAllocationConfig } from '../../lib/votingConfig';
@@ -782,7 +782,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 {isEventCheckInRemoved
                   ? 'Your check-in request was removed. Check in again or see the event team for help.'
                   : hasEventCheckIn
-                  ? 'You are checked in. Pick up your name tag at registration, then use qMe for the schedule, resources, and headshots.'
+                  ? getCompletedEventCheckInMessage(checkInConfig)
                   : isWaitingForHostCheckIn
                   ? 'Your name has been submitted. Please wait here until staff confirms your event check-in.'
                   : !isPeonyEvent

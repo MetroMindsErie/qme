@@ -111,6 +111,11 @@ describe('App routing', () => {
     expect(screen.getByTestId('guest-content-list')).toBeInTheDocument();
   });
 
+  it('/events/:slug/content/:eceSlug/:itemSlug renders content item detail', () => {
+    renderAt('/events/ipitch-092026/content/ipitch-finalists/veesafe');
+    expect(screen.getByTestId('guest-content-list')).toBeInTheDocument();
+  });
+
   it('/events/:slug/vote/:eceSlug renders vote allocation', () => {
     renderAt('/events/ipitch-2026/vote/ipitch-voting');
     expect(screen.getByTestId('guest-vote-allocation')).toBeInTheDocument();

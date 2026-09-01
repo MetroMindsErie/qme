@@ -101,6 +101,7 @@ function App() {
         <Route path="/events/:eventSlug" element={<EventPage />} />
         <Route path="/events/:eventSlug/check-in" element={<EventCheckInPage />} />
         <Route path="/events/:eventSlug/content/:eceSlug" element={<GuestContentList />} />
+        <Route path="/events/:eventSlug/content/:eceSlug/:itemSlug" element={<GuestContentList />} />
         <Route path="/events/:eventSlug/group-order" element={<EventGroupOrderPage />} />
         <Route path="/events/:eventSlug/vote/:eceSlug" element={<GuestVoteAllocation />} />
         {/* Queue landing skipped — jumps straight to ticket */}

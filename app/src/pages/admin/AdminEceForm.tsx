@@ -140,9 +140,13 @@ export default function AdminEceForm() {
   function updateContentListSettings(
     patch: Partial<{
       enabled: boolean;
+      presentationMode: 'detail_list' | 'expanded_home' | 'child_cards';
       title: string;
       actionLabel: string;
       itemsText: string;
+      votingEnabled: boolean;
+      votingOpen: boolean;
+      votingCreditLimit: number;
     }>
   ) {
     setForm((prev) => {
@@ -179,10 +183,17 @@ export default function AdminEceForm() {
           content_list: {
             ...existingContentList,
             enabled,
+            presentation_mode: patch.presentationMode ?? currentConfig.presentationMode,
             title: patch.title ?? currentConfig.title,
             items: patch.itemsText !== undefined
               ? parseContentListItems(patch.itemsText)
               : currentConfig.items,
+            voting: {
+              ...asRecord(existingContentList.voting),
+              enabled: patch.votingEnabled ?? currentConfig.voting.enabled,
+              state: patch.votingOpen ?? currentConfig.voting.open ? 'open' : 'closed',
+              credit_limit: patch.votingCreditLimit ?? currentConfig.voting.creditLimit,
+            },
           },
         },
       };
@@ -470,6 +481,21 @@ export default function AdminEceForm() {
               Open this eCe as a guest-facing list
             </label>
             <div style={{ ...fieldStyle, marginTop: '0.85rem' }}>
+              <label style={labelStyle}>Guest Presentation</label>
+              <select
+                style={inputStyle}
+                value={contentListConfig.presentationMode}
+                onChange={(e) => updateContentListSettings({
+                  presentationMode: e.target.value as 'detail_list' | 'expanded_home' | 'child_cards',
+                  enabled: true,
+                })}
+              >
+                <option value="detail_list">Single card opens detail list</option>
+                <option value="expanded_home">Expanded list on event home</option>
+                <option value="child_cards">Child cards on event home</option>
+              </select>
+            </div>
+            <div style={{ ...fieldStyle, marginTop: '0.85rem' }}>
               <label style={labelStyle}>Detail View Title</label>
               <input
                 style={inputStyle}
@@ -496,8 +522,41 @@ export default function AdminEceForm() {
                 placeholder="Name | Description | optional image URL"
               />
               <span style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.35, marginTop: 6 }}>
-                Enter one item per line as: Name | Description | optional image URL
+                Enter one item per line as: Name | Summary | Full detail | optional image URL. Existing Name | Description | optional image URL lines remain supported.
               </span>
+            </div>
+            <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.85rem' }}>
+              <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', color: '#334155', fontWeight: 700, lineHeight: 1.4 }}>
+                <input
+                  type="checkbox"
+                  checked={contentListConfig.voting.enabled}
+                  onChange={(e) => updateContentListSettings({ votingEnabled: e.target.checked, enabled: true })}
+                  style={{ marginTop: 3 }}
+                />
+                Enable prototype voting controls on child detail pages
+              </label>
+              <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', color: '#334155', fontWeight: 700, lineHeight: 1.4, marginTop: '0.65rem' }}>
+                <input
+                  type="checkbox"
+                  checked={contentListConfig.voting.open}
+                  onChange={(e) => updateContentListSettings({ votingOpen: e.target.checked, enabled: true })}
+                  disabled={!contentListConfig.voting.enabled}
+                  style={{ marginTop: 3 }}
+                />
+                Voting open for controlled testing
+              </label>
+              <div style={{ ...fieldStyle, marginTop: '0.85rem', marginBottom: 0 }}>
+                <label style={labelStyle}>Vote Credits</label>
+                <input
+                  style={inputStyle}
+                  type="number"
+                  min={1}
+                  max={10}
+                  value={contentListConfig.voting.creditLimit}
+                  onChange={(e) => updateContentListSettings({ votingCreditLimit: Number(e.target.value) || 2, enabled: true })}
+                  disabled={!contentListConfig.voting.enabled}
+                />
+              </div>
             </div>
           </div>
         )}

@@ -54,10 +54,6 @@ function isVoteAllocationEce(ece: Ece): boolean {
   return getVoteAllocationConfig(ece).enabled;
 }
 
-function isContentListEce(ece: Ece): boolean {
-  return getContentListConfig(ece).enabled;
-}
-
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -936,7 +932,11 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             }) : '';
             const isGroupOrder = isGroupOrderEce(exp);
             const isVoteAllocation = isVoteAllocationEce(exp);
-            const isContentList = isContentListEce(exp);
+            const contentListConfig = getContentListConfig(exp);
+            const isContentList = contentListConfig.enabled;
+            const contentListOpensDetail = isContentList && contentListConfig.presentationMode === 'detail_list';
+            const contentListExpandedHome = isContentList && contentListConfig.presentationMode === 'expanded_home';
+            const contentListChildCards = isContentList && contentListConfig.presentationMode === 'child_cards';
             const groupOrderStatusLine = isGroupOrder
               ? hasEventCheckIn ? 'Ready to order' : isWaitingForHostCheckIn ? 'Waiting for host check-in' : 'Check in first'
               : '';
@@ -947,7 +947,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               ? `/events/${eventSlug}/group-order`
               : isVoteAllocation
               ? `/events/${eventSlug}/vote/${exp.slug}`
-              : isContentList
+              : contentListOpensDetail
               ? `/events/${eventSlug}/content/${exp.slug}`
               : exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
@@ -985,7 +985,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               ? homeActionLabel || 'Order'
               : isVoteAllocation
               ? homeActionLabel || 'Vote'
-              : isContentList
+              : contentListOpensDetail
               ? homeActionLabel || 'Open'
               : linkedQueue
               ? homeActionLabel || 'Join'
@@ -1115,6 +1115,45 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                       </div>
                       );
                     })}
+                  </div>
+                )}
+                {contentListExpandedHome && contentListConfig.items.length > 0 && (
+                  <div className="ed-home-items ed-content-expanded-list">
+                    {contentListConfig.items.map((item) => (
+                      <div className="ed-home-item" key={item.id || item.slug}>
+                        {item.imageUrl && (
+                          <img src={item.imageUrl} alt={item.name} className="ed-home-item-logo" />
+                        )}
+                        <span className="ed-home-item-copy">
+                          {item.name && <span className="ed-home-item-title">{item.name}</span>}
+                          {(item.summary || item.description) && (
+                            <span className="ed-home-item-note">{item.summary || item.description}</span>
+                          )}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {contentListChildCards && contentListConfig.items.length > 0 && (
+                  <div className="ed-home-items ed-content-child-list">
+                    {contentListConfig.items.map((item) => (
+                      <Link
+                        className="ed-home-item ed-home-item-clickable ed-home-item-block-link"
+                        key={item.id || item.slug}
+                        to={`/events/${eventSlug}/content/${exp.slug}/${item.slug}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {item.imageUrl && (
+                          <img src={item.imageUrl} alt={item.name} className="ed-home-item-logo" />
+                        )}
+                        <span className="ed-home-item-copy">
+                          {item.name && <span className="ed-home-item-title ed-home-item-link">{item.name}</span>}
+                          {(item.summary || item.description) && (
+                            <span className="ed-home-item-note">{item.summary || item.description}</span>
+                          )}
+                        </span>
+                      </Link>
+                    ))}
                   </div>
                 )}
               </div>

@@ -5,12 +5,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockFrom = vi.fn();
+const mockRpc = vi.fn();
 const mockChannel = vi.fn();
 const mockRemoveChannel = vi.fn();
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
     from: (...args: unknown[]) => mockFrom(...args),
+    rpc: (...args: unknown[]) => mockRpc(...args),
     channel: (...args: unknown[]) => mockChannel(...args),
     removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
   },
@@ -23,6 +25,7 @@ import {
   getEventBySlug,
   updateEvent,
   deleteEvent,
+  resetEventTestData,
   onEventsChange,
 } from '../lib/eventService';
 
@@ -121,6 +124,16 @@ describe('eventService', () => {
       mockFrom.mockReturnValue(chainMock(null));
       await deleteEvent('uuid1');
       expect(mockFrom).toHaveBeenCalledWith('events');
+    });
+  });
+
+  describe('resetEventTestData', () => {
+    it('calls the reusable event reset RPC', async () => {
+      mockRpc.mockResolvedValue({ error: null });
+
+      await resetEventTestData('event-1');
+
+      expect(mockRpc).toHaveBeenCalledWith('reset_event_test_data', { p_event_id: 'event-1' });
     });
   });
 

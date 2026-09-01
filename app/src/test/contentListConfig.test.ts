@@ -32,6 +32,12 @@ describe('contentListConfig', () => {
       interaction_mode: 'content_list',
       content_list: {
         title: 'i-Pitch Finalists',
+        presentation_mode: 'child_cards',
+        voting: {
+          enabled: false,
+          state: 'closed',
+          credit_limit: 2,
+        },
         items: [
           { name: 'VeeSafe', description: 'Cybersecurity guidance.' },
           { title: 'Quantum Fluent', summary: 'Technical content.' },
@@ -39,21 +45,27 @@ describe('contentListConfig', () => {
       },
     }))).toEqual({
       enabled: true,
+      presentationMode: 'child_cards',
       title: 'i-Pitch Finalists',
       items: [
-        { name: 'VeeSafe', description: 'Cybersecurity guidance.', imageUrl: '' },
-        { name: 'Quantum Fluent', description: 'Technical content.', imageUrl: '' },
+        { id: 'veesafe', slug: 'veesafe', name: 'VeeSafe', summary: 'Cybersecurity guidance.', description: 'Cybersecurity guidance.', imageUrl: '' },
+        { id: 'quantum-fluent', slug: 'quantum-fluent', name: 'Quantum Fluent', summary: 'Technical content.', description: '', imageUrl: '' },
       ],
+      voting: {
+        enabled: false,
+        open: false,
+        creditLimit: 2,
+      },
     });
   });
 
   it('parses and formats admin content list text', () => {
-    const items = parseContentListItems('VeeSafe | Cybersecurity guidance.\nQuantum Fluent | Technical content. | /images/qf.png');
+    const items = parseContentListItems('VeeSafe | Cybersecurity guidance.\nQuantum Fluent | Short summary | Full profile. | /images/qf.png');
 
     expect(items).toEqual([
-      { name: 'VeeSafe', description: 'Cybersecurity guidance.', imageUrl: '' },
-      { name: 'Quantum Fluent', description: 'Technical content.', imageUrl: '/images/qf.png' },
+      { id: 'veesafe', slug: 'veesafe', name: 'VeeSafe', summary: '', description: 'Cybersecurity guidance.', imageUrl: '' },
+      { id: 'quantum-fluent', slug: 'quantum-fluent', name: 'Quantum Fluent', summary: 'Short summary', description: 'Full profile.', imageUrl: '/images/qf.png' },
     ]);
-    expect(formatContentListItems(items)).toBe('VeeSafe | Cybersecurity guidance.\nQuantum Fluent | Technical content. | /images/qf.png');
+    expect(formatContentListItems(items)).toBe('VeeSafe |  | Cybersecurity guidance.\nQuantum Fluent | Short summary | Full profile. | /images/qf.png');
   });
 });

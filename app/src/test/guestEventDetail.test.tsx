@@ -219,4 +219,105 @@ describe('GuestEventDetail', () => {
     expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/events/ipitch-092026/content/ipitch-finalists');
     expect(screen.queryByRole('link', { name: 'Vote' })).not.toBeInTheDocument();
   });
+
+  it('renders expanded-on-home content without an Open click', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+    });
+    mockListActiveEcesForEvent.mockResolvedValue([
+      {
+        id: 'ece-agenda',
+        event_id: event.id,
+        expie_id: null,
+        org_id: null,
+        type: 'info',
+        queue_id: null,
+        queue_behavior: '',
+        name: 'Agenda',
+        slug: 'agenda',
+        description: "Tonight's schedule.",
+        image_url: '',
+        location: '',
+        sort_order: 10,
+        starts_at: null,
+        ends_at: null,
+        metadata: {
+          interaction_mode: 'content_list',
+          content_list: {
+            title: 'Agenda',
+            presentation_mode: 'expanded_home',
+            items: [
+              { name: '5:00 PM', description: 'Doors Open & Network' },
+              { name: '5:30 PM', description: "Let's Begin!" },
+            ],
+          },
+        },
+        status: 'active',
+        created_at: '',
+        updated_at: '',
+      },
+    ]);
+
+    renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('Agenda')).toBeInTheDocument();
+    expect(screen.getAllByText('5:00 PM').length).toBeGreaterThan(0);
+    expect(screen.getByText('Doors Open & Network')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Open' })).not.toBeInTheDocument();
+  });
+
+  it('renders child-card content with individual detail links and no inactive voting controls', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+    });
+    mockListActiveEcesForEvent.mockResolvedValue([
+      {
+        id: 'ece-finalists',
+        event_id: event.id,
+        expie_id: null,
+        org_id: null,
+        type: 'info',
+        queue_id: null,
+        queue_behavior: '',
+        name: 'i-Pitch Finalists',
+        slug: 'ipitch-finalists',
+        description: "Meet tonight's four finalists.",
+        image_url: '',
+        location: '',
+        sort_order: 20,
+        starts_at: null,
+        ends_at: null,
+        metadata: {
+          interaction_mode: 'content_list',
+          content_list: {
+            title: 'i-Pitch Finalists',
+            presentation_mode: 'child_cards',
+            voting: {
+              enabled: false,
+              state: 'closed',
+              credit_limit: 2,
+            },
+            items: [
+              { name: 'Quantum Fluent', summary: 'Technical content.', description: 'Full detail.' },
+              { name: 'VeeSafe', summary: 'Cybersecurity guidance.', description: 'Full detail.' },
+            ],
+          },
+        },
+        status: 'active',
+        created_at: '',
+        updated_at: '',
+      },
+    ]);
+
+    renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('i-Pitch Finalists')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Quantum Fluent/ })).toHaveAttribute('href', '/events/ipitch-092026/content/ipitch-finalists/quantum-fluent');
+    expect(screen.getByRole('link', { name: /VeeSafe/ })).toHaveAttribute('href', '/events/ipitch-092026/content/ipitch-finalists/veesafe');
+    expect(screen.queryByRole('link', { name: 'Vote' })).not.toBeInTheDocument();
+  });
 });

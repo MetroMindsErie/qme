@@ -12,7 +12,7 @@ import {
 } from '../../lib/adminPrincipalService';
 import { createAdminUserWithAuth, resetStaffPasswordWithAuth } from '../../lib/adminPrincipalAdminService';
 import { getEvent, resetEventTestData } from '../../lib/eventService';
-import { deleteEce, listEcesForEvent } from '../../lib/eceService';
+import { deleteEce, listEcesForEvent, updateEceSortOrder } from '../../lib/eceService';
 import { listEventCheckIns, onEventCheckInsChange } from '../../lib/checkInService';
 import { getVoteAllocationConfig } from '../../lib/votingConfig';
 import {
@@ -188,6 +188,7 @@ export default function AdminEventDetail() {
   const [createdStaffPassword, setCreatedStaffPassword] = useState<{ email: string; password: string } | null>(null);
   const [passwordModal, setPasswordModal] = useState<{ email: string; password: string } | null>(null);
   const [resettingEventData, setResettingEventData] = useState(false);
+  const [reorderingEceId, setReorderingEceId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<AdminEventTab>('operations');
   const refreshTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null);
 
@@ -325,6 +326,40 @@ export default function AdminEventDetail() {
     }
   }
 
+  async function handleMoveEce(eceId: string, direction: 'up' | 'down') {
+    const orderedVisible = visibleEces.slice();
+    const currentIndex = orderedVisible.findIndex((ece) => ece.id === eceId);
+    const swapIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (currentIndex < 0 || swapIndex < 0 || swapIndex >= orderedVisible.length) return;
+
+    const nextVisible = orderedVisible.slice();
+    const [moved] = nextVisible.splice(currentIndex, 1);
+    nextVisible.splice(swapIndex, 0, moved);
+    const updates = nextVisible.map((ece, index) => ({
+      id: ece.id,
+      sortOrder: (index + 1) * 10,
+    })).filter((update) => {
+      const current = eces.find((ece) => ece.id === update.id);
+      return current && current.sort_order !== update.sortOrder;
+    });
+
+    setReorderingEceId(eceId);
+    try {
+      await Promise.all(updates.map((update) => updateEceSortOrder(update.id, update.sortOrder)));
+      setEces((current) => current
+        .map((ece) => {
+          const update = updates.find((item) => item.id === ece.id);
+          return update ? { ...ece, sort_order: update.sortOrder } : ece;
+        })
+        .sort((a, b) => a.sort_order - b.sort_order || a.created_at.localeCompare(b.created_at)));
+    } catch (error) {
+      console.error('Failed to reorder Event Features', error);
+      alert('Could not reorder Event Features.');
+    } finally {
+      setReorderingEceId(null);
+    }
+  }
+
   async function handleAddEventStaff(eventForm: FormEvent) {
     eventForm.preventDefault();
     if (!event || !currentAdmin || !staffEmail.trim()) return;
@@ -435,14 +470,14 @@ export default function AdminEventDetail() {
   async function handleResetEventTestData() {
     if (!event || resettingEventData) return;
     const confirmation = window.prompt(
-      `Reset all test guest data for "${event.name}"?\n\nThis removes check-ins, queue tickets, guest sessions, guest marks/completions, credits, designations, and group order submissions. Event setup, features, queues, and staff access will stay.\n\nType the secret reset password to continue.`
+      `Reset all test guest data for "${event.name}"?\n\nThis removes check-ins, queue tickets, guest sessions, guest marks/completions, credits, designations, and group order submissions. Imported registration definitions, event setup, features, queues, and staff access will stay.\n\nBrowser-local prototype state on guest devices is not controlled by this server reset.\n\nType ${event.slug} to continue.`
     );
     if (confirmation === null) {
       alert('Reset canceled. No test data was changed.');
       return;
     }
-    if (confirmation.trim().toUpperCase() !== 'SOTCRST') {
-      alert('Reset was not run. Type the secret reset password to confirm.');
+    if (confirmation.trim() !== event.slug) {
+      alert(`Reset was not run. Type ${event.slug} to confirm.`);
       return;
     }
 
@@ -798,7 +833,7 @@ export default function AdminEventDetail() {
             </p>
           )}
 
-          {visibleEces.map((exp) => {
+          {visibleEces.map((exp, index) => {
             const linkedQueue = exp.queue_id ? queues.find((q) => q.id === exp.queue_id) : null;
             const queueSummary = linkedQueue ? queueSummaries[linkedQueue.id] ?? emptyQueueSummary : null;
             const votingConfig = isVoteAllocationEce(exp) ? getVoteAllocationConfig(exp) : null;
@@ -870,6 +905,28 @@ export default function AdminEventDetail() {
                   >
                     Group Order
                   </button>
+                )}
+                {canManageThisEvent && (
+                <button
+                  className="actionBtn actionBtn-secondary"
+                  hidden={activeTab !== 'setup'}
+                  disabled={index === 0 || reorderingEceId !== null}
+                  style={{ margin: 0, width: 'auto', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                  onClick={() => handleMoveEce(exp.id, 'up')}
+                >
+                  Up
+                </button>
+                )}
+                {canManageThisEvent && (
+                <button
+                  className="actionBtn actionBtn-secondary"
+                  hidden={activeTab !== 'setup'}
+                  disabled={index === visibleEces.length - 1 || reorderingEceId !== null}
+                  style={{ margin: 0, width: 'auto', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
+                  onClick={() => handleMoveEce(exp.id, 'down')}
+                >
+                  Down
+                </button>
                 )}
                 {canManageThisEvent && (
                 <button

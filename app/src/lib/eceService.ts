@@ -96,6 +96,10 @@ export async function updateEce(id: string, input: UpdateEceInput): Promise<Ece>
   return normalizeEceDisplay(data as Ece);
 }
 
+export async function updateEceSortOrder(id: string, sortOrder: number): Promise<Ece> {
+  return updateEce(id, { sort_order: sortOrder });
+}
+
 export async function deleteEce(id: string): Promise<void> {
   const { error } = await supabase.from('eces').delete().eq('id', id);
   if (error) throw error;

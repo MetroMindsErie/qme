@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -24,6 +24,7 @@ const event: QEvent = {
       completion_mode: 'auto',
       require_completed_for_participation: true,
       imported_registration_lookup_enabled: true,
+      post_check_in_instruction: 'Please go to the check-in desk to receive your event package.',
       self_registration: {
         enabled: true,
         required_fields: ['first_name', 'last_name', 'email'],
@@ -79,9 +80,9 @@ vi.mock('../lib/checkInService', () => ({
   searchImportedRegistrationsForGuest: (...args: unknown[]) => mockSearchImportedRegistrationsForGuest(...args),
 }));
 
-function renderCheckIn() {
+function renderCheckIn(path = '/events/ipitch-2026/check-in') {
   return render(
-    <MemoryRouter initialEntries={['/events/ipitch-2026/check-in']}>
+    <MemoryRouter initialEntries={[path]}>
       <Routes>
         <Route path="/events/:eventSlug/check-in" element={<GuestEventCheckIn />} />
       </Routes>
@@ -105,17 +106,17 @@ describe('GuestEventCheckIn', () => {
     renderCheckIn();
 
     const searchInput = await screen.findByPlaceholderText('First name, last name, or email');
-    await user.type(searchInput, 'missing@example.com');
+    fireEvent.change(searchInput, { target: { value: 'missing@example.com' } });
     await user.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(await screen.findByText('No matching registration was found. Try your first or last name, or register below.')).toBeInTheDocument();
     await user.click(screen.getByText("Can't find your registration?"));
 
     expect(screen.getByText('Please provide your information below to register for the event and check in now.')).toBeInTheDocument();
-    await user.type(screen.getByLabelText('First name'), 'Walk');
-    await user.type(screen.getByLabelText('Last name'), 'Up');
-    await user.type(screen.getByLabelText('Email'), 'walk@example.com');
-    await user.type(screen.getByLabelText('Confirm email'), 'typo@example.com');
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
+    fireEvent.change(screen.getByLabelText('Confirm email'), { target: { value: 'typo@example.com' } });
     await user.click(screen.getByRole('button', { name: 'Register & Check In' }));
 
     const inlineError = await screen.findByText('Email and confirm email must match.');
@@ -131,10 +132,10 @@ describe('GuestEventCheckIn', () => {
 
     await screen.findByPlaceholderText('First name, last name, or email');
     await user.click(screen.getByText("Can't find your registration?"));
-    await user.type(screen.getByLabelText('First name'), 'Walk');
-    await user.type(screen.getByLabelText('Last name'), 'Up');
-    await user.type(screen.getByLabelText('Email'), 'walk@example.com');
-    await user.type(screen.getByLabelText('Confirm email'), 'walk@example.com');
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
+    fireEvent.change(screen.getByLabelText('Confirm email'), { target: { value: 'walk@example.com' } });
     await user.click(screen.getByRole('button', { name: 'Register & Check In' }));
 
     await waitFor(() => {
@@ -148,5 +149,31 @@ describe('GuestEventCheckIn', () => {
       expect(mockCheckInEventGuest).toHaveBeenCalledWith(createdCheckIn.id, 'general', event.id);
     });
     expect(await screen.findByText(/Thanks, Walk!/)).toBeInTheDocument();
+    expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();
+  });
+
+  it('clears prior guest identity and starts clean for shared-device Next Guest', async () => {
+    const user = userEvent.setup();
+    renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
+
+    await screen.findByPlaceholderText('First name, last name, or email');
+    await user.click(screen.getByText("Can't find your registration?"));
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
+    fireEvent.change(screen.getByLabelText('Confirm email'), { target: { value: 'walk@example.com' } });
+    localStorage.setItem('qme:guestSession:event-1', 'guest-a-token');
+    localStorage.setItem('qme:voteAllocation:event-1:ece-1:check-in-1', JSON.stringify({ veesafe: 2 }));
+    await user.click(screen.getByRole('button', { name: 'Register & Check In' }));
+
+    expect(await screen.findByRole('button', { name: 'Next Guest' })).toBeInTheDocument();
+    expect(localStorage.getItem('qme:eventCheckIn:event-1')).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Next Guest' }));
+
+    expect(await screen.findByPlaceholderText('First name, last name, or email')).toBeInTheDocument();
+    expect(screen.queryByText(/Thanks, Walk!/)).not.toBeInTheDocument();
+    expect(localStorage.getItem('qme:eventCheckIn:event-1')).toBeNull();
+    expect(localStorage.getItem('qme:guestSession:event-1')).toBeNull();
+    expect(localStorage.getItem('qme:voteAllocation:event-1:ece-1:check-in-1')).toBeNull();
   });
 });

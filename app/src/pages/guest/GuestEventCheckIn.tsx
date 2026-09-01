@@ -3,7 +3,7 @@
  * First alpha pass: gives the event QR a clear "start here" destination.
  */
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import {
   checkInEventGuest,
@@ -15,6 +15,7 @@ import {
 } from '../../lib/checkInService';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
+import { clearGuestSessionToken } from '../../lib/guestSessionService';
 import { isSotcEventSlug } from '../../lib/sotc';
 import type { EventCheckIn, ImportedRegistrationSearchResult, QEvent } from '../../types';
 import '../../styles/shared.css';
@@ -57,6 +58,8 @@ export default function GuestEventCheckIn({
 }: GuestEventCheckInProps) {
   const navigate = useNavigate();
   const { eventSlug } = useParams<{ eventSlug: string }>();
+  const [searchParams] = useSearchParams();
+  const isSharedDeviceMode = searchParams.get('mode') === 'shared' || searchParams.get('shared') === '1';
   const [event, setEvent] = useState<QEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [firstName, setFirstName] = useState('');
@@ -84,9 +87,11 @@ export default function GuestEventCheckIn({
     : useImportedRegistrationLookup
     ? 'Find your registration to self check in.'
     : intro;
-  const completedConfirmation = useImportedRegistrationLookup && isSotcEventSlug(event?.slug)
+  const completedConfirmation = checkInConfig.postCheckInInstruction
+    ? `You are checked in. ${checkInConfig.postCheckInInstruction}`
+    : (useImportedRegistrationLookup && isSotcEventSlug(event?.slug)
     ? 'You are checked in. Please stop at the registration desk to pick up your name tag. If your registration includes a headshot, join the Headshot Photographer queue when you are ready.'
-    : confirmation;
+    : confirmation);
 
   const storageKey = useCallback((evId: string) => {
     return checkInCode ? `qme:eventCheckIn:${checkInCode}:${evId}` : `qme:eventCheckIn:${evId}`;
@@ -361,6 +366,35 @@ export default function GuestEventCheckIn({
     setError('');
   }
 
+  function clearSharedDeviceGuest() {
+    if (!event) return;
+    try {
+      localStorage.removeItem(storageKey(event.id));
+      clearGuestSessionToken(event.id);
+      const votePrefix = `qme:voteAllocation:${event.id}:`;
+      Object.keys(localStorage)
+        .filter((key) => key.startsWith(votePrefix))
+        .forEach((key) => localStorage.removeItem(key));
+    } catch {
+      /* continue with in-memory reset if browser storage is unavailable */
+    }
+    setFirstName('');
+    setLastName('');
+    setEmail('');
+    setEmailConfirmation('');
+    setPhone('');
+    setSubmitted(false);
+    setCheckIn(null);
+    setSaving(false);
+    setError('');
+    setRegistrationQuery('');
+    setRegistrationResults([]);
+    setRegistrationSearching(false);
+    setRegistrationEmailConfirmation({});
+    setRegistrationHasSearched(false);
+    setSelfRegistrationEmailError('');
+  }
+
   const isRemovedCheckIn = checkIn?.status === 'cancelled';
   const isWaitingForHostCheckIn = submitted
     && checkInConfig.requireCompletedForParticipation
@@ -441,6 +475,16 @@ export default function GuestEventCheckIn({
                 onClick={resetCancelledCheckIn}
               >
                 Check In Again
+              </button>
+            )}
+            {isSharedDeviceMode && !isRemovedCheckIn && (
+              <button
+                className="actionBtn actionBtn-primary"
+                type="button"
+                style={{ margin: '0.5rem 0 1rem' }}
+                onClick={clearSharedDeviceGuest}
+              >
+                Next Guest
               </button>
             )}
             {!checkInCode && checkIn?.ticket_type === 'flowers' && (

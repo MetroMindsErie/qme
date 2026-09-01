@@ -136,6 +136,7 @@ export default function AdminEventForm() {
       importedRegistrationLookupEnabled: boolean;
       selfRegistrationFallbackEnabled: boolean;
       selfRegistrationRequiresEmail: boolean;
+      postCheckInInstruction: string;
     }>
   ) {
     setForm((prev) => {
@@ -171,6 +172,7 @@ export default function AdminEventForm() {
         : false;
       const selfRegistrationRequiresEmail = patch.selfRegistrationRequiresEmail
         ?? current.selfRegistrationRequiredFields.includes('email');
+      const postCheckInInstruction = patch.postCheckInInstruction ?? current.postCheckInInstruction;
 
       return {
         ...prev,
@@ -182,6 +184,7 @@ export default function AdminEventForm() {
             completion_mode: completionMode,
             require_completed_for_participation: requireCompletedForParticipation,
             imported_registration_lookup_enabled: importedRegistrationLookupEnabled,
+            post_check_in_instruction: postCheckInInstruction,
             self_registration: {
               ...asRecord(existingCheckIn.self_registration),
               enabled: selfRegistrationFallbackEnabled,
@@ -479,6 +482,16 @@ export default function AdminEventForm() {
             />
             Require email for self-registration
           </label>
+          <div style={{ ...fieldStyle, marginTop: '0.75rem' }}>
+            <label style={labelStyle}>Post-Check-In Instruction</label>
+            <textarea
+              style={{ ...inputStyle, minHeight: 72, resize: 'vertical' }}
+              value={checkInConfig.postCheckInInstruction}
+              disabled={!checkInConfig.enabled}
+              onChange={(e) => updateCheckInSettings({ postCheckInInstruction: e.target.value })}
+              placeholder="Please go to the check-in desk to receive your event package."
+            />
+          </div>
           <p style={{ margin: '0.65rem 0 0', color: '#64748b', fontSize: '0.84rem', fontWeight: 700, lineHeight: 1.45 }}>
             Auto is best for lightweight tests. Staff approval is best when someone needs to verify arrivals, grant access, or control who can use stations.
           </p>

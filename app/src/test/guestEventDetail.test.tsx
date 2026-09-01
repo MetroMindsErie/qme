@@ -115,4 +115,31 @@ describe('GuestEventDetail', () => {
     });
     expect(await screen.findByText('SOTC Test Event')).toBeInTheDocument();
   });
+
+  it('uses mode-aware Check-In card copy and neutral feature taxonomy', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+      metadata: {
+        check_in: {
+          enabled: true,
+          completion_mode: 'auto',
+          require_completed_for_participation: true,
+          imported_registration_lookup_enabled: true,
+          self_registration: {
+            enabled: true,
+            required_fields: ['first_name', 'last_name', 'email'],
+          },
+        },
+      },
+    });
+
+    renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('i-Pitch')).toBeInTheDocument();
+    expect(screen.getByText("Find your registration and check in when you arrive. If you're not on the list, you can register here.")).toBeInTheDocument();
+    expect(screen.getByText('Feature')).toBeInTheDocument();
+    expect(screen.queryByText('Sessions')).not.toBeInTheDocument();
+  });
 });

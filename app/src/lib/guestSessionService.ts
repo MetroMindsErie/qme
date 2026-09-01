@@ -44,6 +44,11 @@ export function getGuestSessionToken(eventId: string): string {
   return token;
 }
 
+export function clearGuestSessionToken(eventId: string): void {
+  if (!storageAvailable()) return;
+  localStorage.removeItem(eventSessionKey(eventId));
+}
+
 export function getGuestTokenForQueue(queueId: string, eventId?: string | null): string {
   if (eventId) return getGuestSessionToken(eventId);
   if (!storageAvailable()) return createGuestToken();

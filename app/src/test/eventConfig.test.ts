@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getEventCheckInConfig } from '../lib/eventConfig';
+import { getEventCheckInCardDescription, getEventCheckInConfig } from '../lib/eventConfig';
 import type { QEvent } from '../types';
 
 function eventWithCheckIn(checkIn: Record<string, unknown>): QEvent {
@@ -31,6 +31,7 @@ describe('getEventCheckInConfig', () => {
       importedRegistrationLookupEnabled: false,
       selfRegistrationFallbackEnabled: false,
       selfRegistrationRequiredFields: [],
+      postCheckInInstruction: '',
     });
   });
 
@@ -39,6 +40,7 @@ describe('getEventCheckInConfig', () => {
       completion_mode: 'auto',
       require_completed_for_participation: true,
       imported_registration_lookup_enabled: true,
+      post_check_in_instruction: 'Please go to the check-in desk to receive your event package.',
       self_registration: {
         enabled: true,
         required_fields: ['first_name', 'last_name', 'email', 'company'],
@@ -50,6 +52,7 @@ describe('getEventCheckInConfig', () => {
       importedRegistrationLookupEnabled: true,
       selfRegistrationFallbackEnabled: true,
       selfRegistrationRequiredFields: ['first_name', 'last_name', 'email'],
+      postCheckInInstruction: 'Please go to the check-in desk to receive your event package.',
     });
   });
 
@@ -66,5 +69,18 @@ describe('getEventCheckInConfig', () => {
       importedRegistrationLookupEnabled: false,
       selfRegistrationFallbackEnabled: false,
     });
+  });
+
+  it('describes auto imported self-registration check-in without implying staff confirmation', () => {
+    const config = getEventCheckInConfig(eventWithCheckIn({
+      completion_mode: 'auto',
+      imported_registration_lookup_enabled: true,
+      self_registration: {
+        enabled: true,
+        required_fields: ['first_name', 'last_name', 'email'],
+      },
+    }));
+
+    expect(getEventCheckInCardDescription(config)).toBe("Find your registration and check in when you arrive. If you're not on the list, you can register here.");
   });
 });

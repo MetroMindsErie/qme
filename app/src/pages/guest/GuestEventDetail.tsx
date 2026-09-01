@@ -16,7 +16,7 @@ import {
 } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
-import { getEventCheckInConfig } from '../../lib/eventConfig';
+import { getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { getVoteAllocationConfig } from '../../lib/votingConfig';
@@ -700,7 +700,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
   const linkedEceQueueIds = new Set(homeEligibleEces.map((ece) => ece.queue_id).filter(Boolean));
   const visibleQueues = queues.filter((q) => !linkedEceQueueIds.has(q.id));
   const checkInCardCount = checkInConfig.enabled ? 1 : 0;
-  const sessionCount =
+  const featureCount =
     checkInCardCount +
     visibleQueues.length +
     visibleStaticActivities.filter(a => a.id !== 'live-updates').length +
@@ -734,8 +734,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
           <div className="ed-stats">
             <div className="ed-stat">
               <span className="ed-stat-icon">🎙</span>
-              <span className="ed-stat-val">{sessionCount}</span>
-              <span className="ed-stat-label">Sessions</span>
+              <span className="ed-stat-val">{featureCount}</span>
+              <span className="ed-stat-label">{featureCount === 1 ? 'Feature' : 'Features'}</span>
             </div>
             {event.start_time && (
               <div className="ed-stat">
@@ -781,7 +781,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                   : isWaitingForHostCheckIn
                   ? 'Your name has been submitted. Please wait here until staff confirms your event check-in.'
                   : !isPeonyEvent
-                  ? 'Enter your name when you arrive so the event team can confirm your check-in.'
+                  ? getEventCheckInCardDescription(checkInConfig)
                   : eventCheckInTicketType === 'flowers'
                   ? 'You are checked in with flowers access. Use the Bouquet Bar option below when ready.'
                   : 'Enter your name when you arrive so the team can prepare your admission and bouquet access.'}

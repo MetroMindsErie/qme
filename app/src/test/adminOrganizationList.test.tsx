@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import AdminOrganizationList from '../pages/admin/AdminOrganizationList';
@@ -86,9 +86,9 @@ describe('AdminOrganizationList', () => {
     render(<MemoryRouter><AdminOrganizationList /></MemoryRouter>);
 
     await user.click(await screen.findByText('+ New Organization'));
-    await user.type(screen.getByLabelText('Name *'), 'New Partner');
-    await user.type(screen.getByLabelText('Description'), 'Partner org');
-    await user.selectOptions(screen.getByLabelText('Status'), 'inactive');
+    fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'New Partner' } });
+    fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Partner org' } });
+    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'inactive' } });
     await user.click(screen.getByText('Create Organization'));
 
     await waitFor(() => {

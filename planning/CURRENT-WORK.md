@@ -2,169 +2,232 @@
 
 ## Current Slice
 
-Prepare the actual i-Pitch event for continued Product Owner testing over the next two days while waiting on Tricia's answer about multi-ticket Eventbrite orders.
+Improve reusable Event Feature management and guest presentation based on live i-Pitch configuration work, while continuing the reusable admin test-data reset. Do **not** implement the production Eventbrite import until Tricia answers the multi-ticket business-rule question.
 
 Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
 
-## Settled i-Pitch Operating Model
+## Settled i-Pitch Operations
 
 Actual event:
-- organization: **University of Akron Research Foundation**
-- event: **i-Pitch - September, 2026**
+- organization: University of Akron Research Foundation
+- event: i-Pitch - September, 2026
 - slug: `ipitch-092026`
 - September 3, 2026, 5:00-8:00 PM ET
 - Missing Falls Brewery, 540 S Main St., Akron, OH 44311
-- logo: `/images/i-pitch.png`
 
-Check-In operations agreed with Kelly/Tricia:
-- guests should primarily check in on **their own phones** using the event QR;
-- if a guest is not on the imported registration list, they may self-register on their phone using name + email and check in;
-- the shared iPad at the front check-in desk is backup for guests who prefer not to use their phone;
-- there is also a back entrance with an intern assisting and directing guests onward;
-- after check-in, guests go to the **check-in desk by the front entrance** and receive the evening's event package;
-- the Product Owner has updated the event Post-Check-In Instruction to the agreed wording: `Please go to the check-in desk by the front entrance to receive your evening's event package.`;
-- Tricia's preferred role is to see the checked-in state and hand the guest their package, not perform routine data entry;
-- physical balls remain the production voting method for Thursday; digital voting is not in production scope for i-Pitch.
+Event-day operating model:
+- guests primarily check in on their own phones via event QR;
+- if not on the imported list, they may self-register on their phone with name + email;
+- shared iPad at front desk is backup for guests who prefer not to use their phone;
+- back entrance has an intern assisting/directing guests;
+- after check-in, guest goes to the check-in desk by the front entrance and receives the evening's event package;
+- approved event Post-Check-In Instruction is: `Please go to the check-in desk by the front entrance to receive your evening's event package.`;
+- physical balls remain the production voting method Thursday.
 
-Existing accepted shared-device behavior remains:
-- `/events/ipitch-092026/check-in?mode=shared`;
-- no hamburger/menu in shared mode;
-- **Next Guest** reset;
-- 15-second auto-reset using the same reset semantics;
-- personal-device sessions are preserved.
+Existing accepted Check-In behavior must not regress.
 
-## Part A — Generalize/Admin-Expose Event Test Data Reset
+## Part A — Reusable Event Admin Test-Data Reset
 
-The Product Owner needs to repeatedly test i-Pitch over the next couple of days without rebuilding event configuration.
+Continue/finish the reusable reset described previously. Inspect/reuse the existing SOTC reset behavior rather than creating an i-Pitch special case.
 
-Inspect the existing SOTC/reset behavior first and reuse/generalize it rather than creating an i-Pitch-only reset.
-
-Required behavior:
+Required:
 - Event Admin/Superadmin only;
-- clear/reset event participation/test state needed for another clean test run;
-- reset check-in state for imported registrations but **preserve the imported registration list**;
-- remove/clear self-registered test participation records for the event as appropriate so repeated walk-up/self-registration tests can start clean;
-- preserve event configuration, organization assignment, event metadata, Check-In configuration, content eCes, Finalists, Agenda/Judges content, and other setup;
-- preserve source/provenance fields on imported registrations;
-- do not delete the event or imported Eventbrite registration list;
-- if any voting data exists only in browser localStorage, do not pretend an admin reset cleared server-side voting that does not exist; document any client-side limitation separately;
-- provide a clear confirmation/warning before destructive reset and a clear success result after completion.
+- confirmation before destructive reset;
+- reset event participation/check-in test state;
+- preserve event, organization, metadata, Check-In settings, eCes/content/configuration;
+- preserve imported registration definitions/list but return their check-in state to clean/not checked in;
+- clear/remove self-registered test participation records as appropriate for a fresh test;
+- clear other server-side event participation test data only where the existing model safely supports it;
+- document browser-local-only prototype state separately rather than pretending server reset controls it.
 
-The goal is a reusable **Reset Test/Event Participation Data** control, not an i-Pitch special case.
+The Product Owner needs to test repeatedly over the next two days without rebuilding i-Pitch.
 
-## Part B — Finish Event Companion Content Using Existing Content-List Experience
+## Part B — Event Feature Admin Management Gaps
 
-Do not create new code if the existing reusable `content_list` eCe can represent these honestly. Prefer normal admin configuration and document exact steps.
+Live configuration exposed that Event Admin can create an eCe but cannot conveniently manage it afterward.
 
-The supplied i-Pitch brochure confirms these event contents:
+### Edit existing Event Feature
+
+On Admin Event, add an **Edit** action for existing eCes/features. It should reopen the existing eCe form and allow authorized admin to change the existing supported fields, including where applicable:
+- name;
+- description;
+- status;
+- sort/order;
+- location;
+- image/icon URL;
+- Guest Detail List/content-list configuration;
+- guest presentation configuration introduced below.
+
+Do not require delete/recreate merely to change content or presentation.
+
+### Reorder Event Features
+
+The data model already has `sort`. Expose a simple usable reorder mechanism on the Admin Event feature list.
+
+For this bounded slice, **Up / Down controls are sufficient**; do not spend time on drag-and-drop unless trivial.
+
+Reordering should update persisted sort/order and immediately affect guest event-home order.
+
+Current intended i-Pitch top-level order is approximately:
+1. Event Check-In
+2. Agenda
+3. i-Pitch Finalists
+4. Meet the Judges
+
+Do not hard-code those names/order globally.
+
+## Part C — Guest Presentation: Collections and Child Cards
+
+The first `content_list` implementation uses one top-level card followed by a detail/list page. Live Product Owner review refined the desired model.
 
 ### Agenda
 
-Create/configure an informational **Agenda** experience with:
-- `5:00 PM | Doors Open & Network`
-- `5:30 PM | Let's Begin!`
-- `7:20 PM | Award Announcements`
-- `8:00 PM | See you next I-Pitch!`
+Agenda is short, immediately useful content. It should be able to render **expanded directly on the event home** without requiring an extra `Open` click.
 
-Suggested event-home card:
-- Name: `Agenda`
-- Description: `Tonight's i-Pitch schedule.`
-- Detail title: `Agenda`
-- Type: Info
-- Active
+Agenda source content from the supplied brochure:
+- 5:00 PM — Doors Open & Network
+- 5:30 PM — Let's Begin!
+- 7:20 PM — Award Announcements
+- 8:00 PM — See you next I-Pitch!
 
-### Meet the Judges
+### Finalists / speakers
 
-Create/configure an informational **Meet the Judges** experience with:
-- `Tammy Deblock | CEO - Aropha, Inc`
-- `Gary Wakeford | CEO - Sonostick`
-- `Sergio Robles PhD. | Past NSF I-Corps Instructor`
+The Product Owner does **not** want the four finalists hidden behind one generic Finalists detail page.
 
-Do **not** expose brochure email addresses unless Product Owner later asks for them.
+Desired reusable presentation:
+- a collection/section heading such as **i-Pitch Finalists**;
+- individual compact child cards/rows for each configured finalist directly on the event home;
+- each child can be clicked/opened for its own detail view;
+- child supports name, short summary, full description/detail, and optional image/icon/logo;
+- do not hard-code finalist names in React; use configured collection items.
 
-Suggested event-home card:
-- Name: `Meet the Judges`
-- Description: `Meet tonight's i-Pitch judges.`
-- Detail title: `Meet the Judges`
-- Type: Info
-- Active
+For i-Pitch the children are:
+- Quantum Fluent
+- VeeSafe
+- Vettor
+- corVita
 
-### Existing i-Pitch Finalists
+Use the full descriptions already captured in previous CURRENT-WORK handoffs / configured content. A concise child-card summary may be configured separately if the model needs it; do not silently rewrite source content into permanent data without making it editable.
 
-Keep the already built/configurable **i-Pitch Finalists** informational experience independent of voting.
+### Judges
 
-Do not resume production voting work. If useful for Sprint 4 testing, the existing voting eCe/prototype may remain configured **Inactive** so Product Owner can deliberately activate/deactivate it for controlled testing later, but do not make it visible in the production i-Pitch guest experience for Thursday.
+`Meet the Judges` may use the same reusable collection/child-card pattern:
+- Tammy Deblock — CEO, Aropha, Inc
+- Gary Wakeford — CEO, Sonostick
+- Sergio Robles PhD. — Past NSF I-Corps Instructor
 
-## Part C — Eventbrite Import: Inspect Only, Do Not Implement Multi-Ticket Behavior Yet
+Do not expose brochure email addresses unless Product Owner explicitly requests it.
 
-The Product Owner now has the first Eventbrite CSV export. It includes an **Order ID** and a **Tickets** quantity. Some orders have quantity greater than 1 while only the purchaser's name appears in the current export.
+### Presentation modes
 
-The Product Owner has asked Tricia how they operationally handle multi-ticket orders. **Wait for that answer before deciding how one order with quantity > 1 maps to qME attendee/check-in records.**
+Extend the reusable content/collection experience so Event Admin can choose an appropriate guest presentation rather than forcing every list through the same drill-down card.
 
-For now:
-- inspect the existing imported-registration schema/service and document how `Order ID` could be stored as external/source provenance;
-- do not import this production CSV yet;
-- do not invent guest names for additional tickets;
-- do not reconcile Eventbrite imports against qME self-registered guests;
-- do not build identity-merging logic;
-- repeated future Eventbrite imports should eventually skip already-imported Eventbrite registrations rather than duplicate them, but hold implementation details until the multi-ticket rule is confirmed;
-- self-registered qME guests do not have an Eventbrite Order ID; preserve that distinction rather than fabricating an Eventbrite-like value.
+The underlying concept should support at least:
+- **Expanded list on event home** — appropriate for Agenda;
+- **Child cards on event home + child detail** — appropriate for Finalists/Judges;
+- preserve existing **single card -> detail list** behavior for content that still wants it.
 
-When Tricia answers, update CURRENT-WORK with the exact multi-ticket business rule before implementing the production import.
+Keep this generic and configuration-driven. Do not create `if event === ipitch` rendering branches.
 
-## Preserve Accepted Check-In Behavior
+## Part D — Future Vote Interaction Attached to Finalist Child
+
+Physical balls remain the real i-Pitch voting system Thursday. **Do not make digital voting production scope for this event.**
+
+However, refine the existing prototype/model so future voting naturally attaches to each finalist child/detail rather than requiring a duplicate list of finalists in a separate voting destination.
+
+Product model:
+- Finalist = content/entity;
+- Vote = optional interaction available on that entity when voting is enabled/open;
+- checked-in eligible guest receives **2 vote credits**;
+- UI says **`2 votes remaining`**, then `1 vote remaining`, then `0 votes remaining`;
+- a guest with `0 votes remaining` cannot cast another vote;
+- for this first model, a cast vote is **committed/permanent** rather than reallocatable;
+- do not permanently consume a vote on a single accidental tap: require an explicit confirmation step such as `Give Vettor a vote?` -> `Confirm Vote`;
+- after confirmation, one vote credit is consumed;
+- show a clear `Your vote` / check state on a finalist that received the guest's vote;
+- both votes may go to the same finalist unless/until a future experience config says otherwise;
+- when voting is closed/disabled, informational finalist content remains fully available but vote controls are absent/disabled as appropriate.
+
+Architecture direction for later configurability:
+- allocation policy may eventually support `Committed when cast` versus `Reallocatable until voting closes`;
+- **for now use committed when cast + confirmation**;
+- do not build a broad policy engine in this slice.
+
+Important: because physical balls are production voting Thursday, keep any digital voting eCe/interaction **Inactive/not visible** on production i-Pitch unless Product Owner explicitly activates it for controlled testing. Do not imply that this prototype replaces the event's physical voting.
+
+## Part E — Eventbrite Import: Continue to Hold
+
+The first Eventbrite CSV is available and includes Order ID and Tickets quantity. Some orders have quantity > 1 while the current export provides only the purchaser name.
+
+Product Owner has asked Tricia how they handle these multi-ticket orders operationally. Wait for the answer.
+
+Until then:
+- do not import the production CSV;
+- do not decide one Order ID = one attendee;
+- do not invent names for additional tickets;
+- do not reconcile imported Eventbrite rows against qME self-registration;
+- self-registered guests have no Eventbrite Order ID; preserve that distinction;
+- inspect/document existing schema/service support for external Order ID/source provenance if useful, but do not implement speculative multi-ticket mapping.
+
+## Preserve Accepted Behavior
 
 Do not regress:
 - Auto Check-In;
 - imported-registration lookup;
 - self-registration fallback;
 - required email + Confirm email;
-- inline email mismatch validation;
-- event-configurable post-check-in instruction;
-- checked-in event-home card using the same instruction;
+- inline mismatch validation;
+- configured post-check-in instruction on success and checked-in card;
 - shared-device no-menu mode;
 - Next Guest + 15-second reset;
-- mode-aware Check-In card copy;
-- Feature/Features taxonomy;
-- History/search/export and `registration_source` visibility;
-- SOTC behavior.
+- personal-device session preservation;
+- mode-aware Check-In copy;
+- History/search/export and registration-source visibility;
+- SOTC behavior;
+- existing content-list routes/configurations unless intentionally migrated compatibly.
 
 ## Validation
 
 At minimum:
-- focused tests for event-admin reset permissions and reset semantics;
-- prove imported registration definitions remain while check-in state resets;
-- prove event metadata/eCes/configuration remain;
-- prove self-registered test participation is cleared according to the chosen reusable reset semantics;
-- verify Agenda/Judges can be configured/rendered through the existing content-list path without schema changes;
+- tests for Edit Event Feature permissions and persistence;
+- tests for reorder persistence and guest order;
+- tests for each guest content presentation mode;
+- child-card -> child-detail routing/configuration tests;
+- tests ensuring inactive/closed voting does not interfere with informational finalist content;
+- focused vote-credit/confirmation/0-remaining behavior tests if voting prototype is changed in this slice;
+- reset permission/semantics tests;
 - TypeScript;
 - full test suite where practical;
-- production Vite build using the established temporary output directory if needed.
+- production Vite build.
 
-If reset requires SQL/schema/RPC work, prepare the exact SQL and report it clearly. Do not apply production SQL without explicit Product Owner instruction.
+If schema/RPC changes are required, prepare exact SQL and report it. Do not apply production SQL without explicit Product Owner instruction.
 
-## Product Owner Acceptance After Deployment
+## Product Owner Acceptance
 
-1. Use/reset actual `ipitch-092026` test data and verify event setup remains intact.
-2. Confirm imported registration records, when present later, remain available but return to not-checked-in state after reset.
-3. Confirm self-registered test guests are cleared according to the documented reset semantics.
-4. Add/verify **Agenda** on the actual event through normal admin configuration.
-5. Add/verify **Meet the Judges** through normal admin configuration.
-6. Confirm Finalists remains informational and visible independent of voting.
-7. Confirm digital voting is not visible in production i-Pitch unless explicitly activated for controlled testing.
-8. Do not import the production Eventbrite CSV until Tricia answers the multi-ticket question and Product Owner approves the mapping.
+1. Admin Event: edit an existing i-Pitch feature without recreating it.
+2. Reorder Agenda/Finalists/Judges and verify guest home changes order.
+3. Set Agenda to expanded-on-home and verify its four times appear without an Open click.
+4. Set Finalists to child-card presentation and verify four individual finalist cards appear under the collection heading.
+5. Open an individual finalist and verify full details.
+6. Verify optional icon/image can be edited after creation.
+7. Configure Judges similarly if desired.
+8. Verify digital vote interaction remains inactive/not visible in production i-Pitch.
+9. In controlled testing only, if voting interaction is enabled, verify 2 -> 1 -> 0 votes remaining, confirmation before commitment, and no vote possible at 0.
+10. Verify reusable event reset permits another clean i-Pitch test without deleting configuration/import definitions.
 
 ## Handoff
 
 Update this file with:
-- exact reset implementation and what is preserved/cleared;
-- permissions/confirmation behavior;
-- exact Agenda/Judges admin configuration steps if any manual setup remains;
-- Eventbrite schema/import observations, especially Order ID storage and any constraints discovered;
+- Event Feature edit/reorder implementation;
+- content collection/presentation configuration model;
+- child-detail routing/model;
+- any voting-prototype refinement and what remains browser-local/prototype-only;
+- reset implementation/status;
+- Eventbrite inspection notes only, pending Tricia;
 - files changed;
 - tests/build results;
 - SQL/manual actions, if any;
 - commit SHA;
 - concise Product Owner acceptance steps.
 
-Do not mark i-Pitch readiness done until the production Eventbrite import rule is settled, the real list is imported, and the production guest flow is smoke-tested.
+Do not mark i-Pitch readiness done until the Eventbrite multi-ticket rule is settled, the production list is imported, and production guest flow is smoke-tested.

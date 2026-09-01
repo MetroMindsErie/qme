@@ -1,120 +1,165 @@
 # Current Work
 
-## Current Slice Status
+## Current Slice
 
-Superadmin organization creation is implemented and validated.
+Finish the **pre-call i-Pitch Check-In operating experience** based on live Product Owner testing of the actual production event. Registration/check-in is the production must-have. Pause further voting implementation until Kelly and Tricia clarify their desired event operations.
 
-Added `+ New Organization` to the Superadmin Organizations screen only. Superadmins can create an organization with Name, Slug, Description, and Status. The existing organization model supports `active`, `inactive`, and `archived`, so the create form exposes `active` and `inactive` for a bounded create path rather than inventing `draft`.
+Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
 
-After creation, the new organization is inserted through the existing `createOrganization` service, appended to the Organizations list, and will be returned by the existing `listOrganizations()` call used by the Create Event Organization dropdown. Non-superadmin organization admins still see only organizations they manage and do not see the create control.
+## Live Production Context
 
-Files changed:
-- `app/src/pages/admin/AdminOrganizationList.tsx`
-- `app/src/test/adminOrganizationList.test.tsx`
-- `planning/CURRENT-WORK.md`
+The Product Owner manually created the real organization and event through qME admin rather than using the prepared setup SQL. This is an important Sprint 4 result: the normal product configuration path works once organization creation is available.
 
-Validation:
-- `npx tsc -b` passed
-- `npx vitest run src\test\adminOrganizationList.test.tsx src\test\routing.test.tsx` passed
-- `npx vitest run` passed on rerun; first full run had one `guestEventCheckIn` timeout while the Vite build was running in parallel
-- `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir` passed with the existing large chunk warning
+Organization:
+- **University of Akron Research Foundation**
 
-Implementation commit SHA: `6a46f75`.
+Event:
+- name: **i-Pitch - September, 2026**
+- slug: `ipitch-092026`
+- date: September 3, 2026
+- time: 5:00-8:00 PM ET
+- location: **Missing Falls Brewery, 540 S Main St., Akron, OH 44311**
+- event logo currently uses `/images/i-pitch.png`
+- event status: Active
 
-Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
+The Product Owner also added/pushed event image assets under `app/public/images`, including the i-Pitch logo/banner and UARF logo. Do not replace or rename these in this slice unless required for a bug fix.
 
-## Previous i-Pitch Handoff
+The prepared `supabase-ipitch-2026-event-setup.sql` is now a fallback/reference only. **Do not run it against production**; the actual event uses slug `ipitch-092026` and was created through qME admin.
 
-## Current Slice Status
+Actual production Check-In settings were visually verified:
+- Auto check-in;
+- completed check-in required before event features;
+- imported registration lookup enabled;
+- unlisted self-registration enabled;
+- email required for self-registration.
 
-The i-Pitch registration/check-in and bounded voting prototype slice is implemented locally and ready for Product Owner review after the required production SQL/admin setup is applied.
+Actual guest URL `/events/ipitch-092026` renders correctly. Actual guest Check-In renders imported lookup + self-registration. A live walk-up test guest successfully self-registered and Auto checked in on the actual i-Pitch event.
 
-Priority guardrail preserved: the accepted generic registration/check-in behavior was not changed. The new voting work is additive and is gated behind a completed event check-in.
+The real Eventbrite export has not yet been received. Do not invent/fake imported attendees. Final readiness still requires import + smoke test when Kelly/Tricia supply it.
 
-## Actual i-Pitch Event Setup
+## Product Clarification Before Kelly/Tricia Call
 
-Production read check found no live `ipitch-2026` event through the available browser/app credential. Attempting to create it with the available anon credential returned `401`, so Steve did not mutate production directly.
+We do **not yet know the final post-arrival operating process**. For now the known instruction after a successful check-in, whether the guest uses their own phone or a shared iPad, is:
 
-Prepared setup script:
-- `supabase-ipitch-2026-event-setup.sql`
+> **Please go to the check-in desk to receive your event package.**
 
-The script creates or updates:
-- event slug: `ipitch-2026`
-- guest event link: `/events/ipitch-2026`
-- guest check-in link: `/events/ipitch-2026/check-in`
-- Check-In Mode: Auto
-- imported registration lookup: enabled
-- unlisted self-registration fallback: enabled
-- self-registration email: required
-- completed check-in required for participation
-- voting eCe slug/link: `/events/ipitch-2026/vote/ipitch-voting`
+Do not tell the guest to vote, explore the event, proceed inside, or take another action that Kelly/Tricia have not confirmed.
 
-Manual/authenticated production action still required before the Kelly/Tricia demo: run `supabase-ipitch-2026-event-setup.sql` from an authenticated event/organization admin or superadmin DB context, or create the same event/eCe through an admin account with write access.
+Voting remains an experimental concept/prototype. Kelly/Tricia have said they do not want the physical balls, but we do not yet know how they want voting handled. Do not make the pre-call work primarily about voting.
 
-Eventbrite export status: not received. Do not invent or fake attendee data. When the real file arrives, import rows into `event_imported_registrations` for the `ipitch-2026` event using the existing imported-registration table/RPC flow; map at minimum first name, last name, and email where present. The guest QR/direct link should point to `/events/ipitch-2026`; guests can then find imported registration or self-register if unlisted.
+## Required Cleanup 1 — Event-Configurable Post-Check-In Instruction
 
-## Voting Prototype Status
+Live i-Pitch self-registration currently succeeds with generic text similar to:
 
-Implemented a reusable vote-allocation metadata reader for eCes:
-- interaction mode: `vote_allocation`
-- voting state: open/closed
-- result visibility: hidden/visible
-- credit limit: configurable, i-Pitch uses 2
-- choices: configured in eCe metadata
+`Thanks, Joe! You are checked in. Please return to the event page for next steps.`
 
-Implemented a guest voting page prototype:
-- available only after completed event check-in
-- lets a checked-in guest allocate 2 digital balls across configured choices
-- supports putting both balls on one choice or splitting 1 + 1
-- supports reallocation while voting is open
-- locks controls when voting is closed
-- always shows the guest their own allocation
-- hides aggregate results while results are hidden
-- includes a simple glass-cylinder reveal visualization when results are visible
+That is not appropriate for the known i-Pitch operating instruction.
 
-Prototype-only limits:
-- votes are stored in browser `localStorage`, scoped to event/eCe/check-in
-- aggregate totals are not persisted server-side yet
-- admin open/closed and hidden/visible controls are display/status only via eCe metadata, not editable controls in this slice
-- admin aggregate totals are not implemented
+Implement the smallest reusable event-level configuration for the post-check-in instruction.
 
-## Files Changed
+Required behavior:
+- Event admin can configure post-check-in instruction text through the normal Event Create/Edit flow.
+- The instruction is used after a successful imported-registration check-in and successful self-registration/Auto check-in.
+- Preserve a sensible generic fallback for existing events with no configured instruction; do not require data migration merely to preserve current behavior.
+- Configure/enable i-Pitch to display: `Please go to the check-in desk to receive your event package.` through the admin-editable field or provide the Product Owner the exact field/value to enter after deployment.
+- Do not hard-code i-Pitch or UARF names into shared Check-In code.
 
-- `app/src/lib/votingConfig.ts`
-- `app/src/pages/guest/GuestVoteAllocation.tsx`
-- `app/src/App.tsx`
-- `app/src/pages/guest/GuestEventDetail.tsx`
-- `app/src/pages/admin/AdminEventDetail.tsx`
-- `app/src/test/routing.test.tsx`
-- `app/src/test/votingConfig.test.ts`
-- `supabase-ipitch-2026-event-setup.sql`
-- `planning/CURRENT-WORK.md`
+For i-Pitch, the success experience should read naturally as something equivalent to:
+
+`Thanks, Joe! You are checked in.`
+`Please go to the check-in desk to receive your event package.`
+
+## Required Cleanup 2 — Shared-Device / iPad Check-In
+
+The event may use a host/registration iPad so a guest can check in **without having their own phone or scanning a QR code**. The final host-vs-guest operating model will be clarified with Kelly/Tricia, but qME needs a safe shared-device path.
+
+Implement the smallest safe reusable shared-device/kiosk Check-In mode using the existing Check-In experience rather than creating a separate i-Pitch registration system.
+
+Required behavior:
+- A shared device can be placed directly at an event's Check-In flow.
+- Guest can search an imported registration and check in using the same accepted flow.
+- If not listed and event configuration allows it, guest can self-register and check in using the same accepted fallback.
+- After success, show the same event-configured post-check-in instruction used on a personal phone.
+- Provide a clear **Next Guest** action.
+- `Next Guest` must clear/reset the prior guest's local qME guest identity/session for this shared-device flow and return to a clean Check-In starting state.
+- Guest B must not see, inherit, reconnect to, or act as Guest A.
+- Do not require an automatic timed reset for this first slice; explicit Next Guest is sufficient and safer for the Thursday event.
+- Do not change normal personal-device behavior merely because shared-device mode exists.
+- Keep the mode reusable/configurable rather than hard-coded to i-Pitch.
+
+Device locking is **not** a qME browser feature for this slice. The iPad can use Guided Access operationally to keep the device in the browser/qME screen. Do not build custom OS/browser locking.
+
+## Required Cleanup 3 — Check-In Card Copy Must Match Check-In Mode
+
+Actual i-Pitch guest event page currently shows Check-In card copy:
+
+`Enter your name when you arrive so the event team can confirm your check-in.`
+
+That is misleading because i-Pitch is configured for Auto Check-In with imported lookup and self-registration.
+
+Make the Check-In card description reflect the configured behavior. For an i-Pitch-style Auto/imported/self-registration flow, use concise copy equivalent to:
+
+`Find your registration and check in when you arrive. If you're not on the list, you can register here.`
+
+Do not regress Staff Check-In events; their copy can still explain that staff confirms the check-in. Prefer configuration/mode-aware reusable copy rather than an i-Pitch special case.
+
+## Required Cleanup 4 — Remove Misleading `Sessions` Taxonomy From Guest Event Summary
+
+The actual i-Pitch guest event page shows `1 Sessions` even though the only current event feature is Check-In. This is leftover taxonomy and is misleading.
+
+Make the smallest safe correction:
+- do not label Check-In as a `Session`;
+- prefer a neutral event-feature/experience count if the count is genuinely useful, or omit the count when it adds little value;
+- do not undertake the broader Experience Model redesign in this pre-call slice.
+
+## Preserve Accepted Behavior
+
+Do not regress:
+- actual `ipitch-092026` event setup;
+- Auto Check-In;
+- imported registration search by first name, last name, or email;
+- unlisted self-registration;
+- required email + Confirm email;
+- inline email mismatch validation;
+- successful self-registration and Auto completion;
+- Check-In History/search/export and `registration_source` reporting;
+- SOTC Check-In behavior;
+- the existing voting prototype code, even though further voting work is paused.
+
+Recovery phone remains a parked product question. Do not remove/redesign it in this slice.
 
 ## Validation
 
-Passed:
-- `npx tsc -b`
-- `npx vitest run src\test\votingConfig.test.ts src\test\routing.test.tsx src\test\guestEventDetail.test.tsx`
-- `npx vitest run`
-- `npx vite build --outDir ..\tmp\vite-build-check --emptyOutDir`
+At minimum:
+- focused tests for configurable post-check-in instruction;
+- focused tests proving shared-device Next Guest clears prior guest identity/state and starts clean;
+- tests for mode-aware Check-In card copy;
+- relevant guest-event summary/taxonomy test;
+- TypeScript;
+- full test suite where practical;
+- production Vite build using the established temporary output directory if needed.
 
-Vite emitted the existing large chunk warning; build completed successfully.
+If any SQL/schema change is required, prepare the exact SQL and report it clearly. Do not assume Product Owner has applied it until confirmed.
 
-## Demo Steps
+## Product Owner Acceptance After Deployment
 
-1. Apply `supabase-ipitch-2026-event-setup.sql` with authenticated production write access.
-2. Open `/events/ipitch-2026` on mobile or desktop.
-3. Use `/events/ipitch-2026/check-in` to demo imported-registration lookup explanation and unlisted self-registration fallback.
-4. After a completed check-in, open `/events/ipitch-2026/vote/ipitch-voting`.
-5. Allocate two balls among VeeSafe, Quantum Fluent, Vettor, and corVita.
-6. To demonstrate open/closed or hidden/visible, update the voting eCe metadata fields `voting.state` and `voting.results_visibility`.
+1. Edit actual i-Pitch event and set/verify post-check-in instruction.
+2. Fresh personal-device walk-up: self-register -> Auto check-in -> verify desk/package instruction.
+3. Shared-device mode: Guest A self-register/check in -> verify instruction -> Next Guest -> verify clean Check-In screen -> Guest B begins with no Guest A identity/state.
+4. Guest event home: verify Auto Check-In card copy no longer says event team will confirm.
+5. Verify misleading `Sessions` count is removed/reworded.
+6. When Eventbrite export arrives, import it and smoke-test a real imported attendee separately.
 
-## Remaining Acceptance Position
+## Handoff
 
-Do not mark i-Pitch readiness done until the real Eventbrite export is imported and the production guest flow is smoke-tested.
+Update this file with:
+- exact configuration/storage mechanism used for post-check-in instruction;
+- exact shared-device entry URL/mode and reset semantics;
+- copy/taxonomy changes;
+- files changed;
+- tests/build results;
+- SQL/manual production actions, if any;
+- commit SHA;
+- concise Product Owner acceptance steps.
 
-Do not mark voting production-ready until Product Owner live acceptance and a server-side persistence/admin-control pass are explicitly authorized.
-
-Implementation commit SHA: `2c4633d`.
-
-Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
+Do not mark i-Pitch readiness done until the real Eventbrite export is imported and production smoke-tested. Do not mark voting production-ready.

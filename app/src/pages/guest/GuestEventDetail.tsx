@@ -16,6 +16,7 @@ import {
 } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
 import { getEventCheckIn } from '../../lib/checkInService';
+import { getContentListConfig } from '../../lib/contentListConfig';
 import { getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
@@ -51,6 +52,10 @@ function isGroupOrderEce(ece: Ece): boolean {
 
 function isVoteAllocationEce(ece: Ece): boolean {
   return getVoteAllocationConfig(ece).enabled;
+}
+
+function isContentListEce(ece: Ece): boolean {
+  return getContentListConfig(ece).enabled;
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -931,6 +936,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
             }) : '';
             const isGroupOrder = isGroupOrderEce(exp);
             const isVoteAllocation = isVoteAllocationEce(exp);
+            const isContentList = isContentListEce(exp);
             const groupOrderStatusLine = isGroupOrder
               ? hasEventCheckIn ? 'Ready to order' : isWaitingForHostCheckIn ? 'Waiting for host check-in' : 'Check in first'
               : '';
@@ -941,6 +947,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               ? `/events/${eventSlug}/group-order`
               : isVoteAllocation
               ? `/events/${eventSlug}/vote/${exp.slug}`
+              : isContentList
+              ? `/events/${eventSlug}/content/${exp.slug}`
               : exp.type === 'check_in'
               ? `/events/${eventSlug}/check-in`
               : linkedQueue
@@ -977,6 +985,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               ? homeActionLabel || 'Order'
               : isVoteAllocation
               ? homeActionLabel || 'Vote'
+              : isContentList
+              ? homeActionLabel || 'Open'
               : linkedQueue
               ? homeActionLabel || 'Join'
               : homeUrl

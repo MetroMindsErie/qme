@@ -19,6 +19,7 @@ import AdminGate from './components/AdminGate';
 // ----- Demo pages -----
 import GuestEventDetail from './pages/guest/GuestEventDetail';
 import GuestEventCheckIn from './pages/guest/GuestEventCheckIn';
+import GuestContentList from './pages/guest/GuestContentList';
 import GuestGroupOrder from './pages/guest/GuestGroupOrder';
 import GuestVoteAllocation from './pages/guest/GuestVoteAllocation';
 import GuestQueueTicket from './pages/guest/GuestQueueTicket';
@@ -99,6 +100,7 @@ function App() {
         {/* Event detail — guarded to ipitch-2026 only */}
         <Route path="/events/:eventSlug" element={<EventPage />} />
         <Route path="/events/:eventSlug/check-in" element={<EventCheckInPage />} />
+        <Route path="/events/:eventSlug/content/:eceSlug" element={<GuestContentList />} />
         <Route path="/events/:eventSlug/group-order" element={<EventGroupOrderPage />} />
         <Route path="/events/:eventSlug/vote/:eceSlug" element={<GuestVoteAllocation />} />
         {/* Queue landing skipped — jumps straight to ticket */}

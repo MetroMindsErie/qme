@@ -44,6 +44,7 @@ const completedCheckIn: EventCheckIn = {
 
 const mockGetEventBySlug = vi.fn();
 const mockGetEventCheckIn = vi.fn();
+const mockListActiveEcesForEvent = vi.fn();
 
 vi.mock('../lib/eventService', () => ({
   getEventBySlug: (...args: unknown[]) => mockGetEventBySlug(...args),
@@ -60,7 +61,7 @@ vi.mock('../lib/queueService', () => ({
 }));
 
 vi.mock('../lib/eceService', () => ({
-  listActiveEcesForEvent: vi.fn(() => Promise.resolve([])),
+  listActiveEcesForEvent: (...args: unknown[]) => mockListActiveEcesForEvent(...args),
 }));
 
 vi.mock('../lib/checkInService', () => ({
@@ -92,6 +93,7 @@ describe('GuestEventDetail', () => {
     localStorage.clear();
     mockGetEventBySlug.mockResolvedValue(event);
     mockGetEventCheckIn.mockResolvedValue(completedCheckIn);
+    mockListActiveEcesForEvent.mockResolvedValue([]);
   });
 
   it('renders the event home after loading for a fresh unrecognized guest', async () => {
@@ -141,5 +143,51 @@ describe('GuestEventDetail', () => {
     expect(screen.getByText("Find your registration and check in when you arrive. If you're not on the list, you can register here.")).toBeInTheDocument();
     expect(screen.getByText('Feature')).toBeInTheDocument();
     expect(screen.queryByText('Sessions')).not.toBeInTheDocument();
+  });
+
+  it('shows configured finalists content independently of voting', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+    });
+    mockListActiveEcesForEvent.mockResolvedValue([
+      {
+        id: 'ece-finalists',
+        event_id: event.id,
+        expie_id: null,
+        org_id: null,
+        type: 'info',
+        queue_id: null,
+        queue_behavior: '',
+        name: 'i-Pitch Finalists',
+        slug: 'ipitch-finalists',
+        description: "Meet tonight's four finalists.",
+        image_url: '',
+        location: '',
+        sort_order: 20,
+        starts_at: null,
+        ends_at: null,
+        metadata: {
+          interaction_mode: 'content_list',
+          content_list: {
+            title: 'i-Pitch Finalists',
+            items: [
+              { name: 'VeeSafe', description: 'Cybersecurity guidance.' },
+            ],
+          },
+        },
+        status: 'active',
+        created_at: '',
+        updated_at: '',
+      },
+    ]);
+
+    renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('i-Pitch Finalists')).toBeInTheDocument();
+    expect(screen.getByText("Meet tonight's four finalists.")).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/events/ipitch-092026/content/ipitch-finalists');
+    expect(screen.queryByRole('link', { name: 'Vote' })).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GuestEventCheckIn from '../pages/guest/GuestEventCheckIn';
 import type { EventCheckIn, QEvent } from '../types';
 
@@ -92,6 +92,7 @@ function renderCheckIn(path = '/events/ipitch-2026/check-in') {
 
 describe('GuestEventCheckIn', () => {
   beforeEach(() => {
+    vi.useRealTimers();
     vi.clearAllMocks();
     localStorage.clear();
     mockGetEventBySlug.mockResolvedValue(event);
@@ -99,6 +100,10 @@ describe('GuestEventCheckIn', () => {
     mockCreateEventCheckIn.mockResolvedValue(createdCheckIn);
     mockCheckInEventGuest.mockResolvedValue(completedCheckIn);
     mockGetEventCheckIn.mockResolvedValue(completedCheckIn);
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it('guides imported lookup by name or email and blocks mismatched self-registration email locally', async () => {
@@ -175,5 +180,65 @@ describe('GuestEventCheckIn', () => {
     expect(localStorage.getItem('qme:eventCheckIn:event-1')).toBeNull();
     expect(localStorage.getItem('qme:guestSession:event-1')).toBeNull();
     expect(localStorage.getItem('qme:voteAllocation:event-1:ece-1:check-in-1')).toBeNull();
+  });
+
+  it('auto-resets shared-device success after the 15-second countdown', async () => {
+    vi.useFakeTimers();
+    await act(async () => {
+      renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
+    });
+    await act(async () => {});
+
+    expect(screen.getByPlaceholderText('First name, last name, or email')).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Can't find your registration?"));
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
+    fireEvent.change(screen.getByLabelText('Confirm email'), { target: { value: 'walk@example.com' } });
+    localStorage.setItem('qme:guestSession:event-1', 'guest-a-token');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Register & Check In' }));
+    });
+    await act(async () => {});
+
+    expect(screen.getByText('Next guest in 15 seconds...')).toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(15000);
+    });
+
+    expect(screen.getByPlaceholderText('First name, last name, or email')).toBeInTheDocument();
+    expect(screen.queryByText(/Thanks, Walk!/)).not.toBeInTheDocument();
+    expect(localStorage.getItem('qme:eventCheckIn:event-1')).toBeNull();
+    expect(localStorage.getItem('qme:guestSession:event-1')).toBeNull();
+  });
+
+  it('does not auto-reset personal-device success', async () => {
+    vi.useFakeTimers();
+    await act(async () => {
+      renderCheckIn();
+    });
+    await act(async () => {});
+
+    expect(screen.getByPlaceholderText('First name, last name, or email')).toBeInTheDocument();
+    fireEvent.click(screen.getByText("Can't find your registration?"));
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
+    fireEvent.change(screen.getByLabelText('Confirm email'), { target: { value: 'walk@example.com' } });
+    localStorage.setItem('qme:guestSession:event-1', 'guest-a-token');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Register & Check In' }));
+    });
+    await act(async () => {});
+
+    expect(screen.getByText(/Thanks, Walk!/)).toBeInTheDocument();
+    expect(screen.queryByText(/Next guest in/)).not.toBeInTheDocument();
+    await act(async () => {
+      vi.advanceTimersByTime(20000);
+    });
+
+    expect(screen.getByText(/Thanks, Walk!/)).toBeInTheDocument();
+    expect(localStorage.getItem('qme:eventCheckIn:event-1')).not.toBeNull();
+    expect(localStorage.getItem('qme:guestSession:event-1')).toBe('guest-a-token');
   });
 });

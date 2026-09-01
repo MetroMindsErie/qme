@@ -21,6 +21,8 @@ import type { EventCheckIn, ImportedRegistrationSearchResult, QEvent } from '../
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 
+const SHARED_DEVICE_RESET_SECONDS = 15;
+
 interface GuestEventCheckInProps {
   checkInCode?: string | null;
   title?: string;
@@ -77,6 +79,7 @@ export default function GuestEventCheckIn({
   const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
   const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
   const [selfRegistrationEmailError, setSelfRegistrationEmailError] = useState('');
+  const [sharedDeviceResetSeconds, setSharedDeviceResetSeconds] = useState(SHARED_DEVICE_RESET_SECONDS);
   const checkInConfig = getEventCheckInConfig(event);
   const useImportedRegistrationLookup = !checkInCode
     && (checkInConfig.importedRegistrationLookupEnabled || isSotcEventSlug(event?.slug));
@@ -281,6 +284,33 @@ export default function GuestEventCheckIn({
     useImportedRegistrationLookup,
   ]);
 
+  const isRemovedCheckIn = checkIn?.status === 'cancelled';
+  const isWaitingForHostCheckIn = submitted
+    && checkInConfig.requireCompletedForParticipation
+    && checkIn?.status !== 'completed'
+    && !isRemovedCheckIn;
+
+  useEffect(() => {
+    if (!isSharedDeviceMode || !submitted || isRemovedCheckIn) {
+      setSharedDeviceResetSeconds(SHARED_DEVICE_RESET_SECONDS);
+      return;
+    }
+
+    setSharedDeviceResetSeconds(SHARED_DEVICE_RESET_SECONDS);
+    const interval = window.setInterval(() => {
+      setSharedDeviceResetSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(interval);
+          clearSharedDeviceGuest();
+          return SHARED_DEVICE_RESET_SECONDS;
+        }
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [event, isRemovedCheckIn, isSharedDeviceMode, submitted]);
+
   if (loading) {
     return (
       <div className="card">
@@ -393,13 +423,9 @@ export default function GuestEventCheckIn({
     setRegistrationEmailConfirmation({});
     setRegistrationHasSearched(false);
     setSelfRegistrationEmailError('');
+    setSharedDeviceResetSeconds(SHARED_DEVICE_RESET_SECONDS);
   }
 
-  const isRemovedCheckIn = checkIn?.status === 'cancelled';
-  const isWaitingForHostCheckIn = submitted
-    && checkInConfig.requireCompletedForParticipation
-    && checkIn?.status !== 'completed'
-    && !isRemovedCheckIn;
   const eventLogoSrc = isSotcEventSlug(event.slug) || isSotcEventSlug(eventSlug)
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
@@ -478,14 +504,19 @@ export default function GuestEventCheckIn({
               </button>
             )}
             {isSharedDeviceMode && !isRemovedCheckIn && (
-              <button
-                className="actionBtn actionBtn-primary"
-                type="button"
-                style={{ margin: '0.5rem 0 1rem' }}
-                onClick={clearSharedDeviceGuest}
-              >
-                Next Guest
-              </button>
+              <>
+                <div style={{ color: '#334155', fontWeight: 900, margin: '0.2rem 0 0.75rem', textAlign: 'center' }}>
+                  Next guest in {sharedDeviceResetSeconds} seconds...
+                </div>
+                <button
+                  className="actionBtn actionBtn-primary"
+                  type="button"
+                  style={{ margin: '0.5rem 0 1rem' }}
+                  onClick={clearSharedDeviceGuest}
+                >
+                  Next Guest
+                </button>
+              </>
             )}
             {!checkInCode && checkIn?.ticket_type === 'flowers' && (
               <div style={{ background: '#F0EEFF', borderRadius: 12, padding: '1rem', margin: '1rem 0', color: '#2f275f', textAlign: 'center' }}>

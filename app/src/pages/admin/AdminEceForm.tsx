@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { createEce, getEce, updateEce } from '../../lib/eceService';
+import { formatContentListItems, getContentListConfig, parseContentListItems } from '../../lib/contentListConfig';
 import { getEvent } from '../../lib/eventService';
 import { listExpiesForOrganization } from '../../lib/expieService';
 import { createQueue, listQueuesForEvent } from '../../lib/queueService';
@@ -10,6 +11,12 @@ import { slugify } from '../../lib/utils';
 import type { CreateEceInput, Expie, QEvent, Queue } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/admin.css';
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
 
 export default function AdminEceForm() {
   const navigate = useNavigate();
@@ -130,6 +137,58 @@ export default function AdminEceForm() {
     if (field === 'slug') setAutoSlug(false);
   }
 
+  function updateContentListSettings(
+    patch: Partial<{
+      enabled: boolean;
+      title: string;
+      actionLabel: string;
+      itemsText: string;
+    }>
+  ) {
+    setForm((prev) => {
+      const metadata = asRecord(prev.metadata);
+      const existingContentList = asRecord(metadata.content_list);
+      const currentConfig = getContentListConfig({
+        id: '',
+        event_id: eventId || '',
+        expie_id: prev.expie_id ?? null,
+        org_id: prev.org_id ?? null,
+        type: prev.type,
+        queue_id: prev.queue_id ?? null,
+        queue_behavior: prev.queue_behavior || '',
+        name: prev.name,
+        slug: prev.slug,
+        description: prev.description,
+        image_url: prev.image_url,
+        location: prev.location || '',
+        sort_order: prev.sort_order ?? 100,
+        starts_at: prev.starts_at ?? null,
+        ends_at: prev.ends_at ?? null,
+        metadata,
+        status: prev.status ?? 'active',
+        created_at: '',
+        updated_at: '',
+      });
+      const enabled = patch.enabled ?? currentConfig.enabled;
+      return {
+        ...prev,
+        metadata: {
+          ...metadata,
+          interaction_mode: enabled ? 'content_list' : metadata.interaction_mode === 'content_list' ? '' : metadata.interaction_mode,
+          home_action_label: patch.actionLabel ?? (typeof metadata.home_action_label === 'string' ? metadata.home_action_label : ''),
+          content_list: {
+            ...existingContentList,
+            enabled,
+            title: patch.title ?? currentConfig.title,
+            items: patch.itemsText !== undefined
+              ? parseContentListItems(patch.itemsText)
+              : currentConfig.items,
+          },
+        },
+      };
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!eventId || !form.expie_id || !form.name.trim() || !form.slug?.trim()) {
@@ -211,6 +270,29 @@ export default function AdminEceForm() {
   const eventLogoSrc = isSotcEventSlug(event?.slug)
     ? '/images/sotc-logo.png'
     : event?.image_url || '/images/qmeFirstLogo.jpg';
+  const contentListConfig = getContentListConfig({
+    id: '',
+    event_id: eventId || '',
+    expie_id: form.expie_id ?? null,
+    org_id: form.org_id ?? null,
+    type: form.type,
+    queue_id: form.queue_id ?? null,
+    queue_behavior: form.queue_behavior || '',
+    name: form.name,
+    slug: form.slug,
+    description: form.description,
+    image_url: form.image_url,
+    location: form.location || '',
+    sort_order: form.sort_order ?? 100,
+    starts_at: form.starts_at ?? null,
+    ends_at: form.ends_at ?? null,
+    metadata: form.metadata ?? {},
+    status: form.status ?? 'active',
+    created_at: '',
+    updated_at: '',
+  });
+  const formMetadata = asRecord(form.metadata);
+  const contentListItemsText = formatContentListItems(contentListConfig.items);
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -374,6 +456,51 @@ export default function AdminEceForm() {
             placeholder="/images/example.jpg"
           />
         </div>
+
+        {(form.type === 'info' || form.type === 'resource' || form.type === 'session') && (
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', marginTop: '0.25rem', background: '#f8fafc' }}>
+            <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Guest Detail List</h2>
+            <label style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-start', color: '#334155', fontWeight: 700, lineHeight: 1.4 }}>
+              <input
+                type="checkbox"
+                checked={contentListConfig.enabled}
+                onChange={(e) => updateContentListSettings({ enabled: e.target.checked })}
+                style={{ marginTop: 3 }}
+              />
+              Open this eCe as a guest-facing list
+            </label>
+            <div style={{ ...fieldStyle, marginTop: '0.85rem' }}>
+              <label style={labelStyle}>Detail View Title</label>
+              <input
+                style={inputStyle}
+                value={contentListConfig.title}
+                onChange={(e) => updateContentListSettings({ title: e.target.value, enabled: true })}
+                placeholder="i-Pitch Finalists"
+              />
+            </div>
+            <div style={fieldStyle}>
+              <label style={labelStyle}>Card Action Label</label>
+              <input
+                style={inputStyle}
+                value={typeof formMetadata.home_action_label === 'string' ? formMetadata.home_action_label : ''}
+                onChange={(e) => updateContentListSettings({ actionLabel: e.target.value, enabled: true })}
+                placeholder="Open"
+              />
+            </div>
+            <div style={fieldStyle}>
+              <label style={labelStyle}>List Items</label>
+              <textarea
+                style={{ ...inputStyle, minHeight: 160, resize: 'vertical' }}
+                value={contentListItemsText}
+                onChange={(e) => updateContentListSettings({ itemsText: e.target.value, enabled: true })}
+                placeholder="Name | Description | optional image URL"
+              />
+              <span style={{ color: '#64748b', fontSize: '0.8rem', fontWeight: 700, lineHeight: 1.35, marginTop: 6 }}>
+                Enter one item per line as: Name | Description | optional image URL
+              </span>
+            </div>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.2rem', flexWrap: 'wrap' }}>
           <button

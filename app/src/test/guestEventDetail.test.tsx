@@ -110,6 +110,7 @@ describe('GuestEventDetail', () => {
 
     expect(await screen.findByText('SOTC Test Event')).toBeInTheDocument();
     expect(screen.getByText('Event Check-In')).toBeInTheDocument();
+    expect(screen.getByText(/Upcoming/)).toBeInTheDocument();
     expect(container.querySelector('.ed-card-themed')).toBeNull();
   });
 

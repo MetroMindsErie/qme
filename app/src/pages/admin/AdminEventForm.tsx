@@ -11,7 +11,7 @@ import {
   getManagedOrganizationIds,
   type CurrentAdminPrincipal,
 } from '../../lib/adminPrincipalService';
-import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
+import { getEventCheckInConfig, type EventCheckInAvailabilityMode, type EventCheckInCompletionMode } from '../../lib/eventConfig';
 import { createEvent, getEvent, updateEvent } from '../../lib/eventService';
 import { listOrganizations } from '../../lib/organizationService';
 import { slugify } from '../../lib/utils';
@@ -137,6 +137,11 @@ export default function AdminEventForm() {
       selfRegistrationFallbackEnabled: boolean;
       selfRegistrationRequiresEmail: boolean;
       postCheckInInstruction: string;
+      availabilityMode: EventCheckInAvailabilityMode;
+      scheduledOpenTime: string;
+      scheduledCloseTime: string;
+      manualOpenedAt: string;
+      manualClosedAt: string;
     }>
   ) {
     setForm((prev) => {
@@ -173,6 +178,12 @@ export default function AdminEventForm() {
       const selfRegistrationRequiresEmail = patch.selfRegistrationRequiresEmail
         ?? current.selfRegistrationRequiredFields.includes('email');
       const postCheckInInstruction = patch.postCheckInInstruction ?? current.postCheckInInstruction;
+      const availabilityMode = patch.availabilityMode ?? current.availability.mode;
+      const scheduledOpenTime = patch.scheduledOpenTime ?? current.availability.scheduledOpenTime;
+      const scheduledCloseTime = patch.scheduledCloseTime ?? current.availability.scheduledCloseTime;
+      const clearManualOverride = patch.availabilityMode === 'scheduled';
+      const manualOpenedAt = clearManualOverride ? '' : patch.manualOpenedAt ?? current.availability.manualOpenedAt;
+      const manualClosedAt = clearManualOverride ? '' : patch.manualClosedAt ?? current.availability.manualClosedAt;
 
       return {
         ...prev,
@@ -182,6 +193,11 @@ export default function AdminEventForm() {
             ...existingCheckIn,
             enabled,
             completion_mode: completionMode,
+            availability_mode: availabilityMode,
+            scheduled_open_time: scheduledOpenTime,
+            scheduled_close_time: scheduledCloseTime,
+            manual_opened_at: manualOpenedAt,
+            manual_closed_at: manualClosedAt,
             require_completed_for_participation: requireCompletedForParticipation,
             imported_registration_lookup_enabled: importedRegistrationLookupEnabled,
             post_check_in_instruction: postCheckInInstruction,
@@ -524,6 +540,46 @@ export default function AdminEventForm() {
 
         <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', marginTop: '0.25rem', background: '#f8fafc' }}>
           <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Event Check-In Settings</h2>
+          <div style={fieldStyle}>
+            <label style={labelStyle}>Check-In Availability</label>
+            <select
+              style={inputStyle}
+              value={checkInConfig.availability.mode}
+              disabled={!checkInConfig.enabled}
+              onChange={(e) => updateCheckInSettings({ availabilityMode: e.target.value as EventCheckInAvailabilityMode })}
+            >
+              <option value="closed">Closed</option>
+              <option value="manual_open">Open manually</option>
+              <option value="scheduled">Scheduled</option>
+            </select>
+          </div>
+          {checkInConfig.availability.mode === 'scheduled' && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Opens</label>
+                <input
+                  style={inputStyle}
+                  type="time"
+                  value={checkInConfig.availability.scheduledOpenTime}
+                  disabled={!checkInConfig.enabled}
+                  onChange={(e) => updateCheckInSettings({ scheduledOpenTime: e.target.value })}
+                />
+              </div>
+              <div style={fieldStyle}>
+                <label style={labelStyle}>Closes</label>
+                <input
+                  style={inputStyle}
+                  type="time"
+                  value={checkInConfig.availability.scheduledCloseTime}
+                  disabled={!checkInConfig.enabled}
+                  onChange={(e) => updateCheckInSettings({ scheduledCloseTime: e.target.value })}
+                />
+              </div>
+            </div>
+          )}
+          <p style={{ margin: '0 0 0.75rem', color: checkInConfig.availability.isOpen ? '#047857' : '#8B5A00', fontSize: '0.84rem', fontWeight: 800, lineHeight: 1.45 }}>
+            {checkInConfig.availability.label}
+          </p>
           <div style={fieldStyle}>
             <label style={labelStyle}>Check-In Mode</label>
             <select

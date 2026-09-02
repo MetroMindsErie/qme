@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../../components/Header';
 import { getEvent, updateEvent } from '../../lib/eventService';
-import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
+import { getEventCheckInConfig, type EventCheckInAvailabilityMode, type EventCheckInCompletionMode } from '../../lib/eventConfig';
 import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySize';
 import { downloadCsv, formatCsvTimestamp, safeCsvFilename } from '../../lib/csvExport';
 import {
@@ -256,6 +256,11 @@ export default function AdminEventCheckIns({
       importedRegistrationLookupEnabled: boolean;
       selfRegistrationFallbackEnabled: boolean;
       selfRegistrationRequiresEmail: boolean;
+      availabilityMode: EventCheckInAvailabilityMode;
+      scheduledOpenTime: string;
+      scheduledCloseTime: string;
+      manualOpenedAt: string;
+      manualClosedAt: string;
     }>
   ) {
     if (!event) return;
@@ -276,6 +281,12 @@ export default function AdminEventCheckIns({
       : false;
     const selfRegistrationRequiresEmail = patch.selfRegistrationRequiresEmail
       ?? current.selfRegistrationRequiredFields.includes('email');
+    const availabilityMode = patch.availabilityMode ?? current.availability.mode;
+    const scheduledOpenTime = patch.scheduledOpenTime ?? current.availability.scheduledOpenTime;
+    const scheduledCloseTime = patch.scheduledCloseTime ?? current.availability.scheduledCloseTime;
+    const clearManualOverride = patch.availabilityMode === 'scheduled';
+    const manualOpenedAt = clearManualOverride ? '' : patch.manualOpenedAt ?? current.availability.manualOpenedAt;
+    const manualClosedAt = clearManualOverride ? '' : patch.manualClosedAt ?? current.availability.manualClosedAt;
 
     const nextMetadata = {
       ...metadata,
@@ -283,6 +294,11 @@ export default function AdminEventCheckIns({
         ...currentCheckIn,
         enabled,
         completion_mode: completionMode,
+        availability_mode: availabilityMode,
+        scheduled_open_time: scheduledOpenTime,
+        scheduled_close_time: scheduledCloseTime,
+        manual_opened_at: manualOpenedAt,
+        manual_closed_at: manualClosedAt,
         require_completed_for_participation: requireCompletedForParticipation,
         imported_registration_lookup_enabled: importedRegistrationLookupEnabled,
         self_registration: {
@@ -309,6 +325,21 @@ export default function AdminEventCheckIns({
     } finally {
       setSavingSettings(false);
     }
+  }
+
+  function openCheckInNow() {
+    updateCheckInSettings({
+      availabilityMode: 'manual_open',
+      manualOpenedAt: new Date().toISOString(),
+      manualClosedAt: '',
+    });
+  }
+
+  function closeCheckInNow() {
+    updateCheckInSettings({
+      availabilityMode: 'closed',
+      manualClosedAt: new Date().toISOString(),
+    });
   }
 
   async function handleEventbritePreview(file: File | null) {
@@ -689,6 +720,90 @@ export default function AdminEventCheckIns({
             </div>
             <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: '#fafafa' }}>
               <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Check-In Behavior</h2>
+              <div style={{ border: '1px solid #d0d7de', borderRadius: 8, padding: '0.85rem', marginBottom: '1rem', background: '#fff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                  <div>
+                    <div style={{ color: checkInConfig.availability.isOpen ? '#047857' : '#8B5A00', fontWeight: 900 }}>
+                      {checkInConfig.availability.label}
+                    </div>
+                    <div style={{ color: '#667085', fontSize: '0.82rem', fontWeight: 700, lineHeight: 1.45, marginTop: '0.25rem' }}>
+                      Public Check-In availability is separate from event publication.
+                    </div>
+                  </div>
+                  {event?.slug && (
+                    <a
+                      className="actionBtn actionBtn-secondary"
+                      style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem', textDecoration: 'none' }}
+                      href={`/events/${event.slug}/check-in?adminTest=1`}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      Test as Admin
+                    </a>
+                  )}
+                </div>
+              </div>
+              <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>
+                Check-In Availability
+              </label>
+              <select
+                value={checkInConfig.availability.mode}
+                disabled={savingSettings || checkInConfig.completionMode === 'none'}
+                onChange={(e) => updateCheckInSettings({ availabilityMode: e.target.value as EventCheckInAvailabilityMode })}
+                style={{ width: '100%', padding: '0.7rem', borderRadius: 8, border: '1px solid #d0d7de', marginBottom: '0.75rem' }}
+              >
+                <option value="closed">Closed</option>
+                <option value="manual_open">Open manually</option>
+                <option value="scheduled">Scheduled</option>
+              </select>
+              {checkInConfig.availability.mode === 'scheduled' && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>
+                      Opens
+                    </label>
+                    <input
+                      type="time"
+                      value={checkInConfig.availability.scheduledOpenTime}
+                      disabled={savingSettings}
+                      onChange={(e) => updateCheckInSettings({ scheduledOpenTime: e.target.value })}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem', borderRadius: 8, border: '1px solid #d0d7de' }}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>
+                      Closes
+                    </label>
+                    <input
+                      type="time"
+                      value={checkInConfig.availability.scheduledCloseTime}
+                      disabled={savingSettings}
+                      onChange={(e) => updateCheckInSettings({ scheduledCloseTime: e.target.value })}
+                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.7rem', borderRadius: 8, border: '1px solid #d0d7de' }}
+                    />
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  className="actionBtn actionBtn-primary"
+                  style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }}
+                  disabled={savingSettings || checkInConfig.completionMode === 'none'}
+                  onClick={openCheckInNow}
+                >
+                  Open now
+                </button>
+                <button
+                  type="button"
+                  className="actionBtn actionBtn-secondary"
+                  style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem' }}
+                  disabled={savingSettings || checkInConfig.completionMode === 'none'}
+                  onClick={closeCheckInNow}
+                >
+                  Close now
+                </button>
+              </div>
               <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>
                 Check-In Mode
               </label>

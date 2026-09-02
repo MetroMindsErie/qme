@@ -4,6 +4,7 @@ const mockRpc = vi.fn();
 const mockFrom = vi.fn();
 const mockChannel = vi.fn();
 const mockRemoveChannel = vi.fn();
+const mockGetEvent = vi.fn();
 
 vi.mock('../lib/supabase', () => ({
   supabase: {
@@ -14,12 +15,37 @@ vi.mock('../lib/supabase', () => ({
   },
 }));
 
-import { createEventCheckIn } from '../lib/checkInService';
+vi.mock('../lib/eventService', () => ({
+  getEvent: (...args: unknown[]) => mockGetEvent(...args),
+}));
+
+import { createEventCheckIn, searchImportedRegistrationsForGuest } from '../lib/checkInService';
 
 describe('checkInService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorage.clear();
+    mockGetEvent.mockResolvedValue({
+      id: 'event-1',
+      organization_id: null,
+      name: 'Test Event',
+      slug: 'test-event',
+      description: '',
+      location: '',
+      image_url: '',
+      event_date: null,
+      start_time: null,
+      end_time: null,
+      timezone: 'ET',
+      status: 'active',
+      metadata: {
+        check_in: {
+          availability_mode: 'manual_open',
+        },
+      },
+      created_at: '',
+      updated_at: '',
+    });
   });
 
   describe('createEventCheckIn', () => {
@@ -71,6 +97,102 @@ describe('checkInService', () => {
         p_email: null,
         p_phone: null,
       });
+    });
+
+    it('blocks guest check-in creation while public availability is closed', async () => {
+      mockGetEvent.mockResolvedValueOnce({
+        id: 'event-1',
+        organization_id: null,
+        name: 'Test Event',
+        slug: 'test-event',
+        description: '',
+        location: '',
+        image_url: '',
+        event_date: null,
+        start_time: null,
+        end_time: null,
+        timezone: 'ET',
+        status: 'active',
+        metadata: {
+          check_in: {
+            availability_mode: 'closed',
+          },
+        },
+        created_at: '',
+        updated_at: '',
+      });
+
+      await expect(createEventCheckIn({
+        event_id: 'event-1',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+      })).rejects.toThrow('Check-In is not open yet.');
+      expect(mockRpc).not.toHaveBeenCalled();
+    });
+
+    it('allows the authorized admin-test bypass through the app service guard', async () => {
+      const row = { id: 'check-in-1', event_id: 'event-1', first_name: 'Ada', last_name: 'Lovelace' };
+      mockGetEvent.mockResolvedValueOnce({
+        id: 'event-1',
+        organization_id: null,
+        name: 'Test Event',
+        slug: 'test-event',
+        description: '',
+        location: '',
+        image_url: '',
+        event_date: null,
+        start_time: null,
+        end_time: null,
+        timezone: 'ET',
+        status: 'active',
+        metadata: {
+          check_in: {
+            availability_mode: 'closed',
+          },
+        },
+        created_at: '',
+        updated_at: '',
+      });
+      mockRpc.mockResolvedValueOnce({ data: row, error: null });
+
+      await createEventCheckIn({
+        event_id: 'event-1',
+        first_name: 'Ada',
+        last_name: 'Lovelace',
+        bypassAvailability: true,
+      });
+
+      expect(mockGetEvent).not.toHaveBeenCalled();
+      expect(mockRpc).toHaveBeenCalled();
+    });
+  });
+
+  describe('searchImportedRegistrationsForGuest', () => {
+    it('blocks imported registration search while public availability is closed', async () => {
+      mockGetEvent.mockResolvedValueOnce({
+        id: 'event-1',
+        organization_id: null,
+        name: 'Test Event',
+        slug: 'test-event',
+        description: '',
+        location: '',
+        image_url: '',
+        event_date: null,
+        start_time: null,
+        end_time: null,
+        timezone: 'ET',
+        status: 'active',
+        metadata: {
+          check_in: {
+            availability_mode: 'closed',
+          },
+        },
+        created_at: '',
+        updated_at: '',
+      });
+
+      await expect(searchImportedRegistrationsForGuest('event-1', 'Ada')).rejects.toThrow('Check-In is not open yet.');
+      expect(mockRpc).not.toHaveBeenCalled();
     });
   });
 });

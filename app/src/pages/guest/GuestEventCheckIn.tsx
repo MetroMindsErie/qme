@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Header from '../../components/Header';
+import { canManageEvent, getCurrentAdminPrincipal } from '../../lib/adminPrincipalService';
 import {
   checkInEventGuest,
   createEventCheckIn,
@@ -64,8 +65,10 @@ export default function GuestEventCheckIn({
   const { eventSlug } = useParams<{ eventSlug: string }>();
   const [searchParams] = useSearchParams();
   const isSharedDeviceMode = searchParams.get('mode') === 'shared' || searchParams.get('shared') === '1';
+  const requestedAdminTestMode = searchParams.get('adminTest') === '1';
   const [event, setEvent] = useState<QEvent | null>(null);
   const [loading, setLoading] = useState(true);
+  const [adminTestAllowed, setAdminTestAllowed] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -83,7 +86,9 @@ export default function GuestEventCheckIn({
   const [selfRegistrationEmailError, setSelfRegistrationEmailError] = useState('');
   const [sharedDeviceResetSeconds, setSharedDeviceResetSeconds] = useState(SHARED_DEVICE_RESET_SECONDS);
   const checkInConfig = getEventCheckInConfig(event);
+  const isCheckInAvailable = checkInConfig.availability.isOpen || adminTestAllowed;
   const useImportedRegistrationLookup = !checkInCode
+    && isCheckInAvailable
     && (checkInConfig.importedRegistrationLookupEnabled || isSotcEventSlug(event?.slug));
   const useSelfRegistrationFallback = useImportedRegistrationLookup && checkInConfig.selfRegistrationFallbackEnabled;
   const selfRegistrationRequiresEmail = checkInConfig.selfRegistrationRequiredFields.includes('email');
@@ -106,6 +111,18 @@ export default function GuestEventCheckIn({
       try {
         const ev = await getEventBySlug(eventSlug);
         setEvent(ev);
+        let nextAdminTestAllowed = false;
+        if (requestedAdminTestMode) {
+          try {
+            const admin = await getCurrentAdminPrincipal();
+            nextAdminTestAllowed = canManageEvent(admin, ev);
+          } catch {
+            nextAdminTestAllowed = false;
+          }
+        }
+        setAdminTestAllowed(nextAdminTestAllowed);
+        const availability = getEventCheckInConfig(ev).availability;
+        if (!availability.isOpen && !nextAdminTestAllowed) return;
         const stored = localStorage.getItem(storageKey(ev.id));
         if (stored) {
           const saved = JSON.parse(stored) as {
@@ -144,12 +161,16 @@ export default function GuestEventCheckIn({
         setLoading(false);
       }
     })();
-  }, [eventSlug, storageKey]);
+  }, [eventSlug, requestedAdminTestMode, storageKey]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!event) return;
     const checkInConfig = getEventCheckInConfig(event);
+    if (!checkInConfig.availability.isOpen && !adminTestAllowed) {
+      setError('Check-In is not open yet.');
+      return;
+    }
     const shouldAutoComplete = checkInConfig.completionMode === 'auto';
     setSaving(true);
     setError('');
@@ -180,11 +201,12 @@ export default function GuestEventCheckIn({
         last_name: lastName,
         code: checkInCode,
         email: trimmedEmail || null,
-        phone: normalizedPhone || null,
-        needsHelp: useImportedRegistrationLookup && !useSelfRegistrationFallback,
+          phone: normalizedPhone || null,
+          needsHelp: useImportedRegistrationLookup && !useSelfRegistrationFallback,
+          bypassAvailability: adminTestAllowed,
       });
       const row = shouldAutoComplete
-        ? await checkInEventGuest(created.id, 'general', event.id)
+        ? await checkInEventGuest(created.id, 'general', event.id, { bypassAvailability: adminTestAllowed })
         : created;
       localStorage.setItem(storageKey(event.id), JSON.stringify({
         id: row.id,
@@ -229,6 +251,12 @@ export default function GuestEventCheckIn({
 
   const searchImportedRegistrations = useCallback(async (query: string, options?: { showShortQueryError?: boolean }) => {
     if (!event) return;
+    const availability = getEventCheckInConfig(event).availability;
+    if (!availability.isOpen && !adminTestAllowed) {
+      setRegistrationResults([]);
+      setError('Check-In is not open yet.');
+      return;
+    }
     const trimmedQuery = query.trim();
     setRegistrationHasSearched(true);
     if (trimmedQuery.length < 2) {
@@ -241,7 +269,7 @@ export default function GuestEventCheckIn({
     setError('');
     setRegistrationSearching(true);
     try {
-      const results = await searchImportedRegistrationsForGuest(event.id, trimmedQuery);
+      const results = await searchImportedRegistrationsForGuest(event.id, trimmedQuery, 8, { bypassAvailability: adminTestAllowed });
       setRegistrationResults(results);
       if (results.length === 0) {
         setError(useSelfRegistrationFallback
@@ -261,7 +289,7 @@ export default function GuestEventCheckIn({
     } finally {
       setRegistrationSearching(false);
     }
-  }, [event, useSelfRegistrationFallback]);
+  }, [adminTestAllowed, event, useSelfRegistrationFallback]);
 
   useEffect(() => {
     if (!event || submitted || !useImportedRegistrationLookup) return;
@@ -334,6 +362,11 @@ export default function GuestEventCheckIn({
 
   async function claimImportedRegistration(result: ImportedRegistrationSearchResult) {
     if (!event) return;
+    const availability = getEventCheckInConfig(event).availability;
+    if (!availability.isOpen && !adminTestAllowed) {
+      setError('Check-In is not open yet.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
@@ -348,6 +381,7 @@ export default function GuestEventCheckIn({
         importedRegistrationId: result.id,
         emailConfirmation: registrationEmailConfirmation[result.id] || null,
         phone: normalizedPhone || null,
+        bypassAvailability: adminTestAllowed,
       };
       const row = result.already_checked_in
         ? await reconnectImportedRegistrationCheckInForGuest(input)
@@ -469,6 +503,45 @@ export default function GuestEventCheckIn({
     );
   }
 
+  if (!isCheckInAvailable && !submitted) {
+    return (
+      <div
+        className={`card card-scrollable guest-event-card ${isThemed ? 'guest-event-themed' : ''}`}
+        style={{ minHeight: '600px', maxHeight: '90vh', ...guestThemeStyle }}
+      >
+        <Header
+          logoSrc={eventLogoSrc}
+          titleLine1="CHECK"
+          titleLine2="IN"
+          hideMenu={isSharedDeviceMode}
+        />
+        <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
+          <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
+            Event Check-In
+          </h1>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', margin: '1rem 0', background: '#f8fafc', color: '#334155', fontWeight: 800, lineHeight: 1.45 }}>
+            <div>{checkInConfig.availability.label === 'Currently closed' ? 'Check-In is not open yet.' : `Check-In ${checkInConfig.availability.label.toLowerCase()}.`}</div>
+            <div style={{ marginTop: '0.45rem', color: '#64748b', fontWeight: 700 }}>
+              You can explore the event information in the meantime.
+            </div>
+          </div>
+          {requestedAdminTestMode && (
+            <p style={{ color: '#9a3412', background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '0.75rem', fontWeight: 800 }}>
+              Admin test mode requires an authenticated event admin session.
+            </p>
+          )}
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`card card-scrollable guest-event-card ${isThemed ? 'guest-event-themed' : ''}`}
@@ -482,6 +555,11 @@ export default function GuestEventCheckIn({
       />
 
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
+        {adminTestAllowed && (
+          <div style={{ background: '#fff7ed', border: '1px solid #fdba74', borderRadius: 8, color: '#9a3412', fontWeight: 900, padding: '0.65rem 0.75rem', marginBottom: '0.85rem', textAlign: 'center' }}>
+            Admin test mode: public Check-In availability is bypassed for this authenticated admin session.
+          </div>
+        )}
         <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
           {title}
         </h1>

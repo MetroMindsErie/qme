@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import GuestEventCheckIn from '../pages/guest/GuestEventCheckIn';
+import type { CurrentAdminPrincipal } from '../lib/adminPrincipalService';
 import type { EventCheckIn, QEvent } from '../types';
 
 const event: QEvent = {
@@ -55,6 +56,25 @@ const completedCheckIn = {
   status: 'completed' as const,
 };
 
+const superAdmin: CurrentAdminPrincipal = {
+  principal: {
+    id: 'principal-1',
+    auth_user_id: null,
+    principal_type: 'person',
+    display_name: 'Admin',
+    email: 'admin@example.com',
+    phone: null,
+    status: 'active',
+    metadata: {},
+    created_at: '',
+    updated_at: '',
+  },
+  platformRoles: [],
+  organizationMemberships: [],
+  eventStaffAssignments: [],
+  isSuperadmin: true,
+};
+
 const mockGetEventBySlug = vi.fn();
 const mockSearchImportedRegistrationsForGuest = vi.fn();
 const mockCreateEventCheckIn = vi.fn();
@@ -62,6 +82,7 @@ const mockCheckInEventGuest = vi.fn();
 const mockGetEventCheckIn = vi.fn();
 const mockCreateImportedRegistrationCheckInForGuest = vi.fn();
 const mockReconnectImportedRegistrationCheckInForGuest = vi.fn();
+const mockGetCurrentAdminPrincipal = vi.fn();
 
 vi.mock('../components/Header', () => ({
   default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
@@ -71,6 +92,11 @@ vi.mock('../components/Header', () => ({
 
 vi.mock('../lib/eventService', () => ({
   getEventBySlug: (...args: unknown[]) => mockGetEventBySlug(...args),
+}));
+
+vi.mock('../lib/adminPrincipalService', () => ({
+  canManageEvent: vi.fn((admin: CurrentAdminPrincipal | null) => Boolean(admin?.isSuperadmin)),
+  getCurrentAdminPrincipal: (...args: unknown[]) => mockGetCurrentAdminPrincipal(...args),
 }));
 
 vi.mock('../lib/checkInService', () => ({
@@ -104,6 +130,7 @@ describe('GuestEventCheckIn', () => {
     mockGetEventCheckIn.mockResolvedValue(completedCheckIn);
     mockCreateImportedRegistrationCheckInForGuest.mockResolvedValue(completedCheckIn);
     mockReconnectImportedRegistrationCheckInForGuest.mockResolvedValue(completedCheckIn);
+    mockGetCurrentAdminPrincipal.mockResolvedValue(null);
   });
 
   afterEach(() => {
@@ -131,6 +158,58 @@ describe('GuestEventCheckIn', () => {
     expect(themedCard?.style.getPropertyValue('--guest-event-primary')).toBe('#4B2E83');
     expect(themedCard?.style.getPropertyValue('--guest-event-secondary')).toBe('#2563EB');
     expect(themedCard?.style.getPropertyValue('--guest-event-highlight')).toBe('#F59E0B');
+  });
+
+  it('blocks ordinary guest check-in route and actions while availability is closed', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      metadata: {
+        ...event.metadata,
+        check_in: {
+          ...(event.metadata?.check_in as Record<string, unknown>),
+          availability_mode: 'closed',
+        },
+      },
+    });
+
+    renderCheckIn();
+
+    expect(await screen.findByText('Check-In is not open yet.')).toBeInTheDocument();
+    expect(screen.getByText('You can explore the event information in the meantime.')).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText('First name, last name, or email')).not.toBeInTheDocument();
+    expect(mockSearchImportedRegistrationsForGuest).not.toHaveBeenCalled();
+    expect(mockCreateEventCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('allows authenticated admin test mode to exercise the real guest flow while public check-in is closed', async () => {
+    mockGetCurrentAdminPrincipal.mockResolvedValue(superAdmin);
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      metadata: {
+        ...event.metadata,
+        check_in: {
+          ...(event.metadata?.check_in as Record<string, unknown>),
+          availability_mode: 'closed',
+        },
+      },
+    });
+
+    const user = userEvent.setup();
+    renderCheckIn('/events/ipitch-2026/check-in?adminTest=1');
+
+    expect(await screen.findByText(/Admin test mode/)).toBeInTheDocument();
+    await user.click(screen.getByText("Can't find your registration?"));
+    fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
+    fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
+    fireEvent.change(screen.getByLabelText('Confirm email'), { target: { value: 'walk@example.com' } });
+    await user.click(screen.getByRole('button', { name: 'Register & Check In' }));
+
+    await waitFor(() => {
+      expect(mockCreateEventCheckIn).toHaveBeenCalled();
+      expect(mockCheckInEventGuest).toHaveBeenCalledWith(createdCheckIn.id, 'general', event.id, { bypassAvailability: true });
+    });
+    expect(await screen.findByText(/Thanks, Walk!/)).toBeInTheDocument();
   });
 
   it('guides imported lookup by name or email and blocks mismatched self-registration email locally', async () => {
@@ -177,7 +256,7 @@ describe('GuestEventCheckIn', () => {
         email: 'walk@example.com',
         needsHelp: false,
       }));
-      expect(mockCheckInEventGuest).toHaveBeenCalledWith(createdCheckIn.id, 'general', event.id);
+      expect(mockCheckInEventGuest).toHaveBeenCalledWith(createdCheckIn.id, 'general', event.id, { bypassAvailability: false });
     });
     expect(await screen.findByText(/Thanks, Walk!/)).toBeInTheDocument();
     expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();

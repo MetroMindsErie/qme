@@ -2,6 +2,8 @@
  * checkInService.ts — event-level named check-ins for alpha testing.
  */
 import { supabase } from './supabase';
+import { getEvent } from './eventService';
+import { getEventCheckInAvailability } from './eventConfig';
 import { getGuestSessionToken } from './guestSessionService';
 import type { CreateEventCheckInInput, EventCheckIn, ImportedRegistrationSearchResult } from '../types';
 
@@ -15,9 +17,18 @@ function isMissingRpc(error: unknown): boolean {
     message.includes('function') && message.includes('does not exist');
 }
 
+async function assertEventCheckInAvailable(eventId: string, bypassAvailability?: boolean): Promise<void> {
+  if (bypassAvailability) return;
+  const event = await getEvent(eventId);
+  if (!getEventCheckInAvailability(event).isOpen) {
+    throw new Error('Check-In is not open yet.');
+  }
+}
+
 export async function createEventCheckIn(
   input: CreateEventCheckInInput
 ): Promise<EventCheckIn> {
+  await assertEventCheckInAvailable(input.event_id, input.bypassAvailability);
   const guestToken = getGuestSessionToken(input.event_id);
   if (input.needsHelp) {
     const { data, error } = await supabase.rpc('create_needs_help_event_check_in_for_guest', {
@@ -67,8 +78,10 @@ export async function createEventCheckIn(
 export async function searchImportedRegistrationsForGuest(
   eventId: string,
   query: string,
-  limit = 8
+  limit = 8,
+  options: { bypassAvailability?: boolean } = {}
 ): Promise<ImportedRegistrationSearchResult[]> {
+  await assertEventCheckInAvailable(eventId, options.bypassAvailability);
   const { data, error } = await supabase.rpc('search_event_imported_registrations_for_guest', {
     p_event_id: eventId,
     p_guest_token: getGuestSessionToken(eventId),
@@ -84,7 +97,9 @@ export async function createImportedRegistrationCheckInForGuest(input: {
   importedRegistrationId: string;
   emailConfirmation?: string | null;
   phone?: string | null;
+  bypassAvailability?: boolean;
 }): Promise<EventCheckIn> {
+  await assertEventCheckInAvailable(input.eventId, input.bypassAvailability);
   const { data, error } = await supabase.rpc('create_event_check_in_from_imported_registration_for_guest', {
     p_event_id: input.eventId,
     p_guest_token: getGuestSessionToken(input.eventId),
@@ -101,7 +116,9 @@ export async function reconnectImportedRegistrationCheckInForGuest(input: {
   importedRegistrationId: string;
   emailConfirmation?: string | null;
   phone?: string | null;
+  bypassAvailability?: boolean;
 }): Promise<EventCheckIn> {
+  await assertEventCheckInAvailable(input.eventId, input.bypassAvailability);
   const { data, error } = await supabase.rpc('reconnect_event_check_in_from_imported_registration_for_guest', {
     p_event_id: input.eventId,
     p_guest_token: getGuestSessionToken(input.eventId),
@@ -170,9 +187,11 @@ export async function adminCancelEventCheckIn(id: string): Promise<EventCheckIn>
 export async function checkInEventGuest(
   id: string,
   ticketType: NonNullable<EventCheckIn['ticket_type']>,
-  eventId?: string | null
+  eventId?: string | null,
+  options: { bypassAvailability?: boolean } = {}
 ): Promise<EventCheckIn> {
   if (eventId) {
+    await assertEventCheckInAvailable(eventId, options.bypassAvailability);
     const { data: scopedData, error: scopedError } = await supabase.rpc('complete_event_check_in_for_guest', {
       p_check_in_id: id,
       p_guest_token: getGuestSessionToken(eventId),

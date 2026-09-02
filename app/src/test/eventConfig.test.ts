@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getCompletedEventCheckInMessage, getEventCheckInCardDescription, getEventCheckInConfig } from '../lib/eventConfig';
+import { getCompletedEventCheckInMessage, getEventCheckInAvailability, getEventCheckInCardDescription, getEventCheckInConfig } from '../lib/eventConfig';
 import type { QEvent } from '../types';
 
 function eventWithCheckIn(checkIn: Record<string, unknown>): QEvent {
@@ -27,6 +27,11 @@ describe('getEventCheckInConfig', () => {
     expect(getEventCheckInConfig(eventWithCheckIn({}))).toEqual({
       enabled: true,
       completionMode: 'staff',
+      availability: expect.objectContaining({
+        mode: 'manual_open',
+        isOpen: true,
+        label: 'Currently open',
+      }),
       requireCompletedForParticipation: false,
       importedRegistrationLookupEnabled: false,
       selfRegistrationFallbackEnabled: false,
@@ -48,6 +53,10 @@ describe('getEventCheckInConfig', () => {
     }))).toEqual({
       enabled: true,
       completionMode: 'auto',
+      availability: expect.objectContaining({
+        mode: 'manual_open',
+        isOpen: true,
+      }),
       requireCompletedForParticipation: true,
       importedRegistrationLookupEnabled: true,
       selfRegistrationFallbackEnabled: true,
@@ -66,6 +75,7 @@ describe('getEventCheckInConfig', () => {
       },
     }))).toMatchObject({
       enabled: false,
+      availability: expect.objectContaining({ isOpen: true }),
       importedRegistrationLookupEnabled: false,
       selfRegistrationFallbackEnabled: false,
     });
@@ -90,5 +100,67 @@ describe('getEventCheckInConfig', () => {
     })))).toBe('You are checked in. Please go to the check-in desk to receive your event package.');
 
     expect(getCompletedEventCheckInMessage(getEventCheckInConfig(eventWithCheckIn({})))).toBe('You are checked in. Return to the event page for next steps.');
+  });
+
+  it('supports closed, manual-open, and scheduled check-in availability in event timezone', () => {
+    const scheduledEvent = eventWithCheckIn({
+      availability_mode: 'scheduled',
+      scheduled_open_time: '16:30',
+      scheduled_close_time: '20:00',
+    });
+    scheduledEvent.event_date = '2026-09-03';
+    scheduledEvent.timezone = 'ET';
+
+    expect(getEventCheckInConfig(scheduledEvent).availability.mode).toBe('scheduled');
+    expect(getEventCheckInConfig(scheduledEvent).availability.isOpen).toBe(false);
+
+    const beforeOpen = new Date('2026-09-03T20:29:00.000Z');
+    const duringWindow = new Date('2026-09-03T20:30:00.000Z');
+    const afterClose = new Date('2026-09-04T00:01:00.000Z');
+
+    expect(getEventCheckInAvailability(scheduledEvent, beforeOpen).isOpen).toBe(false);
+    expect(getEventCheckInAvailability(scheduledEvent, duringWindow).isOpen).toBe(true);
+    expect(getEventCheckInAvailability(scheduledEvent, afterClose).isOpen).toBe(false);
+
+    expect(getEventCheckInAvailability(eventWithCheckIn({ availability_mode: 'closed' })).isOpen).toBe(false);
+    expect(getEventCheckInAvailability(eventWithCheckIn({ availability_mode: 'manual_open' })).isOpen).toBe(true);
+  });
+
+  it('can read existing row-level check-in start and end fields when metadata times are absent', () => {
+    const scheduledEvent = eventWithCheckIn({
+      availability_mode: 'scheduled',
+    }) as QEvent & { check_in_start: string; check_in_end: string };
+    scheduledEvent.event_date = '2026-09-03';
+    scheduledEvent.timezone = 'ET';
+    scheduledEvent.check_in_start = '16:30';
+    scheduledEvent.check_in_end = '20:00';
+
+    expect(getEventCheckInAvailability(scheduledEvent, new Date('2026-09-03T20:30:00.000Z'))).toMatchObject({
+      scheduledOpenTime: '16:30',
+      scheduledCloseTime: '20:00',
+      isOpen: true,
+    });
+  });
+
+  it('uses latest manual open/close override deterministically', () => {
+    expect(getEventCheckInAvailability(eventWithCheckIn({
+      availability_mode: 'scheduled',
+      scheduled_open_time: '16:30',
+      scheduled_close_time: '20:00',
+      manual_opened_at: '2026-09-02T12:00:00.000Z',
+      manual_closed_at: '2026-09-02T12:05:00.000Z',
+    })).isOpen).toBe(false);
+
+    expect(getEventCheckInAvailability(eventWithCheckIn({
+      availability_mode: 'closed',
+      manual_opened_at: '2026-09-02T12:10:00.000Z',
+      manual_closed_at: '2026-09-02T12:05:00.000Z',
+    })).isOpen).toBe(false);
+
+    expect(getEventCheckInAvailability(eventWithCheckIn({
+      availability_mode: 'scheduled',
+      manual_opened_at: '2026-09-02T12:10:00.000Z',
+      manual_closed_at: '2026-09-02T12:05:00.000Z',
+    })).isOpen).toBe(true);
   });
 });

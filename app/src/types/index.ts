@@ -257,6 +257,7 @@ export type CreateEventCheckInInput = Pick<
   email?: string | null;
   phone?: string | null;
   needsHelp?: boolean;
+  bypassAvailability?: boolean;
 };
 
 export interface ImportedRegistrationSearchResult {

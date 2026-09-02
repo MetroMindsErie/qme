@@ -11,6 +11,7 @@ const mockListEventCheckIns = vi.fn();
 const mockListGuestCreditsForEvent = vi.fn();
 const mockPreviewEventbriteRegistrationsForEvent = vi.fn();
 const mockImportEventbriteRegistrationsForEvent = vi.fn();
+const mockUpdateEvent = vi.fn();
 
 vi.mock('../components/Header', () => ({
   default: ({ titleLine1, titleLine2 }: { titleLine1: string; titleLine2: string }) => (
@@ -20,7 +21,7 @@ vi.mock('../components/Header', () => ({
 
 vi.mock('../lib/eventService', () => ({
   getEvent: (...args: unknown[]) => mockGetEvent(...args),
-  updateEvent: vi.fn(),
+  updateEvent: (...args: unknown[]) => mockUpdateEvent(...args),
 }));
 
 vi.mock('../lib/adminPrincipalService', () => ({
@@ -104,6 +105,7 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
     vi.clearAllMocks();
     mockGetEvent.mockResolvedValue(event);
     mockGetCurrentAdminPrincipal.mockResolvedValue(admin);
+    mockUpdateEvent.mockImplementation((_id: string, input: Partial<QEvent>) => Promise.resolve({ ...event, ...input }));
     mockListEventCheckIns.mockResolvedValue([]);
     mockListGuestCreditsForEvent.mockResolvedValue([]);
     mockPreviewEventbriteRegistrationsForEvent.mockResolvedValue({
@@ -180,5 +182,66 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
       });
     });
     expect(await screen.findByText('Imported 1; skipped 1; invalid 0.')).toBeInTheDocument();
+  });
+
+  it('persists check-in availability controls and exposes authenticated admin test link', async () => {
+    mockGetEvent.mockResolvedValue({
+      ...event,
+      metadata: {
+        check_in: {
+          enabled: true,
+          completion_mode: 'auto',
+          availability_mode: 'closed',
+          scheduled_open_time: '16:30',
+          scheduled_close_time: '20:00',
+        },
+      },
+    });
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    expect(screen.getByText('Currently closed')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Test as Admin' })).toHaveAttribute('href', '/events/ipitch-092026/check-in?adminTest=1');
+
+    fireEvent.change(screen.getByDisplayValue('Closed'), { target: { value: 'scheduled' } });
+
+    await waitFor(() => {
+      expect(mockUpdateEvent).toHaveBeenCalledWith('event-1', expect.objectContaining({
+        metadata: expect.objectContaining({
+          check_in: expect.objectContaining({
+            availability_mode: 'scheduled',
+            scheduled_open_time: '16:30',
+            scheduled_close_time: '20:00',
+            manual_opened_at: '',
+            manual_closed_at: '',
+          }),
+        }),
+      }));
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open now' }));
+    await waitFor(() => {
+      expect(mockUpdateEvent).toHaveBeenLastCalledWith('event-1', expect.objectContaining({
+        metadata: expect.objectContaining({
+          check_in: expect.objectContaining({
+            availability_mode: 'manual_open',
+            manual_opened_at: expect.any(String),
+            manual_closed_at: '',
+          }),
+        }),
+      }));
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close now' }));
+    await waitFor(() => {
+      expect(mockUpdateEvent).toHaveBeenLastCalledWith('event-1', expect.objectContaining({
+        metadata: expect.objectContaining({
+          check_in: expect.objectContaining({
+            availability_mode: 'closed',
+            manual_closed_at: expect.any(String),
+          }),
+        }),
+      }));
+    });
   });
 });

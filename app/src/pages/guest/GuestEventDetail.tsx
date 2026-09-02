@@ -20,6 +20,7 @@ import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySi
 import { getContentListConfig } from '../../lib/contentListConfig';
 import { getCompletedEventCheckInMessage, getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
 import { buildGuestEventThemeStyle, getGuestEventTheme, hasGuestEventTheme } from '../../lib/eventTheme';
+import { getEventTemporalStatus } from '../../lib/eventTiming';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { getVoteAllocationConfig } from '../../lib/votingConfig';
@@ -694,7 +695,10 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
 
   const visibleStaticActivities = isPeonyEvent ? PEONY_ACTIVITIES : [];
   const checkInConfig = getEventCheckInConfig(event);
+  const checkInAvailability = checkInConfig.availability;
+  const isCheckInAvailable = checkInAvailability.isOpen;
   const requiresCompletedCheckIn = checkInConfig.requireCompletedForParticipation;
+  const eventTemporalStatus = getEventTemporalStatus(event);
 
   const isEventCheckInRemoved = eventCheckInStatus === 'cancelled';
   const hasSubmittedEventCheckIn = Boolean(eventCheckInStatus && !isEventCheckInRemoved);
@@ -744,7 +748,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                 )}
               </div>
             </div>
-            <div className="ed-live-badge">● Live</div>
+            <div className={`ed-live-badge ed-live-badge-${eventTemporalStatus.state}`}>● {eventTemporalStatus.label}</div>
           </div>
 
           {/* Stats row */}
@@ -779,7 +783,7 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
 
           {/* Arrival check-in */}
           {checkInConfig.enabled && (!hasEventCheckIn || hasSubmittedEventCheckIn) && (
-          <div className="ed-activity-card ed-card-clickable">
+          <div className={`ed-activity-card ${isCheckInAvailable || hasEventCheckIn || isWaitingForHostCheckIn || isEventCheckInRemoved ? 'ed-card-clickable' : ''}`}>
             <div className="ed-check-icon" aria-hidden="true">
               <span style={{ fontSize: '1.1rem' }}>✓</span>
             </div>
@@ -797,6 +801,8 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
                   ? getCompletedEventCheckInMessage(checkInConfig)
                   : isWaitingForHostCheckIn
                   ? 'Your name has been submitted. Please wait here until staff confirms your event check-in.'
+                  : !isCheckInAvailable
+                  ? `${checkInAvailability.label === 'Currently closed' ? 'Check-In is not open yet.' : `Check-In ${checkInAvailability.label.toLowerCase()}.`} You can explore the event information below in the meantime.`
                   : !isPeonyEvent
                   ? getEventCheckInCardDescription(checkInConfig)
                   : eventCheckInTicketType === 'flowers'
@@ -808,9 +814,15 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
               )}
             </div>
             <div className="ed-activity-right">
-              <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
-                {isEventCheckInRemoved ? 'Check In Again' : hasEventCheckIn ? 'Checked In' : isWaitingForHostCheckIn ? 'Check-In Status' : 'Check In'}
-              </Link>
+              {isCheckInAvailable || hasEventCheckIn || isWaitingForHostCheckIn || isEventCheckInRemoved ? (
+                <Link to={`/events/${eventSlug}/check-in`} className="ed-action-btn">
+                  {isEventCheckInRemoved ? 'Check In Again' : hasEventCheckIn ? 'Checked In' : isWaitingForHostCheckIn ? 'Check-In Status' : 'Check In'}
+                </Link>
+              ) : (
+                <span className="ed-action-btn ed-action-btn-disabled" aria-disabled="true">
+                  {checkInAvailability.actionLabel}
+                </span>
+              )}
             </div>
           </div>
           )}

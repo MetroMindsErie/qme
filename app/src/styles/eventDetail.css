@@ -158,6 +158,22 @@
   align-self: flex-start;
 }
 
+.ed-live-badge-upcoming {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.ed-live-badge-live {
+  background: #e8fdf0;
+  color: var(--qme-green);
+}
+
+.ed-live-badge-ended,
+.ed-live-badge-unavailable {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
 /* ── Stats row ──────────────────────────────────────────────── */
 .ed-stats {
   position: relative;
@@ -776,6 +792,13 @@
   background: white;
   color: var(--qme-purple);
   border: 1.5px solid var(--qme-purple);
+}
+
+.ed-action-btn-disabled {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #d0d7de;
+  cursor: not-allowed;
 }
 
 .ed-activity-chevron {

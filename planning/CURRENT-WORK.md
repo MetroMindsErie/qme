@@ -1,76 +1,14 @@
 # Current Work
 
-## Implementation Handoff
-
-Focused event-navigation + shared-device/iPad cleanup is implemented and validated. Do not mark this slice accepted until the shared-device presentation is visually checked on the actual front-table iPad after automated deployment from `main`.
-
-Guest event workflows changed:
-- Removed the hamburger/menu from `/events/:eventSlug/check-in`, including normal personal-device, shared-device, closed/unavailable, and no-check-in states.
-- Removed the hamburger/menu from `/events/:eventSlug/content/:eceSlug` and `/events/:eventSlug/content/:eceSlug/:itemSlug`.
-- Existing guest event home already used event-owned navigation rather than the global Header menu.
-- Explicit Back to Event navigation remains on check-in and content/detail pages.
-
-Admin event workflows changed:
-- Removed the hamburger/menu from Admin Event detail.
-- Removed the hamburger/menu from Admin Event Check-In live/history/settings.
-- Removed the hamburger/menu from Edit Event; Edit Event save/cancel now returns to the event detail.
-- Removed the hamburger/menu from event eCe/content add/edit; cancel is now labeled Back to Event.
-- Also applied the event-focused treatment to event Queue form/dashboard and Group Order dashboard, each with Back to Event navigation.
-- Create Event remains a broader admin workflow and keeps normal navigation.
-
-Shared-device Check-In:
-- Primary front-table iPad URL: `/events/:eventSlug/check-in?mode=shared`
-- Authenticated admin test URL: `/events/:eventSlug/check-in?mode=shared&adminTest=1`
-- Admin Check-In settings now links to the shared iPad admin-test URL as `Test Shared iPad`.
-- `shared=1` alias remains supported.
-- Shared copy now says: `Enter your name or email to find your registration.`
-- Recovery phone field/helper text are hidden only in shared mode. Personal-device Check-In still shows Recovery phone.
-- Shared mode ignores/restores no phone value on the shared device, preserving the rapid kiosk flow.
-- Next Guest and automatic 15-second reset are preserved.
-- Shared-mode responsive CSS widens the tablet/iPad card, reduces top whitespace, keeps readable form width, and preserves large touch targets.
-
-Preserved:
-- Check-In availability/adminTest enforcement, including ordinary shared URL blocked while Closed/Scheduled and authenticated shared admin-test bypass only for admins who can manage the event.
-- Eventbrite untouched CSV preview/import, Order ID repeat-import safety, party-size/Total guests behavior, guest content, theme accents, and inactive i-Pitch digital voting.
-
-Validation:
-- Focused regression tests passed:
-  `npm test -- --run src/test/guestEventCheckIn.test.tsx src/test/guestContentList.test.tsx src/test/adminEventCheckInsImportWorkflow.test.tsx src/test/adminEventDetail.test.tsx src/test/adminEventForm.test.tsx src/test/adminEceForm.test.tsx`
-- Full Vitest suite passed:
-  `npm test -- --run`
-  Result: 24 test files passed, 187 tests passed.
-- Production build passed:
-  `npm run build`
-  Result: TypeScript and Vite build passed. Vite reported the existing large-chunk warning.
-- Test/build commands required escalation because Node hit a Windows sandbox `EPERM` while resolving the user-profile path inside the restricted sandbox.
-
-Product Owner acceptance after deployment:
-1. Open `/events/ipitch-092026` on a phone and confirm event-owned navigation works and no hamburger appears.
-2. Open `/events/ipitch-092026/check-in` on a personal device and confirm no hamburger appears, Recovery phone still appears, and normal guest Check-In behavior is unchanged.
-3. Open `/events/ipitch-092026/check-in?mode=shared` on the actual front-table iPad and confirm no hamburger, shared copy, no Recovery phone, wider/tablet layout, and normal lookup/check-in.
-4. Complete one shared-device Check-In and confirm Next Guest plus automatic 15-second reset clear the device.
-5. While public Check-In is Closed/Scheduled, verify ordinary shared URL is blocked and `/events/ipitch-092026/check-in?mode=shared&adminTest=1` works only for an authorized admin session.
-6. Inspect Admin Event, Admin Check-In, Edit Event, event eCe/content setup, and event queue/group-order screens and confirm there is no hamburger and Back/Event navigation prevents dead ends.
-7. Re-smoke Eventbrite import, party-size confirmation, Total guests, Guests Represented, Agenda, Finalists, Judges, theme accents, and inactive i-Pitch voting.
-
-Git/deployment:
-- Implementation commit SHA: `039ef6e`.
-- Handoff update committed after the implementation commit.
-- Push to `origin/main`: complete through `f0fd59c`.
-- Manual deploy: not requested. Normal automated deployment from `main` is expected.
-
 ## Current Slice
 
-Polish the production i-Pitch event/check-in experience around two concrete issues discovered during acceptance:
+Final production cleanup for the i-Pitch front-table shared iPad Check-In kiosk.
 
-1. focused event guest/admin workflows should not show the global hamburger menu;
-2. shared-device Check-In already has a dedicated URL/mode and reset behavior, but needs shared-device-specific copy and tablet presentation for the front-table iPad.
+The prior focused navigation/shared-device slice is implemented and was visually tested by the Product Owner on the actual iPad. Preserve it. This is a very small follow-up based on the physical-device acceptance test.
 
-Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Do not broaden into a general navigation redesign or a new kiosk platform.
+Read `AGENTS.md` first. Implementation, validation, FILE update, commit, and push to `main` are authorized for this bounded slice. Do not broaden into a new kiosk platform or change the personal-phone Check-In experience.
 
-The previous Check-In availability/admin-test slice is complete and pushed as `e68d1fb`. Preserve it.
-
-## Production Context
+## Production Context / Physical Acceptance Completed
 
 Event:
 - University of Akron Research Foundation
@@ -78,170 +16,162 @@ Event:
 - slug `ipitch-092026`
 - September 3, 2026, 5:00-8:00 PM ET
 
-Accepted production behavior to preserve:
+The actual front-table iPad was tested successfully with:
+
+`/events/ipitch-092026/check-in?mode=shared`
+
+Verified on the physical iPad:
+- shared tablet layout uses the screen well;
+- no hamburger/menu;
+- shared copy says `Enter your name or email to find your registration.`;
+- Recovery phone is absent;
+- imported Eventbrite registration lookup/check-in works;
+- party-size behavior works (physical test: Meredith + 1 guest produced `Total guests: 2`);
+- confirmation countdown and Next Guest are present;
+- the iPad can use Safari `Add to Home Screen` with `Open as Web App`, which removes Safari browser chrome;
+- iOS Guided Access can then lock the clean qME web-app window, producing the desired physical kiosk setup without drawing disabled regions over Safari controls.
+
+The intended day-of physical kiosk setup is therefore:
+
+**qME shared-device URL -> Add to Home Screen / Open as Web App -> launch Home Screen web app -> Guided Access**
+
+No PWA/manifest work is required for tomorrow based on this successful physical test.
+
+## Product Direction: Shared Mode Is a Dedicated Kiosk Experience
+
+`mode=shared` is not simply the normal personal guest page on a larger screen. It is a dedicated front-table kiosk flow using shared underlying Check-In capabilities.
+
+The kiosk loop should be intentionally closed:
+
+**Find registration -> Check in -> confirmation -> Next Guest / 15-second automatic reset -> Find registration**
+
+A person using the shared iPad should not navigate into the event companion from this device.
+
+Personal-phone Check-In remains the guest's event-companion flow and must retain its existing behavior/copy where not explicitly changed below.
+
+## Part A — Remove Back to Event From Shared Mode
+
+When `mode=shared` (and alias `shared=1` if retained), remove `Back to Event` everywhere in the shared Check-In experience, including:
+- initial registration lookup screen;
+- expanded self-registration fallback;
+- completed confirmation screen;
+- closed/scheduled/unavailable shared-device state if a Back to Event action is currently rendered there.
+
+The shared kiosk must not offer a path into the event companion.
+
+Do **not** remove Back to Event from normal/personal guest Check-In. This is shared-device-only behavior.
+
+Preserve:
+- Next Guest;
+- 15-second automatic reset;
+- clearing prior guest/session state;
+- admin-test indicator when applicable;
+- availability enforcement.
+
+## Part B — Shared-Device Post-Check-In Instruction
+
+The approved personal-phone i-Pitch instruction remains:
+
+`Please go to the check-in desk by the front entrance, show this check-in confirmation, and receive your evening's event package.`
+
+That wording is incorrect on the shared front-table iPad because the guest is already standing at the check-in desk.
+
+For `mode=shared`, use a kiosk-specific version of the post-check-in fulfillment instruction while preserving qME's generated personalized/party-size confirmation.
+
+Target shared wording:
+
+`Please show this confirmation to the person at the desk to receive your evening's event package.`
+
+Example rendered result for a party of two:
+
+`Thanks, Meredith! You and your 1 guest are checked in. Please show this confirmation to the person at the desk to receive your evening's event package.`
+
+Then continue to show:
+- `Total guests: 2`
+- countdown such as `Next guest in 10 seconds...`
+- `Next Guest`
+
+Do not change the configured event-level post-check-in instruction stored for the personal-phone flow just to achieve the shared wording. Shared-device presentation should adapt the instruction for the kiosk context without altering the approved phone experience.
+
+Keep this implementation bounded. If the cleanest reusable design is a small shared-device instruction override/fallback in the Check-In presentation layer, use that rather than introducing a broad content/configuration system in this slice.
+
+## Part C — Preserve Physical Kiosk Setup
+
+Do not add unnecessary install/PWA work. The Product Owner confirmed on the actual iPad that Safari's Add to Home Screen -> Open as Web App launches qME without Safari chrome, and Guided Access then locks the screen cleanly.
+
+Document the day-of operator setup in the handoff:
+1. Open the primary shared URL.
+2. Safari Share -> Add to Home Screen.
+3. Enable `Open as Web App`.
+4. Launch the resulting i-Pitch Check-In Home Screen icon.
+5. Start Guided Access on that clean web-app window.
+6. Do not draw disabled touch regions over the qME screen.
+
+Primary production kiosk URL:
+
+`/events/ipitch-092026/check-in?mode=shared`
+
+Pre-event authenticated test URL remains:
+
+`/events/ipitch-092026/check-in?mode=shared&adminTest=1`
+
+Do not weaken the permission-gated admin-test bypass.
+
+## Preserve Accepted Production Behavior
+
+Preserve all currently accepted behavior:
 - untouched Eventbrite CSV preview/import;
 - Order ID repeat-import safety;
 - party-size handling and `Total guests`;
 - separate `Checked In` and `Guests Represented` counts;
-- Auto Check-In plus self-registration fallback;
-- configurable Closed / Open manually / Scheduled availability;
+- Auto Check-In and self-registration fallback;
+- Closed / Open manually / Scheduled Check-In availability;
 - authenticated `adminTest=1` bypass only for admins who can manage the event;
 - Upcoming / Live / Ended guest event state;
 - guest event theme;
 - Agenda / Finalists / Judges content;
 - digital voting inactive for i-Pitch;
-- shared-device Next Guest / 15-second reset behavior.
-
-## Part A — Remove Hamburger From Focused Event Workflows
-
-Product direction: once a user is inside an event-focused workflow, navigation should come from the event workflow itself rather than the global hamburger menu.
-
-Remove/hide the hamburger menu from the focused event surfaces below, provided each page retains an explicit safe navigation path such as Back to Event / Back / tabs/buttons already present.
-
-### Guest event surfaces
-At minimum:
-- `/events/:eventSlug` event companion;
-- `/events/:eventSlug/check-in`;
-- guest event content/detail pages reached from the event companion;
-- shared-device Check-In.
-
-The shared-device route must not expose the hamburger/menu because the iPad will be physically locked to qME with iOS Guided Access.
-
-### Admin event surfaces
-At minimum:
-- Admin Event detail;
-- Admin Event Check-In tabs/settings/history/live view;
-- Edit Event while entered from an event context;
-- Edit/Add event eCe/content screens where the existing event/back navigation is sufficient.
-
-Do **not** delete the global Header/menu component or remove it from unrelated qME/admin areas. This is scoped event-workflow presentation, not a platform-wide navigation rewrite.
-
-Verify no page becomes a dead end after hiding the menu.
-
-## Part B — Dedicated Shared-Device URL
-
-The existing shared-device mode is the intended front-table iPad path and must remain supported:
-
-`/events/:eventSlug/check-in?mode=shared`
-
-Alias `shared=1` may remain supported if already present, but `mode=shared` is the documented/primary URL.
-
-For pre-event authenticated testing while public Check-In is closed/scheduled:
-
-`/events/:eventSlug/check-in?mode=shared&adminTest=1`
-
-The admin-test bypass remains permission-gated exactly as implemented in the prior slice; copying the URL must not grant an ordinary guest the bypass.
-
-Shared mode must preserve:
-- Next Guest behavior;
-- automatic reset after 15 seconds following a completed shared-device guest session;
-- clearing the prior guest/session from the shared device;
-- no hamburger/menu.
-
-## Part C — Shared-Device Copy
-
-The current generic copy `Find your registration to self check in.` is written for a guest on their own phone and is not appropriate for the front-table shared iPad.
-
-When `mode=shared`, use shared-device-specific copy such as:
-
-**Event Check-In**
-
-`Enter your name or email to find your registration.`
-
-Keep the existing `Find your registration` field heading/search behavior unless there is a strong accessibility/duplication reason to refine it.
-
-The goal is to tell the person standing at the check-in table what to do, not describe a personal-device self-check-in journey.
-
-Do not change the approved post-check-in i-Pitch fulfillment instruction:
-
-`Please go to the check-in desk by the front entrance, show this check-in confirmation, and receive your evening's event package.`
-
-## Part D — Hide Recovery Phone on Shared Device
-
-Do not show the optional Recovery phone field/helper text in `mode=shared`.
-
-Reason:
-- it adds friction to a communal front-table device;
-- the shared device should be optimized for rapid lookup/check-in;
-- recovery-phone product purpose remains a separate future backlog decision;
-- ordinary personal-device behavior should remain unchanged in this slice.
-
-Ensure shared-device lookup, imported-registration claim, self-registration fallback, and reset flows continue to work without the visible phone field.
-
-## Part E — Tablet / iPad Shared-Device Layout
-
-The current shared-device Check-In renders like a narrow phone card floating in a large iPad viewport, with substantial unused space.
-
-For `mode=shared` only, create a tablet/kiosk presentation that uses the viewport more effectively while remaining visually contained and consistent with qME/i-Pitch theming.
-
-Desired behavior:
-- substantially reduce unnecessary top whitespace;
-- allow a wider content/card width appropriate for an iPad in portrait or landscape;
-- use the available viewport height more naturally;
-- keep forms readable rather than stretching controls edge-to-edge across the entire screen;
-- retain generous touch targets;
-- preserve the i-Pitch theme accents and existing semantic success/error colors;
-- remain responsive on common tablet widths and avoid breaking phone guest Check-In.
-
-Do not hard-code one exact iPad pixel dimension. Use shared-mode responsive CSS/layout.
-
-The Product Owner's acceptance reference is the actual iPad/table setup, not desktop emulation alone.
-
-## Part F — Relationship to Check-In Availability
-
-Preserve the previous availability model:
-- event companion may be public while Check-In is Closed/Scheduled;
-- ordinary shared-device URL obeys public Check-In availability;
-- authenticated `mode=shared&adminTest=1` can be used before the event for authorized testing;
-- scheduled/manual/closed state remains enforced by the service layer, not only presentation.
-
-Do not weaken or bypass availability enforcement to make shared mode easier.
+- no hamburger on focused event guest/admin workflows;
+- shared-device copy/layout;
+- Recovery phone hidden only in shared mode;
+- Next Guest / 15-second reset.
 
 ## Validation
 
 At minimum:
 - TypeScript;
-- focused GuestEventCheckIn tests for shared-mode copy, hidden Recovery phone, no menu, reset behavior, and admin-test compatibility;
-- guest event/detail tests proving focused guest event pages no longer render hamburger navigation and retain Back/Event paths;
-- admin event/check-in/form/eCe tests as appropriate proving focused admin pages no longer render hamburger navigation and retain explicit navigation;
-- phone/personal guest Check-In remains unchanged where intended;
-- shared URL without admin permission still obeys closed/scheduled availability;
-- shared + authenticated adminTest still bypasses availability exactly as prior slice;
+- focused GuestEventCheckIn tests proving shared mode has no Back to Event on initial, self-registration, completion, and unavailable states as applicable;
+- tests proving normal/personal Check-In still has Back to Event where expected;
+- tests proving shared post-check-in wording differs appropriately from the configured personal-phone instruction;
+- party-size confirmation remains correct in shared mode;
+- Next Guest and 15-second reset remain intact;
+- shared ordinary URL still obeys closed/scheduled availability;
+- shared `adminTest=1` remains permission-gated;
 - full test suite;
 - production Vite build.
 
-## Product Owner Acceptance
+## Product Owner Acceptance After Deployment
 
-After deployment:
-
-1. Open normal guest event companion on phone and confirm no hamburger appears; event content/navigation still works.
-2. Open normal personal-device Check-In and confirm no hamburger appears and normal personal copy/recovery behavior remains otherwise unchanged.
-3. Open front-table shared URL:
-   `/events/ipitch-092026/check-in?mode=shared`
-4. On the actual iPad, confirm:
-   - no hamburger;
-   - shared-device copy says to enter name/email;
-   - Recovery phone is absent;
-   - layout uses the tablet screen substantially better than the previous narrow centered phone card;
-   - search/imported registration/self-registration can be completed normally when Check-In is open.
-5. Complete one shared-device Check-In and confirm Next Guest + automatic 15-second reset still clears the device for the next person.
-6. While public Check-In is closed/scheduled, verify ordinary shared URL is blocked and authenticated:
-   `/events/ipitch-092026/check-in?mode=shared&adminTest=1`
-   still supports authorized testing.
-7. Inspect Admin Event, Admin Check-In, Edit Event, and event eCe/content setup flows and confirm hamburger is gone but explicit Back/Event navigation prevents dead ends.
-8. Re-smoke Eventbrite party-size confirmation, Total guests, Guests Represented, Agenda, Finalists, Judges, and theme.
+On the actual iPad Home Screen web app:
+1. Open the shared Check-In kiosk and confirm there is no Back to Event action anywhere in the kiosk flow.
+2. Find and check in one imported registration.
+3. Confirm personalized/party-size wording and `Total guests` remain correct.
+4. Confirm the shared fulfillment instruction says to show the confirmation to the person at the desk, rather than telling the guest to go to the front check-in desk.
+5. Confirm `Next Guest` works.
+6. Let one completed session sit untouched and confirm the 15-second automatic reset returns to a clean registration lookup screen.
+7. Confirm the normal personal-phone Check-In still uses the approved front-entrance instruction and retains Back to Event.
+8. Restore/confirm the intended production Check-In availability schedule after testing.
 
 ## Handoff
 
 Update this FILE with:
-- exact guest/admin event surfaces where hamburger was removed;
-- documented shared-device URL(s);
-- shared-device copy/layout behavior;
-- confirmation Recovery phone is hidden only in shared mode;
-- files changed;
+- exact shared-mode Back to Event removals;
+- exact shared-device completion copy behavior;
+- confirmation personal-phone copy/navigation were preserved;
 - tests/build results;
-- any navigation dead-end issue found/resolved;
-- commit SHA;
-- concise Product Owner acceptance steps.
+- files changed;
+- implementation commit SHA;
+- push status;
+- concise final iPad acceptance steps.
 
-Do not mark the slice accepted until the shared-device presentation is visually checked on the actual iPad.
+Implementation, validation, FILE update, commit, and push to `main` are authorized for this bounded slice.

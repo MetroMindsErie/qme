@@ -106,10 +106,45 @@ describe('GuestEventDetail', () => {
   });
 
   it('renders the event home after loading for a fresh unrecognized guest', async () => {
-    renderEventDetail();
+    const { container } = renderEventDetail();
 
     expect(await screen.findByText('SOTC Test Event')).toBeInTheDocument();
     expect(screen.getByText('Event Check-In')).toBeInTheDocument();
+    expect(container.querySelector('.ed-card-themed')).toBeNull();
+  });
+
+  it('applies valid guest event theme accents without changing semantic checked-in status', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+      image_url: '/images/ipitch-logo.png',
+      metadata: {
+        ...event.metadata,
+        guest_theme: {
+          primary_accent: '#4B2E83',
+          secondary_accent: '#2563EB',
+          highlight_accent: '#F59E0B',
+          header_image_url: '/images/ipitch-banner.jpg',
+        },
+      },
+    });
+    localStorage.setItem('qme:eventCheckIn:event-1', JSON.stringify({
+      id: completedCheckIn.id,
+      firstName: completedCheckIn.first_name,
+      lastName: completedCheckIn.last_name,
+    }));
+
+    const { container } = renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('i-Pitch')).toBeInTheDocument();
+    const themedCard = container.querySelector<HTMLElement>('.ed-card-themed');
+    expect(themedCard).not.toBeNull();
+    expect(themedCard?.style.getPropertyValue('--guest-event-primary')).toBe('#4B2E83');
+    expect(themedCard?.style.getPropertyValue('--guest-event-secondary')).toBe('#2563EB');
+    expect(themedCard?.style.getPropertyValue('--guest-event-highlight')).toBe('#F59E0B');
+    expect(container.querySelector('.ed-header-image')).not.toBeNull();
+    expect(screen.getByText('CHECKED IN')).toHaveClass('ed-badge-active');
   });
 
   it('renders after adopting an existing checked-in guest from browser storage', async () => {

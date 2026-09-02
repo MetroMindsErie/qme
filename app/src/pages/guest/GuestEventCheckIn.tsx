@@ -16,6 +16,7 @@ import {
 import { formatCompletedCheckInConfirmation, formatTotalGuests, getCheckInPartySize, getSearchResultPartySize } from '../../lib/checkInPartySize';
 import { getEventCheckInConfig } from '../../lib/eventConfig';
 import { getEventBySlug } from '../../lib/eventService';
+import { buildGuestEventThemeStyle, getGuestEventTheme, hasGuestEventTheme } from '../../lib/eventTheme';
 import { clearGuestSessionToken } from '../../lib/guestSessionService';
 import { isSotcEventSlug } from '../../lib/sotc';
 import type { EventCheckIn, ImportedRegistrationSearchResult, QEvent } from '../../types';
@@ -433,10 +434,16 @@ export default function GuestEventCheckIn({
   const eventLogoSrc = isSotcEventSlug(event.slug) || isSotcEventSlug(eventSlug)
     ? '/images/sotc-logo.png'
     : event.image_url || '/images/qmeFirstLogo.jpg';
+  const guestTheme = getGuestEventTheme(event);
+  const isThemed = hasGuestEventTheme(guestTheme);
+  const guestThemeStyle = buildGuestEventThemeStyle(guestTheme);
 
   if (!checkInConfig.enabled) {
     return (
-      <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+      <div
+        className={`card card-scrollable guest-event-card ${isThemed ? 'guest-event-themed' : ''}`}
+        style={{ minHeight: '600px', maxHeight: '90vh', ...guestThemeStyle }}
+      >
         <Header
           logoSrc={eventLogoSrc}
           titleLine1="EVENT"
@@ -463,7 +470,10 @@ export default function GuestEventCheckIn({
   }
 
   return (
-    <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
+    <div
+      className={`card card-scrollable guest-event-card ${isThemed ? 'guest-event-themed' : ''}`}
+      style={{ minHeight: '600px', maxHeight: '90vh', ...guestThemeStyle }}
+    >
       <Header
         logoSrc={eventLogoSrc}
         titleLine1="CHECK"

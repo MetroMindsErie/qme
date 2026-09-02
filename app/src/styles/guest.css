@@ -244,6 +244,33 @@
   flex-shrink: 0;
 }
 
+.guest-event-themed {
+  --guest-event-primary: #5B4FCE;
+  --guest-event-secondary: #4A3FB8;
+  --guest-event-highlight: #F59E0B;
+}
+
+.guest-event-themed .hdr {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 4px solid transparent;
+  border-image: linear-gradient(90deg, var(--guest-event-primary), var(--guest-event-secondary), var(--guest-event-highlight)) 1;
+}
+
+.guest-event-themed .headline {
+  color: #1d2f46;
+}
+
+.guest-event-themed .headline::after {
+  content: '';
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--guest-event-primary), var(--guest-event-highlight));
+}
+
 @media (max-width: 420px) {
   .registration-result-row {
     flex-direction: column;

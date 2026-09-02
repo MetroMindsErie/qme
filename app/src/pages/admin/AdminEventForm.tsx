@@ -198,6 +198,44 @@ export default function AdminEventForm() {
     });
   }
 
+  function updateGuestEventThemeSettings(
+    patch: Partial<{
+      primaryAccent: string;
+      secondaryAccent: string;
+      highlightAccent: string;
+      headerImageUrl: string;
+    }>
+  ) {
+    setForm((prev) => {
+      const metadata = asRecord(prev.metadata);
+      const existingTheme = asRecord(metadata.guest_theme || metadata.guestTheme);
+      const nextTheme = {
+        primaryAccent: patch.primaryAccent ?? (typeof existingTheme.primary_accent === 'string' ? existingTheme.primary_accent : ''),
+        secondaryAccent: patch.secondaryAccent ?? (typeof existingTheme.secondary_accent === 'string' ? existingTheme.secondary_accent : ''),
+        highlightAccent: patch.highlightAccent ?? (typeof existingTheme.highlight_accent === 'string' ? existingTheme.highlight_accent : ''),
+        headerImageUrl: patch.headerImageUrl ?? (typeof existingTheme.header_image_url === 'string' ? existingTheme.header_image_url : ''),
+      };
+      const guestTheme: Record<string, string> = {};
+      if (nextTheme.primaryAccent.trim()) guestTheme.primary_accent = nextTheme.primaryAccent.trim();
+      if (nextTheme.secondaryAccent.trim()) guestTheme.secondary_accent = nextTheme.secondaryAccent.trim();
+      if (nextTheme.highlightAccent.trim()) guestTheme.highlight_accent = nextTheme.highlightAccent.trim();
+      if (nextTheme.headerImageUrl.trim()) guestTheme.header_image_url = nextTheme.headerImageUrl.trim();
+
+      const nextMetadata = { ...metadata };
+      if (Object.keys(guestTheme).length) {
+        nextMetadata.guest_theme = guestTheme;
+      } else {
+        delete nextMetadata.guest_theme;
+        delete nextMetadata.guestTheme;
+      }
+
+      return {
+        ...prev,
+        metadata: nextMetadata,
+      };
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim() || !form.slug?.trim()) {
@@ -286,6 +324,14 @@ export default function AdminEventForm() {
     updated_at: '',
     metadata: form.metadata,
   });
+  const formMetadata = asRecord(form.metadata);
+  const formGuestTheme = asRecord(formMetadata.guest_theme || formMetadata.guestTheme);
+  const guestThemeConfig = {
+    primaryAccent: typeof formGuestTheme.primary_accent === 'string' ? formGuestTheme.primary_accent : '',
+    secondaryAccent: typeof formGuestTheme.secondary_accent === 'string' ? formGuestTheme.secondary_accent : '',
+    highlightAccent: typeof formGuestTheme.highlight_accent === 'string' ? formGuestTheme.highlight_accent : '',
+    headerImageUrl: typeof formGuestTheme.header_image_url === 'string' ? formGuestTheme.header_image_url : '',
+  };
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
@@ -368,6 +414,54 @@ export default function AdminEventForm() {
             onChange={(e) => handleChange('image_url', e.target.value)}
             placeholder="/images/event-banner.jpg"
           />
+        </div>
+
+        <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', marginTop: '0.25rem', marginBottom: '1rem', background: '#f8fafc' }}>
+          <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Guest Event Theme</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '0.75rem' }}>
+            <div style={fieldStyle}>
+              <label style={labelStyle}>Primary Accent</label>
+              <input
+                style={inputStyle}
+                value={guestThemeConfig.primaryAccent ?? ''}
+                onChange={(e) => updateGuestEventThemeSettings({ primaryAccent: e.target.value })}
+                placeholder="#4B2E83"
+                pattern="#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})"
+              />
+            </div>
+            <div style={fieldStyle}>
+              <label style={labelStyle}>Secondary Accent</label>
+              <input
+                style={inputStyle}
+                value={guestThemeConfig.secondaryAccent ?? ''}
+                onChange={(e) => updateGuestEventThemeSettings({ secondaryAccent: e.target.value })}
+                placeholder="#2563EB"
+                pattern="#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})"
+              />
+            </div>
+            <div style={fieldStyle}>
+              <label style={labelStyle}>Highlight</label>
+              <input
+                style={inputStyle}
+                value={guestThemeConfig.highlightAccent ?? ''}
+                onChange={(e) => updateGuestEventThemeSettings({ highlightAccent: e.target.value })}
+                placeholder="#F59E0B"
+                pattern="#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})"
+              />
+            </div>
+          </div>
+          <div style={{ ...fieldStyle, marginBottom: 0 }}>
+            <label style={labelStyle}>Optional Header/Banner Image URL</label>
+            <input
+              style={inputStyle}
+              value={guestThemeConfig.headerImageUrl ?? ''}
+              onChange={(e) => updateGuestEventThemeSettings({ headerImageUrl: e.target.value })}
+              placeholder="/images/event-banner.jpg"
+            />
+          </div>
+          <p style={{ margin: '0.65rem 0 0', color: '#64748b', fontSize: '0.84rem', fontWeight: 700, lineHeight: 1.45 }}>
+            These accents skin the guest event companion only. Status colors such as checked-in, warning, and error remain qME semantic colors.
+          </p>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.75rem' }}>

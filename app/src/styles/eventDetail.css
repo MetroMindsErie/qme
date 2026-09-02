@@ -11,6 +11,14 @@
   --qme-green:        #00C853;
 }
 
+.ed-card-themed {
+  --guest-event-primary: var(--qme-purple);
+  --guest-event-secondary: var(--qme-purple-dark);
+  --guest-event-highlight: #F59E0B;
+  --qme-purple: var(--guest-event-primary);
+  --qme-purple-light: color-mix(in srgb, var(--guest-event-primary) 11%, #ffffff);
+}
+
 /* ── Card overrides ──────────────────────────────────────────
    The base .card has aspect-ratio, justify-content: space-between,
    and overflow-y: auto. We need full-height flex-column layout.
@@ -45,7 +53,37 @@
   flex-shrink: 0;
 }
 
+.ed-card-themed .ed-header {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 0;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--guest-event-primary) 12%, #ffffff) 0%, #ffffff 48%),
+    linear-gradient(90deg, color-mix(in srgb, var(--guest-event-secondary) 10%, #ffffff), color-mix(in srgb, var(--guest-event-highlight) 14%, #ffffff));
+}
+
+.ed-card-themed .ed-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--guest-event-primary), var(--guest-event-secondary), var(--guest-event-highlight));
+}
+
+.ed-header-image {
+  position: absolute;
+  inset: 0;
+  background-position: center;
+  background-size: cover;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
 .ed-header-top {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -122,6 +160,8 @@
 
 /* ── Stats row ──────────────────────────────────────────────── */
 .ed-stats {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 0;
@@ -184,6 +224,12 @@
   flex-shrink: 0;
 }
 
+.ed-card-themed .ed-section-header {
+  border-left: 4px solid var(--guest-event-primary);
+  padding-left: 12px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--guest-event-primary) 7%, #ffffff), #ffffff 70%);
+}
+
 .ed-section-title {
   font-size: 0.68rem;
   font-weight: 800;
@@ -234,6 +280,12 @@
   padding: 5px 2px 0;
 }
 
+.ed-card-themed .ed-home-section-title {
+  color: var(--guest-event-primary);
+  padding-bottom: 4px;
+  border-bottom: 2px solid color-mix(in srgb, var(--guest-event-secondary) 30%, #ffffff);
+}
+
 .ed-activity-card {
   display: flex;
   align-items: center;
@@ -277,6 +329,11 @@
 .ed-activity-card.ed-card-clickable:hover {
   border-color: #c0b9f0;
   background: #faf9ff;
+}
+
+.ed-card-themed .ed-activity-card.ed-card-clickable:hover:not(.ed-card-completed) {
+  border-color: color-mix(in srgb, var(--guest-event-secondary) 48%, #ffffff);
+  background: color-mix(in srgb, var(--guest-event-primary) 6%, #ffffff);
 }
 
 .ed-activity-card.ed-card-clickable:active {
@@ -491,6 +548,11 @@
   text-underline-offset: 2px;
 }
 
+.ed-card-themed .ed-home-item-link {
+  color: var(--guest-event-primary);
+  text-decoration-color: color-mix(in srgb, var(--guest-event-highlight) 70%, #ffffff);
+}
+
 .ed-home-item-meta {
   font-weight: 700;
   color: var(--qme-purple);
@@ -653,6 +715,10 @@
 
 .ed-badge-active   { background: #e8fdf0; color: var(--qme-green); }
 .ed-badge-featured { background: #fff8e1; color: #E65100; }
+.ed-card-themed .ed-badge-featured {
+  background: color-mix(in srgb, var(--guest-event-highlight) 18%, #ffffff);
+  color: #8a3a00;
+}
 
 /* ── Right side of activity card ────────────────────────────── */
 .ed-activity-right {

@@ -2,186 +2,96 @@
 
 ## Current Slice
 
-Add a **small reusable guest-event theming layer** so the qME guest experience can visually inherit event branding without becoming a one-off custom site per event.
+Reusable guest-event theming is implemented for the bounded "qME owns the UX; the event supplies the skin" slice.
 
-Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
+No schema migration is required. Theme configuration lives in existing `events.metadata`.
 
-This work follows successful production acceptance of the i-Pitch untouched Eventbrite import and party-size guest flow. Preserve all accepted registration/check-in behavior.
+## Theme Metadata Shape
 
-## Product Principle
+Event theme metadata is optional:
 
-> **qME owns the UX; the event supplies the skin.**
+```json
+{
+  "guest_theme": {
+    "primary_accent": "#4B2E83",
+    "secondary_accent": "#2563EB",
+    "highlight_accent": "#F59E0B",
+    "header_image_url": "/images/optional-approved-banner.jpg"
+  }
+}
+```
 
-Do not hard-code `ipitch` CSS/branches. Add a bounded configuration-driven theme capability that can be reused by SOTC, i-Pitch, and future events.
+Color values are applied only when they are valid 3- or 6-digit hex colors. Invalid/missing colors fall back safely. Header/banner image URLs render only when they are relative paths or `http`/`https` URLs.
 
-The goal is not a full white-label/theme-builder system tonight. The goal is to make the guest event companion feel visibly connected to the event's own visual identity using a few safe event-level branding controls.
+Unthemed events do not receive the themed wrapper class or CSS variables, so the existing/default qME guest event look remains intact.
 
-## i-Pitch Visual Direction
+## Admin Path
 
-The supplied i-Pitch/UARF program and the approved QR check-in sign establish the visual direction:
-- i-Pitch logo already configured;
-- strong white base;
-- purple accent;
-- bright blue accent;
-- orange/yellow highlight;
-- clean, bold section hierarchy;
-- keep qME semantic colors for states such as CHECKED IN / success rather than recoloring status meaning arbitrarily.
-
-The current guest page is functionally accepted but still reads mostly as generic qME with an i-Pitch logo. The desired result should feel more like the i-Pitch program/sign while preserving qME layout, accessibility, and interaction patterns.
-
-## Part A — Event Theme Metadata
-
-Inspect the existing event metadata/config helpers before adding a new structure. Prefer existing metadata JSON; no schema migration should be needed unless there is a compelling existing constraint.
-
-Add/read a small event-theme configuration supporting at minimum, where safe:
-- primary accent color;
-- secondary accent color;
-- highlight/accent color;
-- optional header/banner/decorative image URL;
-- existing event/logo image remains the primary logo mechanism rather than duplicating logo configuration.
-
-If naming needs to differ to fit existing config conventions, keep it generic and document it.
-
-Theme configuration must be optional. Events without theme metadata must render exactly/safely with the existing qME default styling.
-
-Validate color strings before applying them. Invalid/missing theme data must fall back safely rather than breaking rendering.
-
-## Part B — Admin Configuration
-
-Expose the bounded theme controls somewhere natural in existing Event Admin/Edit Event setup rather than requiring SQL or direct metadata editing.
-
-Keep the form simple. Suggested section name:
-- `Guest Event Theme`
-
-Suggested fields:
+Normal event admin now includes a `Guest Event Theme` section on Edit/Create Event:
 - Primary Accent
 - Secondary Accent
 - Highlight
 - Optional Header/Banner Image URL
 
-Do not build a color-picker design system if plain validated color inputs are faster/safer. A small preview/swatches are optional only if trivial.
+This is event-level configuration only. Organization administration was not broadened.
 
-Existing Event logo/image configuration remains separate and should continue to work.
+## Guest Surfaces Affected
 
-## Part C — Apply Theme to Guest Event Companion
+The theme is applied selectively to guest-facing companion surfaces:
+- `/events/:eventSlug` event home header, section header, section title accents, non-semantic home links/actions, and restrained hover accents.
+- `/events/:eventSlug/check-in` scoped header/headline accent treatment.
 
-Apply event theme only to restrained guest-facing decorative/accent surfaces where it improves identity without changing semantic meaning.
+Semantic/status colors are preserved:
+- checked-in/success remains green;
+- waiting/warning/error/removal messaging remains in the existing semantic color paths;
+- the CHECKED IN badge keeps `ed-badge-active`.
 
-Priorities:
+Production-accepted Check-In/import behavior was preserved, including Eventbrite preview/import, party-size copy/counts, shared-device no-menu mode, Next Guest, 15-second reset, post-check-in instructions, child-card summary/full-detail behavior, and inactive production voting.
 
-### 1. Guest event header
+## Recommended i-Pitch Values
 
-Make the top of `/events/:eventSlug` visibly event-branded using the configured accents and optional decorative/header asset while preserving:
-- event logo;
-- event name;
-- location/date/time/status information;
-- responsive mobile layout;
-- readable contrast.
+Configure `ipitch-092026` through normal admin after the automated deployment from `main`:
+- Primary Accent: `#4B2E83`
+- Secondary Accent: `#2563EB`
+- Highlight: `#F59E0B`
+- Optional Header/Banner Image URL: leave blank unless an already-approved banner/program image URL is available.
 
-A subtle accent band/rule/background treatment inspired by the i-Pitch sign/program is preferred over a heavy hero redesign.
+These are approximate values chosen to align with the i-Pitch/UARF program/sign direction. They are not asserted as official UARF brand standards and can be adjusted by the Product Owner in admin after deployment.
 
-### 2. Section/content accents
+## Files Changed
 
-Allow Agenda, Finalists, Judges, and other Event Feature sections/cards to pick up restrained theme accents, for example:
-- section heading rule/accent block;
-- small border/highlight treatment;
-- non-semantic link/action accent.
-
-Do not make every card a different color or reduce readability.
-
-### 3. Ordinary interactive accents
-
-Where qME currently uses generic decorative/action accent colors, allow the event primary accent to influence appropriate guest links/buttons **only where this does not conflict with semantic states**.
-
-Preserve semantic/status meanings:
-- checked-in/success green remains semantic;
-- destructive/error red remains semantic;
-- warning states remain meaningful;
-- do not recolor status badges merely for branding.
-
-## Part D — Configure Actual i-Pitch Theme
-
-After implementation, provide exact normal-admin steps to configure i-Pitch using colors visually aligned with the supplied program/sign.
-
-Do not require exact color matching if the source artwork does not expose canonical hex values. Reasonable approximations are acceptable, but document them as chosen theme values rather than claiming they are official UARF brand standards.
-
-Current visual target from the sign/program is approximately:
-- purple primary;
-- bright blue secondary;
-- orange/yellow highlight.
-
-The Product Owner should be able to adjust the values after deployment through admin without code.
-
-Do not add a new bespoke i-Pitch artwork file unless an already-available approved image can be reused cleanly. The existing i-Pitch logo and current event assets are sufficient for this slice.
-
-## Preserve Production-Accepted i-Pitch Behavior
-
-Do not regress:
-- untouched Eventbrite CSV recognition/preview/import;
-- imported 50 registrations / 66 guests represented model;
-- Order ID repeat-import safety;
-- party-size check-in copy;
-- `Total guests: N` on success and event-home checked-in card;
-- separate Checked In vs Guests Represented admin counts;
-- Auto Check-In;
-- self-registration;
-- shared iPad no-menu mode;
-- Next Guest + 15-second reset;
-- post-check-in front-entrance/package instruction;
-- Agenda expanded on home;
-- Finalists child cards summary -> full detail;
-- Judges child-card content;
-- reusable reset;
-- SOTC behavior;
-- digital voting inactive/not visible for Thursday.
+- `app/src/lib/eventTheme.ts`
+- `app/src/pages/admin/AdminEventForm.tsx`
+- `app/src/pages/guest/GuestEventDetail.tsx`
+- `app/src/pages/guest/GuestEventCheckIn.tsx`
+- `app/src/styles/eventDetail.css`
+- `app/src/styles/guest.css`
+- `app/src/test/eventTheme.test.ts`
+- `app/src/test/adminEventForm.test.tsx`
+- `app/src/test/guestEventDetail.test.tsx`
+- `app/src/test/guestEventCheckIn.test.tsx`
 
 ## Validation
 
-At minimum:
-- event with no theme metadata renders existing/default guest UI without errors;
-- valid theme metadata applies only to intended decorative/accent surfaces;
-- invalid color input safely falls back/rejects;
-- admin theme fields persist/reload correctly;
-- guest header remains readable/mobile-safe;
-- Check-In semantic success/error/status colors are not accidentally overwritten;
-- Agenda/Finalists/Judges content behavior/routing remains unchanged;
-- TypeScript;
-- focused tests;
-- full test suite where practical;
-- production Vite build.
+Passed locally:
+- `npx tsc -b`
+- `npx vitest run src/test/eventTheme.test.ts src/test/guestEventDetail.test.tsx src/test/guestEventCheckIn.test.tsx src/test/adminEventForm.test.tsx --testTimeout 30000`
+- `npx vitest run --testTimeout 30000` - 23 files / 175 tests passed.
+- `npx vite build --outDir ..\tmp\vite-build-check-event-theme --emptyOutDir`
+
+Vite reported the existing large-chunk warning only.
 
 ## Product Owner Acceptance
 
-1. Open Edit Event / event setup for `ipitch-092026` and configure the new guest theme through normal admin UI.
-2. Use a purple primary, bright-blue secondary, and orange/yellow highlight aligned with the i-Pitch sign/program.
-3. Open guest event home on phone-sized viewport.
-4. Verify top/header feels visibly i-Pitch-branded while remaining recognizably qME.
-5. Verify Agenda / Finalists / Judges receive restrained coordinated accents rather than a broad redesign.
-6. Verify CHECKED IN remains semantic green and errors/statuses retain their intended meaning.
-7. Verify Check-In, child details, Agenda and party-size behavior all still work.
+1. Open admin Edit Event for `ipitch-092026`.
+2. Set the `Guest Event Theme` fields to the recommended i-Pitch values above.
+3. Save the event.
+4. Open `/events/ipitch-092026` on a phone-sized viewport and verify the header and event sections feel i-Pitch-branded while remaining qME.
+5. Open `/events/ipitch-092026/check-in` and verify the same restrained accent direction appears.
+6. Verify CHECKED IN remains semantic green and errors/warnings retain their existing semantic colors.
+7. Verify Check-In, Eventbrite-imported party-size confirmation, Agenda, Finalists child details, Judges content, shared-device reset, and Back to Event still behave as accepted.
 8. Verify an unthemed event still renders the prior/default qME look.
 
-## Backlog — Do Not Implement in This Slice
+## Status
 
-Keep these previously discovered future items in planning, but do not expand scope tonight:
-- structured Event Content Item editor replacing pipe-delimited `Name | Summary | Full Detail | Image URL` editing;
-- generalized Import Registrations profiles / manual source mapping beyond known formats;
-- richer event-brand design system/white-labeling;
-- item-level tags/links/interactions;
-- digital voting production hardening.
-
-## Handoff
-
-Update this FILE (`planning/CURRENT-WORK.md`) with:
-- theme metadata/config shape;
-- exact admin fields/path;
-- guest surfaces affected;
-- fallback/default behavior;
-- exact i-Pitch theme values recommended/configured;
-- files changed;
-- tests/build results;
-- any manual production configuration steps;
-- commit SHA;
-- concise Product Owner acceptance steps.
-
-Do not alter or reset the already imported production Eventbrite registration list as part of theming work.
+Implementation and local validation are complete. Commit/push to `main` is next.

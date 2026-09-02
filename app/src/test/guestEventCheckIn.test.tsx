@@ -110,6 +110,29 @@ describe('GuestEventCheckIn', () => {
     vi.useRealTimers();
   });
 
+  it('applies guest event theme accents to the check-in surface', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      metadata: {
+        ...event.metadata,
+        guest_theme: {
+          primary_accent: '#4B2E83',
+          secondary_accent: '#2563EB',
+          highlight_accent: '#F59E0B',
+        },
+      },
+    });
+
+    const { container } = renderCheckIn();
+
+    expect(await screen.findByText('Event Check-In')).toBeInTheDocument();
+    const themedCard = container.querySelector<HTMLElement>('.guest-event-themed');
+    expect(themedCard).not.toBeNull();
+    expect(themedCard?.style.getPropertyValue('--guest-event-primary')).toBe('#4B2E83');
+    expect(themedCard?.style.getPropertyValue('--guest-event-secondary')).toBe('#2563EB');
+    expect(themedCard?.style.getPropertyValue('--guest-event-highlight')).toBe('#F59E0B');
+  });
+
   it('guides imported lookup by name or email and blocks mismatched self-registration email locally', async () => {
     renderCheckIn();
 

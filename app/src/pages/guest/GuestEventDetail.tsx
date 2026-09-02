@@ -19,6 +19,7 @@ import { getEventCheckIn } from '../../lib/checkInService';
 import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySize';
 import { getContentListConfig } from '../../lib/contentListConfig';
 import { getCompletedEventCheckInMessage, getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
+import { buildGuestEventThemeStyle, getGuestEventTheme, hasGuestEventTheme } from '../../lib/eventTheme';
 import { getGuestCreditForCheckIn } from '../../lib/guestCreditService';
 import { clearGuestStateAfterEventReset, getEventTestDataResetMarker } from '../../lib/guestResetService';
 import { getVoteAllocationConfig } from '../../lib/votingConfig';
@@ -712,13 +713,23 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
     visibleStaticActivities.filter(a => a.id !== 'live-updates').length +
     visibleEces.length;
   const isHeadshotQueue = (slug?: string | null) => slug === 'headshot-photo-station';
+  const guestTheme = getGuestEventTheme(event);
+  const isThemed = hasGuestEventTheme(guestTheme);
+  const guestThemeStyle = buildGuestEventThemeStyle(guestTheme);
 
   return (
     <>
-      <div className="card card-scrollable ed-card">
+      <div className={`card card-scrollable ed-card ${isThemed ? 'ed-card-themed' : ''}`} style={guestThemeStyle}>
 
         {/* ── Event Header ── */}
         <div className="ed-header">
+          {guestTheme.headerImageUrl && (
+            <div
+              className="ed-header-image"
+              style={{ backgroundImage: `url(${guestTheme.headerImageUrl})` }}
+              aria-hidden="true"
+            />
+          )}
           <div className="ed-header-top">
             <div className="ed-header-left">
               <img

@@ -42,7 +42,7 @@ Files changed:
 - `planning/CURRENT-WORK.md`
 
 Git/deployment:
-- Commit SHA: pending.
+- Implementation commit SHA: `889f031`.
 - Push to `origin/main`: pending.
 - Manual deploy: not requested. Normal automated deployment from `main` is expected.
 

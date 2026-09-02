@@ -92,7 +92,9 @@ export default function GuestEventCheckIn({
     && (checkInConfig.importedRegistrationLookupEnabled || isSotcEventSlug(event?.slug));
   const useSelfRegistrationFallback = useImportedRegistrationLookup && checkInConfig.selfRegistrationFallbackEnabled;
   const selfRegistrationRequiresEmail = checkInConfig.selfRegistrationRequiredFields.includes('email');
-  const pageIntro = useImportedRegistrationLookup && isSotcEventSlug(event?.slug)
+  const pageIntro = isSharedDeviceMode
+    ? 'Enter your name or email to find your registration.'
+    : useImportedRegistrationLookup && isSotcEventSlug(event?.slug)
     ? 'Find your registration to self check in. After checking in, stop at the registration desk to pick up your name tag.'
     : useImportedRegistrationLookup
     ? 'Find your registration to self check in.'
@@ -138,11 +140,11 @@ export default function GuestEventCheckIn({
           if (saved.email || saved.phone) {
             setEmail(saved.email || '');
             setEmailConfirmation(saved.email || '');
-            setPhone(saved.phone || '');
+            setPhone(isSharedDeviceMode ? '' : saved.phone || '');
           } else if (saved.contact) {
             setEmail(saved.contact.includes('@') ? saved.contact : '');
             setEmailConfirmation(saved.contact.includes('@') ? saved.contact : '');
-            setPhone(saved.contact.includes('@') ? '' : saved.contact);
+            setPhone(isSharedDeviceMode || saved.contact.includes('@') ? '' : saved.contact);
           }
           setSubmitted(true);
           if (saved.id) {
@@ -161,7 +163,7 @@ export default function GuestEventCheckIn({
         setLoading(false);
       }
     })();
-  }, [eventSlug, requestedAdminTestMode, storageKey]);
+  }, [eventSlug, isSharedDeviceMode, requestedAdminTestMode, storageKey]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -177,7 +179,7 @@ export default function GuestEventCheckIn({
     setSelfRegistrationEmailError('');
     try {
       const trimmedEmail = email.trim();
-      const trimmedPhone = phone.trim();
+      const trimmedPhone = isSharedDeviceMode ? '' : phone.trim();
       const normalizedPhone = normalizePhone(trimmedPhone);
       if (trimmedEmail && !isValidEmail(trimmedEmail)) {
         setError('Please enter a valid email address or leave email blank.');
@@ -370,7 +372,7 @@ export default function GuestEventCheckIn({
     setSaving(true);
     setError('');
     try {
-      const trimmedPhone = phone.trim();
+      const trimmedPhone = isSharedDeviceMode ? '' : phone.trim();
       const normalizedPhone = normalizePhone(trimmedPhone);
       if (trimmedPhone && !isValidPhone(trimmedPhone)) {
         setError('Please enter a 10-digit U.S. phone number, an international number starting with +, or leave phone blank.');
@@ -475,14 +477,14 @@ export default function GuestEventCheckIn({
   if (!checkInConfig.enabled) {
     return (
       <div
-        className={`card card-scrollable guest-event-card ${isThemed ? 'guest-event-themed' : ''}`}
+        className={`card card-scrollable guest-event-card ${isSharedDeviceMode ? 'guest-event-shared-card' : ''} ${isThemed ? 'guest-event-themed' : ''}`}
         style={{ minHeight: '600px', maxHeight: '90vh', ...guestThemeStyle }}
       >
         <Header
           logoSrc={eventLogoSrc}
           titleLine1="EVENT"
           titleLine2="INFO"
-          hideMenu={isSharedDeviceMode}
+          hideMenu
         />
         <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
           <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
@@ -506,14 +508,14 @@ export default function GuestEventCheckIn({
   if (!isCheckInAvailable && !submitted) {
     return (
       <div
-        className={`card card-scrollable guest-event-card ${isThemed ? 'guest-event-themed' : ''}`}
+        className={`card card-scrollable guest-event-card ${isSharedDeviceMode ? 'guest-event-shared-card' : ''} ${isThemed ? 'guest-event-themed' : ''}`}
         style={{ minHeight: '600px', maxHeight: '90vh', ...guestThemeStyle }}
       >
         <Header
           logoSrc={eventLogoSrc}
           titleLine1="CHECK"
           titleLine2="IN"
-          hideMenu={isSharedDeviceMode}
+          hideMenu
         />
         <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', textAlign: 'center' }}>
           <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>
@@ -544,14 +546,14 @@ export default function GuestEventCheckIn({
 
   return (
     <div
-      className={`card card-scrollable guest-event-card ${isThemed ? 'guest-event-themed' : ''}`}
+      className={`card card-scrollable guest-event-card ${isSharedDeviceMode ? 'guest-event-shared-card' : ''} ${isThemed ? 'guest-event-themed' : ''}`}
       style={{ minHeight: '600px', maxHeight: '90vh', ...guestThemeStyle }}
     >
       <Header
         logoSrc={eventLogoSrc}
         titleLine1="CHECK"
         titleLine2="IN"
-        hideMenu={isSharedDeviceMode}
+        hideMenu
       />
 
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
@@ -661,20 +663,24 @@ export default function GuestEventCheckIn({
               </button>
             </form>
 
-            <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
-              Recovery phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span>
-            </label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="216-555-0100"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
-            />
-            <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
-              Optional. Used only to help recover your check-in later, not to search the imported list.
-            </div>
+            {!isSharedDeviceMode && (
+              <>
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+                  Recovery phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span>
+                </label>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="216-555-0100"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
+                />
+                <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
+                  Optional. Used only to help recover your check-in later, not to search the imported list.
+                </div>
+              </>
+            )}
 
             {registrationResults.map((result) => (
               <div
@@ -873,18 +879,22 @@ export default function GuestEventCheckIn({
               Optional. Used only to help recover your check-in later.
             </div>
 
-            <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span></label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              inputMode="tel"
-              autoComplete="tel"
-              placeholder="216-555-0100"
-              style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
-            />
-            <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
-              Optional. Used only to help recover your check-in later.
-            </div>
+            {!isSharedDeviceMode && (
+              <>
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>Phone <span style={{ color: '#888', fontWeight: 500 }}>(optional)</span></label>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  inputMode="tel"
+                  autoComplete="tel"
+                  placeholder="216-555-0100"
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.35rem' }}
+                />
+                <div style={{ color: '#777', fontSize: '0.8rem', lineHeight: 1.35, marginBottom: '1rem' }}>
+                  Optional. Used only to help recover your check-in later.
+                </div>
+              </>
+            )}
 
             <button className="actionBtn actionBtn-primary" type="submit" style={{ margin: 0 }} disabled={saving}>
               {saving ? 'Checking In...' : 'Check In'}

@@ -271,6 +271,42 @@
   background: linear-gradient(90deg, var(--guest-event-primary), var(--guest-event-highlight));
 }
 
+@media (min-width: 700px) {
+  .guest-event-shared-card.card {
+    width: min(920px, calc(100vw - 48px));
+    min-height: min(760px, calc(100vh - 32px));
+    max-height: calc(100vh - 32px);
+    padding: 16px 28px 24px;
+  }
+
+  .guest-event-shared-card .hdr {
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+
+  .guest-event-shared-card .scrollable-content {
+    width: min(720px, 100%);
+    margin: 0 auto;
+    padding-top: 0.75rem !important;
+  }
+
+  .guest-event-shared-card input {
+    min-height: 50px;
+    font-size: 1.05rem;
+  }
+
+  .guest-event-shared-card .actionBtn {
+    min-height: 52px;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .guest-event-shared-card.card {
+    width: min(980px, calc(100vw - 64px));
+  }
+}
+
 @media (max-width: 420px) {
   .registration-result-row {
     flex-direction: column;

@@ -1,5 +1,63 @@
 # Current Work
 
+## Implementation Handoff
+
+Focused event-navigation + shared-device/iPad cleanup is implemented and validated. Do not mark this slice accepted until the shared-device presentation is visually checked on the actual front-table iPad after automated deployment from `main`.
+
+Guest event workflows changed:
+- Removed the hamburger/menu from `/events/:eventSlug/check-in`, including normal personal-device, shared-device, closed/unavailable, and no-check-in states.
+- Removed the hamburger/menu from `/events/:eventSlug/content/:eceSlug` and `/events/:eventSlug/content/:eceSlug/:itemSlug`.
+- Existing guest event home already used event-owned navigation rather than the global Header menu.
+- Explicit Back to Event navigation remains on check-in and content/detail pages.
+
+Admin event workflows changed:
+- Removed the hamburger/menu from Admin Event detail.
+- Removed the hamburger/menu from Admin Event Check-In live/history/settings.
+- Removed the hamburger/menu from Edit Event; Edit Event save/cancel now returns to the event detail.
+- Removed the hamburger/menu from event eCe/content add/edit; cancel is now labeled Back to Event.
+- Also applied the event-focused treatment to event Queue form/dashboard and Group Order dashboard, each with Back to Event navigation.
+- Create Event remains a broader admin workflow and keeps normal navigation.
+
+Shared-device Check-In:
+- Primary front-table iPad URL: `/events/:eventSlug/check-in?mode=shared`
+- Authenticated admin test URL: `/events/:eventSlug/check-in?mode=shared&adminTest=1`
+- Admin Check-In settings now links to the shared iPad admin-test URL as `Test Shared iPad`.
+- `shared=1` alias remains supported.
+- Shared copy now says: `Enter your name or email to find your registration.`
+- Recovery phone field/helper text are hidden only in shared mode. Personal-device Check-In still shows Recovery phone.
+- Shared mode ignores/restores no phone value on the shared device, preserving the rapid kiosk flow.
+- Next Guest and automatic 15-second reset are preserved.
+- Shared-mode responsive CSS widens the tablet/iPad card, reduces top whitespace, keeps readable form width, and preserves large touch targets.
+
+Preserved:
+- Check-In availability/adminTest enforcement, including ordinary shared URL blocked while Closed/Scheduled and authenticated shared admin-test bypass only for admins who can manage the event.
+- Eventbrite untouched CSV preview/import, Order ID repeat-import safety, party-size/Total guests behavior, guest content, theme accents, and inactive i-Pitch digital voting.
+
+Validation:
+- Focused regression tests passed:
+  `npm test -- --run src/test/guestEventCheckIn.test.tsx src/test/guestContentList.test.tsx src/test/adminEventCheckInsImportWorkflow.test.tsx src/test/adminEventDetail.test.tsx src/test/adminEventForm.test.tsx src/test/adminEceForm.test.tsx`
+- Full Vitest suite passed:
+  `npm test -- --run`
+  Result: 24 test files passed, 187 tests passed.
+- Production build passed:
+  `npm run build`
+  Result: TypeScript and Vite build passed. Vite reported the existing large-chunk warning.
+- Test/build commands required escalation because Node hit a Windows sandbox `EPERM` while resolving the user-profile path inside the restricted sandbox.
+
+Product Owner acceptance after deployment:
+1. Open `/events/ipitch-092026` on a phone and confirm event-owned navigation works and no hamburger appears.
+2. Open `/events/ipitch-092026/check-in` on a personal device and confirm no hamburger appears, Recovery phone still appears, and normal guest Check-In behavior is unchanged.
+3. Open `/events/ipitch-092026/check-in?mode=shared` on the actual front-table iPad and confirm no hamburger, shared copy, no Recovery phone, wider/tablet layout, and normal lookup/check-in.
+4. Complete one shared-device Check-In and confirm Next Guest plus automatic 15-second reset clear the device.
+5. While public Check-In is Closed/Scheduled, verify ordinary shared URL is blocked and `/events/ipitch-092026/check-in?mode=shared&adminTest=1` works only for an authorized admin session.
+6. Inspect Admin Event, Admin Check-In, Edit Event, event eCe/content setup, and event queue/group-order screens and confirm there is no hamburger and Back/Event navigation prevents dead ends.
+7. Re-smoke Eventbrite import, party-size confirmation, Total guests, Guests Represented, Agenda, Finalists, Judges, theme accents, and inactive i-Pitch voting.
+
+Git/deployment:
+- Commit SHA: pending.
+- Push to `origin/main`: pending.
+- Manual deploy: not requested. Normal automated deployment from `main` is expected.
+
 ## Current Slice
 
 Polish the production i-Pitch event/check-in experience around two concrete issues discovered during acceptance:

@@ -160,7 +160,7 @@ describe('GuestEventCheckIn', () => {
     expect(themedCard?.style.getPropertyValue('--guest-event-highlight')).toBe('#F59E0B');
   });
 
-  it('blocks ordinary guest check-in route and actions while availability is closed', async () => {
+  it('blocks ordinary shared-device check-in route and actions while availability is closed', async () => {
     mockGetEventBySlug.mockResolvedValue({
       ...event,
       metadata: {
@@ -172,10 +172,11 @@ describe('GuestEventCheckIn', () => {
       },
     });
 
-    renderCheckIn();
+    renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
 
     expect(await screen.findByText('Check-In is not open yet.')).toBeInTheDocument();
     expect(screen.getByText('You can explore the event information in the meantime.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText('First name, last name, or email')).not.toBeInTheDocument();
     expect(mockSearchImportedRegistrationsForGuest).not.toHaveBeenCalled();
     expect(mockCreateEventCheckIn).not.toHaveBeenCalled();
@@ -195,9 +196,12 @@ describe('GuestEventCheckIn', () => {
     });
 
     const user = userEvent.setup();
-    renderCheckIn('/events/ipitch-2026/check-in?adminTest=1');
+    renderCheckIn('/events/ipitch-2026/check-in?mode=shared&adminTest=1');
 
     expect(await screen.findByText(/Admin test mode/)).toBeInTheDocument();
+    expect(screen.getByText('Enter your name or email to find your registration.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.queryByText('Recovery phone')).not.toBeInTheDocument();
     await user.click(screen.getByText("Can't find your registration?"));
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
@@ -319,7 +323,9 @@ describe('GuestEventCheckIn', () => {
     renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
 
     await screen.findByPlaceholderText('First name, last name, or email');
+    expect(screen.getByText('Enter your name or email to find your registration.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.queryByText('Recovery phone')).not.toBeInTheDocument();
     await user.click(screen.getByText("Can't find your registration?"));
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
@@ -378,7 +384,8 @@ describe('GuestEventCheckIn', () => {
     await act(async () => {});
 
     expect(screen.getByPlaceholderText('First name, last name, or email')).toBeInTheDocument();
-    expect(screen.getByLabelText('Open menu')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.getByText('Recovery phone')).toBeInTheDocument();
     fireEvent.click(screen.getByText("Can't find your registration?"));
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });

@@ -431,7 +431,7 @@ export default function AdminEventCheckIns({
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-      <Header logoSrc={eventLogoSrc} titleLine1="ADMIN" titleLine2="CHECK-IN" />
+      <Header logoSrc={eventLogoSrc} titleLine1="ADMIN" titleLine2="CHECK-IN" hideMenu />
 
       <div style={{ padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>
         <h1 className="headline" style={{ fontSize: '1.35rem', margin: 0, fontWeight: 700 }}>
@@ -734,11 +734,11 @@ export default function AdminEventCheckIns({
                     <a
                       className="actionBtn actionBtn-secondary"
                       style={{ margin: 0, width: 'auto', padding: '0.45rem 0.8rem', textDecoration: 'none' }}
-                      href={`/events/${event.slug}/check-in?adminTest=1`}
+                      href={`/events/${event.slug}/check-in?mode=shared&adminTest=1`}
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Test as Admin
+                      Test Shared iPad
                     </a>
                   )}
                 </div>

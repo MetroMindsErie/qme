@@ -614,7 +614,7 @@ export default function AdminQueueDashboard() {
   if (accessDenied) {
     return (
       <div className="card">
-        <Header titleLine1="ADMIN" titleLine2="QUEUE" />
+        <Header titleLine1="ADMIN" titleLine2="QUEUE" hideMenu />
         <div style={{ padding: '1rem 1.25rem', textAlign: 'center' }}>
           <h1 className="headline" style={{ fontSize: '1.4rem', marginBottom: '0.75rem' }}>
             Queue access unavailable
@@ -765,7 +765,7 @@ export default function AdminQueueDashboard() {
 
     return (
       <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-        <Header logoSrc={getQueueImageSrc(queue)} titleLine1="ADMIN" titleLine2="QUEUE" />
+        <Header logoSrc={getQueueImageSrc(queue)} titleLine1="ADMIN" titleLine2="QUEUE" hideMenu />
 
         <div style={{ padding: '0 1.25rem 0.85rem', borderBottom: '2px solid #e0e0e0' }}>
           <h1 className="headline" style={{ fontSize: '1.4rem', margin: '0 0 0.35rem' }}>{queue.name}</h1>
@@ -1206,6 +1206,7 @@ export default function AdminQueueDashboard() {
         logoSrc={getQueueImageSrc(queue)}
         titleLine1=""
         titleLine2=""
+        hideMenu
       />
 
       <div style={{ borderBottom: '2px solid #2f3e4f', paddingBottom: '0.75rem' }}>

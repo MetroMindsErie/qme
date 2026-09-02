@@ -126,7 +126,7 @@ export default function GuestContentList() {
     const isAwaitingConfirmation = pendingVoteItemId === selectedItem.id;
     return (
       <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-        <Header logoSrc={eventLogoSrc} titleLine1="EVENT" titleLine2="INFO" />
+        <Header logoSrc={eventLogoSrc} titleLine1="EVENT" titleLine2="INFO" hideMenu />
         <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
           <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>{selectedItem.name}</h1>
           {selectedItem.imageUrl && (
@@ -192,7 +192,7 @@ export default function GuestContentList() {
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-      <Header logoSrc={eventLogoSrc} titleLine1="EVENT" titleLine2="INFO" />
+      <Header logoSrc={eventLogoSrc} titleLine1="EVENT" titleLine2="INFO" hideMenu />
       <div className="scrollable-content" style={{ flex: 1, overflowY: 'auto', padding: '1.25rem' }}>
         <h1 className="headline" style={{ fontSize: '1.45rem', margin: '0 0 0.5rem' }}>{config.title}</h1>
         {ece.description && (

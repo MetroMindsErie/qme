@@ -133,6 +133,7 @@ export default function AdminGroupOrderDashboard() {
         logoSrc={event?.image_url || '/images/qmeFirstLogo.jpg'}
         titleLine1="ADMIN"
         titleLine2="GROUP ORDER"
+        hideMenu
       />
 
       <div style={{ padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>

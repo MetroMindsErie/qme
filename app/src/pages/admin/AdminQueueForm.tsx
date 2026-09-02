@@ -131,6 +131,7 @@ export default function AdminQueueForm() {
         logoSrc="/images/qmeFirstLogo.jpg"
         titleLine1="ADMIN"
         titleLine2={isEdit ? 'EDIT Q' : 'NEW Q'}
+        hideMenu
       />
 
       <h1 className="headline" style={{ fontSize: '1.3rem' }}>
@@ -208,7 +209,7 @@ export default function AdminQueueForm() {
             style={{ margin: 0, flex: 1, background: '#888' }}
             onClick={() => navigate(`/admin/events/${eventId}`)}
           >
-            Cancel
+            Back to Event
           </button>
         </div>
       </form>

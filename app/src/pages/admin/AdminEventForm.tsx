@@ -269,7 +269,7 @@ export default function AdminEventForm() {
       } else {
         await createEvent(form);
       }
-      navigate('/admin/events');
+      navigate(isEdit && eventId ? `/admin/events/${eventId}` : '/admin/events');
     } catch (err) {
       console.error('Save failed', err);
       alert('Save failed. Check console for details.');
@@ -355,6 +355,7 @@ export default function AdminEventForm() {
         logoSrc="/images/qmeFirstLogo.jpg"
         titleLine1="ADMIN"
         titleLine2={isEdit ? 'EDIT' : 'NEW'}
+        hideMenu={isEdit}
       />
 
       <div style={{ padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>
@@ -660,9 +661,9 @@ export default function AdminEventForm() {
             type="button"
             className="actionBtn actionBtn-secondary"
             style={{ margin: 0, flex: 1, padding: '0.75rem' }}
-            onClick={() => navigate('/admin/events')}
+            onClick={() => navigate(isEdit && eventId ? `/admin/events/${eventId}` : '/admin/events')}
           >
-            Cancel
+            {isEdit ? 'Back to Event' : 'Cancel'}
           </button>
         </div>
       </form>

@@ -58,8 +58,8 @@ const mockListActiveEcesForEvent = vi.fn();
 const mockGetEventCheckIn = vi.fn();
 
 vi.mock('../components/Header', () => ({
-  default: ({ titleLine1, titleLine2 }: { titleLine1: string; titleLine2: string }) => (
-    <header>{titleLine1} {titleLine2}</header>
+  default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
+    <header>{titleLine1} {titleLine2}{hideMenu ? null : <button type="button" aria-label="Open menu">Menu</button>}</header>
   ),
 }));
 
@@ -114,6 +114,8 @@ describe('GuestContentList', () => {
     expect(screen.getByText('VeeSafe')).toBeInTheDocument();
     expect(screen.getByText('Cybersecurity guidance.')).toBeInTheDocument();
     expect(screen.getByText('Quantum Fluent')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Event' })).toHaveAttribute('href', '/events/ipitch-092026');
   });
 
   it('opens an individual child detail without showing inactive voting controls', async () => {
@@ -140,6 +142,8 @@ describe('GuestContentList', () => {
 
     expect(await screen.findByText('VeeSafe')).toBeInTheDocument();
     expect(screen.getByText('Full VeeSafe profile.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to Event' })).toHaveAttribute('href', '/events/ipitch-092026');
     expect(screen.queryByText(/votes remaining/)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /vote/i })).not.toBeInTheDocument();
   });

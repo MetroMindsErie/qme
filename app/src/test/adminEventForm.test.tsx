@@ -21,8 +21,8 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../components/Header', () => ({
-  default: ({ titleLine1, titleLine2 }: { titleLine1: string; titleLine2: string }) => (
-    <header>{titleLine1} {titleLine2}</header>
+  default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
+    <header>{titleLine1} {titleLine2}{hideMenu ? null : <button type="button" aria-label="Open menu">Menu</button>}</header>
   ),
 }));
 
@@ -126,6 +126,8 @@ describe('AdminEventForm guest event theme', () => {
     renderEditForm();
 
     expect(await screen.findByText('Guest Event Theme')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Event' })).toBeInTheDocument();
     expect(screen.getByDisplayValue('#4B2E83')).toBeInTheDocument();
     expect(screen.getByDisplayValue('#2563EB')).toBeInTheDocument();
     expect(screen.getByDisplayValue('#F59E0B')).toBeInTheDocument();
@@ -149,6 +151,6 @@ describe('AdminEventForm guest event theme', () => {
         }),
       }));
     });
-    expect(mockNavigate).toHaveBeenCalledWith('/admin/events');
+    expect(mockNavigate).toHaveBeenCalledWith('/admin/events/event-1');
   });
 });

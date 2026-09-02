@@ -557,6 +557,7 @@ export default function AdminEventDetail() {
         logoSrc={isSotcEventSlug(event.slug) ? '/images/sotc-logo.png' : event.image_url || '/images/qmeFirstLogo.jpg'}
         titleLine1="ADMIN"
         titleLine2="EVENT"
+        hideMenu
       />
 
       {/* Event summary */}

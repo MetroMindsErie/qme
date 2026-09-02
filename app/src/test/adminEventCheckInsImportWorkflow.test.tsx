@@ -14,8 +14,8 @@ const mockImportEventbriteRegistrationsForEvent = vi.fn();
 const mockUpdateEvent = vi.fn();
 
 vi.mock('../components/Header', () => ({
-  default: ({ titleLine1, titleLine2 }: { titleLine1: string; titleLine2: string }) => (
-    <header>{titleLine1} {titleLine2}</header>
+  default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
+    <header>{titleLine1} {titleLine2}{hideMenu ? null : <button type="button" aria-label="Open menu">Menu</button>}</header>
   ),
 }));
 
@@ -152,6 +152,7 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
     renderPage();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     const input = screen.getByLabelText('Eventbrite CSV');
     const file = new File([untouchedCsv], 'uarf-eventbrite.csv', { type: 'text/csv' });
     fireEvent.change(input, { target: { files: [file] } });
@@ -200,8 +201,9 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
     renderPage();
 
     fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     expect(screen.getByText('Currently closed')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Test as Admin' })).toHaveAttribute('href', '/events/ipitch-092026/check-in?adminTest=1');
+    expect(screen.getByRole('link', { name: 'Test Shared iPad' })).toHaveAttribute('href', '/events/ipitch-092026/check-in?mode=shared&adminTest=1');
 
     fireEvent.change(screen.getByDisplayValue('Closed'), { target: { value: 'scheduled' } });
 

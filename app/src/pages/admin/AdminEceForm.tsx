@@ -307,7 +307,7 @@ export default function AdminEceForm() {
 
   return (
     <div className="card card-scrollable" style={{ minHeight: '600px', maxHeight: '90vh' }}>
-      <Header logoSrc={eventLogoSrc} titleLine1="ADMIN" titleLine2="eCe" />
+      <Header logoSrc={eventLogoSrc} titleLine1="ADMIN" titleLine2="eCe" hideMenu />
 
       <div style={{ padding: '0 1.25rem 0.75rem', borderBottom: '2px solid #e0e0e0' }}>
         <h1 className="headline" style={{ fontSize: '1.35rem', margin: 0, fontWeight: 800 }}>
@@ -576,7 +576,7 @@ export default function AdminEceForm() {
             style={{ margin: 0, flex: 1, padding: '0.75rem' }}
             onClick={() => navigate(`/admin/events/${eventId}`)}
           >
-            Cancel
+            Back to Event
           </button>
         </div>
       </form>

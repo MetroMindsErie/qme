@@ -23,8 +23,8 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../components/Header', () => ({
-  default: ({ titleLine1, titleLine2 }: { titleLine1: string; titleLine2: string }) => (
-    <header>{titleLine1} {titleLine2}</header>
+  default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
+    <header>{titleLine1} {titleLine2}{hideMenu ? null : <button type="button" aria-label="Open menu">Menu</button>}</header>
   ),
 }));
 
@@ -168,6 +168,7 @@ describe('AdminEventDetail feature management and reset', () => {
     renderDetail();
 
     fireEvent.click(await screen.findByRole('tab', { name: 'Setup' }));
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     fireEvent.click(screen.getAllByRole('button', { name: 'Edit' })[1]);
     expect(mockNavigate).toHaveBeenCalledWith('/admin/events/event-1/eces/ece-finalists/edit');
 

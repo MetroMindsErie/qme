@@ -22,8 +22,8 @@ vi.mock('react-router-dom', async () => {
 });
 
 vi.mock('../components/Header', () => ({
-  default: ({ titleLine1, titleLine2 }: { titleLine1: string; titleLine2: string }) => (
-    <header>{titleLine1} {titleLine2}</header>
+  default: ({ titleLine1, titleLine2, hideMenu }: { titleLine1: string; titleLine2: string; hideMenu?: boolean }) => (
+    <header>{titleLine1} {titleLine2}{hideMenu ? null : <button type="button" aria-label="Open menu">Menu</button>}</header>
   ),
 }));
 
@@ -135,6 +135,8 @@ describe('AdminEceForm', () => {
     renderForm();
 
     const nameInputs = await screen.findAllByDisplayValue('i-Pitch Finalists');
+    expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Event' })).toBeInTheDocument();
     fireEvent.change(nameInputs[0], { target: { value: 'Meet the Founders' } });
     fireEvent.change(screen.getByDisplayValue('Single card opens detail list'), { target: { value: 'child_cards' } });
     fireEvent.change(screen.getByPlaceholderText('Open'), { target: { value: 'Meet' } });

@@ -1,145 +1,187 @@
 # Current Work
 
-## Current Slice Status
+## Current Slice
 
-The field-ready untouched Eventbrite CSV preview/import workflow is implemented, validated locally, committed, and pushed to `main`.
+Add a **small reusable guest-event theming layer** so the qME guest experience can visually inherit event branding without becoming a one-off custom site per event.
 
-Production SQL and production import have not been run by Steve.
+Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
 
-## Production Event
+This work follows successful production acceptance of the i-Pitch untouched Eventbrite import and party-size guest flow. Preserve all accepted registration/check-in behavior.
 
-- organization: University of Akron Research Foundation
-- event: i-Pitch - September, 2026
-- slug: `ipitch-092026`
-- September 3, 2026, 5:00-8:00 PM ET
+## Product Principle
 
-Digital voting remains inactive/not visible for production i-Pitch. Physical balls remain the production voting method.
+> **qME owns the UX; the event supplies the skin.**
 
-## Untouched File Workflow
+Do not hard-code `ipitch` CSS/branches. Add a bounded configuration-driven theme capability that can be reused by SOTC, i-Pitch, and future events.
 
-Admin -> Event Check-In -> Settings now supports the field workflow:
+The goal is not a full white-label/theme-builder system tonight. The goal is to make the guest event companion feel visibly connected to the event's own visual identity using a few safe event-level branding controls.
 
-Registration system -> Download CSV -> qME -> Upload that exact CSV -> Review preview -> Import.
+## i-Pitch Visual Direction
 
-Selecting a CSV no longer commits rows immediately. qME reads the file, recognizes the Eventbrite registration concepts, queries existing Eventbrite Order IDs, and shows a preview. The operator must then click **Import Registrations** to write imported registration rows.
+The supplied i-Pitch/UARF program and the approved QR check-in sign establish the visual direction:
+- i-Pitch logo already configured;
+- strong white base;
+- purple accent;
+- bright blue accent;
+- orange/yellow highlight;
+- clean, bold section hierarchy;
+- keep qME semantic colors for states such as CHECKED IN / success rather than recoloring status meaning arbitrarily.
 
-Preview shows:
-- rows found;
-- First Name recognized/missing;
-- Last Name recognized/missing;
-- Email recognized/missing;
-- Order ID recognized/missing;
-- Tickets / party size recognized/missing;
-- total guests represented;
-- new registrations;
-- already imported/skipped;
-- invalid rows;
-- first invalid row reason when present.
+The current guest page is functionally accepted but still reads mostly as generic qME with an i-Pitch logo. The desired result should feel more like the i-Pitch program/sign while preserving qME layout, accessibility, and interaction patterns.
 
-Malformed/unrecognized files fail during preview with an actionable missing-column message such as:
-`Eventbrite CSV is missing required column: Order ID`
+## Part A — Event Theme Metadata
 
-## Supported Concepts / Header Aliases
+Inspect the existing event metadata/config helpers before adding a new structure. Prefer existing metadata JSON; no schema migration should be needed unless there is a compelling existing constraint.
 
-Required recognized concepts:
-- external/source registration identity: `Order ID`;
-- party size / represented guests: `Tickets`;
-- first name: `First Name`, `Attendee First Name`, `Buyer First Name`;
-- last name: `Last Name`, `Attendee Last Name`, `Buyer Last Name`;
-- email: `Email`, `Email Address`, `Attendee Email`, `Buyer Email`.
+Add/read a small event-theme configuration supporting at minimum, where safe:
+- primary accent color;
+- secondary accent color;
+- highlight/accent color;
+- optional header/banner/decorative image URL;
+- existing event/logo image remains the primary logo mechanism rather than duplicating logo configuration.
 
-Optional ticket/category concept:
-- `Ticket Type`, `Ticket Class`, `Ticket Name`.
+If naming needs to differ to fit existing config conventions, keep it generic and document it.
 
-Column order does not matter. Extra/unrecognized columns are ignored operationally.
+Theme configuration must be optional. Events without theme metadata must render exactly/safely with the existing qME default styling.
 
-## Source Metadata
+Validate color strings before applying them. Invalid/missing theme data must fall back safely rather than breaking rendering.
 
-Raw/source export fields are preserved in `event_imported_registrations.source_metadata` for each imported row. The importer stores every CSV header/value there, along with normalized Eventbrite fields:
-- `order_id`;
-- `tickets`;
-- `party_size`;
-- `additional_guests`.
+## Part B — Admin Configuration
 
-No broad new raw-row schema was added.
+Expose the bounded theme controls somewhere natural in existing Event Admin/Edit Event setup rather than requiring SQL or direct metadata editing.
 
-## Party-Size / Order-ID Behavior Preserved
+Keep the form simple. Suggested section name:
+- `Guest Event Theme`
 
-- one Eventbrite CSV row/order = one qME imported registration;
-- `Order ID` is the durable external/source order identity;
-- `Tickets` is total people represented by that registration/check-in;
-- no invented companion records;
-- self-registration defaults to party size 1 and has no Eventbrite Order ID;
-- no Eventbrite-vs-qME self-registration merge/reconciliation by name or email;
-- later Eventbrite exports skip already-imported Order IDs and add new Order IDs;
-- no destructive synchronization/deletion;
-- re-import does not reset existing check-in state.
+Suggested fields:
+- Primary Accent
+- Secondary Accent
+- Highlight
+- Optional Header/Banner Image URL
 
-Guest Check-In still shows party-size fulfillment copy and `Total guests: N` on success and on the checked-in event-home card.
+Do not build a color-picker design system if plain validated color inputs are faster/safer. A small preview/swatches are optional only if trivial.
 
-## SQL / Production Safety
+Existing Event logo/image configuration remains separate and should continue to work.
 
-The previous SQL remains the required production SQL:
-- `supabase-eventbrite-party-size-checkin.sql`
+## Part C — Apply Theme to Guest Event Companion
 
-This slice did not change that SQL.
+Apply event theme only to restrained guest-facing decorative/accent surfaces where it improves identity without changing semantic meaning.
 
-Product Owner must run that SQL in production before the first production import. After SQL succeeds and the automated deployment from `main` is live, the actual Eventbrite CSV can be imported through qME.
+Priorities:
+
+### 1. Guest event header
+
+Make the top of `/events/:eventSlug` visibly event-branded using the configured accents and optional decorative/header asset while preserving:
+- event logo;
+- event name;
+- location/date/time/status information;
+- responsive mobile layout;
+- readable contrast.
+
+A subtle accent band/rule/background treatment inspired by the i-Pitch sign/program is preferred over a heavy hero redesign.
+
+### 2. Section/content accents
+
+Allow Agenda, Finalists, Judges, and other Event Feature sections/cards to pick up restrained theme accents, for example:
+- section heading rule/accent block;
+- small border/highlight treatment;
+- non-semantic link/action accent.
+
+Do not make every card a different color or reduce readability.
+
+### 3. Ordinary interactive accents
+
+Where qME currently uses generic decorative/action accent colors, allow the event primary accent to influence appropriate guest links/buttons **only where this does not conflict with semantic states**.
+
+Preserve semantic/status meanings:
+- checked-in/success green remains semantic;
+- destructive/error red remains semantic;
+- warning states remain meaningful;
+- do not recolor status badges merely for branding.
+
+## Part D — Configure Actual i-Pitch Theme
+
+After implementation, provide exact normal-admin steps to configure i-Pitch using colors visually aligned with the supplied program/sign.
+
+Do not require exact color matching if the source artwork does not expose canonical hex values. Reasonable approximations are acceptable, but document them as chosen theme values rather than claiming they are official UARF brand standards.
+
+Current visual target from the sign/program is approximately:
+- purple primary;
+- bright blue secondary;
+- orange/yellow highlight.
+
+The Product Owner should be able to adjust the values after deployment through admin without code.
+
+Do not add a new bespoke i-Pitch artwork file unless an already-available approved image can be reused cleanly. The existing i-Pitch logo and current event assets are sufficient for this slice.
+
+## Preserve Production-Accepted i-Pitch Behavior
+
+Do not regress:
+- untouched Eventbrite CSV recognition/preview/import;
+- imported 50 registrations / 66 guests represented model;
+- Order ID repeat-import safety;
+- party-size check-in copy;
+- `Total guests: N` on success and event-home checked-in card;
+- separate Checked In vs Guests Represented admin counts;
+- Auto Check-In;
+- self-registration;
+- shared iPad no-menu mode;
+- Next Guest + 15-second reset;
+- post-check-in front-entrance/package instruction;
+- Agenda expanded on home;
+- Finalists child cards summary -> full detail;
+- Judges child-card content;
+- reusable reset;
+- SOTC behavior;
+- digital voting inactive/not visible for Thursday.
 
 ## Validation
 
-Passed:
-- automated parser/import preview tests using an untouched UARF/Eventbrite-shaped CSV header set with unrelated extra columns, shuffled column order, `Email Address`, and `Ticket Class`;
-- column-order independence;
-- extra columns ignored operationally and preserved in source metadata;
-- known email/ticket aliases;
-- missing required concept blocks preview/import with actionable validation;
-- preview totals rows / represented guests / new / skipped / invalid before commit;
-- explicit import after preview preserves Order ID / party size / re-import semantics;
-- repeated updated file behavior remains existing Order IDs skipped, new Order IDs inserted;
-- `npx tsc -b`;
-- focused tests:
-  `npx vitest run src\test\eventbriteRegistrationImport.test.ts src\test\adminEventCheckInsImportWorkflow.test.tsx src\test\guestEventCheckIn.test.tsx src\test\guestEventDetail.test.tsx src\test\adminEventCheckIns.test.ts`;
-- full suite:
-  `npx vitest run --testTimeout 30000`
-  passed 21 files / 168 tests;
-- production build:
-  `npx vite build --outDir ..\tmp\vite-build-check-registration-preview --emptyOutDir`.
+At minimum:
+- event with no theme metadata renders existing/default guest UI without errors;
+- valid theme metadata applies only to intended decorative/accent surfaces;
+- invalid color input safely falls back/rejects;
+- admin theme fields persist/reload correctly;
+- guest header remains readable/mobile-safe;
+- Check-In semantic success/error/status colors are not accidentally overwritten;
+- Agenda/Finalists/Judges content behavior/routing remains unchanged;
+- TypeScript;
+- focused tests;
+- full test suite where practical;
+- production Vite build.
 
-Vite emitted the existing large chunk warning; build completed successfully.
+## Product Owner Acceptance
 
-Repository search found no actual CSV fixture checked into or near the qME repo, so validation used the actual UARF/Eventbrite export shape recorded in this file rather than a hand-cleaned subset.
+1. Open Edit Event / event setup for `ipitch-092026` and configure the new guest theme through normal admin UI.
+2. Use a purple primary, bright-blue secondary, and orange/yellow highlight aligned with the i-Pitch sign/program.
+3. Open guest event home on phone-sized viewport.
+4. Verify top/header feels visibly i-Pitch-branded while remaining recognizably qME.
+5. Verify Agenda / Finalists / Judges receive restrained coordinated accents rather than a broad redesign.
+6. Verify CHECKED IN remains semantic green and errors/statuses retain their intended meaning.
+7. Verify Check-In, child details, Agenda and party-size behavior all still work.
+8. Verify an unthemed event still renders the prior/default qME look.
 
-## Files Changed
+## Backlog — Do Not Implement in This Slice
 
-- `app/src/lib/eventbriteRegistrationImport.ts`
-- `app/src/pages/admin/AdminEventCheckIns.tsx`
-- `app/src/test/adminEventCheckInsImportWorkflow.test.tsx`
-- `app/src/test/eventbriteRegistrationImport.test.ts`
-- `planning/CURRENT-WORK.md`
+Keep these previously discovered future items in planning, but do not expand scope tonight:
+- structured Event Content Item editor replacing pipe-delimited `Name | Summary | Full Detail | Image URL` editing;
+- generalized Import Registrations profiles / manual source mapping beyond known formats;
+- richer event-brand design system/white-labeling;
+- item-level tags/links/interactions;
+- digital voting production hardening.
 
-## Production Import Status
+## Handoff
 
-Production Eventbrite list has not been imported.
+Update this FILE (`planning/CURRENT-WORK.md`) with:
+- theme metadata/config shape;
+- exact admin fields/path;
+- guest surfaces affected;
+- fallback/default behavior;
+- exact i-Pitch theme values recommended/configured;
+- files changed;
+- tests/build results;
+- any manual production configuration steps;
+- commit SHA;
+- concise Product Owner acceptance steps.
 
-Product Owner acceptance:
-1. Run `supabase-eventbrite-party-size-checkin.sql` in production Supabase.
-2. Wait for automated deployment from `main` to be live.
-3. Download/use the untouched actual Eventbrite CSV.
-4. In qME Event Check-In Settings, choose that exact file without editing it.
-5. Verify qME recognizes required concepts and shows the preview counts.
-6. Confirm row count and total guests represented are plausible against Eventbrite.
-7. Click **Import Registrations** explicitly.
-8. Verify processed/new/skipped/invalid result counts.
-9. Search and test one party-size-1 registration.
-10. Reset test participation if needed.
-11. Search and test one multi-ticket registration; verify `You and your N guests` plus `Total guests: N`.
-12. Return to event home and verify `Total guests` persists.
-13. Export check-ins and verify source Order ID and party size.
-14. Re-upload the same untouched file and verify existing Order IDs are skipped rather than duplicated.
-
-Do not mark i-Pitch production readiness done until the actual untouched Eventbrite export is imported through qME and the production guest flow is smoke-tested.
-
-Implementation commit SHA: this commit.
-
-Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.
+Do not alter or reset the already imported production Eventbrite registration list as part of theming work.

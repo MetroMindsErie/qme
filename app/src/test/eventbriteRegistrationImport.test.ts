@@ -12,6 +12,7 @@ import {
   buildEventbriteRegistrationInsertRows,
   importEventbriteRegistrationsForEvent,
   parseEventbriteRegistrationsCsv,
+  previewEventbriteRegistrationsForEvent,
 } from '../lib/eventbriteRegistrationImport';
 
 const csv = [
@@ -19,6 +20,12 @@ const csv = [
   '1001,1,Paul,One,paul@example.com,General Admission',
   '1002,2,Paula,Two,paula@example.com,General Admission',
   '1004,4,Pat,Four,pat@example.com,General Admission',
+].join('\n');
+
+const untouchedUarfEventbriteCsv = [
+  'Order Date,Last Name,Registration Answers,Email Address,Tickets,Company,Order ID,First Name,Attendee Status,Ticket Class',
+  '2026-08-31,One,"How did you hear?,Partner",paul@example.com,1,UARF,1001,Paul,Attending,General Admission',
+  '2026-09-01,Four,,pat@example.com,4,Vettor,1004,Pat,Attending,General Admission',
 ].join('\n');
 
 function thenableQuery(result: { data?: unknown; error?: unknown }) {
@@ -58,6 +65,44 @@ describe('Eventbrite registration import', () => {
       expect.objectContaining({ orderId: '1004', firstName: 'Pat', ticketCount: 4 }),
     ]);
     expect(parsed.rows).toHaveLength(3);
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('recognizes the untouched UARF/Eventbrite export shape with extra columns in any order', () => {
+    const parsed = parseEventbriteRegistrationsCsv(untouchedUarfEventbriteCsv);
+
+    expect(parsed.headerMapping).toMatchObject({
+      orderId: 'Order ID',
+      tickets: 'Tickets',
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      email: 'Email Address',
+      ticketType: 'Ticket Class',
+    });
+    expect(parsed.rows).toEqual([
+      expect.objectContaining({
+        orderId: '1001',
+        firstName: 'Paul',
+        lastName: 'One',
+        normalizedEmail: 'paul@example.com',
+        ticketCount: 1,
+        ticketType: 'General Admission',
+        sourceMetadata: expect.objectContaining({
+          'Order Date': '2026-08-31',
+          'Registration Answers': 'How did you hear?,Partner',
+          Company: 'UARF',
+          party_size: 1,
+        }),
+      }),
+      expect.objectContaining({
+        orderId: '1004',
+        firstName: 'Pat',
+        lastName: 'Four',
+        normalizedEmail: 'pat@example.com',
+        ticketCount: 4,
+        sourceMetadata: expect.objectContaining({ additional_guests: 3 }),
+      }),
+    ]);
     expect(parsed.invalidRows).toHaveLength(0);
   });
 
@@ -136,5 +181,45 @@ describe('Eventbrite registration import', () => {
       skippedExistingOrderIds: ['1001', '1002'],
     });
     expect(calls).not.toContain('event_check_ins');
+  });
+
+  it('previews recognized concepts and counts without committing rows', async () => {
+    const calls: string[] = [];
+    mockFrom.mockImplementation((table: string) => {
+      calls.push(table);
+      if (table === 'event_imported_registrations') {
+        return thenableQuery({ data: [{ external_order_id: '1001' }] });
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const preview = await previewEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      csvText: untouchedUarfEventbriteCsv,
+    });
+
+    expect(preview.recognized).toMatchObject({
+      firstName: true,
+      lastName: true,
+      email: true,
+      orderId: true,
+      tickets: true,
+      ticketType: true,
+    });
+    expect(preview).toMatchObject({
+      rowCount: 2,
+      totalGuestsRepresented: 5,
+      newRegistrationCount: 1,
+      skippedExistingCount: 1,
+      skippedExistingOrderIds: ['1001'],
+    });
+    expect(calls).toEqual(['event_imported_registrations']);
+  });
+
+  it('blocks import with actionable validation when required concepts are missing', () => {
+    expect(() => parseEventbriteRegistrationsCsv([
+      'Tickets,First Name,Last Name,Email Address',
+      '1,Paul,One,paul@example.com',
+    ].join('\n'))).toThrow('Eventbrite CSV is missing required column: Order ID');
   });
 });

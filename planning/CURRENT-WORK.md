@@ -1,239 +1,145 @@
 # Current Work
 
-## Current Slice
+## Current Slice Status
 
-Before Product Owner runs the Eventbrite party-size SQL or performs the first production import, finish the **field-ready registration import experience** so an operator can download a registration CSV from Eventbrite and upload that exact untouched file directly into qME.
+The field-ready untouched Eventbrite CSV preview/import workflow is implemented, validated locally, committed, and pushed to `main`.
 
-Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Normal automated deployment from `main` is expected; do not perform a separate/manual deployment unless explicitly requested.
+Production SQL and production import have not been run by Steve.
 
-The previous Eventbrite party-size implementation is complete locally but **production SQL/import acceptance has not yet occurred**. Preserve that work while improving the actual import workflow described below.
+## Production Event
 
-## Product Principle
+- organization: University of Akron Research Foundation
+- event: i-Pitch - September, 2026
+- slug: `ipitch-092026`
+- September 3, 2026, 5:00-8:00 PM ET
 
-The field workflow must be:
+Digital voting remains inactive/not visible for production i-Pitch. Physical balls remain the production voting method.
 
-> **Registration system -> Download CSV -> qME -> Upload that exact CSV -> Review preview -> Import**
+## Untouched File Workflow
 
-The operator must **not** have to:
-- open Excel;
-- delete unrelated columns;
-- select/copy only qME columns;
-- rename headers;
-- rearrange columns;
-- create a qME-specific CSV;
-- re-save/transform the registration-system export.
+Admin -> Event Check-In -> Settings now supports the field workflow:
 
-This matters especially for late event-day updates. If a new Eventbrite export arrives shortly before doors open, qME should accept the untouched download safely.
+Registration system -> Download CSV -> qME -> Upload that exact CSV -> Review preview -> Import.
 
-## Actual Production Context
+Selecting a CSV no longer commits rows immediately. qME reads the file, recognizes the Eventbrite registration concepts, queries existing Eventbrite Order IDs, and shows a preview. The operator must then click **Import Registrations** to write imported registration rows.
 
-Event:
-- University of Akron Research Foundation
-- i-Pitch - September, 2026
-- slug `ipitch-092026`
-- September 3, 2026
+Preview shows:
+- rows found;
+- First Name recognized/missing;
+- Last Name recognized/missing;
+- Email recognized/missing;
+- Order ID recognized/missing;
+- Tickets / party size recognized/missing;
+- total guests represented;
+- new registrations;
+- already imported/skipped;
+- invalid rows;
+- first invalid row reason when present.
 
-The actual supplied Eventbrite export is the production fixture for this work. Test against its **real header names and extra columns**, not a hand-cleaned subset.
+Malformed/unrecognized files fail during preview with an actionable missing-column message such as:
+`Eventbrite CSV is missing required column: Order ID`
 
-Previous SOTC registration work is also useful evidence: different registration sources/events contain different extra fields, but qME repeatedly needs a small set of stable registration concepts. Do not hard-code column positions or require every source to have the same complete shape.
+## Supported Concepts / Header Aliases
 
-## Part A — Recognize Registration Concepts, Not Column Positions
+Required recognized concepts:
+- external/source registration identity: `Order ID`;
+- party size / represented guests: `Tickets`;
+- first name: `First Name`, `Attendee First Name`, `Buyer First Name`;
+- last name: `Last Name`, `Attendee Last Name`, `Buyer Last Name`;
+- email: `Email`, `Email Address`, `Attendee Email`, `Buyer Email`.
 
-For the current Eventbrite format, qME should recognize/map the concepts it needs by header name/known aliases and ignore unrelated columns.
+Optional ticket/category concept:
+- `Ticket Type`, `Ticket Class`, `Ticket Name`.
 
-Core concepts for i-Pitch/Eventbrite:
-- first name;
-- last name;
-- email;
-- external/source registration identity (`Order ID` for this Eventbrite export);
-- total registration quantity / party size (`Tickets` for this Eventbrite export);
-- optional ticket/category/type where useful.
+Column order does not matter. Extra/unrecognized columns are ignored operationally.
 
-Known/expected aliases should be intentionally supported where evidence/current code justifies them. Examples may include:
-- email: `Email`, `Email Address`;
-- ticket category: `Ticket Type`, `Ticket Class`, `Ticket Name`;
-- do not assume these examples are exhaustive without inspecting the actual fixture/current SOTC import handling.
+## Source Metadata
 
-Column **order must not matter**.
+Raw/source export fields are preserved in `event_imported_registrations.source_metadata` for each imported row. The importer stores every CSV header/value there, along with normalized Eventbrite fields:
+- `order_id`;
+- `tickets`;
+- `party_size`;
+- `additional_guests`.
 
-Extra/unrecognized columns must not make a valid import fail. Ignore them operationally unless preserving raw source metadata as described below is straightforward.
+No broad new raw-row schema was added.
 
-If a required concept genuinely cannot be found, **stop before import and explain exactly what is missing**. Do not guess from arbitrary columns.
-
-## Part B — Untouched File Upload + Preview
-
-Admin -> Event Check-In -> Settings should allow the operator to choose the untouched Eventbrite CSV file directly.
-
-After file selection and **before committing rows**, show a useful recognition/preview state, ideally equivalent to:
-
-`Eventbrite registration file recognized`
-
-- rows found: N
-- First Name: recognized
-- Last Name: recognized
-- Email: recognized
-- Order ID: recognized
-- Tickets / party size: recognized
-- total guests represented: N
-- new registrations: N
-- already imported/skipped: N
-- invalid rows: N
-
-Then provide an explicit **Import Registrations** action.
-
-The exact visual wording/layout may follow existing qME admin patterns; the important requirement is that the operator can see that qME understood the untouched file **before data is committed**.
-
-For a malformed/unrecognized file, show actionable validation rather than a generic failure.
-
-Do not require a separate column-mapping screen for this known Eventbrite format in the Thursday production path.
-
-## Part C — Preserve Previous Eventbrite Party-Size Work
-
-The previous bounded model remains accepted for implementation:
+## Party-Size / Order-ID Behavior Preserved
 
 - one Eventbrite CSV row/order = one qME imported registration;
-- `Order ID` = external/source order identity;
-- `Tickets` = total people represented by that registration;
-- do not create invented companion records;
-- `Tickets = 1` -> one guest;
-- `Tickets = 3` -> purchaser + 2 guests;
+- `Order ID` is the durable external/source order identity;
+- `Tickets` is total people represented by that registration/check-in;
+- no invented companion records;
 - self-registration defaults to party size 1 and has no Eventbrite Order ID;
-- do not merge Eventbrite imports against qME self-registration;
+- no Eventbrite-vs-qME self-registration merge/reconciliation by name or email;
 - later Eventbrite exports skip already-imported Order IDs and add new Order IDs;
 - no destructive synchronization/deletion;
-- re-import must not reset existing check-in state.
+- re-import does not reset existing check-in state.
 
-Guest Check-In behavior remains:
-- party size 1: `Thanks, Paul! You are checked in.`;
-- party size > 1: `Thanks, Paul! You and your N guest(s) are checked in.` where N = party size - 1;
-- visible `Total guests: N` on success and checked-in event-home card;
-- configured event package instruction remains unchanged.
+Guest Check-In still shows party-size fulfillment copy and `Total guests: N` on success and on the checked-in event-home card.
 
-Tricia will use the guest's phone confirmation to know how many event packages to provide; do not make her dependent on an admin console.
+## SQL / Production Safety
 
-## Part D — SQL / Production Safety
-
-Previous work prepared:
+The previous SQL remains the required production SQL:
 - `supabase-eventbrite-party-size-checkin.sql`
 
-It adds/preserves the required Order ID and party-size schema/RPC support.
+This slice did not change that SQL.
 
-**Do not run production import from code or mark production imported in this slice.**
-
-After this untouched-file workflow is complete and deployed, handoff must tell Product Owner whether the previously prepared SQL is still the exact SQL to run or whether this slice changed it.
-
-Product Owner will run required production SQL explicitly, then perform the real import through qME.
-
-## Part E — Source Metadata / Future Import Direction
-
-Do not overbuild this before Thursday, but preserve a clean architectural direction.
-
-qME should distinguish:
-
-### Normalized operational registration data
-Examples:
-- first name;
-- last name;
-- email;
-- source/import system;
-- external registration ID;
-- party size;
-- ticket/category where operationally useful;
-- check-in/attendance state.
-
-### Source-specific metadata
-Registration exports may also contain fields such as company/employer, school, major, area of expertise, registration answers, price tier, etc. These may later become useful for personalization, tags, Perfect Phit/matching, analytics, or event-specific experiences even when Check-In does not currently use them.
-
-If the existing schema already has a safe metadata/json field for imported registration source data, preserve the original row/source fields there where practical. **Do not add a broad new schema solely for raw-row preservation in this pre-event slice.** If not currently practical, document it as a future story rather than blocking Thursday.
-
-Longer-term product direction (do not fully build now):
-- rename/generalize `Eventbrite Import` toward **Import Registrations**;
-- known source profiles (Eventbrite, recurring SOTC/custom exports, etc.);
-- alias-based concept recognition;
-- unknown-source/manual mapping when necessary;
-- organization-level saved import profiles for recurring formats.
-
-## Part F — Backlog Story: Structured Event Content Item Editor
-
-Capture but **do not implement in this slice**:
-
-Replace the current pipe-delimited content item editor (`Name | Summary | Full Detail | Image URL`) with a structured admin item editor.
-
-Future desired UX:
-- collection shows individual item cards/rows;
-- **+ Add Item**;
-- edit one item without replacing the entire text block;
-- fields for Name, Summary, Full Detail, optional Image/Icon URL;
-- Up / Down ordering;
-- Delete;
-- natural future place for URL, tags, and item-level interactions such as Vote;
-- preserve bulk paste/import as an advanced convenience where useful.
-
-The current pipe editor is acceptable for Thursday but has proven awkward and error-prone during live i-Pitch configuration.
-
-## Preserve Accepted i-Pitch Behavior
-
-Do not regress:
-- Auto Check-In;
-- imported lookup by first/last/email;
-- self-registration fallback;
-- email + Confirm email;
-- post-check-in event instruction;
-- party-size fulfillment copy/Total guests work from previous slice;
-- shared iPad no-menu mode;
-- Next Guest + 15-second reset;
-- reusable event test-data reset;
-- Agenda expanded on home;
-- Finalists child cards summary -> full detail;
-- Judges content;
-- digital voting inactive/not visible for Thursday;
-- SOTC behavior.
+Product Owner must run that SQL in production before the first production import. After SQL succeeds and the automated deployment from `main` is live, the actual Eventbrite CSV can be imported through qME.
 
 ## Validation
 
-At minimum:
-- automated test using the actual untouched UARF/Eventbrite CSV header shape including unrelated extra columns;
-- prove column order does not matter;
-- prove extra columns are ignored safely;
-- prove known email/ticket aliases where supported;
-- prove missing required concepts block import with actionable validation;
-- prove preview totals rows / represented guests / new / skipped / invalid before commit;
-- prove import after preview preserves Order ID/party-size/re-import semantics;
-- prove repeated untouched updated file adds only new Order IDs;
-- TypeScript;
-- full test suite;
-- production Vite build.
+Passed:
+- automated parser/import preview tests using an untouched UARF/Eventbrite-shaped CSV header set with unrelated extra columns, shuffled column order, `Email Address`, and `Ticket Class`;
+- column-order independence;
+- extra columns ignored operationally and preserved in source metadata;
+- known email/ticket aliases;
+- missing required concept blocks preview/import with actionable validation;
+- preview totals rows / represented guests / new / skipped / invalid before commit;
+- explicit import after preview preserves Order ID / party size / re-import semantics;
+- repeated updated file behavior remains existing Order IDs skipped, new Order IDs inserted;
+- `npx tsc -b`;
+- focused tests:
+  `npx vitest run src\test\eventbriteRegistrationImport.test.ts src\test\adminEventCheckInsImportWorkflow.test.tsx src\test\guestEventCheckIn.test.tsx src\test\guestEventDetail.test.tsx src\test\adminEventCheckIns.test.ts`;
+- full suite:
+  `npx vitest run --testTimeout 30000`
+  passed 21 files / 168 tests;
+- production build:
+  `npx vite build --outDir ..\tmp\vite-build-check-registration-preview --emptyOutDir`.
 
-## Product Owner Acceptance
+Vite emitted the existing large chunk warning; build completed successfully.
 
-After deployment, but **before production import**:
-1. Run/confirm required SQL as instructed by Steve's handoff.
-2. Download/use the untouched actual Eventbrite CSV.
-3. In qME Event Check-In Settings, choose that exact file without editing it.
-4. Verify qME recognizes required concepts and shows a preview.
-5. Verify row count and total guests represented are plausible against the source file.
-6. Import explicitly.
-7. Verify processed/new/skipped/invalid result counts.
-8. Search and test one party-size-1 registration.
-9. Reset test participation if needed.
-10. Search and test one multi-ticket registration; verify `You and your N guests` plus `Total guests: N`.
-11. Return to event home and verify Total guests persists.
-12. Export/check reporting for source Order ID and party size.
-13. Re-upload the same untouched file and verify all existing Order IDs are skipped rather than duplicated.
+Repository search found no actual CSV fixture checked into or near the qME repo, so validation used the actual UARF/Eventbrite export shape recorded in this file rather than a hand-cleaned subset.
 
-## Handoff
+## Files Changed
 
-Update this FILE (`planning/CURRENT-WORK.md`) with:
-- exact untouched-file recognition behavior;
-- supported header aliases/concepts;
-- preview implementation;
-- actual fixture/header validation performed;
-- whether raw/source metadata is preserved or deferred;
-- confirmation that previous party-size SQL is unchanged or exact replacement SQL if changed;
-- files changed;
-- tests/build results;
-- production import status (must remain truthful);
-- commit SHA;
-- concise Product Owner SQL/import acceptance steps.
+- `app/src/lib/eventbriteRegistrationImport.ts`
+- `app/src/pages/admin/AdminEventCheckIns.tsx`
+- `app/src/test/adminEventCheckInsImportWorkflow.test.tsx`
+- `app/src/test/eventbriteRegistrationImport.test.ts`
+- `planning/CURRENT-WORK.md`
+
+## Production Import Status
+
+Production Eventbrite list has not been imported.
+
+Product Owner acceptance:
+1. Run `supabase-eventbrite-party-size-checkin.sql` in production Supabase.
+2. Wait for automated deployment from `main` to be live.
+3. Download/use the untouched actual Eventbrite CSV.
+4. In qME Event Check-In Settings, choose that exact file without editing it.
+5. Verify qME recognizes required concepts and shows the preview counts.
+6. Confirm row count and total guests represented are plausible against Eventbrite.
+7. Click **Import Registrations** explicitly.
+8. Verify processed/new/skipped/invalid result counts.
+9. Search and test one party-size-1 registration.
+10. Reset test participation if needed.
+11. Search and test one multi-ticket registration; verify `You and your N guests` plus `Total guests: N`.
+12. Return to event home and verify `Total guests` persists.
+13. Export check-ins and verify source Order ID and party size.
+14. Re-upload the same untouched file and verify existing Order IDs are skipped rather than duplicated.
 
 Do not mark i-Pitch production readiness done until the actual untouched Eventbrite export is imported through qME and the production guest flow is smoke-tested.
+
+Implementation commit SHA: this commit.
+
+Final pushed SHA is reported in the completion summary; it cannot be embedded in the same commit that defines it.

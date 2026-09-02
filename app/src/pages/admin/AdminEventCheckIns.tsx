@@ -8,7 +8,12 @@ import { getEvent, updateEvent } from '../../lib/eventService';
 import { getEventCheckInConfig, type EventCheckInCompletionMode } from '../../lib/eventConfig';
 import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySize';
 import { downloadCsv, formatCsvTimestamp, safeCsvFilename } from '../../lib/csvExport';
-import { importEventbriteRegistrationsForEvent, type EventbriteRegistrationImportResult } from '../../lib/eventbriteRegistrationImport';
+import {
+  importEventbriteRegistrationsForEvent,
+  previewEventbriteRegistrationsForEvent,
+  type EventbriteRegistrationImportResult,
+  type EventbriteRegistrationPreviewResult,
+} from '../../lib/eventbriteRegistrationImport';
 import {
   canManageEvent,
   getCurrentAdminPrincipal,
@@ -49,6 +54,16 @@ function checkInField(row: EventCheckIn, key: string): unknown {
   return (row as unknown as Record<string, unknown>)[key];
 }
 
+function readFileText(file: File): Promise<string> {
+  if (typeof file.text === 'function') return file.text();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ''));
+    reader.onerror = () => reject(reader.error ?? new Error('File could not be read.'));
+    reader.readAsText(file);
+  });
+}
+
 export function getCheckInRegistrationSource(row: EventCheckIn): 'imported' | 'self_registered' | 'needs_help' {
   const metadata = asRecord(row.metadata);
   if (metadata.imported_registration_id) return 'imported';
@@ -72,8 +87,11 @@ export default function AdminEventCheckIns({
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsStatus, setSettingsStatus] = useState('');
   const [importingEventbrite, setImportingEventbrite] = useState(false);
+  const [eventbritePreviewing, setEventbritePreviewing] = useState(false);
   const [eventbriteImportStatus, setEventbriteImportStatus] = useState('');
   const [eventbriteImportResult, setEventbriteImportResult] = useState<EventbriteRegistrationImportResult | null>(null);
+  const [eventbritePreview, setEventbritePreview] = useState<EventbriteRegistrationPreviewResult | null>(null);
+  const [eventbritePendingFile, setEventbritePendingFile] = useState<{ name: string; text: string } | null>(null);
   const [removingCheckInIds, setRemovingCheckInIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -293,19 +311,47 @@ export default function AdminEventCheckIns({
     }
   }
 
-  async function handleEventbriteImport(file: File | null) {
+  async function handleEventbritePreview(file: File | null) {
     if (!event || !file) return;
+    setEventbritePreviewing(true);
+    setEventbriteImportStatus('Reading file...');
+    setEventbriteImportResult(null);
+    setEventbritePreview(null);
+    setEventbritePendingFile(null);
+    try {
+      const csvText = await readFileText(file);
+      const preview = await previewEventbriteRegistrationsForEvent({
+        eventId: event.id,
+        csvText,
+      });
+      setEventbritePendingFile({ name: file.name, text: csvText });
+      setEventbritePreview(preview);
+      setEventbriteImportStatus(preview.invalidRows.length > 0
+        ? `File recognized with ${preview.invalidRows.length} invalid row(s). Review before importing.`
+        : 'Preview ready. Review recognized fields before importing.');
+    } catch (e) {
+      console.error('Eventbrite preview failed', e);
+      const message = e instanceof Error ? e.message : 'Unknown error';
+      setEventbriteImportStatus(`Preview failed: ${message}`);
+    } finally {
+      setEventbritePreviewing(false);
+    }
+  }
+
+  async function handleEventbriteImport() {
+    if (!event || !eventbritePendingFile || !eventbritePreview) return;
     setImportingEventbrite(true);
     setEventbriteImportStatus('Importing...');
     setEventbriteImportResult(null);
     try {
-      const csvText = await file.text();
       const result = await importEventbriteRegistrationsForEvent({
         eventId: event.id,
-        sourceFileName: file.name,
-        csvText,
+        sourceFileName: eventbritePendingFile.name,
+        csvText: eventbritePendingFile.text,
       });
       setEventbriteImportResult(result);
+      setEventbritePreview(null);
+      setEventbritePendingFile(null);
       setEventbriteImportStatus(`Imported ${result.insertedCount}; skipped ${result.skippedExistingCount}; invalid ${result.invalidRows.length}.`);
     } catch (e) {
       console.error('Eventbrite import failed', e);
@@ -585,10 +631,11 @@ export default function AdminEventCheckIns({
               </label>
               <input
                 type="file"
+                aria-label="Eventbrite CSV"
                 accept=".csv,text/csv"
-                disabled={importingEventbrite}
+                disabled={importingEventbrite || eventbritePreviewing}
                 onChange={(e) => {
-                  void handleEventbriteImport(e.target.files?.[0] ?? null);
+                  void handleEventbritePreview(e.target.files?.[0] ?? null);
                   e.currentTarget.value = '';
                 }}
                 style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem', border: '1px solid #d0d7de', borderRadius: 8, background: '#fff' }}
@@ -597,9 +644,42 @@ export default function AdminEventCheckIns({
                 Uses Eventbrite Order ID for repeat-import safety and Tickets as the total guests represented by one registration.
               </p>
               {eventbriteImportStatus && (
-                <p style={{ color: eventbriteImportStatus.startsWith('Import failed') ? '#B71C1C' : '#00a344', fontWeight: 800, margin: '0.75rem 0 0' }}>
+                <p style={{ color: eventbriteImportStatus.includes('failed') ? '#B71C1C' : '#00a344', fontWeight: 800, margin: '0.75rem 0 0' }}>
                   {eventbriteImportStatus}
                 </p>
+              )}
+              {eventbritePreview && (
+                <div style={{ border: '1px solid #d0d7de', borderRadius: 8, padding: '0.85rem', marginTop: '0.75rem', background: '#fff' }}>
+                  <div style={{ color: '#223247', fontWeight: 900, marginBottom: '0.5rem' }}>
+                    Eventbrite registration file recognized
+                  </div>
+                  <div style={{ display: 'grid', gap: '0.25rem', color: '#475467', fontSize: '0.82rem', lineHeight: 1.4 }}>
+                    <div>Rows found: {eventbritePreview.rowCount}</div>
+                    <div>First Name: {eventbritePreview.recognized.firstName ? 'recognized' : 'missing'}</div>
+                    <div>Last Name: {eventbritePreview.recognized.lastName ? 'recognized' : 'missing'}</div>
+                    <div>Email: {eventbritePreview.recognized.email ? 'recognized' : 'missing'}</div>
+                    <div>Order ID: {eventbritePreview.recognized.orderId ? 'recognized' : 'missing'}</div>
+                    <div>Tickets / party size: {eventbritePreview.recognized.tickets ? 'recognized' : 'missing'}</div>
+                    <div>Total guests represented: {eventbritePreview.totalGuestsRepresented}</div>
+                    <div>New registrations: {eventbritePreview.newRegistrationCount}</div>
+                    <div>Already imported/skipped: {eventbritePreview.skippedExistingCount}</div>
+                    <div>Invalid rows: {eventbritePreview.invalidRows.length}</div>
+                  </div>
+                  {eventbritePreview.invalidRows.length > 0 && (
+                    <div style={{ color: '#B71C1C', fontSize: '0.8rem', fontWeight: 800, lineHeight: 1.35, marginTop: '0.65rem' }}>
+                      First invalid row: row {eventbritePreview.invalidRows[0].sourceRowNumber}, {eventbritePreview.invalidRows[0].reason}.
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    className="actionBtn actionBtn-primary"
+                    style={{ margin: '0.85rem 0 0' }}
+                    disabled={importingEventbrite || eventbritePreview.rows.length === 0}
+                    onClick={handleEventbriteImport}
+                  >
+                    {importingEventbrite ? 'Importing...' : 'Import Registrations'}
+                  </button>
+                </div>
               )}
               {eventbriteImportResult && (
                 <div style={{ color: '#475467', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.5rem' }}>

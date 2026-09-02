@@ -45,12 +45,27 @@ export type EventbriteRegistrationImportResult = EventbriteRegistrationParseResu
   importBatchId: string | null;
 };
 
+export type EventbriteRegistrationPreviewResult = EventbriteRegistrationParseResult & {
+  recognized: {
+    firstName: boolean;
+    lastName: boolean;
+    email: boolean;
+    orderId: boolean;
+    tickets: boolean;
+    ticketType: boolean;
+  };
+  totalGuestsRepresented: number;
+  newRegistrationCount: number;
+  skippedExistingCount: number;
+  skippedExistingOrderIds: string[];
+};
+
 const REQUIRED_COLUMNS = {
   orderId: ['Order ID'],
   tickets: ['Tickets'],
   firstName: ['First Name', 'Attendee First Name', 'Buyer First Name'],
   lastName: ['Last Name', 'Attendee Last Name', 'Buyer Last Name'],
-  email: ['Email', 'Attendee Email', 'Buyer Email'],
+  email: ['Email', 'Email Address', 'Attendee Email', 'Buyer Email'],
 };
 
 const OPTIONAL_COLUMNS = {
@@ -208,6 +223,54 @@ export function parseEventbriteRegistrationsCsv(csvText: string): EventbriteRegi
   };
 }
 
+async function getExistingEventbriteOrderIds(eventId: string, orderIds: string[]): Promise<Set<string>> {
+  const existingOrderIds = new Set<string>();
+  if (orderIds.length === 0) return existingOrderIds;
+
+  const { data, error } = await supabase
+    .from('event_imported_registrations')
+    .select('external_order_id, external_attendee_id')
+    .eq('event_id', eventId)
+    .eq('import_source', 'eventbrite')
+    .in('external_order_id', orderIds);
+  if (error) throw error;
+  (data ?? []).forEach((row) => {
+    const record = row as Record<string, unknown>;
+    const externalOrderId = normalizeText(record.external_order_id || record.external_attendee_id);
+    if (externalOrderId) existingOrderIds.add(externalOrderId.toLowerCase());
+  });
+
+  return existingOrderIds;
+}
+
+export async function previewEventbriteRegistrationsForEvent(input: {
+  eventId: string;
+  csvText: string;
+}): Promise<EventbriteRegistrationPreviewResult> {
+  const parsed = parseEventbriteRegistrationsCsv(input.csvText);
+  const orderIds = parsed.rows.map((row) => row.orderId);
+  const existingOrderIds = await getExistingEventbriteOrderIds(input.eventId, orderIds);
+  const skippedExistingOrderIds = parsed.rows
+    .filter((row) => existingOrderIds.has(row.orderId.toLowerCase()))
+    .map((row) => row.orderId);
+
+  return {
+    ...parsed,
+    recognized: {
+      firstName: Boolean(parsed.headerMapping.firstName),
+      lastName: Boolean(parsed.headerMapping.lastName),
+      email: Boolean(parsed.headerMapping.email),
+      orderId: Boolean(parsed.headerMapping.orderId),
+      tickets: Boolean(parsed.headerMapping.tickets),
+      ticketType: Boolean(parsed.headerMapping.ticketType),
+    },
+    totalGuestsRepresented: parsed.rows.reduce((sum, row) => sum + row.ticketCount, 0),
+    newRegistrationCount: parsed.rows.length - skippedExistingOrderIds.length,
+    skippedExistingCount: skippedExistingOrderIds.length,
+    skippedExistingOrderIds,
+  };
+}
+
 export function buildEventbriteRegistrationInsertRows(
   eventId: string,
   importBatchId: string,
@@ -240,22 +303,7 @@ export async function importEventbriteRegistrationsForEvent(input: {
 }): Promise<EventbriteRegistrationImportResult> {
   const parsed = parseEventbriteRegistrationsCsv(input.csvText);
   const orderIds = parsed.rows.map((row) => row.orderId);
-  const existingOrderIds = new Set<string>();
-
-  if (orderIds.length > 0) {
-    const { data, error } = await supabase
-      .from('event_imported_registrations')
-      .select('external_order_id, external_attendee_id')
-      .eq('event_id', input.eventId)
-      .eq('import_source', 'eventbrite')
-      .in('external_order_id', orderIds);
-    if (error) throw error;
-    (data ?? []).forEach((row) => {
-      const record = row as Record<string, unknown>;
-      const externalOrderId = normalizeText(record.external_order_id || record.external_attendee_id);
-      if (externalOrderId) existingOrderIds.add(externalOrderId.toLowerCase());
-    });
-  }
+  const existingOrderIds = await getExistingEventbriteOrderIds(input.eventId, orderIds);
 
   const newRows = parsed.rows.filter((row) => !existingOrderIds.has(row.orderId.toLowerCase()));
   const skippedExistingOrderIds = parsed.rows

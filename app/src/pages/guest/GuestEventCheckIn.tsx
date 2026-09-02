@@ -25,6 +25,7 @@ import '../../styles/shared.css';
 import '../../styles/guest.css';
 
 const SHARED_DEVICE_RESET_SECONDS = 15;
+const SHARED_DEVICE_COMPLETION_INSTRUCTION = "Please show this confirmation to the person at the desk to receive your evening's event package.";
 
 interface GuestEventCheckInProps {
   checkInCode?: string | null;
@@ -99,8 +100,9 @@ export default function GuestEventCheckIn({
     : useImportedRegistrationLookup
     ? 'Find your registration to self check in.'
     : intro;
-  const completedInstruction = checkInConfig.postCheckInInstruction
-    || confirmation.replace(/^You are checked in\.\s*/i, '');
+  const completedInstruction = isSharedDeviceMode
+    ? SHARED_DEVICE_COMPLETION_INSTRUCTION
+    : checkInConfig.postCheckInInstruction || confirmation.replace(/^You are checked in\.\s*/i, '');
   const checkInPartySize = getCheckInPartySize(checkIn);
 
   const storageKey = useCallback((evId: string) => {
@@ -493,13 +495,15 @@ export default function GuestEventCheckIn({
           <p style={{ color: '#666', lineHeight: 1.5, marginTop: 0 }}>
             This event does not require guest check-in before viewing or joining activities.
           </p>
-          <button
-            className="actionBtn actionBtn-secondary"
-            style={{ marginTop: '1rem' }}
-            onClick={() => navigate(`/events/${eventSlug}`)}
-          >
-            Back to Event
-          </button>
+          {!isSharedDeviceMode && (
+            <button
+              className="actionBtn actionBtn-secondary"
+              style={{ marginTop: '1rem' }}
+              onClick={() => navigate(`/events/${eventSlug}`)}
+            >
+              Back to Event
+            </button>
+          )}
         </div>
       </div>
     );
@@ -532,13 +536,15 @@ export default function GuestEventCheckIn({
               Admin test mode requires an authenticated event admin session.
             </p>
           )}
-          <button
-            className="actionBtn actionBtn-secondary"
-            style={{ marginTop: '1rem' }}
-            onClick={() => navigate(`/events/${eventSlug}`)}
-          >
-            Back to Event
-          </button>
+          {!isSharedDeviceMode && (
+            <button
+              className="actionBtn actionBtn-secondary"
+              style={{ marginTop: '1rem' }}
+              onClick={() => navigate(`/events/${eventSlug}`)}
+            >
+              Back to Event
+            </button>
+          )}
         </div>
       </div>
     );
@@ -630,13 +636,15 @@ export default function GuestEventCheckIn({
                 <div style={{ fontSize: '0.9rem', marginTop: 6, lineHeight: 1.4 }}>
                   Return to the event page and choose Bouquet Bar when you are ready.
                 </div>
-                <button
-                  className="actionBtn actionBtn-primary"
-                  style={{ margin: '0.85rem 0 0' }}
-                  onClick={() => navigate(`/events/${eventSlug}`)}
-                >
-                  Back to Event
-                </button>
+                {!isSharedDeviceMode && (
+                  <button
+                    className="actionBtn actionBtn-primary"
+                    style={{ margin: '0.85rem 0 0' }}
+                    onClick={() => navigate(`/events/${eventSlug}`)}
+                  >
+                    Back to Event
+                  </button>
+                )}
               </div>
             )}
           </>
@@ -902,13 +910,15 @@ export default function GuestEventCheckIn({
           </form>
         )}
 
-        <button
-          className="actionBtn actionBtn-secondary"
-          style={{ marginTop: '1rem' }}
-          onClick={() => navigate(`/events/${eventSlug}`)}
-        >
-          Back to Event
-        </button>
+        {!isSharedDeviceMode && (
+          <button
+            className="actionBtn actionBtn-secondary"
+            style={{ marginTop: '1rem' }}
+            onClick={() => navigate(`/events/${eventSlug}`)}
+          >
+            Back to Event
+          </button>
+        )}
       </div>
     </div>
   );

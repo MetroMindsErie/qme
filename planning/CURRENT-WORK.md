@@ -1,5 +1,54 @@
 # Current Work
 
+## Implementation Handoff
+
+Final shared-iPad kiosk cleanup is implemented and validated. The shared device is now a closed loop:
+
+`Find registration -> Check in -> confirmation -> Next Guest / 15-second automatic reset -> Find registration`
+
+Shared-mode changes:
+- Removed Back to Event from shared Check-In initial lookup.
+- Removed Back to Event from shared expanded self-registration fallback.
+- Removed Back to Event from shared completion/confirmation.
+- Removed Back to Event from shared closed/scheduled and no-check-in/unavailable states.
+- Preserved Next Guest, 15-second auto-reset, prior guest/session clearing, admin-test indicator, and availability enforcement.
+- Preserved `shared=1` alias and primary `/events/:eventSlug/check-in?mode=shared` behavior.
+
+Shared completion copy:
+- Shared mode now uses kiosk-specific fulfillment wording without changing event configuration:
+  `Please show this confirmation to the person at the desk to receive your evening's event package.`
+- Personalized and party-size text still comes from qME's normal confirmation formatter.
+- Personal-phone Check-In still uses the configured event instruction and still shows Back to Event.
+
+Physical kiosk setup:
+1. Open `/events/ipitch-092026/check-in?mode=shared`.
+2. Safari Share -> Add to Home Screen.
+3. Enable `Open as Web App`.
+4. Launch the resulting i-Pitch Check-In Home Screen icon.
+5. Start Guided Access on that clean web-app window.
+6. Do not draw disabled touch regions over the qME screen.
+
+Validation passed:
+- Focused GuestEventCheckIn tests:
+  `npm test -- --run src/test/guestEventCheckIn.test.tsx`
+  Result: 13 tests passed.
+- Full Vitest suite:
+  `npm test -- --run`
+  Result: 24 test files passed, 189 tests passed.
+- Production build:
+  `npm run build`
+  Result: TypeScript and Vite build passed. Vite reported the existing large-chunk warning.
+
+Files changed:
+- `app/src/pages/guest/GuestEventCheckIn.tsx`
+- `app/src/test/guestEventCheckIn.test.tsx`
+- `planning/CURRENT-WORK.md`
+
+Git/deployment:
+- Commit SHA: pending.
+- Push to `origin/main`: pending.
+- Manual deploy: not requested. Normal automated deployment from `main` is expected.
+
 ## Current Slice
 
 Final production cleanup for the i-Pitch front-table shared iPad Check-In kiosk.

@@ -177,9 +177,28 @@ describe('GuestEventCheckIn', () => {
     expect(await screen.findByText('Check-In is not open yet.')).toBeInTheDocument();
     expect(screen.getByText('You can explore the event information in the meantime.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
     expect(screen.queryByPlaceholderText('First name, last name, or email')).not.toBeInTheDocument();
     expect(mockSearchImportedRegistrationsForGuest).not.toHaveBeenCalled();
     expect(mockCreateEventCheckIn).not.toHaveBeenCalled();
+  });
+
+  it('does not offer Back to Event from shared-device no-check-in state', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      metadata: {
+        ...event.metadata,
+        check_in: {
+          ...(event.metadata?.check_in as Record<string, unknown>),
+          completion_mode: 'none',
+        },
+      },
+    });
+
+    renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
+
+    expect(await screen.findByText('Check-in is not needed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
   });
 
   it('allows authenticated admin test mode to exercise the real guest flow while public check-in is closed', async () => {
@@ -202,7 +221,9 @@ describe('GuestEventCheckIn', () => {
     expect(screen.getByText('Enter your name or email to find your registration.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     expect(screen.queryByText('Recovery phone')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
     await user.click(screen.getByText("Can't find your registration?"));
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
@@ -214,6 +235,9 @@ describe('GuestEventCheckIn', () => {
       expect(mockCheckInEventGuest).toHaveBeenCalledWith(createdCheckIn.id, 'general', event.id, { bypassAvailability: true });
     });
     expect(await screen.findByText(/Thanks, Walk!/)).toBeInTheDocument();
+    expect(screen.getByText(/Please show this confirmation to the person at the desk to receive your evening's event package./)).toBeInTheDocument();
+    expect(screen.queryByText(/Please go to the check-in desk to receive your event package./)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
   });
 
   it('guides imported lookup by name or email and blocks mismatched self-registration email locally', async () => {
@@ -264,6 +288,7 @@ describe('GuestEventCheckIn', () => {
     });
     expect(await screen.findByText(/Thanks, Walk!/)).toBeInTheDocument();
     expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Event' })).toBeInTheDocument();
     expect(screen.getByText('Total guests: 1')).toBeInTheDocument();
   });
 
@@ -318,6 +343,57 @@ describe('GuestEventCheckIn', () => {
     expect(screen.getByText(totalGuests)).toBeInTheDocument();
   });
 
+  it('uses kiosk-specific completion wording with shared imported party-size confirmation', async () => {
+    const user = userEvent.setup();
+    mockSearchImportedRegistrationsForGuest.mockResolvedValue([{
+      id: 'registration-meredith',
+      first_name: 'Meredith',
+      last_name: 'Guest',
+      email_hint: 'me**@example.com',
+      ticket_hint: 'General Admission',
+      party_size: 2,
+      external_order_id: 'order-meredith',
+      headshot_entitled: false,
+      already_checked_in: false,
+      requires_email_confirmation: false,
+    }]);
+    mockCreateImportedRegistrationCheckInForGuest.mockResolvedValue({
+      ...completedCheckIn,
+      first_name: 'Meredith',
+      last_name: 'Guest',
+      metadata: {
+        imported_registration_id: 'registration-meredith',
+        external_order_id: 'order-meredith',
+        party_size: 2,
+      },
+    });
+    mockGetEventCheckIn.mockResolvedValue({
+      ...completedCheckIn,
+      first_name: 'Meredith',
+      last_name: 'Guest',
+      metadata: {
+        imported_registration_id: 'registration-meredith',
+        external_order_id: 'order-meredith',
+        party_size: 2,
+      },
+    });
+
+    renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
+
+    const searchInput = await screen.findByPlaceholderText('First name, last name, or email');
+    fireEvent.change(searchInput, { target: { value: 'Meredith' } });
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.click(await screen.findByRole('button', { name: 'This is me' }));
+
+    expect(await screen.findByText(/Thanks, Meredith! You and your 1 guest are checked in./)).toBeInTheDocument();
+    expect(screen.getByText(/Please show this confirmation to the person at the desk to receive your evening's event package./)).toBeInTheDocument();
+    expect(screen.queryByText(/Please go to the check-in desk to receive your event package./)).not.toBeInTheDocument();
+    expect(screen.getByText('Total guests: 2')).toBeInTheDocument();
+    expect(screen.getByText('Next guest in 15 seconds...')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next Guest' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
+  });
+
   it('clears prior guest identity and starts clean for shared-device Next Guest', async () => {
     const user = userEvent.setup();
     renderCheckIn('/events/ipitch-2026/check-in?mode=shared');
@@ -326,7 +402,9 @@ describe('GuestEventCheckIn', () => {
     expect(screen.getByText('Enter your name or email to find your registration.')).toBeInTheDocument();
     expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     expect(screen.queryByText('Recovery phone')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
     await user.click(screen.getByText("Can't find your registration?"));
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });
     fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'walk@example.com' } });
@@ -336,6 +414,7 @@ describe('GuestEventCheckIn', () => {
     await user.click(screen.getByRole('button', { name: 'Register & Check In' }));
 
     expect(await screen.findByRole('button', { name: 'Next Guest' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Back to Event' })).not.toBeInTheDocument();
     expect(localStorage.getItem('qme:eventCheckIn:event-1')).not.toBeNull();
     await user.click(screen.getByRole('button', { name: 'Next Guest' }));
 
@@ -386,6 +465,7 @@ describe('GuestEventCheckIn', () => {
     expect(screen.getByPlaceholderText('First name, last name, or email')).toBeInTheDocument();
     expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
     expect(screen.getByText('Recovery phone')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Back to Event' })).toBeInTheDocument();
     fireEvent.click(screen.getByText("Can't find your registration?"));
     fireEvent.change(screen.getByLabelText('First name'), { target: { value: 'Walk' } });
     fireEvent.change(screen.getByLabelText('Last name'), { target: { value: 'Up' } });

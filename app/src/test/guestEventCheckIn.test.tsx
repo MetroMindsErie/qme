@@ -82,6 +82,7 @@ const mockCheckInEventGuest = vi.fn();
 const mockGetEventCheckIn = vi.fn();
 const mockCreateImportedRegistrationCheckInForGuest = vi.fn();
 const mockReconnectImportedRegistrationCheckInForGuest = vi.fn();
+const mockRecoverEventCheckInForGuest = vi.fn();
 const mockGetCurrentAdminPrincipal = vi.fn();
 
 vi.mock('../components/Header', () => ({
@@ -105,6 +106,7 @@ vi.mock('../lib/checkInService', () => ({
   createImportedRegistrationCheckInForGuest: (...args: unknown[]) => mockCreateImportedRegistrationCheckInForGuest(...args),
   getEventCheckIn: (...args: unknown[]) => mockGetEventCheckIn(...args),
   reconnectImportedRegistrationCheckInForGuest: (...args: unknown[]) => mockReconnectImportedRegistrationCheckInForGuest(...args),
+  recoverEventCheckInForGuest: (...args: unknown[]) => mockRecoverEventCheckInForGuest(...args),
   searchImportedRegistrationsForGuest: (...args: unknown[]) => mockSearchImportedRegistrationsForGuest(...args),
 }));
 
@@ -130,6 +132,7 @@ describe('GuestEventCheckIn', () => {
     mockGetEventCheckIn.mockResolvedValue(completedCheckIn);
     mockCreateImportedRegistrationCheckInForGuest.mockResolvedValue(completedCheckIn);
     mockReconnectImportedRegistrationCheckInForGuest.mockResolvedValue(completedCheckIn);
+    mockRecoverEventCheckInForGuest.mockResolvedValue(completedCheckIn);
     mockGetCurrentAdminPrincipal.mockResolvedValue(null);
   });
 
@@ -290,6 +293,45 @@ describe('GuestEventCheckIn', () => {
     expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Back to Event' })).toBeInTheDocument();
     expect(screen.getByText('Total guests: 1')).toBeInTheDocument();
+  });
+
+  it('recovers an already-completed imported check-in from older local storage without showing pending staff state', async () => {
+    localStorage.setItem('qme:eventCheckIn:event-1', JSON.stringify({
+      id: 'stale-check-in-id',
+      firstName: 'Evan',
+      lastName: 'Guest',
+      importedRegistrationId: 'registration-evan',
+      phone: '2165550100',
+    }));
+    mockRecoverEventCheckInForGuest.mockResolvedValue({
+      ...completedCheckIn,
+      id: 'server-check-in-evan',
+      first_name: 'Evan',
+      last_name: 'Guest',
+      status: 'completed',
+      ticket_type: 'general',
+      metadata: {
+        imported_registration_id: 'registration-evan',
+        party_size: 1,
+      },
+    });
+
+    renderCheckIn();
+
+    expect(await screen.findByText(/Thanks, Evan!/)).toBeInTheDocument();
+    expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();
+    expect(screen.queryByText(/Please wait for the host/)).not.toBeInTheDocument();
+    expect(mockRecoverEventCheckInForGuest).toHaveBeenCalledWith(event.id, expect.objectContaining({
+      id: 'stale-check-in-id',
+      importedRegistrationId: 'registration-evan',
+      phone: '2165550100',
+    }));
+    expect(JSON.parse(localStorage.getItem('qme:eventCheckIn:event-1') || '{}')).toMatchObject({
+      id: 'server-check-in-evan',
+      firstName: 'Evan',
+      lastName: 'Guest',
+      importedRegistrationId: 'registration-evan',
+    });
   });
 
   it.each([

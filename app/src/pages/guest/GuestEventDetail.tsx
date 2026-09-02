@@ -15,7 +15,7 @@ import {
   listQueuesForEvent,
 } from '../../lib/queueService';
 import { listActiveEcesForEvent } from '../../lib/eceService';
-import { getEventCheckIn } from '../../lib/checkInService';
+import { recoverEventCheckInForGuest } from '../../lib/checkInService';
 import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySize';
 import { getContentListConfig } from '../../lib/contentListConfig';
 import { getCompletedEventCheckInMessage, getEventCheckInCardDescription, getEventCheckInConfig } from '../../lib/eventConfig';
@@ -73,6 +73,18 @@ function asNumber(value: unknown): number | null {
 
 function hasSameShape(left: unknown, right: unknown) {
   return JSON.stringify(left) === JSON.stringify(right);
+}
+
+type StoredEventCheckIn = {
+  id?: string;
+  importedRegistrationId?: string;
+  imported_registration_id?: string;
+  email?: string;
+  phone?: string;
+};
+
+function getStoredImportedRegistrationId(saved: StoredEventCheckIn) {
+  return saved.importedRegistrationId || saved.imported_registration_id || '';
 }
 
 function getEceHomeSection(ece: Ece): string {
@@ -523,21 +535,40 @@ export default function GuestEventDetail({ eventSlugOverride }: { eventSlugOverr
       let nextHeadshotCreditStatus: CreditStatus = 'none';
       if (storedCheckIn) {
         try {
-          const saved = JSON.parse(storedCheckIn) as { id?: string };
-          if (saved.id) {
-            const row = await getEventCheckIn(saved.id, ev.id);
-            nextEventCheckInStatus = row.status;
-            nextEventCheckInPartySize = getCheckInPartySize(row);
-            if (!checkInConfig.requireCompletedForParticipation || row.status === 'completed') {
-              checkInTicketType = row.ticket_type;
-              nextHasEventCheckIn = true;
-              const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot', ev.id);
-              nextHeadshotCreditStatus = credit
-                ? credit.quantity > credit.used_quantity ? 'available' : 'used'
-                : 'none';
+          const saved = JSON.parse(storedCheckIn) as StoredEventCheckIn;
+          const importedRegistrationId = getStoredImportedRegistrationId(saved);
+          if (saved.id || importedRegistrationId) {
+            const row = await recoverEventCheckInForGuest(ev.id, {
+              id: saved.id,
+              importedRegistrationId,
+              emailConfirmation: saved.email,
+              phone: saved.phone,
+            });
+            if (row) {
+              nextEventCheckInStatus = row.status;
+              nextEventCheckInPartySize = getCheckInPartySize(row);
+              if (!checkInConfig.requireCompletedForParticipation || row.status === 'completed') {
+                checkInTicketType = row.ticket_type;
+                nextHasEventCheckIn = true;
+                const credit = await getGuestCreditForCheckIn(row.id, 'professional_headshot', ev.id);
+                nextHeadshotCreditStatus = credit
+                  ? credit.quantity > credit.used_quantity ? 'available' : 'used'
+                  : 'none';
+              }
+              localStorage.setItem(`qme:eventCheckIn:${ev.id}`, JSON.stringify({
+                ...saved,
+                id: row.id,
+                firstName: row.first_name,
+                lastName: row.last_name,
+                importedRegistrationId,
+                ts: Date.now(),
+              }));
+            } else {
+              localStorage.removeItem(`qme:eventCheckIn:${ev.id}`);
             }
           }
         } catch {
+          localStorage.removeItem(`qme:eventCheckIn:${ev.id}`);
           nextEventCheckInStatus = null;
           nextHasEventCheckIn = false;
           nextHeadshotCreditStatus = 'none';

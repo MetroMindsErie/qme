@@ -7,6 +7,13 @@ import { getEventCheckInAvailability } from './eventConfig';
 import { getGuestSessionToken } from './guestSessionService';
 import type { CreateEventCheckInInput, EventCheckIn, ImportedRegistrationSearchResult } from '../types';
 
+export interface StoredEventCheckInRecoveryHint {
+  id?: string | null;
+  importedRegistrationId?: string | null;
+  emailConfirmation?: string | null;
+  phone?: string | null;
+}
+
 function isMissingRpc(error: unknown): boolean {
   const record = error && typeof error === 'object' ? error as Record<string, unknown> : {};
   const code = typeof record.code === 'string' ? record.code : '';
@@ -257,6 +264,31 @@ export async function getEventCheckIn(
     .single();
   if (error) throw error;
   return data as EventCheckIn;
+}
+
+export async function recoverEventCheckInForGuest(
+  eventId: string,
+  hint: StoredEventCheckInRecoveryHint
+): Promise<EventCheckIn | null> {
+  const id = hint.id?.trim();
+  if (id) {
+    try {
+      return await getEventCheckIn(id, eventId);
+    } catch {
+      /* Try imported-registration recovery below for older/stale guest tokens. */
+    }
+  }
+
+  const importedRegistrationId = hint.importedRegistrationId?.trim();
+  if (!importedRegistrationId) return null;
+
+  return reconnectImportedRegistrationCheckInForGuest({
+    eventId,
+    importedRegistrationId,
+    emailConfirmation: hint.emailConfirmation ?? null,
+    phone: hint.phone ?? null,
+    bypassAvailability: true,
+  });
 }
 
 export function onEventCheckInsChange(

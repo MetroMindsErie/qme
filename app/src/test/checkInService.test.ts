@@ -19,7 +19,7 @@ vi.mock('../lib/eventService', () => ({
   getEvent: (...args: unknown[]) => mockGetEvent(...args),
 }));
 
-import { createEventCheckIn, searchImportedRegistrationsForGuest } from '../lib/checkInService';
+import { createEventCheckIn, recoverEventCheckInForGuest, searchImportedRegistrationsForGuest } from '../lib/checkInService';
 
 describe('checkInService', () => {
   beforeEach(() => {
@@ -193,6 +193,52 @@ describe('checkInService', () => {
 
       await expect(searchImportedRegistrationsForGuest('event-1', 'Ada')).rejects.toThrow('Check-In is not open yet.');
       expect(mockRpc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('recoverEventCheckInForGuest', () => {
+    it('uses the stored check-in id when the current guest token can read it', async () => {
+      const row = { id: 'check-in-1', event_id: 'event-1', status: 'completed' };
+      mockRpc.mockResolvedValueOnce({ data: row, error: null });
+
+      const result = await recoverEventCheckInForGuest('event-1', {
+        id: 'check-in-1',
+        importedRegistrationId: 'registration-1',
+      });
+
+      expect(result).toEqual(row);
+      expect(mockRpc).toHaveBeenCalledTimes(1);
+      expect(mockRpc).toHaveBeenCalledWith('get_event_check_in_for_guest', {
+        p_check_in_id: 'check-in-1',
+        p_guest_token: expect.any(String),
+      });
+    });
+
+    it('reconnects a stored imported registration when the stored check-in id belongs to an older guest token', async () => {
+      const row = { id: 'server-check-in-1', event_id: 'event-1', status: 'completed' };
+      mockRpc
+        .mockResolvedValueOnce({ data: null, error: { message: 'No rows found' } })
+        .mockResolvedValueOnce({ data: row, error: null });
+
+      const result = await recoverEventCheckInForGuest('event-1', {
+        id: 'stale-check-in-1',
+        importedRegistrationId: 'registration-1',
+        phone: '2165550100',
+      });
+
+      expect(result).toEqual(row);
+      expect(mockRpc).toHaveBeenNthCalledWith(1, 'get_event_check_in_for_guest', {
+        p_check_in_id: 'stale-check-in-1',
+        p_guest_token: expect.any(String),
+      });
+      expect(mockRpc).toHaveBeenNthCalledWith(2, 'reconnect_event_check_in_from_imported_registration_for_guest', {
+        p_event_id: 'event-1',
+        p_guest_token: expect.any(String),
+        p_imported_registration_id: 'registration-1',
+        p_email_confirmation: null,
+        p_phone: '2165550100',
+      });
+      expect(mockGetEvent).not.toHaveBeenCalled();
     });
   });
 });

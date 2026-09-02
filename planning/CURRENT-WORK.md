@@ -1,5 +1,51 @@
 # Current Work
 
+## Production Regression Handoff
+
+Guest check-in/session recovery regression is fixed and validated.
+
+Finding:
+- Returning guests could have older localStorage with a check-in id and imported registration id, while the current browser guest token no longer matched the server-side check-in row.
+- `GuestEventCheckIn` trusted that local record enough to set `submitted=true` before server reconciliation completed. If the scoped server lookup failed, the UI could render the staff/pending state even though production `event_check_ins.status` was already `completed`.
+- `GuestEventDetail` used the same stored id path, so event home could fail to recognize the completed guest session and show the user as not fully checked in.
+- This was a client/session reconciliation issue, not event configuration. No production event configuration changes are needed.
+
+Fix:
+- Added reusable `recoverEventCheckInForGuest(eventId, hint)` in `checkInService`.
+- Recovery first tries the stored server check-in id using the current guest token.
+- If that fails and older localStorage includes `importedRegistrationId` or legacy `imported_registration_id`, recovery reconnects the imported registration to the current guest token and uses the returned server row.
+- Guest Check-In now only marks the guest submitted after server fetch/recovery succeeds, and it clears unrecoverable stale local check-in state instead of showing a false pending/staff state.
+- Event home now uses the same recovery helper and rewrites localStorage with the authoritative server row after successful recovery.
+- Already-checked-in imported-registration recovery remains server-side and uses the existing reconnect RPC. The recovery call bypasses the public availability guard only for reconnecting an already-known imported registration from local state; it does not open search or new check-in creation.
+
+Preserved:
+- `completion_mode=auto`, `manual_open` availability, Eventbrite import, Order ID repeat-import safety, party-size/Total guests, shared kiosk loop, adminTest gating, and personal-phone instructions/navigation.
+
+Validation passed:
+- Targeted recovery tests:
+  `npm test -- --run src/test/checkInService.test.ts src/test/guestEventCheckIn.test.tsx src/test/guestEventDetail.test.tsx`
+  Result: 3 files passed, 32 tests passed.
+- Full Vitest suite:
+  `npm test -- --run`
+  Result: 24 files passed, 193 tests passed.
+- Production build:
+  `npm run build`
+  Result: passed. Two attempts hit transient Windows/Dropbox `EBUSY` while Vite removed `dist/images`; immediate reruns passed. Existing large-chunk warning remains.
+
+Files changed:
+- `app/src/lib/checkInService.ts`
+- `app/src/pages/guest/GuestEventCheckIn.tsx`
+- `app/src/pages/guest/GuestEventDetail.tsx`
+- `app/src/test/checkInService.test.ts`
+- `app/src/test/guestEventCheckIn.test.tsx`
+- `app/src/test/guestEventDetail.test.tsx`
+- `planning/CURRENT-WORK.md`
+
+Git/deployment:
+- Commit SHA: pending.
+- Push to `origin/main`: pending.
+- Manual deploy: not requested. Normal automated deployment from `main` is expected.
+
 ## Implementation Handoff
 
 Final shared-iPad kiosk cleanup is implemented and validated. The shared device is now a closed loop:

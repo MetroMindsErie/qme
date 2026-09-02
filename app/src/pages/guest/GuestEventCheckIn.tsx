@@ -12,6 +12,7 @@ import {
   createImportedRegistrationCheckInForGuest,
   getEventCheckIn,
   reconnectImportedRegistrationCheckInForGuest,
+  recoverEventCheckInForGuest,
   searchImportedRegistrationsForGuest,
 } from '../../lib/checkInService';
 import { formatCompletedCheckInConfirmation, formatTotalGuests, getCheckInPartySize, getSearchResultPartySize } from '../../lib/checkInPartySize';
@@ -54,6 +55,22 @@ function isValidPhone(value: string) {
     return digits.length >= 8 && digits.length <= 15;
   }
   return normalized.length === 10;
+}
+
+type StoredEventCheckIn = {
+  id?: string;
+  firstName?: string;
+  lastName?: string;
+  contact?: string;
+  email?: string;
+  phone?: string;
+  importedRegistrationId?: string;
+  imported_registration_id?: string;
+  ts?: number;
+};
+
+function getStoredImportedRegistrationId(saved: StoredEventCheckIn) {
+  return saved.importedRegistrationId || saved.imported_registration_id || '';
 }
 
 export default function GuestEventCheckIn({
@@ -129,14 +146,8 @@ export default function GuestEventCheckIn({
         if (!availability.isOpen && !nextAdminTestAllowed) return;
         const stored = localStorage.getItem(storageKey(ev.id));
         if (stored) {
-          const saved = JSON.parse(stored) as {
-            id?: string;
-            firstName?: string;
-            lastName?: string;
-            contact?: string;
-            email?: string;
-            phone?: string;
-          };
+          const saved = JSON.parse(stored) as StoredEventCheckIn;
+          const importedRegistrationId = getStoredImportedRegistrationId(saved);
           setFirstName(saved.firstName || '');
           setLastName(saved.lastName || '');
           if (saved.email || saved.phone) {
@@ -148,15 +159,37 @@ export default function GuestEventCheckIn({
             setEmailConfirmation(saved.contact.includes('@') ? saved.contact : '');
             setPhone(isSharedDeviceMode || saved.contact.includes('@') ? '' : saved.contact);
           }
-          setSubmitted(true);
-          if (saved.id) {
+          if (saved.id || importedRegistrationId) {
             try {
-              const row = await getEventCheckIn(saved.id, ev.id);
+              const row = await recoverEventCheckInForGuest(ev.id, {
+                id: saved.id,
+                importedRegistrationId,
+                emailConfirmation: saved.email || (saved.contact?.includes('@') ? saved.contact : ''),
+                phone: isSharedDeviceMode ? null : saved.phone || (!saved.contact?.includes('@') ? saved.contact : ''),
+              });
+              if (!row) throw new Error('Stored check-in could not be recovered.');
               const config = getEventCheckInConfig(ev);
-              setCheckIn(config.completionMode === 'auto' && row.status !== 'completed'
-                ? await checkInEventGuest(row.id, row.ticket_type ?? 'general', ev.id)
-                : row);
-            } catch { /* keep local confirmation even if fetch fails */ }
+              const nextRow = config.completionMode === 'auto' && row.status !== 'completed'
+                ? await checkInEventGuest(row.id, row.ticket_type ?? 'general', ev.id, { bypassAvailability: nextAdminTestAllowed })
+                : row;
+              setFirstName(nextRow.first_name);
+              setLastName(nextRow.last_name);
+              setCheckIn(nextRow);
+              localStorage.setItem(storageKey(ev.id), JSON.stringify({
+                ...saved,
+                id: nextRow.id,
+                firstName: nextRow.first_name,
+                lastName: nextRow.last_name,
+                phone: isSharedDeviceMode ? '' : saved.phone || '',
+                importedRegistrationId,
+                ts: saved.ts || Date.now(),
+              }));
+              setSubmitted(true);
+            } catch {
+              localStorage.removeItem(storageKey(ev.id));
+              setSubmitted(false);
+              setCheckIn(null);
+            }
           }
         }
       } catch (e) {

@@ -53,6 +53,7 @@ const partyCheckIn: EventCheckIn = {
 
 const mockGetEventBySlug = vi.fn();
 const mockGetEventCheckIn = vi.fn();
+const mockRecoverEventCheckInForGuest = vi.fn();
 const mockListActiveEcesForEvent = vi.fn();
 
 vi.mock('../lib/eventService', () => ({
@@ -75,6 +76,7 @@ vi.mock('../lib/eceService', () => ({
 
 vi.mock('../lib/checkInService', () => ({
   getEventCheckIn: (...args: unknown[]) => mockGetEventCheckIn(...args),
+  recoverEventCheckInForGuest: (...args: unknown[]) => mockRecoverEventCheckInForGuest(...args),
 }));
 
 vi.mock('../lib/guestCreditService', () => ({
@@ -102,6 +104,7 @@ describe('GuestEventDetail', () => {
     localStorage.clear();
     mockGetEventBySlug.mockResolvedValue(event);
     mockGetEventCheckIn.mockResolvedValue(completedCheckIn);
+    mockRecoverEventCheckInForGuest.mockResolvedValue(completedCheckIn);
     mockListActiveEcesForEvent.mockResolvedValue([]);
   });
 
@@ -158,11 +161,64 @@ describe('GuestEventDetail', () => {
     renderEventDetail();
 
     await waitFor(() => {
-      expect(mockGetEventCheckIn).toHaveBeenCalledWith(completedCheckIn.id, event.id);
+      expect(mockRecoverEventCheckInForGuest).toHaveBeenCalledWith(event.id, expect.objectContaining({
+        id: completedCheckIn.id,
+      }));
     });
     expect(await screen.findByText('SOTC Test Event')).toBeInTheDocument();
     expect(screen.getByText('You are checked in. Return to the event page for next steps.')).toBeInTheDocument();
     expect(screen.queryByText(/Pick up your name tag at registration/)).not.toBeInTheDocument();
+  });
+
+  it('recognizes a completed imported check-in after reconnecting older local storage to the current guest session', async () => {
+    mockGetEventBySlug.mockResolvedValue({
+      ...event,
+      name: 'i-Pitch',
+      slug: 'ipitch-092026',
+      metadata: {
+        check_in: {
+          enabled: true,
+          completion_mode: 'auto',
+          require_completed_for_participation: true,
+          post_check_in_instruction: 'Please go to the check-in desk to receive your event package.',
+        },
+      },
+    });
+    mockRecoverEventCheckInForGuest.mockResolvedValue({
+      ...completedCheckIn,
+      id: 'server-check-in-evan',
+      first_name: 'Evan',
+      last_name: 'Guest',
+      status: 'completed',
+      ticket_type: 'general',
+      metadata: {
+        imported_registration_id: 'registration-evan',
+        party_size: 1,
+      },
+    });
+    localStorage.setItem('qme:eventCheckIn:event-1', JSON.stringify({
+      id: 'stale-check-in-id',
+      firstName: 'Evan',
+      lastName: 'Guest',
+      imported_registration_id: 'registration-evan',
+    }));
+
+    renderEventDetail('/events/ipitch-092026');
+
+    expect(await screen.findByText('i-Pitch')).toBeInTheDocument();
+    expect(screen.getByText('CHECKED IN')).toBeInTheDocument();
+    expect(screen.getByText('You are checked in. Please go to the check-in desk to receive your event package.')).toBeInTheDocument();
+    expect(screen.queryByText('WAITING FOR STAFF')).not.toBeInTheDocument();
+    expect(mockRecoverEventCheckInForGuest).toHaveBeenCalledWith(event.id, expect.objectContaining({
+      id: 'stale-check-in-id',
+      importedRegistrationId: 'registration-evan',
+    }));
+    expect(JSON.parse(localStorage.getItem('qme:eventCheckIn:event-1') || '{}')).toMatchObject({
+      id: 'server-check-in-evan',
+      firstName: 'Evan',
+      lastName: 'Guest',
+      importedRegistrationId: 'registration-evan',
+    });
   });
 
   it('uses the configured post-check-in instruction on the checked-in event card', async () => {
@@ -206,7 +262,7 @@ describe('GuestEventDetail', () => {
         },
       },
     });
-    mockGetEventCheckIn.mockResolvedValue(partyCheckIn);
+    mockRecoverEventCheckInForGuest.mockResolvedValue(partyCheckIn);
     localStorage.setItem('qme:eventCheckIn:event-1', JSON.stringify({
       id: partyCheckIn.id,
       firstName: partyCheckIn.first_name,

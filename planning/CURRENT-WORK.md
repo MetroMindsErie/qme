@@ -55,7 +55,7 @@ Product Owner acceptance after deployment:
 
 Git/deployment:
 - Implementation commit SHA: `039ef6e`.
-- Handoff SHA: pending.
+- Handoff update committed after the implementation commit.
 - Push to `origin/main`: pending.
 - Manual deploy: not requested. Normal automated deployment from `main` is expected.
 

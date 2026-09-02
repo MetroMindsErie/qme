@@ -2,147 +2,187 @@
 
 ## Current Slice
 
-Check-In availability plus pre-event admin testing is implemented for production events.
+Polish the production i-Pitch event/check-in experience around two concrete issues discovered during acceptance:
 
-The event companion can remain publicly visible while ordinary guest Check-In is Closed or Scheduled. No schema migration is required.
+1. focused event guest/admin workflows should not show the global hamburger menu;
+2. shared-device Check-In already has a dedicated URL/mode and reset behavior, but needs shared-device-specific copy and tablet presentation for the front-table iPad.
 
-## Availability Storage / Model
+Read `AGENTS.md` first. Implementation, validation, CURRENT-WORK update, commit, and push to `main` are authorized for this bounded slice. Do not broaden into a general navigation redesign or a new kiosk platform.
 
-Configuration lives under existing `events.metadata.check_in`:
+The previous Check-In availability/admin-test slice is complete and pushed as `e68d1fb`. Preserve it.
 
-```json
-{
-  "check_in": {
-    "enabled": true,
-    "completion_mode": "auto",
-    "availability_mode": "closed | manual_open | scheduled",
-    "scheduled_open_time": "16:30",
-    "scheduled_close_time": "20:00",
-    "manual_opened_at": "2026-09-02T...",
-    "manual_closed_at": "2026-09-02T..."
-  }
-}
-```
+## Production Context
 
-The reader also honors existing row-level `check_in_start` / `check_in_end` values as fallbacks when metadata times are absent.
+Event:
+- University of Akron Research Foundation
+- i-Pitch - September, 2026
+- slug `ipitch-092026`
+- September 3, 2026, 5:00-8:00 PM ET
 
-Default for existing events without availability metadata is `manual_open`, preserving accepted SOTC/i-Pitch behavior unless an admin explicitly closes or schedules Check-In.
+Accepted production behavior to preserve:
+- untouched Eventbrite CSV preview/import;
+- Order ID repeat-import safety;
+- party-size handling and `Total guests`;
+- separate `Checked In` and `Guests Represented` counts;
+- Auto Check-In plus self-registration fallback;
+- configurable Closed / Open manually / Scheduled availability;
+- authenticated `adminTest=1` bypass only for admins who can manage the event;
+- Upcoming / Live / Ended guest event state;
+- guest event theme;
+- Agenda / Finalists / Judges content;
+- digital voting inactive for i-Pitch;
+- shared-device Next Guest / 15-second reset behavior.
 
-## Precedence Rules
+## Part A — Remove Hamburger From Focused Event Workflows
 
-- `closed`: public Check-In is closed.
-- `manual_open`: public Check-In is open.
-- `scheduled`: public Check-In follows `scheduled_open_time` / `scheduled_close_time` on the event date in the event timezone.
-- `Open now`: sets `availability_mode = manual_open`, writes `manual_opened_at = now`, and clears `manual_closed_at`.
-- `Close now`: sets `availability_mode = closed` and writes `manual_closed_at = now`.
-- Choosing `scheduled` clears manual open/close timestamps so the event-local schedule is authoritative again.
+Product direction: once a user is inside an event-focused workflow, navigation should come from the event workflow itself rather than the global hamburger menu.
 
-## Timezone / Event Badge
+Remove/hide the hamburger menu from the focused event surfaces below, provided each page retains an explicit safe navigation path such as Back to Event / Back / tabs/buttons already present.
 
-`app/src/lib/eventTiming.ts` maps short zones such as `ET` to IANA zones such as `America/New_York` and converts event-local date/time to UTC instants for comparison.
+### Guest event surfaces
+At minimum:
+- `/events/:eventSlug` event companion;
+- `/events/:eventSlug/check-in`;
+- guest event content/detail pages reached from the event companion;
+- shared-device Check-In.
 
-Guest-facing event state no longer treats `status = active` as Live:
-- before scheduled start: `Upcoming`;
-- during start/end: `Live`;
-- after scheduled end: `Ended`;
-- draft/cancelled: unavailable;
-- completed: ended.
+The shared-device route must not expose the hamburger/menu because the iPad will be physically locked to qME with iOS Guided Access.
 
-## Enforcement
+### Admin event surfaces
+At minimum:
+- Admin Event detail;
+- Admin Event Check-In tabs/settings/history/live view;
+- Edit Event while entered from an event context;
+- Edit/Add event eCe/content screens where the existing event/back navigation is sufficient.
 
-Guest home:
-- Check-In card remains visible when closed/scheduled, but the action becomes disabled copy such as `Closed` or `Opens 4:30 PM ET`.
-- Agenda, Finalists, Judges, theme, and other event companion content remain visible.
+Do **not** delete the global Header/menu component or remove it from unrelated qME/admin areas. This is scoped event-workflow presentation, not a platform-wide navigation rewrite.
 
-Guest Check-In route:
-- `/events/:eventSlug/check-in` blocks ordinary guests while availability is closed or before/after the scheduled window.
-- The route shows clear closed/scheduled copy and a Back to Event action.
-- Guest form/search/claim handlers re-check availability before mutation.
+Verify no page becomes a dead end after hiding the menu.
 
-App service layer:
-- `createEventCheckIn`
-- `searchImportedRegistrationsForGuest`
-- `createImportedRegistrationCheckInForGuest`
-- `reconnectImportedRegistrationCheckInForGuest`
-- `checkInEventGuest`
+## Part B — Dedicated Shared-Device URL
 
-These functions now refuse closed public Check-In unless called with the authenticated admin-test bypass from the guest route.
+The existing shared-device mode is the intended front-table iPad path and must remain supported:
 
-## Admin Test Path
+`/events/:eventSlug/check-in?mode=shared`
 
-Admin Check-In Settings exposes `Test as Admin`, linking to:
+Alias `shared=1` may remain supported if already present, but `mode=shared` is the documented/primary URL.
 
-`/events/:eventSlug/check-in?adminTest=1`
+For pre-event authenticated testing while public Check-In is closed/scheduled:
 
-That route bypasses public availability only after `getCurrentAdminPrincipal()` returns an authenticated admin who can manage the event via `canManageEvent`. Ordinary guests who copy the URL still see the closed/scheduled gate.
+`/events/:eventSlug/check-in?mode=shared&adminTest=1`
 
-The bypass is visibly labeled on the guest Check-In screen.
+The admin-test bypass remains permission-gated exactly as implemented in the prior slice; copying the URL must not grant an ordinary guest the bypass.
 
-## Admin Controls
+Shared mode must preserve:
+- Next Guest behavior;
+- automatic reset after 15 seconds following a completed shared-device guest session;
+- clearing the prior guest/session from the shared device;
+- no hamburger/menu.
 
-Normal admin now exposes:
-- Check-In Availability: Closed / Open manually / Scheduled.
-- Scheduled Opens / Closes time inputs when Scheduled.
-- Current/effective state label.
-- Open now / Close now buttons in Check-In Settings.
-- Test as Admin link in Check-In Settings.
+## Part C — Shared-Device Copy
 
-The Edit Event form also persists the same availability fields in the Event Check-In Settings section.
+The current generic copy `Find your registration to self check in.` is written for a guest on their own phone and is not appropriate for the front-table shared iPad.
 
-## Files Changed
+When `mode=shared`, use shared-device-specific copy such as:
 
-- `app/src/lib/eventTiming.ts`
-- `app/src/lib/eventConfig.ts`
-- `app/src/lib/checkInService.ts`
-- `app/src/types/index.ts`
-- `app/src/pages/admin/AdminEventCheckIns.tsx`
-- `app/src/pages/admin/AdminEventForm.tsx`
-- `app/src/pages/guest/GuestEventDetail.tsx`
-- `app/src/pages/guest/GuestEventCheckIn.tsx`
-- `app/src/styles/eventDetail.css`
-- `app/src/test/eventTiming.test.ts`
-- `app/src/test/eventConfig.test.ts`
-- `app/src/test/checkInService.test.ts`
-- `app/src/test/adminEventCheckInsImportWorkflow.test.tsx`
-- `app/src/test/guestEventDetail.test.tsx`
-- `app/src/test/guestEventCheckIn.test.tsx`
+**Event Check-In**
+
+`Enter your name or email to find your registration.`
+
+Keep the existing `Find your registration` field heading/search behavior unless there is a strong accessibility/duplication reason to refine it.
+
+The goal is to tell the person standing at the check-in table what to do, not describe a personal-device self-check-in journey.
+
+Do not change the approved post-check-in i-Pitch fulfillment instruction:
+
+`Please go to the check-in desk by the front entrance, show this check-in confirmation, and receive your evening's event package.`
+
+## Part D — Hide Recovery Phone on Shared Device
+
+Do not show the optional Recovery phone field/helper text in `mode=shared`.
+
+Reason:
+- it adds friction to a communal front-table device;
+- the shared device should be optimized for rapid lookup/check-in;
+- recovery-phone product purpose remains a separate future backlog decision;
+- ordinary personal-device behavior should remain unchanged in this slice.
+
+Ensure shared-device lookup, imported-registration claim, self-registration fallback, and reset flows continue to work without the visible phone field.
+
+## Part E — Tablet / iPad Shared-Device Layout
+
+The current shared-device Check-In renders like a narrow phone card floating in a large iPad viewport, with substantial unused space.
+
+For `mode=shared` only, create a tablet/kiosk presentation that uses the viewport more effectively while remaining visually contained and consistent with qME/i-Pitch theming.
+
+Desired behavior:
+- substantially reduce unnecessary top whitespace;
+- allow a wider content/card width appropriate for an iPad in portrait or landscape;
+- use the available viewport height more naturally;
+- keep forms readable rather than stretching controls edge-to-edge across the entire screen;
+- retain generous touch targets;
+- preserve the i-Pitch theme accents and existing semantic success/error colors;
+- remain responsive on common tablet widths and avoid breaking phone guest Check-In.
+
+Do not hard-code one exact iPad pixel dimension. Use shared-mode responsive CSS/layout.
+
+The Product Owner's acceptance reference is the actual iPad/table setup, not desktop emulation alone.
+
+## Part F — Relationship to Check-In Availability
+
+Preserve the previous availability model:
+- event companion may be public while Check-In is Closed/Scheduled;
+- ordinary shared-device URL obeys public Check-In availability;
+- authenticated `mode=shared&adminTest=1` can be used before the event for authorized testing;
+- scheduled/manual/closed state remains enforced by the service layer, not only presentation.
+
+Do not weaken or bypass availability enforcement to make shared mode easier.
 
 ## Validation
 
-Passed locally:
-- `npx tsc -b`
-- `npx vitest run src/test/checkInService.test.ts src/test/eventTiming.test.ts src/test/eventConfig.test.ts src/test/guestEventDetail.test.tsx src/test/guestEventCheckIn.test.tsx src/test/adminEventCheckInsImportWorkflow.test.tsx --testTimeout 30000`
-- `npx vitest run --testTimeout 30000` - 24 files / 187 tests passed.
-- `npx vite build --outDir ..\tmp\vite-build-checkin-availability-2 --emptyOutDir`
-
-One earlier build attempt failed because Windows/Dropbox had the previous temp output directory locked; the fresh-output production build passed. Vite still reports the existing large-chunk warning.
-
-## i-Pitch Admin Configuration Steps
-
-After automated deployment from `main`:
-1. Open Admin -> Events -> `ipitch-092026` -> Check-Ins -> Settings.
-2. Set Check-In Availability to `Scheduled`.
-3. Set Opens to the chosen September 3 ET opening time, likely around `16:30`.
-4. Set Closes to the chosen September 3 ET close time, likely `20:00`.
-5. Use `Test as Admin` to exercise the full imported-registration/party-size Check-In flow while public Check-In remains closed.
-6. Confirm a normal/incognito guest sees the event companion and an unavailable Check-In card before opening.
-7. Use `Open now` / `Close now` only for operational testing or day-of override.
-8. Restore `Scheduled` after manual testing so public Check-In follows the event-local window.
+At minimum:
+- TypeScript;
+- focused GuestEventCheckIn tests for shared-mode copy, hidden Recovery phone, no menu, reset behavior, and admin-test compatibility;
+- guest event/detail tests proving focused guest event pages no longer render hamburger navigation and retain Back/Event paths;
+- admin event/check-in/form/eCe tests as appropriate proving focused admin pages no longer render hamburger navigation and retain explicit navigation;
+- phone/personal guest Check-In remains unchanged where intended;
+- shared URL without admin permission still obeys closed/scheduled availability;
+- shared + authenticated adminTest still bypasses availability exactly as prior slice;
+- full test suite;
+- production Vite build.
 
 ## Product Owner Acceptance
 
-1. Before the event window, `/events/ipitch-092026` shows `Upcoming`, not Live.
-2. Event companion content remains visible while Check-In is closed/scheduled.
-3. Direct ordinary navigation to `/events/ipitch-092026/check-in` cannot complete Check-In while closed.
-4. `?adminTest=1` works only for an authenticated admin who can manage the event.
-5. Admin test mode can complete lookup, imported registration, self-registration, completion, party-size copy, and Back to Event without opening public Check-In.
-6. Manual Open now makes ordinary guest Check-In available.
-7. Manual Close now closes ordinary guest Check-In again.
-8. Scheduled mode opens/closes by event-local ET times.
-9. Existing Eventbrite import, party-size, shared-device reset, content/theme, and inactive production voting behavior remain intact.
+After deployment:
 
-## Status
+1. Open normal guest event companion on phone and confirm no hamburger appears; event content/navigation still works.
+2. Open normal personal-device Check-In and confirm no hamburger appears and normal personal copy/recovery behavior remains otherwise unchanged.
+3. Open front-table shared URL:
+   `/events/ipitch-092026/check-in?mode=shared`
+4. On the actual iPad, confirm:
+   - no hamburger;
+   - shared-device copy says to enter name/email;
+   - Recovery phone is absent;
+   - layout uses the tablet screen substantially better than the previous narrow centered phone card;
+   - search/imported registration/self-registration can be completed normally when Check-In is open.
+5. Complete one shared-device Check-In and confirm Next Guest + automatic 15-second reset still clears the device for the next person.
+6. While public Check-In is closed/scheduled, verify ordinary shared URL is blocked and authenticated:
+   `/events/ipitch-092026/check-in?mode=shared&adminTest=1`
+   still supports authorized testing.
+7. Inspect Admin Event, Admin Check-In, Edit Event, and event eCe/content setup flows and confirm hamburger is gone but explicit Back/Event navigation prevents dead ends.
+8. Re-smoke Eventbrite party-size confirmation, Total guests, Guests Represented, Agenda, Finalists, Judges, and theme.
 
-Implementation, local validation, and push to `main` are complete.
+## Handoff
 
-Implementation commit: `e68d1fb`
+Update this FILE with:
+- exact guest/admin event surfaces where hamburger was removed;
+- documented shared-device URL(s);
+- shared-device copy/layout behavior;
+- confirmation Recovery phone is hidden only in shared mode;
+- files changed;
+- tests/build results;
+- any navigation dead-end issue found/resolved;
+- commit SHA;
+- concise Product Owner acceptance steps.
+
+Do not mark the slice accepted until the shared-device presentation is visually checked on the actual iPad.

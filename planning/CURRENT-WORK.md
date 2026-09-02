@@ -54,7 +54,8 @@ Product Owner acceptance after deployment:
 7. Re-smoke Eventbrite import, party-size confirmation, Total guests, Guests Represented, Agenda, Finalists, Judges, theme accents, and inactive i-Pitch voting.
 
 Git/deployment:
-- Commit SHA: pending.
+- Implementation commit SHA: `039ef6e`.
+- Handoff SHA: pending.
 - Push to `origin/main`: pending.
 - Manual deploy: not requested. Normal automated deployment from `main` is expected.
 

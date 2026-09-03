@@ -4,7 +4,7 @@
 
 Production-day investigation for i-Pitch, September 3, 2026.
 
-Status: implemented locally and live i-Pitch Supabase migration applied.
+Status: implemented locally, pushed, and live i-Pitch Supabase migrations applied.
 
 ## Finding
 
@@ -37,7 +37,9 @@ The imported-registration duplicate-name email confirmation UI/state was removed
 
 ## Live Supabase
 
-Applied live migration `allow_ipitch_duplicate_imported_claim_without_email`.
+Applied live migrations:
+- `allow_ipitch_duplicate_imported_claim_without_email`
+- `fix_ipitch_imported_search_event_scope`
 
 Scope:
 - i-Pitch only (`events.slug = 'ipitch-092026'`) bypasses duplicate-name email confirmation in imported-registration search/create/reconnect RPCs.
@@ -47,6 +49,10 @@ Verified in a rollback transaction:
 - Craig D'Andrea order `15588379013` with Donna D'Andrea as additional guest returns a completed check-in.
 - `actual_party_size = 2`.
 - No production check-in row was committed by the verification.
+
+Search verification:
+- Craig D'Andrea search returns both imported orders.
+- Both i-Pitch rows return `requires_email_confirmation = false`.
 
 ## Validation
 

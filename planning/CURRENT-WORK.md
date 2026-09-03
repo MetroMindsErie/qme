@@ -1,272 +1,181 @@
 # Current Work
 
-## Production Regression Handoff
+## Current Slice — Untouched Eventbrite Excel Import From Mobile
 
-Guest check-in/session recovery regression is fixed and validated.
+Production-day field workflow gap discovered September 3, 2026.
 
-Finding:
-- Returning guests could have older localStorage with a check-in id and imported registration id, while the current browser guest token no longer matched the server-side check-in row.
-- `GuestEventCheckIn` trusted that local record enough to set `submitted=true` before server reconciliation completed. If the scoped server lookup failed, the UI could render the staff/pending state even though production `event_check_ins.status` was already `completed`.
-- `GuestEventDetail` used the same stored id path, so event home could fail to recognize the completed guest session and show the user as not fully checked in.
-- This was a client/session reconciliation issue, not event configuration. No production event configuration changes are needed.
+The Product Owner received a new Eventbrite attendee export from Tricia and attempted the intended field workflow on iPhone/mobile web:
 
-Fix:
-- Added reusable `recoverEventCheckInForGuest(eventId, hint)` in `checkInService`.
-- Recovery first tries the stored server check-in id using the current guest token.
-- If that fails and older localStorage includes `importedRegistrationId` or legacy `imported_registration_id`, recovery reconnects the imported registration to the current guest token and uses the returned server row.
-- Guest Check-In now only marks the guest submitted after server fetch/recovery succeeds, and it clears unrecoverable stale local check-in state instead of showing a false pending/staff state.
-- Event home now uses the same recovery helper and rewrites localStorage with the authoritative server row after successful recovery.
-- Already-checked-in imported-registration recovery remains server-side and uses the existing reconnect RPC. The recovery call bypasses the public availability guard only for reconnecting an already-known imported registration from local state; it does not open search or new check-in creation.
+**download Eventbrite file -> choose file in qME -> preview -> import**
 
-Preserved:
-- `completion_mode=auto`, `manual_open` availability, Eventbrite import, Order ID repeat-import safety, party-size/Total guests, shared kiosk loop, adminTest gating, and personal-phone instructions/navigation.
+The file can be downloaded into Dropbox or iCloud Files and is visible in the iOS file picker, but it cannot be selected by qME because the actual Eventbrite export is an Excel `.xls` file, not CSV.
 
-Validation passed:
-- Targeted recovery tests:
-  `npm test -- --run src/test/checkInService.test.ts src/test/guestEventCheckIn.test.tsx src/test/guestEventDetail.test.tsx`
-  Result: 3 files passed, 32 tests passed.
-- Full Vitest suite:
-  `npm test -- --run`
-  Result: 24 files passed, 193 tests passed.
-- Production build:
-  `npm run build`
-  Result: passed. Two attempts hit transient Windows/Dropbox `EBUSY` while Vite removed `dist/images`; immediate reruns passed. Existing large-chunk warning remains.
+This is a production workflow gap, not a request to convert/edit the organizer's file manually. Product direction remains:
 
-Files changed:
-- `app/src/lib/checkInService.ts`
-- `app/src/pages/guest/GuestEventCheckIn.tsx`
-- `app/src/pages/guest/GuestEventDetail.tsx`
-- `app/src/test/checkInService.test.ts`
-- `app/src/test/guestEventCheckIn.test.tsx`
-- `app/src/test/guestEventDetail.test.tsx`
-- `planning/CURRENT-WORK.md`
+> A person should be able to download the untouched Eventbrite export and upload it directly to qME, including from a phone in the field, without opening Excel, selecting/reordering columns, renaming fields, or converting the file to CSV.
 
-Git/deployment:
-- Implementation commit SHA: `889f031`.
-- Push to `origin/main`: pending.
-- Manual deploy: not requested. Normal automated deployment from `main` is expected.
+Read `AGENTS.md` first. Implement, validate, update this FILE, commit, and push to `main`. Keep the slice bounded to import-file compatibility and preserve the accepted import semantics.
 
-## Implementation Handoff
-
-Final shared-iPad kiosk cleanup is implemented and validated. The shared device is now a closed loop:
-
-`Find registration -> Check in -> confirmation -> Next Guest / 15-second automatic reset -> Find registration`
-
-Shared-mode changes:
-- Removed Back to Event from shared Check-In initial lookup.
-- Removed Back to Event from shared expanded self-registration fallback.
-- Removed Back to Event from shared completion/confirmation.
-- Removed Back to Event from shared closed/scheduled and no-check-in/unavailable states.
-- Preserved Next Guest, 15-second auto-reset, prior guest/session clearing, admin-test indicator, and availability enforcement.
-- Preserved `shared=1` alias and primary `/events/:eventSlug/check-in?mode=shared` behavior.
-
-Shared completion copy:
-- Shared mode now uses kiosk-specific fulfillment wording without changing event configuration:
-  `Please show this confirmation to the person at the desk to receive your evening's event package.`
-- Personalized and party-size text still comes from qME's normal confirmation formatter.
-- Personal-phone Check-In still uses the configured event instruction and still shows Back to Event.
-
-Physical kiosk setup:
-1. Open `/events/ipitch-092026/check-in?mode=shared`.
-2. Safari Share -> Add to Home Screen.
-3. Enable `Open as Web App`.
-4. Launch the resulting i-Pitch Check-In Home Screen icon.
-5. Start Guided Access on that clean web-app window.
-6. Do not draw disabled touch regions over the qME screen.
-
-Validation passed:
-- Focused GuestEventCheckIn tests:
-  `npm test -- --run src/test/guestEventCheckIn.test.tsx`
-  Result: 13 tests passed.
-- Full Vitest suite:
-  `npm test -- --run`
-  Result: 24 test files passed, 189 tests passed.
-- Production build:
-  `npm run build`
-  Result: TypeScript and Vite build passed. Vite reported the existing large-chunk warning.
-
-Files changed:
-- `app/src/pages/guest/GuestEventCheckIn.tsx`
-- `app/src/test/guestEventCheckIn.test.tsx`
-- `planning/CURRENT-WORK.md`
-
-Git/deployment:
-- Implementation commit SHA: `c86cb4d`.
-- Push to `origin/main`: pending.
-- Manual deploy: not requested. Normal automated deployment from `main` is expected.
-
-## Current Slice
-
-Final production cleanup for the i-Pitch front-table shared iPad Check-In kiosk.
-
-The prior focused navigation/shared-device slice is implemented and was visually tested by the Product Owner on the actual iPad. Preserve it. This is a very small follow-up based on the physical-device acceptance test.
-
-Read `AGENTS.md` first. Implementation, validation, FILE update, commit, and push to `main` are authorized for this bounded slice. Do not broaden into a new kiosk platform or change the personal-phone Check-In experience.
-
-## Production Context / Physical Acceptance Completed
+## Production Context
 
 Event:
 - University of Akron Research Foundation
 - i-Pitch - September, 2026
 - slug `ipitch-092026`
-- September 3, 2026, 5:00-8:00 PM ET
+- event is today, September 3, 2026
 
-The actual front-table iPad was tested successfully with:
-
-`/events/ipitch-092026/check-in?mode=shared`
-
-Verified on the physical iPad:
-- shared tablet layout uses the screen well;
-- no hamburger/menu;
-- shared copy says `Enter your name or email to find your registration.`;
-- Recovery phone is absent;
-- imported Eventbrite registration lookup/check-in works;
-- party-size behavior works (physical test: Meredith + 1 guest produced `Total guests: 2`);
-- confirmation countdown and Next Guest are present;
-- the iPad can use Safari `Add to Home Screen` with `Open as Web App`, which removes Safari browser chrome;
-- iOS Guided Access can then lock the clean qME web-app window, producing the desired physical kiosk setup without drawing disabled regions over Safari controls.
-
-The intended day-of physical kiosk setup is therefore:
-
-**qME shared-device URL -> Add to Home Screen / Open as Web App -> launch Home Screen web app -> Guided Access**
-
-No PWA/manifest work is required for tomorrow based on this successful physical test.
-
-## Product Direction: Shared Mode Is a Dedicated Kiosk Experience
-
-`mode=shared` is not simply the normal personal guest page on a larger screen. It is a dedicated front-table kiosk flow using shared underlying Check-In capabilities.
-
-The kiosk loop should be intentionally closed:
-
-**Find registration -> Check in -> confirmation -> Next Guest / 15-second automatic reset -> Find registration**
-
-A person using the shared iPad should not navigate into the event companion from this device.
-
-Personal-phone Check-In remains the guest's event-companion flow and must retain its existing behavior/copy where not explicitly changed below.
-
-## Part A — Remove Back to Event From Shared Mode
-
-When `mode=shared` (and alias `shared=1` if retained), remove `Back to Event` everywhere in the shared Check-In experience, including:
-- initial registration lookup screen;
-- expanded self-registration fallback;
-- completed confirmation screen;
-- closed/scheduled/unavailable shared-device state if a Back to Event action is currently rendered there.
-
-The shared kiosk must not offer a path into the event companion.
-
-Do **not** remove Back to Event from normal/personal guest Check-In. This is shared-device-only behavior.
-
-Preserve:
-- Next Guest;
-- 15-second automatic reset;
-- clearing prior guest/session state;
-- admin-test indicator when applicable;
-- availability enforcement.
-
-## Part B — Shared-Device Post-Check-In Instruction
-
-The approved personal-phone i-Pitch instruction remains:
-
-`Please go to the check-in desk by the front entrance, show this check-in confirmation, and receive your evening's event package.`
-
-That wording is incorrect on the shared front-table iPad because the guest is already standing at the check-in desk.
-
-For `mode=shared`, use a kiosk-specific version of the post-check-in fulfillment instruction while preserving qME's generated personalized/party-size confirmation.
-
-Target shared wording:
-
-`Please show this confirmation to the person at the desk to receive your evening's event package.`
-
-Example rendered result for a party of two:
-
-`Thanks, Meredith! You and your 1 guest are checked in. Please show this confirmation to the person at the desk to receive your evening's event package.`
-
-Then continue to show:
-- `Total guests: 2`
-- countdown such as `Next guest in 10 seconds...`
-- `Next Guest`
-
-Do not change the configured event-level post-check-in instruction stored for the personal-phone flow just to achieve the shared wording. Shared-device presentation should adapt the instruction for the kiosk context without altering the approved phone experience.
-
-Keep this implementation bounded. If the cleanest reusable design is a small shared-device instruction override/fallback in the Check-In presentation layer, use that rather than introducing a broad content/configuration system in this slice.
-
-## Part C — Preserve Physical Kiosk Setup
-
-Do not add unnecessary install/PWA work. The Product Owner confirmed on the actual iPad that Safari's Add to Home Screen -> Open as Web App launches qME without Safari chrome, and Guided Access then locks the screen cleanly.
-
-Document the day-of operator setup in the handoff:
-1. Open the primary shared URL.
-2. Safari Share -> Add to Home Screen.
-3. Enable `Open as Web App`.
-4. Launch the resulting i-Pitch Check-In Home Screen icon.
-5. Start Guided Access on that clean web-app window.
-6. Do not draw disabled touch regions over the qME screen.
-
-Primary production kiosk URL:
-
-`/events/ipitch-092026/check-in?mode=shared`
-
-Pre-event authenticated test URL remains:
-
-`/events/ipitch-092026/check-in?mode=shared&adminTest=1`
-
-Do not weaken the permission-gated admin-test bypass.
-
-## Preserve Accepted Production Behavior
-
-Preserve all currently accepted behavior:
+Existing accepted Eventbrite import behavior to preserve:
 - untouched Eventbrite CSV preview/import;
-- Order ID repeat-import safety;
-- party-size handling and `Total guests`;
-- separate `Checked In` and `Guests Represented` counts;
-- Auto Check-In and self-registration fallback;
-- Closed / Open manually / Scheduled Check-In availability;
-- authenticated `adminTest=1` bypass only for admins who can manage the event;
-- Upcoming / Live / Ended guest event state;
-- guest event theme;
-- Agenda / Finalists / Judges content;
-- digital voting inactive for i-Pitch;
-- no hamburger on focused event guest/admin workflows;
-- shared-device copy/layout;
-- Recovery phone hidden only in shared mode;
-- Next Guest / 15-second reset.
+- recognized Eventbrite columns without manual mapping;
+- Order ID as the stable repeat-import/dedupe key;
+- repeat import skips existing Order IDs rather than altering existing records/check-ins;
+- party-size from `Tickets`;
+- preview shows rows found, recognized fields, total guests represented, new registrations, already imported/skipped, and invalid rows;
+- existing attendance/check-in state is not disturbed by a later Eventbrite import;
+- self-registered qME guests remain separate records if a later Eventbrite registration appears for the same person; do not introduce fuzzy person merging in this slice.
+
+Before this new import attempt, the two fabricated test imported-registration rows for Tricia Heller and Kelly Bialek were deliberately deleted from production because they were manually added to an earlier spreadsheet only so those organizers could test. Neither deleted row was linked to a check-in/session. If Tricia/Kelly appear in the new real Eventbrite export, qME should therefore import their actual Eventbrite records normally.
+
+## Required File Support
+
+The Eventbrite import file picker and parser should support untouched exports in:
+- `.csv`
+- `.xls`
+- `.xlsx`
+
+The iOS/mobile web file picker must allow a downloaded `.xls` Eventbrite file from iCloud Files or a Files-provider such as Dropbox to be selected.
+
+Do not solve this only by loosening the HTML `accept` attribute. qME must actually parse the selected Excel workbook and normalize it into the same import pipeline used by CSV.
+
+Prefer one normalized internal row/header representation feeding the existing Eventbrite detection/preview/import logic rather than duplicating import business rules for each file format.
+
+For Excel workbooks:
+- parse the appropriate worksheet safely;
+- for the normal Eventbrite export, use the worksheet containing the attendee/order table; if there is only one worksheet, use it;
+- preserve header text/value semantics needed by the existing Eventbrite column recognizer;
+- treat blank trailing rows as non-data;
+- preserve Order IDs as strings so large numeric-looking IDs are not rounded or converted to scientific notation;
+- preserve Tickets/party-size semantics;
+- do not evaluate or depend on workbook formulas/macros;
+- reject unsupported/corrupt files with a clear user-facing message rather than silently importing bad data.
+
+If `.xls` support requires a browser-compatible workbook parsing dependency, choose a maintained, appropriate dependency and keep its use scoped to import parsing. Do not add a server-side conversion requirement for today's field workflow unless there is a compelling security/compatibility reason documented in the handoff.
+
+## Mobile / iPhone Acceptance
+
+Primary production acceptance is the Product Owner's actual iPhone/mobile-web workflow, not desktop emulation alone:
+
+1. Download Tricia's untouched Eventbrite `.xls` file to iCloud Files or Dropbox/Files.
+2. Open qME Admin -> i-Pitch -> Event Check-Ins -> Import.
+3. Tap Choose File.
+4. The `.xls` file is selectable in the iOS file picker.
+5. qME parses it directly without conversion.
+6. Preview renders before any database mutation.
+7. Product Owner can inspect the preview and decide whether to press Import.
+
+The user must not need to:
+- open Excel;
+- Save As CSV;
+- edit columns;
+- copy/paste into another workbook;
+- rename the file extension;
+- move the task to a laptop merely because the source is `.xls`.
+
+## Preview / Import Semantics
+
+Excel and CSV versions of equivalent Eventbrite data must produce equivalent normalized preview/import results.
+
+Preview must continue to expose at minimum:
+- source rows found;
+- recognized fields/columns;
+- total guests represented;
+- new registrations;
+- already imported/skipped registrations;
+- invalid rows with useful reasons.
+
+Order ID remains the primary repeat-import identity. Do not change dedupe semantics merely to support Excel.
+
+The new export may contain registrations added since the prior import. Expected behavior is:
+- previously imported Order IDs -> skipped;
+- genuinely new Order IDs -> new/importable;
+- no existing check-in is deleted, reset, or recreated;
+- party size for new rows comes from the current source export.
+
+Do not auto-import immediately after file selection. Preserve the explicit preview -> Import confirmation workflow.
+
+## Security / Robustness
+
+Treat workbook content as untrusted input.
+- Do not execute macros or formulas.
+- Do not inject workbook cell HTML into the DOM.
+- Bound parsing reasonably for an event-attendee upload; avoid allowing an unexpectedly huge workbook to freeze the browser indefinitely.
+- Show a clear error for an unsupported/corrupt workbook.
+- Preserve existing admin authorization for preview/import and existing server-side import protections.
+
+## Preserve Production-Accepted Behavior
+
+Do not regress:
+- guest Auto Check-In;
+- imported-registration lookup/reconnect and completed-session recovery;
+- shared iPad kiosk loop;
+- party-size confirmation and `Total guests`;
+- `Checked In` vs `Guests Represented` counts;
+- Check-In availability/manual/scheduled/adminTest behavior;
+- event companion content/theme;
+- personal-phone and shared-device copy/navigation;
+- current imported registrations and existing check-ins.
+
+No production data reset is part of this slice.
 
 ## Validation
 
 At minimum:
+- tests for CSV compatibility remaining unchanged;
+- tests for `.xls` Eventbrite parsing;
+- tests for `.xlsx` Eventbrite parsing;
+- equivalent CSV/XLS/XLSX fixtures normalize to the same key import fields and preview counts;
+- Order ID is preserved exactly as a string;
+- Tickets/party size is preserved;
+- duplicate Order IDs are still skipped against existing imported registrations;
+- corrupt/unsupported Excel input yields a clear error;
+- file input accepts `.csv`, `.xls`, `.xlsx` on supported browsers;
 - TypeScript;
-- focused GuestEventCheckIn tests proving shared mode has no Back to Event on initial, self-registration, completion, and unavailable states as applicable;
-- tests proving normal/personal Check-In still has Back to Event where expected;
-- tests proving shared post-check-in wording differs appropriately from the configured personal-phone instruction;
-- party-size confirmation remains correct in shared mode;
-- Next Guest and 15-second reset remain intact;
-- shared ordinary URL still obeys closed/scheduled availability;
-- shared `adminTest=1` remains permission-gated;
-- full test suite;
+- focused import workflow tests;
+- full Vitest suite;
 - production Vite build.
+
+If practical, include a test fixture that reflects the actual Eventbrite column set already accepted for i-Pitch, including at minimum Order ID, First Name, Last Name, Email Address, and Tickets, plus the extra untouched Eventbrite columns that should simply pass through/normalize without requiring the user to edit the file.
 
 ## Product Owner Acceptance After Deployment
 
-On the actual iPad Home Screen web app:
-1. Open the shared Check-In kiosk and confirm there is no Back to Event action anywhere in the kiosk flow.
-2. Find and check in one imported registration.
-3. Confirm personalized/party-size wording and `Total guests` remain correct.
-4. Confirm the shared fulfillment instruction says to show the confirmation to the person at the desk, rather than telling the guest to go to the front check-in desk.
-5. Confirm `Next Guest` works.
-6. Let one completed session sit untouched and confirm the 15-second automatic reset returns to a clean registration lookup screen.
-7. Confirm the normal personal-phone Check-In still uses the approved front-entrance instruction and retains Back to Event.
-8. Restore/confirm the intended production Check-In availability schedule after testing.
+1. On the actual iPhone, download/save Tricia's untouched `.xls` Eventbrite export into Files/Dropbox.
+2. In qME mobile web, open i-Pitch Event Check-Ins import.
+3. Confirm the `.xls` file is selectable.
+4. Select it and stop at Preview.
+5. Verify preview counts before pressing Import, especially:
+   - rows found;
+   - total guests represented;
+   - new registrations;
+   - already imported/skipped;
+   - invalid rows.
+6. Compare the preview logically with the previous imported population; existing Order IDs should be skipped and only genuinely new Order IDs should be proposed for import.
+7. Only after Product Owner review, press Import.
+8. Confirm existing check-ins/attendance state remain unchanged after import.
+
+Do not mark production acceptance complete until the actual untouched `.xls` file can be selected and previewed on the Product Owner's iPhone.
 
 ## Handoff
 
 Update this FILE with:
-- exact shared-mode Back to Event removals;
-- exact shared-device completion copy behavior;
-- confirmation personal-phone copy/navigation were preserved;
-- tests/build results;
+- exact file formats supported;
+- parser/dependency chosen and why;
+- file-picker accept behavior;
+- worksheet-selection behavior;
+- normalization approach;
+- preservation of Order ID and Tickets/party size;
 - files changed;
-- implementation commit SHA;
-- push status;
-- concise final iPad acceptance steps.
+- focused/full test and build results;
+- implementation commit SHA and push status;
+- concise actual-iPhone acceptance steps.
 
-Implementation, validation, FILE update, commit, and push to `main` are authorized for this bounded slice.
+Implementation, validation, FILE update, commit, and push to `main` are authorized for this bounded production-day slice.

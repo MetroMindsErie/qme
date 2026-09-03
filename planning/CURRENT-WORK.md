@@ -1,102 +1,134 @@
 # Current Work
 
-## Current Slice - Consolidate Eventbrite Ticket Rows Into Orders
+## Current Slice — Ignore Eventbrite TOTALS Footer Row
 
-Production-day import compatibility follow-up for i-Pitch, September 3, 2026.
+Final production-day import cleanup for i-Pitch, September 3, 2026.
 
-Status: implemented and pushed to `main`; ready for Product Owner Preview acceptance using Tricia's exact untouched workbook before production Import.
+The repeated-ticket-row consolidation slice is deployed and Product Owner tested Tricia's exact untouched workbook in production Preview. The consolidation behavior is accepted. One final non-data footer row remains incorrectly classified as an invalid order.
 
-Implementation commit:
-- `a1a27f756307c5ce2b2560c32b8cd8ee06d2eb0a` - `Consolidate Eventbrite ticket rows by order`
+Read `AGENTS.md` first. Implement, validate, update this FILE, commit, and push to `main`. This should be a very small bounded parser cleanup. Do not broaden the importer or change any accepted check-in/import semantics.
 
-## What Changed
+## Production Acceptance Evidence
 
-The Eventbrite importer now consolidates compatible source ticket rows into one canonical registration/order before Preview, dedupe, and Import.
+Using Tricia's exact untouched new Eventbrite workbook after the repeated-order deployment, Preview now reports:
+- Source rows: 75
+- Registrations / orders found: 58
+- Total registered guests represented: 74
+- New registrations: 8
+- Already imported/skipped: 49
+- Invalid orders: 1
+- First invalid order: `row 76, missing_required_field`
 
-Algorithm:
-- CSV, `.xls`, and `.xlsx` still normalize into the existing worksheet row matrix first.
-- Alias-aware header recognition still maps old and new Eventbrite headers into canonical fields.
-- Each valid source row is grouped by the trimmed original Eventbrite `Order ID`.
-- Within each Order ID group, primary first name, last name, and email are compared after harmless case/whitespace normalization.
-- Compatible groups emit one canonical registration.
-- Registered party size is the sum of `Tickets` / `Ticket quantity` across all rows in the group.
-- The original Order ID remains the primary `external_order_id` and `external_attendee_id`.
-- Existing exact Order ID repeat-import dedupe then runs once per canonical order.
+Inspection of the actual workbook confirms Excel row 76 is not a registration. It is an Eventbrite summary/footer row whose first populated value is:
 
-Real production examples now represented correctly:
-- Mourad Krifa, `15545403573`, three `Ticket quantity = 1` source rows -> one registration with party size 3.
-- Terica Lacey, `15563970373`, four `Ticket quantity = 1` source rows -> one registration with party size 4.
+`TOTALS`
 
-## Conflict / Invalid Rules
+Therefore the real attendee/order math is:
+- 74 actual ticket/attendee source rows;
+- 57 real canonical Eventbrite orders;
+- 74 registered guests represented;
+- 8 new orders;
+- 49 already imported/skipped orders;
+- 0 invalid real orders.
 
-The importer does not guess across conflicting repeated rows.
+`8 + 49 = 57` real orders.
 
-An Order ID group is invalid when:
-- any grouped row has invalid/non-positive/non-numeric ticket quantity;
-- first name conflicts across rows after normalization;
-- last name conflicts across rows after normalization;
-- email conflicts across rows after normalization.
+The prior assumption that all 75 source rows represented attendees was corrected by inspecting the actual workbook: one of the 75 physical post-header rows is the `TOTALS` footer.
 
-Conflict reason: `conflicting_order_rows`.
+## Required Behavior
 
-Compatible repeated rows no longer produce `duplicate_order_id_in_file`.
+Recognize the known Eventbrite `TOTALS` summary/footer row as **non-data** and ignore it before required-field validation/grouping.
 
-Canonical metadata records the consolidation shape:
-- `source_row_count`
-- `source_row_numbers`
-- `source_export_shape`
-- `summed_ticket_quantity` for multi-row groups
+For the real workbook, after this change Preview should show the equivalent of:
+- Source rows: 74 data rows (preferred if source-row count means importable/data rows), OR `75 physical rows / 1 ignored footer` if preserving physical-row semantics is cleaner;
+- Registrations / orders found: 57;
+- Total registered guests represented: 74;
+- New registrations: 8;
+- Already imported/skipped: 49;
+- Invalid orders: 0.
 
-## Preview Semantics
+Whichever source-row presentation is chosen, make it unambiguous that the TOTALS footer is intentionally ignored and is not an invalid registration.
 
-Admin Preview now distinguishes physical rows from canonical registrations/orders:
-- `Source rows: N`
-- `Registrations / orders found: N`
-- `Total registered guests represented: N`
-- `Invalid orders: N`
+## Footer Detection Safety
 
-New/skipped/invalid classification is now at the canonical registration/order level. Preview still does not mutate the database.
+Keep footer detection narrow and deterministic.
 
-## Preserved
+At minimum:
+- after normal cell trimming/case normalization, a row whose Order ID/source first identifying cell is exactly `TOTALS` should be treated as an Eventbrite summary/footer row and skipped;
+- case variants such as `Totals` / `totals` may be treated equivalently;
+- surrounding whitespace may be ignored.
 
-- Old order-level Eventbrite exports still work.
-- Header aliases remain supported: `Order ID`; `First Name` / `Attendee First Name` / `Buyer First Name`; `Last Name` / `Attendee Last Name` / `Buyer Last Name`; `Email` / `Email Address` / `Attendee Email` / `Buyer Email`; `Tickets` / `Ticket quantity`; optional ticket type/class/name.
-- CSV, `.xls`, and `.xlsx` direct upload remains supported.
-- Preview-before-Import remains unchanged.
-- Existing imported registrations are skipped once per canonical Order ID.
-- Existing check-ins and named additional attendees are untouched.
-- Guest Check-In, kiosk, recovery, History, Export, and availability behavior are unchanged.
+Do **not** broadly skip arbitrary rows merely because required fields are missing. Genuine malformed attendee/order rows must continue to be invalid and visible in Preview.
 
-## Files Changed
+Do not skip a legitimate order merely because another unrelated cell happens to contain the word totals. Detection should be anchored to the expected Eventbrite footer shape / Order ID position.
 
-- `app/src/lib/eventbriteRegistrationImport.ts`
-- `app/src/pages/admin/AdminEventCheckIns.tsx`
-- `app/src/test/eventbriteRegistrationImport.test.ts`
-- `app/src/test/adminEventCheckInsImportWorkflow.test.tsx`
-- `planning/CURRENT-WORK.md`
+If the parser already has a concept of ignored blank/non-data rows, integrate this footer into that mechanism rather than creating a second import path.
+
+## Preserve Accepted Import Behavior
+
+Preserve all previously accepted behavior:
+- compatible repeated Order IDs consolidate into one canonical order;
+- registered party size is summed across grouped Ticket quantity/Tickets rows;
+- Mourad's three ticket rows -> one order, party size 3;
+- Terica's four ticket rows -> one order, party size 4;
+- conflicting repeated rows remain invalid rather than guessed;
+- exact original Eventbrite Order ID remains dedupe identity;
+- existing Order IDs skip once per canonical order;
+- header aliases remain supported;
+- CSV/XLS/XLSX remain supported;
+- mobile/iPhone upload remains supported;
+- alias-aware worksheet selection remains supported;
+- Preview remains non-mutating and Import remains explicit;
+- edited/reduced files missing required safe concepts still fail;
+- existing completed check-ins/named additional attendees remain untouched;
+- guest Check-In, actual party size, History/Export, kiosk, recovery, and availability are unchanged.
 
 ## Validation
 
-Passed:
-- `npm test -- --run src/test/eventbriteRegistrationImport.test.ts src/test/adminEventCheckInsImportWorkflow.test.tsx` - 35 tests passed
-- `npx tsc -b`
-- `npm test -- --run --maxWorkers=1` - 24 files / 225 tests passed
-- `npm run build`
+At minimum test:
+- exact `TOTALS` footer in Order ID position is ignored;
+- `Totals` / whitespace/case variants are ignored;
+- ignored TOTALS row does not increment invalid-order count;
+- ignored TOTALS row does not increment canonical order count;
+- ignored TOTALS row does not increment total registered guests;
+- a normal malformed row missing required fields is still invalid;
+- a legitimate order with some other cell containing `TOTALS` is not incorrectly skipped;
+- Tricia-style fixture yields 74 attendee/ticket data rows, 57 canonical orders, 74 represented guests, and zero invalid orders when all real orders are valid;
+- repeated-order grouping tests remain passing;
+- old order-level export tests remain passing;
+- header alias tests remain passing;
+- focused Eventbrite parser/import workflow tests;
+- TypeScript;
+- full Vitest suite;
+- production Vite build.
 
-Note: as in prior event-day slices, parallel build attempts hit a transient Dropbox `dist/images` file-lock (`EBUSY`) while Vite was emptying output; isolated build retry passed.
+## Product Owner Acceptance After Deployment
 
-## Product Owner Acceptance
+Use Tricia's exact untouched workbook again and stop at Preview.
 
-Use Tricia's exact untouched new Eventbrite workbook. Do not Import until Preview is reviewed.
+Expected production Preview:
+- 57 registrations/orders;
+- 74 total registered guests represented;
+- 8 new registrations;
+- 49 already imported/skipped;
+- 0 invalid orders;
+- TOTALS footer is ignored rather than shown as invalid.
 
-1. Open Admin -> i-Pitch -> Event Check-Ins -> Settings.
-2. Choose the new `.xlsx` workbook.
-3. Confirm Preview no longer reports repeated ticket rows as duplicate-order invalids.
-4. Confirm Preview shows both source rows and registrations/orders found.
-5. Confirm total registered guests represented is consistent with the 75 ticket rows in the real workbook.
-6. Confirm Mourad `15545403573` is one registration with registered party size 3.
-7. Confirm Terica `15563970373` is one registration with registered party size 4.
-8. Review new registrations, existing/skipped registrations, and invalid orders.
-9. Stop and report Preview counts to Product Owner before pressing Import.
-10. Only after Product Owner approval, press Import Registrations.
-11. Verify existing completed check-ins and named additional attendees remain unchanged after import.
+If those values are confirmed, Product Owner may approve **Import Registrations**.
+
+After import:
+1. Confirm import reports 8 newly imported and 49 skipped, with no invalid real orders.
+2. Confirm existing completed check-ins and named additional attendees remain unchanged.
+3. Confirm one of the newly imported registrations can be found by guest search if desired; no need to create another test check-in unless Product Owner wants to.
+
+## Handoff
+
+Update this FILE with:
+- exact TOTALS/footer detection rule;
+- source-row Preview semantics chosen;
+- tests/build results;
+- files changed;
+- implementation commit SHA and push status;
+- concise final Preview acceptance steps.
+
+Implementation, validation, FILE update, commit, and push to `main` are authorized for this bounded final production-day import cleanup.

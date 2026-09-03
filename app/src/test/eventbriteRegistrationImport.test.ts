@@ -34,11 +34,19 @@ const untouchedUarfEventbriteRows = [
   ['2026-09-01', 'Four', '', 'pat@example.com', '4', 'Vettor', '1004', 'Pat', 'Attending', 'General Admission'],
 ];
 
+const newEventbriteRows = [
+  ['Order ID', 'Attendee first name', 'Attendee last name', 'Attendee email', 'Ticket quantity', 'Ticket Class'],
+  ['1001', 'Paul', 'One', 'paul@example.com', '1', 'General Admission'],
+  ['1004', 'Pat', 'Four', 'pat@example.com', '4', 'General Admission'],
+];
+
 const untouchedUarfEventbriteCsvWithExtraColumns = [
   'Order Date,Last Name,Registration Answers,Email Address,Tickets,Company,Order ID,First Name,Attendee Status,Ticket Class',
   '2026-08-31,One,"How did you hear?,Partner",paul@example.com,1,UARF,1001,Paul,Attending,General Admission',
   '2026-09-01,Four,,pat@example.com,4,Vettor,1004,Pat,Attending,General Admission',
 ].join('\n');
+
+const newEventbriteCsv = newEventbriteRows.map((row) => row.join(',')).join('\n');
 
 function thenableQuery(result: { data?: unknown; error?: unknown }) {
   const query: Record<string, unknown> = {};
@@ -138,6 +146,74 @@ describe('Eventbrite registration import', () => {
     expect(parsed.invalidRows).toHaveLength(0);
   });
 
+  it('recognizes the new Eventbrite attendee header vocabulary as the same canonical fields', () => {
+    const parsed = parseEventbriteRegistrationsCsv(newEventbriteCsv);
+
+    expect(parsed.headerMapping).toMatchObject({
+      orderId: 'Order ID',
+      tickets: 'Ticket quantity',
+      firstName: 'Attendee first name',
+      lastName: 'Attendee last name',
+      email: 'Attendee email',
+      ticketType: 'Ticket Class',
+    });
+    expect(normalizedFieldsFromRows(parsed.rows)).toEqual([
+      {
+        orderId: '1001',
+        firstName: 'Paul',
+        lastName: 'One',
+        email: 'paul@example.com',
+        ticketCount: 1,
+        ticketType: 'General Admission',
+      },
+      {
+        orderId: '1004',
+        firstName: 'Pat',
+        lastName: 'Four',
+        email: 'pat@example.com',
+        ticketCount: 4,
+        ticketType: 'General Admission',
+      },
+    ]);
+    expect(parsed.rows[1].sourceMetadata).toMatchObject({
+      order_id: '1004',
+      tickets: 4,
+      party_size: 4,
+      additional_guests: 3,
+      'Ticket quantity': '4',
+    });
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('normalizes old and new Eventbrite header vocabularies to equivalent key fields', () => {
+    const oldParsed = parseEventbriteRegistrationsCsv(untouchedUarfEventbriteCsvWithExtraColumns);
+    const newParsed = parseEventbriteRegistrationsCsv(newEventbriteCsv);
+
+    expect(normalizedFieldsFromRows(newParsed.rows)).toEqual(normalizedFieldsFromRows(oldParsed.rows));
+  });
+
+  it('matches supported Eventbrite aliases despite harmless case and whitespace changes', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      ' order id , attendee FIRST   name , Attendee LAST name , attendee EMAIL , ticket QUANTITY ',
+      ' Exact-001 , Avery , Alias , alias@example.com , 2 ',
+    ].join('\n'));
+
+    expect(parsed.headerMapping).toMatchObject({
+      orderId: 'order id',
+      tickets: 'ticket QUANTITY',
+      firstName: 'attendee FIRST   name',
+      lastName: 'Attendee LAST name',
+      email: 'attendee EMAIL',
+    });
+    expect(parsed.rows[0]).toMatchObject({
+      orderId: 'Exact-001',
+      firstName: 'Avery',
+      lastName: 'Alias',
+      normalizedEmail: 'alias@example.com',
+      ticketCount: 2,
+    });
+  });
+
   it('normalizes equivalent Eventbrite CSV, XLS, and XLSX exports to the same import fields', () => {
     const csvParsed = parseEventbriteRegistrationsCsv(untouchedUarfEventbriteCsvWithExtraColumns);
     const xlsData = parseEventbriteRegistrationsWorkbookData(workbookData(untouchedUarfEventbriteRows, 'xls'), 'ipitch-eventbrite.xls');
@@ -161,6 +237,22 @@ describe('Eventbrite registration import', () => {
     expect(parseEventbriteRegistrationsRows(data.rows).rows).toHaveLength(2);
   });
 
+  it('chooses a workbook worksheet using the new alias-aware Eventbrite vocabulary', () => {
+    const data = parseEventbriteRegistrationsWorkbookData(
+      workbookData(newEventbriteRows, 'xlsx', [[['Report generated'], ['Not attendee data']]]),
+      'new-eventbrite-export.xlsx'
+    );
+
+    expect(data.worksheetName).toBe('Attendees');
+    expect(parseEventbriteRegistrationsRows(data.rows).headerMapping).toMatchObject({
+      orderId: 'Order ID',
+      tickets: 'Ticket quantity',
+      firstName: 'Attendee first name',
+      lastName: 'Attendee last name',
+      email: 'Attendee email',
+    });
+  });
+
   it('preserves string Order IDs exactly from Excel workbooks', () => {
     const rows = [
       ['Order ID', 'Tickets', 'First Name', 'Last Name', 'Email'],
@@ -180,6 +272,19 @@ describe('Eventbrite registration import', () => {
       'Order ID,Tickets,First Name,Last Name,Email',
       '1000,0,Zero,Guest,zero@example.com',
       '100x,nope,Bad,Guest,bad@example.com',
+    ].join('\n'));
+
+    expect(parsed.rows[0]).toMatchObject({ orderId: '1000', ticketCount: 1 });
+    expect(parsed.invalidRows).toEqual([
+      expect.objectContaining({ orderId: '100x', reason: 'invalid_tickets' }),
+    ]);
+  });
+
+  it('applies Ticket quantity with the same registered party-size semantics as Tickets', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      '1000,Quantity,Guest,quantity@example.com,0',
+      '100x,Bad,Guest,bad@example.com,nope',
     ].join('\n'));
 
     expect(parsed.rows[0]).toMatchObject({ orderId: '1000', ticketCount: 1 });
@@ -252,6 +357,52 @@ describe('Eventbrite registration import', () => {
     expect(calls).not.toContain('event_check_ins');
   });
 
+  it('skips already-imported exact Order IDs from the new Eventbrite vocabulary', async () => {
+    const calls: string[] = [];
+    mockFrom.mockImplementation((table: string) => {
+      calls.push(table);
+      if (table === 'event_imported_registrations' && calls.filter((name) => name === table).length === 1) {
+        return thenableQuery({ data: [{ external_order_id: '1001' }] });
+      }
+      if (table === 'event_import_batches') {
+        const proxy: Record<string, unknown> = {};
+        proxy.insert = vi.fn(() => proxy);
+        proxy.select = vi.fn(() => proxy);
+        proxy.single = vi.fn(() => Promise.resolve({ data: { id: 'batch-1' }, error: null }));
+        return proxy;
+      }
+      if (table === 'event_imported_registrations') {
+        const proxy: Record<string, unknown> = {};
+        proxy.insert = vi.fn((rows) => {
+          expect(rows).toHaveLength(1);
+          expect(rows[0]).toMatchObject({ external_order_id: '1004', party_size: 4 });
+          return Promise.resolve({ error: null });
+        });
+        return proxy;
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const result = await importEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      sourceFileName: 'new-eventbrite-export.xlsx',
+      fileData: {
+        sourceFileName: 'new-eventbrite-export.xlsx',
+        format: 'xlsx',
+        rows: newEventbriteRows,
+        worksheetName: 'Attendees',
+      },
+    });
+
+    expect(result).toMatchObject({
+      processedCount: 2,
+      insertedCount: 1,
+      skippedExistingCount: 1,
+      skippedExistingOrderIds: ['1001'],
+    });
+    expect(calls).not.toContain('event_check_ins');
+  });
+
   it('previews recognized concepts and counts without committing rows', async () => {
     const calls: string[] = [];
     mockFrom.mockImplementation((table: string) => {
@@ -314,14 +465,28 @@ describe('Eventbrite registration import', () => {
     expect(() => parseEventbriteRegistrationsCsv([
       'Tickets,First Name,Last Name,Email Address',
       '1,Paul,One,paul@example.com',
-    ].join('\n'))).toThrow('Eventbrite import file is missing required column: Order ID');
+    ].join('\n'))).toThrow('This file is missing the Eventbrite Order ID column required for safe repeat imports');
+  });
+
+  it('blocks reduced files missing both Tickets and Ticket quantity', () => {
+    expect(() => parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email',
+      '1001,Paul,One,paul@example.com',
+    ].join('\n'))).toThrow('This file is missing the Eventbrite ticket quantity column (Tickets or Ticket quantity).');
+  });
+
+  it('continues rejecting edited files without safe required Eventbrite concepts', () => {
+    expect(() => parseEventbriteRegistrationsCsv([
+      'First Name,Last Name,Email Address,Company',
+      'Paul,One,paul@example.com,UARF',
+    ].join('\n'))).toThrow('This file is missing the Eventbrite Order ID column required for safe repeat imports');
   });
 
   it('rejects corrupt Excel input with a clear error before database writes', async () => {
     const fileData = parseEventbriteRegistrationsWorkbookData(new Uint8Array([1, 2, 3, 4]), 'broken.xls');
 
     await expect(previewEventbriteRegistrationsForEvent({ eventId: 'event-1', fileData }))
-      .rejects.toThrow('Eventbrite import file is missing required column: Order ID');
+      .rejects.toThrow('This file is missing the Eventbrite Order ID column required for safe repeat imports');
     expect(mockFrom).not.toHaveBeenCalled();
   });
 

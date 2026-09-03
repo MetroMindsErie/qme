@@ -71,15 +71,32 @@ export type EventbriteRegistrationPreviewResult = EventbriteRegistrationParseRes
 };
 
 const REQUIRED_COLUMNS = {
-  orderId: ['Order ID'],
-  tickets: ['Tickets'],
-  firstName: ['First Name', 'Attendee First Name', 'Buyer First Name'],
-  lastName: ['Last Name', 'Attendee Last Name', 'Buyer Last Name'],
-  email: ['Email', 'Email Address', 'Attendee Email', 'Buyer Email'],
+  orderId: {
+    aliases: ['Order ID'],
+    missingMessage: 'This file is missing the Eventbrite Order ID column required for safe repeat imports. Please use an Eventbrite export that includes Order ID.',
+  },
+  tickets: {
+    aliases: ['Tickets', 'Ticket quantity'],
+    missingMessage: 'This file is missing the Eventbrite ticket quantity column (Tickets or Ticket quantity).',
+  },
+  firstName: {
+    aliases: ['First Name', 'Attendee First Name', 'Buyer First Name'],
+    missingMessage: 'Eventbrite import file is missing required column: First Name',
+  },
+  lastName: {
+    aliases: ['Last Name', 'Attendee Last Name', 'Buyer Last Name'],
+    missingMessage: 'Eventbrite import file is missing required column: Last Name',
+  },
+  email: {
+    aliases: ['Email', 'Email Address', 'Attendee Email', 'Buyer Email'],
+    missingMessage: 'Eventbrite import file is missing required column: Email Address',
+  },
 };
 
 const OPTIONAL_COLUMNS = {
-  ticketType: ['Ticket Type', 'Ticket Class', 'Ticket Name'],
+  ticketType: {
+    aliases: ['Ticket Type', 'Ticket Class', 'Ticket Name'],
+  },
 };
 
 export const EVENTBRITE_IMPORT_ACCEPT = [
@@ -144,21 +161,26 @@ function normalizeText(value: unknown): string {
   return String(value ?? '').trim();
 }
 
+function normalizeHeader(value: unknown): string {
+  return normalizeText(value).replace(/\s+/g, ' ').toLowerCase();
+}
+
 function normalizeEmail(value: unknown): string {
   return normalizeText(value).toLowerCase();
 }
 
-function findHeader(headers: string[], candidates: string[], required: boolean): string {
-  const found = candidates.find((candidate) => headers.includes(candidate));
+function findHeader(headers: string[], config: { aliases: string[]; missingMessage?: string }, required: boolean): string {
+  const normalizedAliases = new Set(config.aliases.map(normalizeHeader));
+  const found = headers.find((header) => normalizedAliases.has(normalizeHeader(header)));
   if (found) return found;
   if (required) {
-    throw new Error(`Eventbrite import file is missing required column: ${candidates[0]}`);
+    throw new Error(config.missingMessage ?? `Eventbrite import file is missing required column: ${config.aliases[0]}`);
   }
   return '';
 }
 
 function hasRequiredEventbriteHeaders(headers: string[]): boolean {
-  return Object.values(REQUIRED_COLUMNS).every((candidates) => candidates.some((candidate) => headers.includes(candidate)));
+  return Object.values(REQUIRED_COLUMNS).every((config) => Boolean(findHeader(headers, config, false)));
 }
 
 export function normalizeTicketCount(value: unknown): number | null {

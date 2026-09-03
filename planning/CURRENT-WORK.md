@@ -53,8 +53,8 @@ Files changed:
 - `planning/CURRENT-WORK.md`
 
 Git/deployment:
-- Implementation commit SHA: pending.
-- Push to `origin/main`: pending.
+- Implementation commit SHA: `a97d2a6f876c051ccbb6cfd3fdcf66732797a3e9`.
+- Push to `origin/main`: pushed.
 - Manual deploy: not requested. Normal automated deployment from `main` is expected after push.
 
 Product Owner actual-iPhone acceptance still required:

@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as XLSX from 'xlsx';
 
 const mockFrom = vi.fn();
 
@@ -9,20 +10,31 @@ vi.mock('../lib/supabase', () => ({
 }));
 
 import {
+  EVENTBRITE_IMPORT_ACCEPT,
   buildEventbriteRegistrationInsertRows,
   importEventbriteRegistrationsForEvent,
   parseEventbriteRegistrationsCsv,
+  parseEventbriteRegistrationsRows,
+  parseEventbriteRegistrationsWorkbookData,
   previewEventbriteRegistrationsForEvent,
 } from '../lib/eventbriteRegistrationImport';
 
-const csv = [
-  'Order ID,Tickets,First Name,Last Name,Email,Ticket Type',
-  '1001,1,Paul,One,paul@example.com,General Admission',
-  '1002,2,Paula,Two,paula@example.com,General Admission',
-  '1004,4,Pat,Four,pat@example.com,General Admission',
-].join('\n');
+const eventbriteRows = [
+  ['Order ID', 'Tickets', 'First Name', 'Last Name', 'Email', 'Ticket Type'],
+  ['1001', '1', 'Paul', 'One', 'paul@example.com', 'General Admission'],
+  ['1002', '2', 'Paula', 'Two', 'paula@example.com', 'General Admission'],
+  ['1004', '4', 'Pat', 'Four', 'pat@example.com', 'General Admission'],
+];
 
-const untouchedUarfEventbriteCsv = [
+const csv = eventbriteRows.map((row) => row.join(',')).join('\n');
+
+const untouchedUarfEventbriteRows = [
+  ['Order Date', 'Last Name', 'Registration Answers', 'Email Address', 'Tickets', 'Company', 'Order ID', 'First Name', 'Attendee Status', 'Ticket Class'],
+  ['2026-08-31', 'One', 'How did you hear?,Partner', 'paul@example.com', '1', 'UARF', '1001', 'Paul', 'Attending', 'General Admission'],
+  ['2026-09-01', 'Four', '', 'pat@example.com', '4', 'Vettor', '1004', 'Pat', 'Attending', 'General Admission'],
+];
+
+const untouchedUarfEventbriteCsvWithExtraColumns = [
   'Order Date,Last Name,Registration Answers,Email Address,Tickets,Company,Order ID,First Name,Attendee Status,Ticket Class',
   '2026-08-31,One,"How did you hear?,Partner",paul@example.com,1,UARF,1001,Paul,Attending,General Admission',
   '2026-09-01,Four,,pat@example.com,4,Vettor,1004,Pat,Attending,General Admission',
@@ -42,6 +54,26 @@ function thenableQuery(result: { data?: unknown; error?: unknown }) {
     },
   });
   return proxy;
+}
+
+function workbookData(rows: string[][], bookType: 'xls' | 'xlsx', extraSheets: string[][][] = []) {
+  const workbook = XLSX.utils.book_new();
+  extraSheets.forEach((sheetRows, index) => {
+    XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(sheetRows), `Sheet${index + 1}`);
+  });
+  XLSX.utils.book_append_sheet(workbook, XLSX.utils.aoa_to_sheet(rows), 'Attendees');
+  return XLSX.write(workbook, { bookType, type: 'array' }) as ArrayBuffer;
+}
+
+function normalizedFieldsFromRows(rows: ReturnType<typeof parseEventbriteRegistrationsCsv>['rows']) {
+  return rows.map((row) => ({
+    orderId: row.orderId,
+    firstName: row.firstName,
+    lastName: row.lastName,
+    email: row.email,
+    ticketCount: row.ticketCount,
+    ticketType: row.ticketType,
+  }));
 }
 
 describe('Eventbrite registration import', () => {
@@ -69,7 +101,7 @@ describe('Eventbrite registration import', () => {
   });
 
   it('recognizes the untouched UARF/Eventbrite export shape with extra columns in any order', () => {
-    const parsed = parseEventbriteRegistrationsCsv(untouchedUarfEventbriteCsv);
+    const parsed = parseEventbriteRegistrationsCsv(untouchedUarfEventbriteCsvWithExtraColumns);
 
     expect(parsed.headerMapping).toMatchObject({
       orderId: 'Order ID',
@@ -104,6 +136,43 @@ describe('Eventbrite registration import', () => {
       }),
     ]);
     expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('normalizes equivalent Eventbrite CSV, XLS, and XLSX exports to the same import fields', () => {
+    const csvParsed = parseEventbriteRegistrationsCsv(untouchedUarfEventbriteCsvWithExtraColumns);
+    const xlsData = parseEventbriteRegistrationsWorkbookData(workbookData(untouchedUarfEventbriteRows, 'xls'), 'ipitch-eventbrite.xls');
+    const xlsxData = parseEventbriteRegistrationsWorkbookData(workbookData(untouchedUarfEventbriteRows, 'xlsx'), 'ipitch-eventbrite.xlsx');
+    const xlsParsed = parseEventbriteRegistrationsRows(xlsData.rows);
+    const xlsxParsed = parseEventbriteRegistrationsRows(xlsxData.rows);
+
+    expect(normalizedFieldsFromRows(xlsParsed.rows)).toEqual(normalizedFieldsFromRows(csvParsed.rows));
+    expect(normalizedFieldsFromRows(xlsxParsed.rows)).toEqual(normalizedFieldsFromRows(csvParsed.rows));
+    expect(xlsData).toMatchObject({ format: 'xls', worksheetName: 'Attendees' });
+    expect(xlsxData).toMatchObject({ format: 'xlsx', worksheetName: 'Attendees' });
+  });
+
+  it('chooses the worksheet containing the Eventbrite attendee table', () => {
+    const data = parseEventbriteRegistrationsWorkbookData(
+      workbookData(untouchedUarfEventbriteRows, 'xlsx', [[['Report generated'], ['Not attendee data']]]),
+      'multi-sheet-eventbrite.xlsx'
+    );
+
+    expect(data.worksheetName).toBe('Attendees');
+    expect(parseEventbriteRegistrationsRows(data.rows).rows).toHaveLength(2);
+  });
+
+  it('preserves string Order IDs exactly from Excel workbooks', () => {
+    const rows = [
+      ['Order ID', 'Tickets', 'First Name', 'Last Name', 'Email'],
+      ['00123456789012345678', '2', 'Exact', 'Order', 'exact@example.com'],
+    ];
+    const data = parseEventbriteRegistrationsWorkbookData(workbookData(rows, 'xls'), 'exact-orders.xls');
+    const parsed = parseEventbriteRegistrationsRows(data.rows);
+
+    expect(parsed.rows[0]).toMatchObject({
+      orderId: '00123456789012345678',
+      ticketCount: 2,
+    });
   });
 
   it('normalizes Tickets to a minimum party size of 1 and rejects non-numeric quantities', () => {
@@ -195,7 +264,7 @@ describe('Eventbrite registration import', () => {
 
     const preview = await previewEventbriteRegistrationsForEvent({
       eventId: 'event-1',
-      csvText: untouchedUarfEventbriteCsv,
+      csvText: untouchedUarfEventbriteCsvWithExtraColumns,
     });
 
     expect(preview.recognized).toMatchObject({
@@ -216,10 +285,50 @@ describe('Eventbrite registration import', () => {
     expect(calls).toEqual(['event_imported_registrations']);
   });
 
+  it('previews XLSX file data with the same counts and duplicate Order ID skips as CSV', async () => {
+    const calls: string[] = [];
+    mockFrom.mockImplementation((table: string) => {
+      calls.push(table);
+      if (table === 'event_imported_registrations') {
+        return thenableQuery({ data: [{ external_order_id: '1001' }] });
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const preview = await previewEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      fileData: parseEventbriteRegistrationsWorkbookData(workbookData(untouchedUarfEventbriteRows, 'xlsx'), 'ipitch-eventbrite.xlsx'),
+    });
+
+    expect(preview).toMatchObject({
+      rowCount: 2,
+      totalGuestsRepresented: 5,
+      newRegistrationCount: 1,
+      skippedExistingCount: 1,
+      skippedExistingOrderIds: ['1001'],
+    });
+    expect(calls).toEqual(['event_imported_registrations']);
+  });
+
   it('blocks import with actionable validation when required concepts are missing', () => {
     expect(() => parseEventbriteRegistrationsCsv([
       'Tickets,First Name,Last Name,Email Address',
       '1,Paul,One,paul@example.com',
-    ].join('\n'))).toThrow('Eventbrite CSV is missing required column: Order ID');
+    ].join('\n'))).toThrow('Eventbrite import file is missing required column: Order ID');
+  });
+
+  it('rejects corrupt Excel input with a clear error before database writes', async () => {
+    const fileData = parseEventbriteRegistrationsWorkbookData(new Uint8Array([1, 2, 3, 4]), 'broken.xls');
+
+    await expect(previewEventbriteRegistrationsForEvent({ eventId: 'event-1', fileData }))
+      .rejects.toThrow('Eventbrite import file is missing required column: Order ID');
+    expect(mockFrom).not.toHaveBeenCalled();
+  });
+
+  it('allows CSV, XLS, and XLSX files in the browser file picker', () => {
+    expect(EVENTBRITE_IMPORT_ACCEPT).toContain('.csv');
+    expect(EVENTBRITE_IMPORT_ACCEPT).toContain('.xls');
+    expect(EVENTBRITE_IMPORT_ACCEPT).toContain('.xlsx');
+    expect(EVENTBRITE_IMPORT_ACCEPT).toContain('application/vnd.ms-excel');
   });
 });

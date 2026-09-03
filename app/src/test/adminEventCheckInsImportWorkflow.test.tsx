@@ -11,6 +11,7 @@ const mockListEventCheckIns = vi.fn();
 const mockListGuestCreditsForEvent = vi.fn();
 const mockPreviewEventbriteRegistrationsForEvent = vi.fn();
 const mockImportEventbriteRegistrationsForEvent = vi.fn();
+const mockReadEventbriteRegistrationFile = vi.fn();
 const mockUpdateEvent = vi.fn();
 
 vi.mock('../components/Header', () => ({
@@ -43,6 +44,8 @@ vi.mock('../lib/guestCreditService', () => ({
 }));
 
 vi.mock('../lib/eventbriteRegistrationImport', () => ({
+  EVENTBRITE_IMPORT_ACCEPT: '.csv,.xls,.xlsx,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  readEventbriteRegistrationFile: (...args: unknown[]) => mockReadEventbriteRegistrationFile(...args),
   previewEventbriteRegistrationsForEvent: (...args: unknown[]) => mockPreviewEventbriteRegistrationsForEvent(...args),
   importEventbriteRegistrationsForEvent: (...args: unknown[]) => mockImportEventbriteRegistrationsForEvent(...args),
 }));
@@ -90,6 +93,16 @@ const untouchedCsv = [
   '2026-09-01,Four,,pat@example.com,4,Vettor,1004,Pat,Attending,General Admission',
 ].join('\n');
 
+const untouchedFileData = {
+  sourceFileName: 'uarf-eventbrite.csv',
+  format: 'csv' as const,
+  rows: [
+    ['Order Date', 'Last Name', 'Registration Answers', 'Email Address', 'Tickets', 'Company', 'Order ID', 'First Name', 'Attendee Status', 'Ticket Class'],
+    ['2026-08-31', 'One', 'How did you hear?,Partner', 'paul@example.com', '1', 'UARF', '1001', 'Paul', 'Attending', 'General Admission'],
+    ['2026-09-01', 'Four', '', 'pat@example.com', '4', 'Vettor', '1004', 'Pat', 'Attending', 'General Admission'],
+  ],
+};
+
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={['/admin/events/event-1/check-ins']}>
@@ -108,6 +121,7 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
     mockUpdateEvent.mockImplementation((_id: string, input: Partial<QEvent>) => Promise.resolve({ ...event, ...input }));
     mockListEventCheckIns.mockResolvedValue([]);
     mockListGuestCreditsForEvent.mockResolvedValue([]);
+    mockReadEventbriteRegistrationFile.mockResolvedValue(untouchedFileData);
     mockPreviewEventbriteRegistrationsForEvent.mockResolvedValue({
       headers: ['Order Date', 'Last Name', 'Registration Answers', 'Email Address', 'Tickets', 'Company', 'Order ID', 'First Name', 'Attendee Status', 'Ticket Class'],
       headerMapping: {
@@ -153,14 +167,17 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
     expect(screen.queryByLabelText('Open menu')).not.toBeInTheDocument();
-    const input = screen.getByLabelText('Eventbrite CSV');
+    const input = screen.getByLabelText('Eventbrite CSV or Excel');
+    expect(input).toHaveAttribute('accept', expect.stringContaining('.xls'));
+    expect(input).toHaveAttribute('accept', expect.stringContaining('.xlsx'));
     const file = new File([untouchedCsv], 'uarf-eventbrite.csv', { type: 'text/csv' });
     fireEvent.change(input, { target: { files: [file] } });
 
     await waitFor(() => {
+      expect(mockReadEventbriteRegistrationFile).toHaveBeenCalledWith(file);
       expect(mockPreviewEventbriteRegistrationsForEvent).toHaveBeenCalledWith({
         eventId: event.id,
-        csvText: untouchedCsv,
+        fileData: untouchedFileData,
       });
     });
     expect(mockImportEventbriteRegistrationsForEvent).not.toHaveBeenCalled();
@@ -179,7 +196,7 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
       expect(mockImportEventbriteRegistrationsForEvent).toHaveBeenCalledWith({
         eventId: event.id,
         sourceFileName: 'uarf-eventbrite.csv',
-        csvText: untouchedCsv,
+        fileData: untouchedFileData,
       });
     });
     expect(await screen.findByText('Imported 1; skipped 1; invalid 0.')).toBeInTheDocument();

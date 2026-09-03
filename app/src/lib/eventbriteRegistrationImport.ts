@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import * as XLSX from 'xlsx';
 
 export type EventbriteRegistrationRow = {
   sourceRowNumber: number;
@@ -37,6 +38,15 @@ export type EventbriteRegistrationParseResult = {
   rowCount: number;
 };
 
+export type EventbriteRegistrationFileFormat = 'csv' | 'xls' | 'xlsx';
+
+export type EventbriteRegistrationFileData = {
+  sourceFileName: string;
+  format: EventbriteRegistrationFileFormat;
+  rows: string[][];
+  worksheetName?: string;
+};
+
 export type EventbriteRegistrationImportResult = EventbriteRegistrationParseResult & {
   processedCount: number;
   insertedCount: number;
@@ -71,6 +81,19 @@ const REQUIRED_COLUMNS = {
 const OPTIONAL_COLUMNS = {
   ticketType: ['Ticket Type', 'Ticket Class', 'Ticket Name'],
 };
+
+export const EVENTBRITE_IMPORT_ACCEPT = [
+  '.csv',
+  '.xls',
+  '.xlsx',
+  'text/csv',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+].join(',');
+
+const MAX_IMPORT_FILE_BYTES = 8 * 1024 * 1024;
+const MAX_WORKSHEET_ROWS = 10000;
+const MAX_WORKSHEET_COLUMNS = 200;
 
 function parseCsv(text: string): string[][] {
   const rows: string[][] = [];
@@ -129,9 +152,13 @@ function findHeader(headers: string[], candidates: string[], required: boolean):
   const found = candidates.find((candidate) => headers.includes(candidate));
   if (found) return found;
   if (required) {
-    throw new Error(`Eventbrite CSV is missing required column: ${candidates[0]}`);
+    throw new Error(`Eventbrite import file is missing required column: ${candidates[0]}`);
   }
   return '';
+}
+
+function hasRequiredEventbriteHeaders(headers: string[]): boolean {
+  return Object.values(REQUIRED_COLUMNS).every((candidates) => candidates.some((candidate) => headers.includes(candidate)));
 }
 
 export function normalizeTicketCount(value: unknown): number | null {
@@ -142,9 +169,8 @@ export function normalizeTicketCount(value: unknown): number | null {
   return Math.max(1, parsed);
 }
 
-export function parseEventbriteRegistrationsCsv(csvText: string): EventbriteRegistrationParseResult {
-  const parsedRows = parseCsv(csvText.replace(/^\uFEFF/, ''));
-  if (parsedRows.length === 0) throw new Error('Eventbrite CSV is empty.');
+export function parseEventbriteRegistrationsRows(parsedRows: string[][]): EventbriteRegistrationParseResult {
+  if (parsedRows.length === 0) throw new Error('Eventbrite import file is empty.');
 
   const headers = parsedRows[0].map((header) => header.trim());
   const headerMapping = {
@@ -223,6 +249,128 @@ export function parseEventbriteRegistrationsCsv(csvText: string): EventbriteRegi
   };
 }
 
+export function parseEventbriteRegistrationsCsv(csvText: string): EventbriteRegistrationParseResult {
+  return parseEventbriteRegistrationsRows(parseCsv(csvText.replace(/^\uFEFF/, '')));
+}
+
+function detectImportFormat(fileName: string, mimeType = ''): EventbriteRegistrationFileFormat {
+  const lowerName = fileName.toLowerCase();
+  const lowerType = mimeType.toLowerCase();
+  if (lowerName.endsWith('.csv') || lowerType === 'text/csv') return 'csv';
+  if (lowerName.endsWith('.xlsx') || lowerType.includes('openxmlformats-officedocument.spreadsheetml.sheet')) return 'xlsx';
+  if (lowerName.endsWith('.xls') || lowerType === 'application/vnd.ms-excel') return 'xls';
+  throw new Error('Unsupported Eventbrite import file. Please choose a .csv, .xls, or .xlsx file.');
+}
+
+function cellToText(cell: XLSX.CellObject | undefined): string {
+  if (!cell) return '';
+  if (cell.w !== undefined) return normalizeText(cell.w);
+  if (cell.v === undefined || cell.v === null) return '';
+  return normalizeText(cell.v);
+}
+
+function worksheetToRows(sheet: XLSX.WorkSheet): string[][] {
+  const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
+  if (range.e.r - range.s.r + 1 > MAX_WORKSHEET_ROWS || range.e.c - range.s.c + 1 > MAX_WORKSHEET_COLUMNS) {
+    throw new Error('Eventbrite workbook is too large for browser import. Please use a smaller attendee export.');
+  }
+
+  const rows: string[][] = [];
+  for (let rowIndex = range.s.r; rowIndex <= range.e.r; rowIndex += 1) {
+    const row: string[] = [];
+    for (let columnIndex = range.s.c; columnIndex <= range.e.c; columnIndex += 1) {
+      const address = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
+      row.push(cellToText(sheet[address] as XLSX.CellObject | undefined));
+    }
+    rows.push(row);
+  }
+
+  return rows.filter((cells) => cells.some((cell) => cell.trim() !== ''));
+}
+
+function chooseEventbriteWorksheet(workbook: XLSX.WorkBook): { name: string; rows: string[][] } {
+  for (const name of workbook.SheetNames) {
+    const sheet = workbook.Sheets[name];
+    if (!sheet) continue;
+    const rows = worksheetToRows(sheet);
+    const headers = rows[0]?.map((header) => header.trim()) ?? [];
+    if (headers.length > 0 && hasRequiredEventbriteHeaders(headers)) {
+      return { name, rows };
+    }
+  }
+
+  if (workbook.SheetNames.length === 1) {
+    const name = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[name];
+    if (sheet) {
+      const rows = worksheetToRows(sheet);
+      if (rows.length > 0) return { name, rows };
+    }
+  }
+
+  throw new Error('Could not find an Eventbrite attendee worksheet with Order ID, Tickets, name, and email columns.');
+}
+
+export function parseEventbriteRegistrationsWorkbookData(
+  data: ArrayBuffer | Uint8Array,
+  sourceFileName = 'eventbrite-export.xls'
+): EventbriteRegistrationFileData {
+  try {
+    const workbook = XLSX.read(data, {
+      type: data instanceof Uint8Array ? 'array' : 'array',
+      cellFormula: false,
+      cellHTML: false,
+      cellNF: false,
+      cellStyles: false,
+      cellDates: false,
+    });
+    const worksheet = chooseEventbriteWorksheet(workbook);
+    return {
+      sourceFileName,
+      format: detectImportFormat(sourceFileName),
+      rows: worksheet.rows,
+      worksheetName: worksheet.name,
+    };
+  } catch (e) {
+    if (e instanceof Error && e.message.startsWith('Could not find')) throw e;
+    if (e instanceof Error && e.message.includes('too large')) throw e;
+    throw new Error('Could not read the Eventbrite Excel file. Please choose a valid .xls or .xlsx export.');
+  }
+}
+
+export async function readEventbriteRegistrationFile(file: File): Promise<EventbriteRegistrationFileData> {
+  if (file.size > MAX_IMPORT_FILE_BYTES) {
+    throw new Error('Eventbrite import file is too large for browser import. Please choose a smaller attendee export.');
+  }
+
+  const format = detectImportFormat(file.name, file.type);
+  if (format === 'csv') {
+    const text = typeof file.text === 'function'
+      ? await file.text()
+      : await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result ?? ''));
+        reader.onerror = () => reject(reader.error ?? new Error('File could not be read.'));
+        reader.readAsText(file);
+      });
+    return {
+      sourceFileName: file.name,
+      format,
+      rows: parseCsv(text.replace(/^\uFEFF/, '')),
+    };
+  }
+
+  const data = await file.arrayBuffer();
+  const parsed = parseEventbriteRegistrationsWorkbookData(data, file.name);
+  return { ...parsed, format };
+}
+
+function parseEventbriteRegistrationInput(input: { csvText?: string; fileData?: EventbriteRegistrationFileData }) {
+  if (input.fileData) return parseEventbriteRegistrationsRows(input.fileData.rows);
+  if (input.csvText !== undefined) return parseEventbriteRegistrationsCsv(input.csvText);
+  throw new Error('No Eventbrite import file data was provided.');
+}
+
 async function getExistingEventbriteOrderIds(eventId: string, orderIds: string[]): Promise<Set<string>> {
   const existingOrderIds = new Set<string>();
   if (orderIds.length === 0) return existingOrderIds;
@@ -245,9 +393,10 @@ async function getExistingEventbriteOrderIds(eventId: string, orderIds: string[]
 
 export async function previewEventbriteRegistrationsForEvent(input: {
   eventId: string;
-  csvText: string;
+  csvText?: string;
+  fileData?: EventbriteRegistrationFileData;
 }): Promise<EventbriteRegistrationPreviewResult> {
-  const parsed = parseEventbriteRegistrationsCsv(input.csvText);
+  const parsed = parseEventbriteRegistrationInput(input);
   const orderIds = parsed.rows.map((row) => row.orderId);
   const existingOrderIds = await getExistingEventbriteOrderIds(input.eventId, orderIds);
   const skippedExistingOrderIds = parsed.rows
@@ -298,10 +447,11 @@ export function buildEventbriteRegistrationInsertRows(
 
 export async function importEventbriteRegistrationsForEvent(input: {
   eventId: string;
-  csvText: string;
+  csvText?: string;
+  fileData?: EventbriteRegistrationFileData;
   sourceFileName: string;
 }): Promise<EventbriteRegistrationImportResult> {
-  const parsed = parseEventbriteRegistrationsCsv(input.csvText);
+  const parsed = parseEventbriteRegistrationInput(input);
   const orderIds = parsed.rows.map((row) => row.orderId);
   const existingOrderIds = await getExistingEventbriteOrderIds(input.eventId, orderIds);
 

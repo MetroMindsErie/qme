@@ -9,8 +9,11 @@ import { getEventCheckInConfig, type EventCheckInAvailabilityMode, type EventChe
 import { formatTotalGuests, getCheckInPartySize } from '../../lib/checkInPartySize';
 import { downloadCsv, formatCsvTimestamp, safeCsvFilename } from '../../lib/csvExport';
 import {
+  EVENTBRITE_IMPORT_ACCEPT,
   importEventbriteRegistrationsForEvent,
   previewEventbriteRegistrationsForEvent,
+  readEventbriteRegistrationFile,
+  type EventbriteRegistrationFileData,
   type EventbriteRegistrationImportResult,
   type EventbriteRegistrationPreviewResult,
 } from '../../lib/eventbriteRegistrationImport';
@@ -54,16 +57,6 @@ function checkInField(row: EventCheckIn, key: string): unknown {
   return (row as unknown as Record<string, unknown>)[key];
 }
 
-function readFileText(file: File): Promise<string> {
-  if (typeof file.text === 'function') return file.text();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result ?? ''));
-    reader.onerror = () => reject(reader.error ?? new Error('File could not be read.'));
-    reader.readAsText(file);
-  });
-}
-
 export function getCheckInRegistrationSource(row: EventCheckIn): 'imported' | 'self_registered' | 'needs_help' {
   const metadata = asRecord(row.metadata);
   if (metadata.imported_registration_id) return 'imported';
@@ -91,7 +84,7 @@ export default function AdminEventCheckIns({
   const [eventbriteImportStatus, setEventbriteImportStatus] = useState('');
   const [eventbriteImportResult, setEventbriteImportResult] = useState<EventbriteRegistrationImportResult | null>(null);
   const [eventbritePreview, setEventbritePreview] = useState<EventbriteRegistrationPreviewResult | null>(null);
-  const [eventbritePendingFile, setEventbritePendingFile] = useState<{ name: string; text: string } | null>(null);
+  const [eventbritePendingFile, setEventbritePendingFile] = useState<EventbriteRegistrationFileData | null>(null);
   const [removingCheckInIds, setRemovingCheckInIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -350,12 +343,12 @@ export default function AdminEventCheckIns({
     setEventbritePreview(null);
     setEventbritePendingFile(null);
     try {
-      const csvText = await readFileText(file);
+      const fileData = await readEventbriteRegistrationFile(file);
       const preview = await previewEventbriteRegistrationsForEvent({
         eventId: event.id,
-        csvText,
+        fileData,
       });
-      setEventbritePendingFile({ name: file.name, text: csvText });
+      setEventbritePendingFile(fileData);
       setEventbritePreview(preview);
       setEventbriteImportStatus(preview.invalidRows.length > 0
         ? `File recognized with ${preview.invalidRows.length} invalid row(s). Review before importing.`
@@ -377,8 +370,8 @@ export default function AdminEventCheckIns({
     try {
       const result = await importEventbriteRegistrationsForEvent({
         eventId: event.id,
-        sourceFileName: eventbritePendingFile.name,
-        csvText: eventbritePendingFile.text,
+        sourceFileName: eventbritePendingFile.sourceFileName,
+        fileData: eventbritePendingFile,
       });
       setEventbriteImportResult(result);
       setEventbritePreview(null);
@@ -658,12 +651,12 @@ export default function AdminEventCheckIns({
             <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '1rem', background: '#fafafa' }}>
               <h2 style={{ margin: '0 0 0.75rem', fontSize: '1rem', color: '#2f3e4f' }}>Eventbrite Import</h2>
               <label style={{ display: 'block', fontWeight: 800, color: '#2f3e4f', marginBottom: '0.35rem' }}>
-                Eventbrite CSV
+                Eventbrite CSV or Excel
               </label>
               <input
                 type="file"
-                aria-label="Eventbrite CSV"
-                accept=".csv,text/csv"
+                aria-label="Eventbrite CSV or Excel"
+                accept={EVENTBRITE_IMPORT_ACCEPT}
                 disabled={importingEventbrite || eventbritePreviewing}
                 onChange={(e) => {
                   void handleEventbritePreview(e.target.files?.[0] ?? null);

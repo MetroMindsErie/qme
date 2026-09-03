@@ -144,6 +144,7 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
       invalidRows: [],
       rowCount: 2,
       sourceRowCount: 2,
+      ignoredFooterRowCount: 0,
       canonicalRegistrationCount: 2,
       totalGuestsRepresented: 5,
       newRegistrationCount: 1,
@@ -161,6 +162,7 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
       headerMapping: {},
       rowCount: 2,
       sourceRowCount: 2,
+      ignoredFooterRowCount: 0,
       canonicalRegistrationCount: 2,
       importBatchId: 'batch-1',
     });

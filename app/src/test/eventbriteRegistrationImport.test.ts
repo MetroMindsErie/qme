@@ -51,6 +51,49 @@ const ticketRowEventbriteRows = [
   ['15563970373', 'Terica', 'Lacey', 'terica@example.com', '1', 'General Admission'],
 ];
 
+function triciaStyleRowsWithTotalsFooter() {
+  const headers = ['Order ID', 'Attendee first name', 'Attendee last name', 'Attendee email', 'Ticket quantity', 'Ticket Class'];
+  const rows: string[][] = [headers];
+  for (let orderIndex = 1; orderIndex <= 43; orderIndex += 1) {
+    rows.push([
+      `155000000${String(orderIndex).padStart(2, '0')}`,
+      `Guest${orderIndex}`,
+      'Single',
+      `guest${orderIndex}@example.com`,
+      '1',
+      'General Admission',
+    ]);
+  }
+  for (let orderIndex = 1; orderIndex <= 12; orderIndex += 1) {
+    rows.push([
+      `155100000${String(orderIndex).padStart(2, '0')}`,
+      `Group${orderIndex}`,
+      'Pair',
+      `group${orderIndex}@example.com`,
+      '1',
+      'General Admission',
+    ]);
+    rows.push([
+      `155100000${String(orderIndex).padStart(2, '0')}`,
+      `Group${orderIndex}`,
+      'Pair',
+      `group${orderIndex}@example.com`,
+      '1',
+      'General Admission',
+    ]);
+  }
+  rows.push(...ticketRowEventbriteRows.slice(1));
+  rows.push(['TOTALS', '', '', '', '74', '']);
+  return rows;
+}
+
+function triciaStyleSkippedOrderIds() {
+  return [
+    ...Array.from({ length: 43 }, (_value, index) => `155000000${String(index + 1).padStart(2, '0')}`),
+    ...Array.from({ length: 6 }, (_value, index) => `155100000${String(index + 1).padStart(2, '0')}`),
+  ];
+}
+
 const untouchedUarfEventbriteCsvWithExtraColumns = [
   'Order Date,Last Name,Registration Answers,Email Address,Tickets,Company,Order ID,First Name,Attendee Status,Ticket Class',
   '2026-08-31,One,"How did you hear?,Partner",paul@example.com,1,UARF,1001,Paul,Attending,General Admission',
@@ -401,6 +444,156 @@ describe('Eventbrite registration import', () => {
       ticketCount: 2,
     });
     expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('ignores an exact TOTALS footer in the Order ID position before validation', () => {
+    const parsed = parseEventbriteRegistrationsRows([
+      ticketRowEventbriteRows[0],
+      ticketRowEventbriteRows[1],
+      ['TOTALS', '', '', '', '3', ''],
+    ]);
+
+    expect(parsed).toMatchObject({
+      rowCount: 2,
+      sourceRowCount: 1,
+      ignoredFooterRowCount: 1,
+      canonicalRegistrationCount: 1,
+    });
+    expect(parsed.rows).toEqual([
+      expect.objectContaining({ orderId: '15545403573', ticketCount: 1 }),
+    ]);
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('ignores TOTALS footer case and whitespace variants in the identifying position', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      'CASE-TOTALS,Case,Footer,case@example.com,1',
+      '  totals  ,,,,1',
+    ].join('\n'));
+
+    expect(parsed).toMatchObject({
+      rowCount: 2,
+      sourceRowCount: 1,
+      ignoredFooterRowCount: 1,
+      canonicalRegistrationCount: 1,
+    });
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('ignores a TOTALS footer when it is the first populated cell and identity fields are empty', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order Date,Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      '2026-09-03,FIRST-CELL,First,Cell,first@example.com,1',
+      'TOTALS,,,,,1',
+    ].join('\n'));
+
+    expect(parsed).toMatchObject({
+      sourceRowCount: 1,
+      ignoredFooterRowCount: 1,
+      canonicalRegistrationCount: 1,
+    });
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('does not let a TOTALS footer increment invalid orders, canonical orders, or guests represented', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'event_imported_registrations') return thenableQuery({ data: [] });
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const preview = await previewEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      fileData: {
+        sourceFileName: 'ticket-row-eventbrite.xlsx',
+        format: 'xlsx',
+        rows: [
+          ticketRowEventbriteRows[0],
+          ticketRowEventbriteRows[1],
+          ['TOTALS', '', '', '', '99', ''],
+        ],
+        worksheetName: 'Attendees',
+      },
+    });
+
+    expect(preview).toMatchObject({
+      rowCount: 2,
+      sourceRowCount: 1,
+      ignoredFooterRowCount: 1,
+      canonicalRegistrationCount: 1,
+      totalGuestsRepresented: 1,
+      newRegistrationCount: 1,
+      skippedExistingCount: 0,
+    });
+    expect(preview.invalidRows).toHaveLength(0);
+  });
+
+  it('keeps normal malformed rows invalid instead of broadly skipping them', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      'BAD-MISSING,,Guest,bad@example.com,1',
+    ].join('\n'));
+
+    expect(parsed).toMatchObject({
+      sourceRowCount: 1,
+      ignoredFooterRowCount: 0,
+      canonicalRegistrationCount: 1,
+    });
+    expect(parsed.invalidRows).toEqual([
+      expect.objectContaining({ orderId: 'BAD-MISSING', reason: 'missing_required_field' }),
+    ]);
+  });
+
+  it('does not skip a legitimate order when another cell contains TOTALS', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity,Company',
+      'REAL-TOTALS,Real,Guest,real@example.com,1,TOTALS',
+    ].join('\n'));
+
+    expect(parsed).toMatchObject({
+      sourceRowCount: 1,
+      ignoredFooterRowCount: 0,
+      canonicalRegistrationCount: 1,
+    });
+    expect(parsed.rows[0]).toMatchObject({ orderId: 'REAL-TOTALS', ticketCount: 1 });
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('projects the Tricia-style workbook as 74 source rows, 57 orders, 74 guests, and no invalid orders', async () => {
+    mockFrom.mockImplementation((table: string) => {
+      if (table === 'event_imported_registrations') {
+        return thenableQuery({
+          data: triciaStyleSkippedOrderIds().map((external_order_id) => ({ external_order_id })),
+        });
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const preview = await previewEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      fileData: {
+        sourceFileName: 'tricia-eventbrite.xlsx',
+        format: 'xlsx',
+        rows: triciaStyleRowsWithTotalsFooter(),
+        worksheetName: 'Attendees',
+      },
+    });
+
+    expect(preview).toMatchObject({
+      rowCount: 75,
+      sourceRowCount: 74,
+      ignoredFooterRowCount: 1,
+      canonicalRegistrationCount: 57,
+      totalGuestsRepresented: 74,
+      newRegistrationCount: 8,
+      skippedExistingCount: 49,
+      skippedExistingOrderIds: triciaStyleSkippedOrderIds(),
+    });
+    expect(preview.rows).toEqual(expect.arrayContaining([
+      expect.objectContaining({ orderId: '15545403573', firstName: 'Mourad', ticketCount: 3 }),
+      expect.objectContaining({ orderId: '15563970373', firstName: 'Terica', ticketCount: 4 }),
+    ]));
+    expect(preview.invalidRows).toHaveLength(0);
   });
 
   it('preserves string Order IDs exactly from Excel workbooks', () => {

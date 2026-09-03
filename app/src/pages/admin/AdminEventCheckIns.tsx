@@ -811,6 +811,9 @@ export default function AdminEventCheckIns({
                   </div>
                   <div style={{ display: 'grid', gap: '0.25rem', color: '#475467', fontSize: '0.82rem', lineHeight: 1.4 }}>
                     <div>Source rows: {eventbritePreview.sourceRowCount ?? eventbritePreview.rowCount}</div>
+                    {(eventbritePreview.ignoredFooterRowCount ?? 0) > 0 && (
+                      <div>Ignored footer rows: {eventbritePreview.ignoredFooterRowCount}</div>
+                    )}
                     <div>Registrations / orders found: {eventbritePreview.canonicalRegistrationCount ?? eventbritePreview.rows.length + eventbritePreview.invalidRows.length}</div>
                     <div>First Name: {eventbritePreview.recognized.firstName ? 'recognized' : 'missing'}</div>
                     <div>Last Name: {eventbritePreview.recognized.lastName ? 'recognized' : 'missing'}</div>
@@ -840,7 +843,7 @@ export default function AdminEventCheckIns({
               )}
               {eventbriteImportResult && (
                 <div style={{ color: '#475467', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.5rem' }}>
-                  Source rows processed: {eventbriteImportResult.sourceRowCount ?? eventbriteImportResult.rowCount}. Registrations/orders processed: {eventbriteImportResult.processedCount}. New registrations: {eventbriteImportResult.insertedCount}. Existing Order IDs skipped: {eventbriteImportResult.skippedExistingCount}. Invalid orders: {eventbriteImportResult.invalidRows.length}.
+                  Source rows processed: {eventbriteImportResult.sourceRowCount ?? eventbriteImportResult.rowCount}. Ignored footer rows: {eventbriteImportResult.ignoredFooterRowCount ?? 0}. Registrations/orders processed: {eventbriteImportResult.processedCount}. New registrations: {eventbriteImportResult.insertedCount}. Existing Order IDs skipped: {eventbriteImportResult.skippedExistingCount}. Invalid orders: {eventbriteImportResult.invalidRows.length}.
                 </div>
               )}
             </div>

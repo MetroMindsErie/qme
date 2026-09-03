@@ -40,6 +40,7 @@ export type EventbriteRegistrationParseResult = {
   invalidRows: EventbriteRegistrationInvalidRow[];
   rowCount: number;
   sourceRowCount: number;
+  ignoredFooterRowCount: number;
   canonicalRegistrationCount: number;
 };
 
@@ -205,6 +206,20 @@ function hasRequiredEventbriteHeaders(headers: string[]): boolean {
   return Object.values(REQUIRED_COLUMNS).every((config) => Boolean(findHeader(headers, config, false)));
 }
 
+function isEventbriteTotalsFooterRow(cells: string[], headerMapping: EventbriteRegistrationParseResult['headerMapping'], get: (cells: string[], header: string) => string): boolean {
+  if (normalizeIdentity(get(cells, headerMapping.orderId)) === 'totals') return true;
+
+  const firstPopulatedCell = cells.map(normalizeText).find((cell) => cell !== '');
+  if (normalizeIdentity(firstPopulatedCell) !== 'totals') return false;
+
+  return [
+    get(cells, headerMapping.orderId),
+    get(cells, headerMapping.firstName),
+    get(cells, headerMapping.lastName),
+    get(cells, headerMapping.email),
+  ].every((value) => normalizeText(value) === '');
+}
+
 export function normalizeTicketCount(value: unknown): number | null {
   const trimmed = normalizeText(value);
   if (!trimmed) return null;
@@ -235,9 +250,15 @@ export function parseEventbriteRegistrationsRows(parsedRows: string[][]): Eventb
   const rows: EventbriteRegistrationRow[] = [];
   const invalidRows: EventbriteRegistrationInvalidRow[] = [];
   const rowGroups = new Map<string, ParsedSourceRegistrationRow[]>();
+  let ignoredFooterRowCount = 0;
 
   parsedRows.slice(1).forEach((cells, index) => {
     const sourceRowNumber = index + 2;
+    if (isEventbriteTotalsFooterRow(cells, headerMapping, get)) {
+      ignoredFooterRowCount += 1;
+      return;
+    }
+
     const orderId = get(cells, headerMapping.orderId);
     const firstName = get(cells, headerMapping.firstName);
     const lastName = get(cells, headerMapping.lastName);
@@ -339,7 +360,8 @@ export function parseEventbriteRegistrationsRows(parsedRows: string[][]): Eventb
     rows,
     invalidRows,
     rowCount: parsedRows.length - 1,
-    sourceRowCount: parsedRows.length - 1,
+    sourceRowCount: parsedRows.length - 1 - ignoredFooterRowCount,
+    ignoredFooterRowCount,
     canonicalRegistrationCount: rows.length + invalidRows.length,
   };
 }
@@ -567,6 +589,7 @@ export async function importEventbriteRegistrationsForEvent(input: {
       invalid_rows: parsed.invalidRows,
       header_mapping: parsed.headerMapping,
       source_row_count: parsed.sourceRowCount,
+      ignored_footer_row_count: parsed.ignoredFooterRowCount,
       canonical_registration_count: parsed.canonicalRegistrationCount,
     };
     const { data: batch, error: batchError } = await supabase

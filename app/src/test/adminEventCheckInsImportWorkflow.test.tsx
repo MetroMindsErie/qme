@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminEventCheckIns from '../pages/admin/AdminEventCheckIns';
 import type { CurrentAdminPrincipal } from '../lib/adminPrincipalService';
-import type { QEvent } from '../types';
+import type { EventCheckIn, QEvent } from '../types';
 
 const mockGetEvent = vi.fn();
 const mockGetCurrentAdminPrincipal = vi.fn();
@@ -200,6 +200,47 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
       });
     });
     expect(await screen.findByText('Imported 1; skipped 1; invalid 0.')).toBeInTheDocument();
+  });
+
+  it('shows persisted additional attendees within one primary history entry', async () => {
+    const completedParty: EventCheckIn = {
+      id: 'check-in-party',
+      event_id: event.id,
+      first_name: 'Pat',
+      last_name: 'Four',
+      code: null,
+      ticket_type: 'general',
+      status: 'completed',
+      metadata: {
+        imported_registration_id: 'registration-party',
+        external_order_id: '123456789',
+        registered_party_size: 4,
+        actual_party_size: 3,
+        party_size: 3,
+        tickets: 4,
+        additional_attendees: [
+          { role: 'additional_attendee', position: 1, external_order_id: '123456789-1', first_name: 'Ava', last_name: 'One' },
+          { role: 'additional_attendee', position: 3, external_order_id: '123456789-3', first_name: 'Zed', last_name: 'Three' },
+        ],
+      },
+      created_at: '',
+      updated_at: '',
+    };
+    mockListEventCheckIns.mockResolvedValue([completedParty]);
+
+    renderPage();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'History' }));
+
+    expect(await screen.findByText('Check-In History (1)')).toBeInTheDocument();
+    expect(screen.getByText('Pat Four')).toBeInTheDocument();
+    expect(screen.getByText(/Actual party size: 3/)).toBeInTheDocument();
+    expect(screen.getByText(/Registered tickets: 4/)).toBeInTheDocument();
+    expect(screen.getByText(/Guest 1: Ava One/)).toBeInTheDocument();
+    expect(screen.getByText(/123456789-1/)).toBeInTheDocument();
+    expect(screen.getByText(/Guest 3: Zed Three/)).toBeInTheDocument();
+    expect(screen.getByText(/123456789-3/)).toBeInTheDocument();
+    expect(screen.queryByText('Guest 2:')).not.toBeInTheDocument();
   });
 
   it('persists check-in availability controls and exposes authenticated admin test link', async () => {

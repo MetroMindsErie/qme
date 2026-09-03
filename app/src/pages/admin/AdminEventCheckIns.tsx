@@ -42,6 +42,25 @@ interface AdminEventCheckInsProps {
 
 type CheckInAdminTab = 'live' | 'history' | 'settings';
 
+type CheckInAdditionalAttendee = {
+  position: number;
+  externalOrderId: string;
+  firstName: string;
+  lastName: string;
+};
+
+type CheckInAttendanceExportRow = {
+  checkIn: EventCheckIn;
+  attendeeRole: 'primary' | 'additional';
+  attendeeExternalOrderId: string;
+  primaryOrderId: string;
+  firstName: string;
+  lastName: string;
+  registeredPartySize: number;
+  actualPartySize: number;
+  additionalAttendee?: CheckInAdditionalAttendee;
+};
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? value as Record<string, unknown>
@@ -53,8 +72,81 @@ function asCsvString(value: unknown): string {
   return String(value);
 }
 
+function asInteger(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return Math.max(1, Math.floor(value));
+  if (typeof value !== 'string') return null;
+  const parsed = Number.parseInt(value.trim().replace(/,/g, ''), 10);
+  return Number.isFinite(parsed) ? Math.max(1, parsed) : null;
+}
+
 function checkInField(row: EventCheckIn, key: string): unknown {
   return (row as unknown as Record<string, unknown>)[key];
+}
+
+function getPrimaryOrderId(row: EventCheckIn): string {
+  const metadata = asRecord(row.metadata);
+  return asCsvString(metadata.external_order_id || metadata.eventbrite_order_id);
+}
+
+export function getCheckInRegisteredPartySize(row: EventCheckIn): number {
+  const metadata = asRecord(row.metadata);
+  const importedRegistration = asRecord(metadata.imported_registration);
+  return asInteger(metadata.registered_party_size)
+    ?? asInteger(metadata.tickets)
+    ?? asInteger(importedRegistration.party_size)
+    ?? asInteger(importedRegistration.tickets)
+    ?? getCheckInPartySize(row);
+}
+
+export function getCheckInAdditionalAttendees(row: EventCheckIn): CheckInAdditionalAttendee[] {
+  const rawAttendees = asRecord(row.metadata).additional_attendees;
+  if (!Array.isArray(rawAttendees)) return [];
+  const primaryOrderId = getPrimaryOrderId(row);
+  return rawAttendees.flatMap((attendee) => {
+    const record = asRecord(attendee);
+    const position = asInteger(record.position);
+    const firstName = asCsvString(record.first_name || record.firstName).trim();
+    const lastName = asCsvString(record.last_name || record.lastName).trim();
+    if (!position || !firstName || !lastName) return [];
+    return [{
+      position,
+      externalOrderId: asCsvString(record.external_order_id || record.externalOrderId || (primaryOrderId ? `${primaryOrderId}-${position}` : '')).trim(),
+      firstName,
+      lastName,
+    }];
+  }).sort((a, b) => a.position - b.position);
+}
+
+export function buildCheckInAttendanceExportRows(checkIns: EventCheckIn[]): CheckInAttendanceExportRow[] {
+  return checkIns.flatMap((row) => {
+    const primaryOrderId = getPrimaryOrderId(row);
+    const actualPartySize = getCheckInPartySize(row);
+    const registeredPartySize = getCheckInRegisteredPartySize(row);
+    const primary: CheckInAttendanceExportRow = {
+      checkIn: row,
+      attendeeRole: 'primary',
+      attendeeExternalOrderId: primaryOrderId,
+      primaryOrderId,
+      firstName: row.first_name,
+      lastName: row.last_name,
+      registeredPartySize,
+      actualPartySize,
+    };
+    return [
+      primary,
+      ...getCheckInAdditionalAttendees(row).map((attendee) => ({
+        checkIn: row,
+        attendeeRole: 'additional' as const,
+        attendeeExternalOrderId: attendee.externalOrderId,
+        primaryOrderId,
+        firstName: attendee.firstName,
+        lastName: attendee.lastName,
+        registeredPartySize,
+        actualPartySize,
+        additionalAttendee: attendee,
+      })),
+    ];
+  });
 }
 
 export function getCheckInRegistrationSource(row: EventCheckIn): 'imported' | 'self_registered' | 'needs_help' {
@@ -212,37 +304,41 @@ export default function AdminEventCheckIns({
     downloadCsv(filename, [
       { header: 'event_name', value: () => event.name },
       { header: 'event_slug', value: () => event.slug },
-      { header: 'check_in_id', value: (row) => row.id },
-      { header: 'first_name', value: (row) => row.first_name },
-      { header: 'last_name', value: (row) => row.last_name },
-      { header: 'status', value: (row) => row.status },
-      { header: 'ticket_type', value: (row) => row.ticket_type ?? '' },
-      { header: 'email', value: (row) => asCsvString(checkInField(row, 'email')) },
-      { header: 'phone', value: (row) => asCsvString(checkInField(row, 'phone')) },
-      { header: 'imported_registration_id', value: (row) => asCsvString(asRecord(row.metadata).imported_registration_id) },
-      { header: 'registration_match_status', value: (row) => asCsvString(asRecord(row.metadata).registration_match_status) },
-      { header: 'registration_source', value: (row) => getCheckInRegistrationSource(row) },
-      { header: 'external_order_id', value: (row) => asCsvString(asRecord(row.metadata).external_order_id || asRecord(row.metadata).eventbrite_order_id) },
-      { header: 'party_size', value: (row) => getCheckInPartySize(row) },
-      { header: 'actual_party_size', value: (row) => getCheckInPartySize(row) },
-      { header: 'registered_party_size', value: (row) => asCsvString(asRecord(row.metadata).registered_party_size || asRecord(row.metadata).tickets || asRecord(asRecord(row.metadata).imported_registration).tickets) },
-      { header: 'guests_represented', value: (row) => getCheckInPartySize(row) },
-      { header: 'additional_attendees', value: (row) => JSON.stringify(asRecord(row.metadata).additional_attendees ?? []) },
-      { header: 'needs_help', value: (row) => asRecord(row.metadata).needs_help === true ? 'yes' : 'no' },
+      { header: 'check_in_id', value: (row) => row.checkIn.id },
+      { header: 'attendee_role', value: (row) => row.attendeeRole },
+      { header: 'attendee_external_order_id', value: (row) => row.attendeeExternalOrderId },
+      { header: 'primary_order_id', value: (row) => row.primaryOrderId },
+      { header: 'first_name', value: (row) => row.firstName },
+      { header: 'last_name', value: (row) => row.lastName },
+      { header: 'status', value: (row) => row.checkIn.status },
+      { header: 'ticket_type', value: (row) => row.checkIn.ticket_type ?? '' },
+      { header: 'email', value: (row) => row.attendeeRole === 'primary' ? asCsvString(checkInField(row.checkIn, 'email')) : '' },
+      { header: 'phone', value: (row) => row.attendeeRole === 'primary' ? asCsvString(checkInField(row.checkIn, 'phone')) : '' },
+      { header: 'imported_registration_id', value: (row) => asCsvString(asRecord(row.checkIn.metadata).imported_registration_id) },
+      { header: 'registration_match_status', value: (row) => asCsvString(asRecord(row.checkIn.metadata).registration_match_status) },
+      { header: 'registration_source', value: (row) => getCheckInRegistrationSource(row.checkIn) },
+      { header: 'external_order_id', value: (row) => row.attendeeExternalOrderId },
+      { header: 'party_size', value: (row) => row.actualPartySize },
+      { header: 'actual_party_size', value: (row) => row.actualPartySize },
+      { header: 'registered_party_size', value: (row) => row.registeredPartySize },
+      { header: 'guests_represented', value: (row) => row.actualPartySize },
+      { header: 'additional_attendee_position', value: (row) => row.additionalAttendee?.position ?? '' },
+      { header: 'needs_help', value: (row) => asRecord(row.checkIn.metadata).needs_help === true ? 'yes' : 'no' },
       {
         header: 'headshot_credit_status',
         value: (row) => {
-          const credit = photoCredits.find((item) => item.check_in_id === row.id);
+          if (row.attendeeRole !== 'primary') return '';
+          const credit = photoCredits.find((item) => item.check_in_id === row.checkIn.id);
           if (!credit) return '';
           if (credit.used_quantity >= credit.quantity) return 'used';
           return 'available';
         },
       },
-      { header: 'headshot_credit_quantity', value: (row) => photoCredits.find((item) => item.check_in_id === row.id)?.quantity ?? '' },
-      { header: 'headshot_credit_used_quantity', value: (row) => photoCredits.find((item) => item.check_in_id === row.id)?.used_quantity ?? '' },
-      { header: 'created_at', value: (row) => formatCsvTimestamp(row.created_at) },
-      { header: 'updated_at', value: (row) => formatCsvTimestamp(row.updated_at) },
-    ], checkIns);
+      { header: 'headshot_credit_quantity', value: (row) => row.attendeeRole === 'primary' ? photoCredits.find((item) => item.check_in_id === row.checkIn.id)?.quantity ?? '' : '' },
+      { header: 'headshot_credit_used_quantity', value: (row) => row.attendeeRole === 'primary' ? photoCredits.find((item) => item.check_in_id === row.checkIn.id)?.used_quantity ?? '' : '' },
+      { header: 'created_at', value: (row) => formatCsvTimestamp(row.checkIn.created_at) },
+      { header: 'updated_at', value: (row) => formatCsvTimestamp(row.checkIn.updated_at) },
+    ], buildCheckInAttendanceExportRows(checkIns));
   }
 
   async function updateCheckInSettings(
@@ -397,6 +493,7 @@ export default function AdminEventCheckIns({
   const matchesSearch = useCallback((row: EventCheckIn) => {
     if (!normalizedSearchQuery) return true;
     const metadata = asRecord(row.metadata);
+    const additionalAttendees = getCheckInAdditionalAttendees(row);
     return [
       row.first_name,
       row.last_name,
@@ -407,6 +504,12 @@ export default function AdminEventCheckIns({
       asCsvString(checkInField(row, 'phone')),
       asCsvString(metadata.registration_match_status),
       asCsvString(metadata.import_source),
+      ...additionalAttendees.flatMap((attendee) => [
+        attendee.firstName,
+        attendee.lastName,
+        `${attendee.firstName} ${attendee.lastName}`,
+        attendee.externalOrderId,
+      ]),
     ].some((value) => asCsvString(value).toLowerCase().includes(normalizedSearchQuery));
   }, [normalizedSearchQuery]);
   const visibleWaiting = waiting.filter(matchesSearch);
@@ -601,16 +704,42 @@ export default function AdminEventCheckIns({
               const hasPhotoCredit = Boolean(photoCredit && photoCredit.quantity > photoCredit.used_quantity);
               const hasUsedPhotoCredit = Boolean(photoCredit && photoCredit.quantity <= photoCredit.used_quantity);
               const accessLabel = isCancelled ? 'REMOVED' : hasFlowersAccess ? 'FLOWERS' : 'GENERAL';
+              const additionalAttendees = getCheckInAdditionalAttendees(row);
+              const actualPartySize = getCheckInPartySize(row);
+              const registeredPartySize = getCheckInRegisteredPartySize(row);
+              const showPartyDetails = actualPartySize > 1 || registeredPartySize > 1 || additionalAttendees.length > 0;
 
               return (
-                <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.8rem 0', borderBottom: '1px solid #f0f0f0', alignItems: 'center' }}>
-                  <div>
+                <div key={row.id} style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', padding: '0.8rem 0', borderBottom: '1px solid #f0f0f0', alignItems: 'flex-start' }}>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ fontWeight: 700, color: '#2f3e4f' }}>
                       {row.first_name} {row.last_name}
                     </div>
                     <div style={{ color: isCancelled ? '#dc2626' : hasFlowersAccess ? '#5B4FCE' : '#00c853', fontSize: '0.78rem', fontWeight: 800, marginTop: 2 }}>
                       {isCancelled ? accessLabel : checkInCode || event?.slug !== 'peony-festival' ? 'CHECKED IN' : accessLabel}
                     </div>
+                    {showPartyDetails && (
+                      <div style={{ marginTop: '0.45rem', color: '#536171', fontSize: '0.78rem', lineHeight: 1.45 }}>
+                        <div>
+                          Actual party size: {actualPartySize}
+                          {registeredPartySize !== actualPartySize && (
+                            <span> · Registered tickets: {registeredPartySize}</span>
+                          )}
+                        </div>
+                        {additionalAttendees.length > 0 && (
+                          <div style={{ display: 'grid', gap: '0.2rem', marginTop: '0.25rem' }}>
+                            {additionalAttendees.map((attendee) => (
+                              <div key={`${row.id}-${attendee.position}`}>
+                                Guest {attendee.position}: {attendee.firstName} {attendee.lastName}
+                                {attendee.externalOrderId && (
+                                  <span> ({attendee.externalOrderId})</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     {!isCancelled && !checkInCode && event?.slug === 'peony-festival' && !hasFlowersAccess && (

@@ -118,7 +118,6 @@ export default function GuestEventCheckIn({
   const [registrationQuery, setRegistrationQuery] = useState('');
   const [registrationResults, setRegistrationResults] = useState<ImportedRegistrationSearchResult[]>([]);
   const [registrationSearching, setRegistrationSearching] = useState(false);
-  const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
   const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
   const [pendingImportedRegistration, setPendingImportedRegistration] = useState<PendingImportedRegistration | null>(null);
   const [additionalGuests, setAdditionalGuests] = useState<AdditionalGuestDraft[]>([]);
@@ -439,7 +438,7 @@ export default function GuestEventCheckIn({
       const input = {
         eventId: event.id,
         importedRegistrationId: result.id,
-        emailConfirmation: registrationEmailConfirmation[result.id] || null,
+        emailConfirmation: null,
         phone: normalizedPhone || null,
         bypassAvailability: adminTestAllowed,
       };
@@ -618,7 +617,6 @@ export default function GuestEventCheckIn({
     setRegistrationQuery('');
     setRegistrationResults([]);
     setRegistrationSearching(false);
-    setRegistrationEmailConfirmation({});
     setRegistrationHasSearched(false);
     setPendingImportedRegistration(null);
     setAdditionalGuests([]);
@@ -957,6 +955,11 @@ export default function GuestEventCheckIn({
                         Registration: {result.ticket_hint}
                       </div>
                     )}
+                    {result.external_order_id && (
+                      <div style={{ color: '#64748b', fontSize: '0.78rem', marginTop: 3 }}>
+                        Order ID: {result.external_order_id}
+                      </div>
+                    )}
                     <div style={{ color: result.headshot_entitled ? '#00a344' : '#64748b', fontSize: '0.78rem', fontWeight: 900, marginTop: 5 }}>
                       {result.headshot_entitled ? 'Headshot included' : 'Event admission'}
                     </div>
@@ -971,27 +974,6 @@ export default function GuestEventCheckIn({
                     {result.already_checked_in ? 'Reconnect to My Event' : 'This is me'}
                   </button>
                 </div>
-                {result.requires_email_confirmation && (
-                  <div style={{ marginTop: '0.75rem' }}>
-                    <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
-                      Confirm your email
-                    </label>
-                    <input
-                      value={registrationEmailConfirmation[result.id] || ''}
-                      onChange={(e) => setRegistrationEmailConfirmation((current) => ({
-                        ...current,
-                        [result.id]: e.target.value,
-                      }))}
-                      inputMode="email"
-                      autoComplete="email"
-                      placeholder="name@example.com"
-                      style={{ width: '100%', boxSizing: 'border-box', padding: '0.65rem', borderRadius: 8, border: '1px solid #ddd' }}
-                    />
-                    <div style={{ color: '#777', fontSize: '0.78rem', lineHeight: 1.35, marginTop: 5 }}>
-                      More than one registration has this name, so we need the matching email.
-                    </div>
-                  </div>
-                )}
               </div>
             ))}
 

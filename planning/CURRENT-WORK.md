@@ -1,87 +1,58 @@
 # Current Work
 
-## Current Slice - Ignore Eventbrite TOTALS Footer Row
+## Current Slice - Remove Imported Claim Email Confirmation
 
-Final production-day import cleanup for i-Pitch, September 3, 2026.
+Production-day investigation for i-Pitch, September 3, 2026.
 
-Status: implemented and pushed to `main`; ready for final Product Owner Preview acceptance using Tricia's exact untouched workbook before Import.
+Status: implemented locally and live i-Pitch Supabase migration applied.
 
-Implementation commit:
-- `ecf4b7d68416025f00e9b4cfc5de56fc715e3512` - `Ignore Eventbrite totals footer row`
+## Finding
+
+Robert Covington has two ready imported registrations for i-Pitch with the same first name, last name, and email, but different Eventbrite Order IDs:
+- `15318060603`
+- `15572143453`
+
+The live Supabase claim RPC resolves by the selected `event_imported_registrations.id`, not by name/email, and does not auto-merge duplicate-name orders. A rollbacked live SQL call using Robert's verified email and one selected imported-registration ID successfully created the expected completed check-in row inside the transaction.
+
+Live RPC execute permissions for `anon` and `authenticated` are present for imported-registration search, create, and reconnect functions. There is no `event_check_ins` uniqueness constraint by name/email/session that would block this duplicate-name/same-email scenario.
+
+Craig D'Andrea has the same production shape: two ready imported registrations with the same first name, last name, and email, different Eventbrite Order IDs, and `party_size = 2`. The multi-ticket flow defers the create RPC until the additional-guest form is submitted, so the hidden server-side email gate produced the generic `Check-in could not be saved` failure at final `Check In`.
 
 ## What Changed
 
-The Eventbrite parser now ignores the known `TOTALS` summary/footer row before required-field validation and repeated-order grouping.
+The guest imported-registration search card now displays `Order ID` when available, so two same-name/same-email imported orders are distinguishable before `This is me`.
 
-Footer detection rule:
-- skip when the normalized `Order ID` cell is exactly `totals`;
-- also skip when `TOTALS` is the first populated cell and the canonical identity fields (`Order ID`, first name, last name, email) are empty;
-- matching trims whitespace and is case-insensitive.
+The imported-registration duplicate-name email confirmation UI/state was removed for now. Imported registration claims send `emailConfirmation: null`.
 
-This is intentionally narrow. A malformed registration row still becomes invalid, and a real registration with `TOTALS` in some unrelated cell is not skipped.
+## Guardrails Added
 
-## Preview Semantics
-
-`rowCount` remains the physical post-header row count for compatibility.
-
-Admin Preview shows:
-- `Source rows: N` as data rows after ignored footer rows are removed;
-- `Ignored footer rows: N` only when a footer was ignored;
-- `Registrations / orders found: N`;
-- `Total registered guests represented: N`;
-- `Invalid orders: N`.
-
-Expected final Preview for Tricia's exact workbook:
-- Source rows: 74
-- Ignored footer rows: 1
-- Registrations / orders found: 57
-- Total registered guests represented: 74
-- New registrations: 8
-- Already imported/skipped: 49
-- Invalid orders: 0
+- UI regression: two Robert Covington search results with the same name/email and different Order IDs show separate Order IDs, no email confirmation field, and claiming the second row sends that exact selected imported-registration ID.
+- Service regression: imported-registration claim sends the exact selected imported-registration ID and no email confirmation to the RPC.
 
 ## Preserved
 
-- Compatible repeated Order IDs still consolidate into one canonical order.
-- Mourad `15545403573` remains one order with party size 3.
-- Terica `15563970373` remains one order with party size 4.
-- Conflicting repeated rows remain invalid rather than guessed.
-- Header aliases remain supported.
-- CSV, `.xls`, and `.xlsx` direct upload remain supported.
-- Exact original Eventbrite Order ID remains the dedupe identity.
-- Preview remains non-mutating and Import remains explicit.
-- Existing imported registrations, completed check-ins, and named additional attendees remain untouched.
-- Guest Check-In, actual party size, History/Export, kiosk, recovery, and availability behavior are unchanged.
+- No auto-merge of duplicate Eventbrite orders.
+- Imported claims continue to use exact imported-registration ID / Eventbrite Order ID linkage.
+- Existing imported registrations, completed check-ins, named additional attendees, recovery, kiosk, and check-in behavior remain unchanged.
 
-## Files Changed
+## Live Supabase
 
-- `app/src/lib/eventbriteRegistrationImport.ts`
-- `app/src/pages/admin/AdminEventCheckIns.tsx`
-- `app/src/test/eventbriteRegistrationImport.test.ts`
-- `app/src/test/adminEventCheckInsImportWorkflow.test.tsx`
-- `planning/CURRENT-WORK.md`
+Applied live migration `allow_ipitch_duplicate_imported_claim_without_email`.
+
+Scope:
+- i-Pitch only (`events.slug = 'ipitch-092026'`) bypasses duplicate-name email confirmation in imported-registration search/create/reconnect RPCs.
+- Other events retain the existing duplicate-name email confirmation gate.
+
+Verified in a rollback transaction:
+- Craig D'Andrea order `15588379013` with Donna D'Andrea as additional guest returns a completed check-in.
+- `actual_party_size = 2`.
+- No production check-in row was committed by the verification.
 
 ## Validation
 
 Passed:
-- `npm test -- --run src/test/eventbriteRegistrationImport.test.ts src/test/adminEventCheckInsImportWorkflow.test.tsx` - 42 tests passed
+- `npm test -- --run src/test/guestEventCheckIn.test.tsx src/test/checkInService.test.ts` - 26 tests passed
 - `npx tsc -b`
-- `npm test -- --run --maxWorkers=1` - 24 files / 232 tests passed
 - `npm run build`
 
-Note: the parallel build attempt hit the recurring transient Dropbox `dist/images` file-lock (`EBUSY`) while Vite was emptying output; isolated build retry passed.
-
-## Product Owner Acceptance
-
-Use Tricia's exact untouched workbook and stop at Preview.
-
-1. Open Admin -> i-Pitch -> Event Check-Ins -> Settings.
-2. Choose the new `.xlsx` workbook.
-3. Confirm Preview shows 57 registrations/orders.
-4. Confirm Preview shows 74 total registered guests represented.
-5. Confirm Preview shows 8 new registrations and 49 already imported/skipped.
-6. Confirm Preview shows 0 invalid orders.
-7. Confirm the `TOTALS` footer is ignored rather than shown as invalid.
-8. Only after Product Owner approval, press Import Registrations.
-9. After import, confirm import reports 8 newly imported and 49 skipped, with no invalid real orders.
-10. Confirm existing completed check-ins and named additional attendees remain unchanged.
+Note: the first build attempt hit the recurring transient Dropbox `dist/images` file-lock (`EBUSY`) while Vite was emptying output; isolated build retry passed.

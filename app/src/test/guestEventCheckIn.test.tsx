@@ -334,6 +334,77 @@ describe('GuestEventCheckIn', () => {
     });
   });
 
+  it('claims the selected duplicate-name imported registration by exact order without email confirmation', async () => {
+    const user = userEvent.setup();
+    mockSearchImportedRegistrationsForGuest.mockResolvedValue([
+      {
+        id: 'registration-robert-15318060603',
+        first_name: 'Robert',
+        last_name: 'Covington',
+        email_hint: 'co**********@protonmail.com',
+        ticket_hint: 'Eventbrite',
+        party_size: 1,
+        external_order_id: '15318060603',
+        headshot_entitled: false,
+        already_checked_in: false,
+        requires_email_confirmation: false,
+      },
+      {
+        id: 'registration-robert-15572143453',
+        first_name: 'Robert',
+        last_name: 'Covington',
+        email_hint: 'co**********@protonmail.com',
+        ticket_hint: 'Eventbrite',
+        party_size: 1,
+        external_order_id: '15572143453',
+        headshot_entitled: false,
+        already_checked_in: false,
+        requires_email_confirmation: false,
+      },
+    ]);
+    mockCreateImportedRegistrationCheckInForGuest.mockResolvedValue({
+      ...completedCheckIn,
+      id: 'check-in-robert-15572143453',
+      first_name: 'Robert',
+      last_name: 'Covington',
+      metadata: {
+        imported_registration_id: 'registration-robert-15572143453',
+        external_order_id: '15572143453',
+        party_size: 1,
+      },
+    });
+    mockGetEventCheckIn.mockResolvedValue({
+      ...completedCheckIn,
+      id: 'check-in-robert-15572143453',
+      first_name: 'Robert',
+      last_name: 'Covington',
+      metadata: {
+        imported_registration_id: 'registration-robert-15572143453',
+        external_order_id: '15572143453',
+        party_size: 1,
+      },
+    });
+
+    renderCheckIn();
+
+    fireEvent.change(await screen.findByPlaceholderText('First name, last name, or email'), { target: { value: 'Robert Covington' } });
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+
+    expect(await screen.findByText('Order ID: 15318060603')).toBeInTheDocument();
+    expect(screen.getByText('Order ID: 15572143453')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Confirm your email')).not.toBeInTheDocument();
+    await user.click(screen.getAllByRole('button', { name: 'This is me' })[1]);
+
+    await waitFor(() => {
+      expect(mockCreateImportedRegistrationCheckInForGuest).toHaveBeenCalledWith(expect.objectContaining({
+        importedRegistrationId: 'registration-robert-15572143453',
+        emailConfirmation: null,
+        additionalAttendees: [],
+      }));
+    });
+    expect(await screen.findByText(/Thanks, Robert! You are checked in./)).toBeInTheDocument();
+  });
+
   it.each([
     [1, 'Thanks, Paul! You are checked in.', 'Total guests: 1'],
     [2, 'Thanks, Paul! You and your 1 guest are checked in.', 'Total guests: 2'],

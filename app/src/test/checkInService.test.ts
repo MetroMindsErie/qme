@@ -202,6 +202,29 @@ describe('checkInService', () => {
   });
 
   describe('createImportedRegistrationCheckInForGuest', () => {
+    it('passes exact imported registration id without email confirmation for duplicate-name claims', async () => {
+      const row = { id: 'check-in-robert', event_id: 'event-1', status: 'completed' };
+      mockRpc.mockResolvedValueOnce({ data: row, error: null });
+
+      const result = await createImportedRegistrationCheckInForGuest({
+        eventId: 'event-1',
+        importedRegistrationId: 'registration-robert-15572143453',
+        phone: null,
+        bypassAvailability: true,
+        additionalAttendees: [],
+      });
+
+      expect(result).toEqual(row);
+      expect(mockRpc).toHaveBeenCalledWith('create_event_check_in_from_imported_registration_for_guest', {
+        p_event_id: 'event-1',
+        p_guest_token: expect.any(String),
+        p_imported_registration_id: 'registration-robert-15572143453',
+        p_email_confirmation: null,
+        p_phone: null,
+        p_additional_attendees: [],
+      });
+    });
+
     it('passes named additional attendees to the Eventbrite check-in RPC without changing the primary imported registration id', async () => {
       const row = { id: 'check-in-1', event_id: 'event-1', status: 'completed' };
       mockRpc.mockResolvedValueOnce({ data: row, error: null });

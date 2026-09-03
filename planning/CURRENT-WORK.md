@@ -70,8 +70,8 @@ Files changed:
 - `planning/CURRENT-WORK.md`
 
 Git/deployment:
-- Implementation commit SHA: pending.
-- Push to `origin/main`: pending.
+- Implementation commit SHA: `3bb3cc1541d21f21a7ce81c0edb4f64da92b4c0c`.
+- Push to `origin/main`: pushed.
 - Manual deploy: not requested.
 - Production database SQL application is required before actual multi-ticket named-attendee acceptance can pass in production.
 

@@ -143,6 +143,8 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
       rows: [{ orderId: '1001' }, { orderId: '1004' }],
       invalidRows: [],
       rowCount: 2,
+      sourceRowCount: 2,
+      canonicalRegistrationCount: 2,
       totalGuestsRepresented: 5,
       newRegistrationCount: 1,
       skippedExistingCount: 1,
@@ -158,6 +160,8 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
       headers: [],
       headerMapping: {},
       rowCount: 2,
+      sourceRowCount: 2,
+      canonicalRegistrationCount: 2,
       importBatchId: 'batch-1',
     });
   });
@@ -182,11 +186,12 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
     });
     expect(mockImportEventbriteRegistrationsForEvent).not.toHaveBeenCalled();
     expect(await screen.findByText('Eventbrite registration file recognized')).toBeInTheDocument();
-    expect(screen.getByText('Rows found: 2')).toBeInTheDocument();
+    expect(screen.getByText('Source rows: 2')).toBeInTheDocument();
+    expect(screen.getByText('Registrations / orders found: 2')).toBeInTheDocument();
     expect(screen.getByText('Email: recognized')).toBeInTheDocument();
     expect(screen.getByText('Order ID: recognized')).toBeInTheDocument();
     expect(screen.getByText('Tickets / party size: recognized')).toBeInTheDocument();
-    expect(screen.getByText('Total guests represented: 5')).toBeInTheDocument();
+    expect(screen.getByText('Total registered guests represented: 5')).toBeInTheDocument();
     expect(screen.getByText('New registrations: 1')).toBeInTheDocument();
     expect(screen.getByText('Already imported/skipped: 1')).toBeInTheDocument();
 
@@ -199,7 +204,7 @@ describe('AdminEventCheckIns Eventbrite import workflow', () => {
         fileData: untouchedFileData,
       });
     });
-    expect(await screen.findByText('Imported 1; skipped 1; invalid 0.')).toBeInTheDocument();
+    expect(await screen.findByText('Imported 1; skipped 1; invalid orders 0.')).toBeInTheDocument();
   });
 
   it('shows persisted additional attendees within one primary history entry', async () => {

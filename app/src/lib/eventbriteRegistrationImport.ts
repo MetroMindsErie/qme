@@ -3,6 +3,8 @@ import * as XLSX from 'xlsx';
 
 export type EventbriteRegistrationRow = {
   sourceRowNumber: number;
+  sourceRowNumbers?: number[];
+  sourceRowCount?: number;
   orderId: string;
   firstName: string;
   lastName: string;
@@ -15,6 +17,7 @@ export type EventbriteRegistrationRow = {
 
 export type EventbriteRegistrationInvalidRow = {
   sourceRowNumber: number;
+  sourceRowNumbers?: number[];
   reason: string;
   orderId?: string;
   firstName?: string;
@@ -36,6 +39,8 @@ export type EventbriteRegistrationParseResult = {
   rows: EventbriteRegistrationRow[];
   invalidRows: EventbriteRegistrationInvalidRow[];
   rowCount: number;
+  sourceRowCount: number;
+  canonicalRegistrationCount: number;
 };
 
 export type EventbriteRegistrationFileFormat = 'csv' | 'xls' | 'xlsx';
@@ -68,6 +73,19 @@ export type EventbriteRegistrationPreviewResult = EventbriteRegistrationParseRes
   newRegistrationCount: number;
   skippedExistingCount: number;
   skippedExistingOrderIds: string[];
+};
+
+type ParsedSourceRegistrationRow = {
+  sourceRowNumber: number;
+  orderId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  normalizedEmail: string;
+  tickets: string;
+  ticketCount: number | null;
+  ticketType: string;
+  cells: string[];
 };
 
 const REQUIRED_COLUMNS = {
@@ -169,6 +187,10 @@ function normalizeEmail(value: unknown): string {
   return normalizeText(value).toLowerCase();
 }
 
+function normalizeIdentity(value: unknown): string {
+  return normalizeText(value).replace(/\s+/g, ' ').toLowerCase();
+}
+
 function findHeader(headers: string[], config: { aliases: string[]; missingMessage?: string }, required: boolean): string {
   const normalizedAliases = new Set(config.aliases.map(normalizeHeader));
   const found = headers.find((header) => normalizedAliases.has(normalizeHeader(header)));
@@ -188,7 +210,8 @@ export function normalizeTicketCount(value: unknown): number | null {
   if (!trimmed) return null;
   const parsed = Number.parseInt(trimmed.replace(/,/g, ''), 10);
   if (!Number.isFinite(parsed)) return null;
-  return Math.max(1, parsed);
+  if (parsed < 1) return null;
+  return parsed;
 }
 
 export function parseEventbriteRegistrationsRows(parsedRows: string[][]): EventbriteRegistrationParseResult {
@@ -211,7 +234,7 @@ export function parseEventbriteRegistrationsRows(parsedRows: string[][]): Eventb
 
   const rows: EventbriteRegistrationRow[] = [];
   const invalidRows: EventbriteRegistrationInvalidRow[] = [];
-  const seenOrderIds = new Set<string>();
+  const rowGroups = new Map<string, ParsedSourceRegistrationRow[]>();
 
   parsedRows.slice(1).forEach((cells, index) => {
     const sourceRowNumber = index + 2;
@@ -227,37 +250,85 @@ export function parseEventbriteRegistrationsRows(parsedRows: string[][]): Eventb
       invalidRows.push({ ...invalidBase, reason: 'missing_required_field' });
       return;
     }
-    if (ticketCount === null) {
-      invalidRows.push({ ...invalidBase, reason: 'invalid_tickets' });
-      return;
-    }
-    const normalizedOrderId = orderId.toLowerCase();
-    if (seenOrderIds.has(normalizedOrderId)) {
-      invalidRows.push({ ...invalidBase, reason: 'duplicate_order_id_in_file' });
-      return;
-    }
-    seenOrderIds.add(normalizedOrderId);
-
     const ticketType = headerMapping.ticketType ? get(cells, headerMapping.ticketType) : '';
-    const sourceMetadata: Record<string, string | number> = {
-      order_id: orderId,
-      tickets: ticketCount,
-      party_size: ticketCount,
-      additional_guests: Math.max(0, ticketCount - 1),
-    };
-    headers.forEach((header, headerIndex) => {
-      sourceMetadata[header] = normalizeText(cells[headerIndex]);
-    });
-
-    rows.push({
+    const groupRow = {
       sourceRowNumber,
       orderId,
       firstName,
       lastName,
       email,
       normalizedEmail: normalizeEmail(email),
+      tickets,
       ticketCount,
       ticketType,
+      cells,
+    };
+    rowGroups.set(orderId, [...(rowGroups.get(orderId) ?? []), groupRow]);
+  });
+
+  rowGroups.forEach((group) => {
+    const primary = group[0];
+    const sourceRowNumbers = group.map((row) => row.sourceRowNumber);
+    const invalidTicketRow = group.find((row) => row.ticketCount === null);
+    const invalidBase = {
+      sourceRowNumber: primary.sourceRowNumber,
+      sourceRowNumbers,
+      orderId: primary.orderId,
+      firstName: primary.firstName,
+      lastName: primary.lastName,
+      email: primary.email,
+      tickets: primary.tickets,
+    };
+
+    if (invalidTicketRow) {
+      invalidRows.push({
+        ...invalidBase,
+        sourceRowNumber: invalidTicketRow.sourceRowNumber,
+        tickets: invalidTicketRow.tickets,
+        reason: 'invalid_tickets',
+      });
+      return;
+    }
+
+    const hasIdentityConflict = group.some((row) => (
+      normalizeIdentity(row.firstName) !== normalizeIdentity(primary.firstName)
+      || normalizeIdentity(row.lastName) !== normalizeIdentity(primary.lastName)
+      || normalizeEmail(row.email) !== normalizeEmail(primary.email)
+    ));
+    if (hasIdentityConflict) {
+      invalidRows.push({ ...invalidBase, reason: 'conflicting_order_rows' });
+      return;
+    }
+
+    const ticketCount = group.reduce((sum, row) => sum + (row.ticketCount ?? 0), 0);
+    const sourceMetadata: Record<string, string | number> = {
+      order_id: primary.orderId,
+      tickets: ticketCount,
+      party_size: ticketCount,
+      additional_guests: Math.max(0, ticketCount - 1),
+      source_row_count: group.length,
+      source_row_numbers: sourceRowNumbers.join(','),
+      source_export_shape: group.length > 1 ? 'ticket_rows_consolidated' : 'order_rows',
+    };
+    headers.forEach((header, headerIndex) => {
+      const metadataKey = Object.prototype.hasOwnProperty.call(sourceMetadata, header) ? `source_${header}` : header;
+      sourceMetadata[metadataKey] = normalizeText(primary.cells[headerIndex]);
+    });
+    if (group.length > 1) {
+      sourceMetadata.summed_ticket_quantity = ticketCount;
+    }
+
+    rows.push({
+      sourceRowNumber: primary.sourceRowNumber,
+      sourceRowNumbers,
+      sourceRowCount: group.length,
+      orderId: primary.orderId,
+      firstName: primary.firstName,
+      lastName: primary.lastName,
+      email: primary.email,
+      normalizedEmail: primary.normalizedEmail,
+      ticketCount,
+      ticketType: primary.ticketType,
       sourceMetadata,
     });
   });
@@ -268,6 +339,8 @@ export function parseEventbriteRegistrationsRows(parsedRows: string[][]): Eventb
     rows,
     invalidRows,
     rowCount: parsedRows.length - 1,
+    sourceRowCount: parsedRows.length - 1,
+    canonicalRegistrationCount: rows.length + invalidRows.length,
   };
 }
 
@@ -493,6 +566,8 @@ export async function importEventbriteRegistrationsForEvent(input: {
       invalid_count: parsed.invalidRows.length,
       invalid_rows: parsed.invalidRows,
       header_mapping: parsed.headerMapping,
+      source_row_count: parsed.sourceRowCount,
+      canonical_registration_count: parsed.canonicalRegistrationCount,
     };
     const { data: batch, error: batchError } = await supabase
       .from('event_import_batches')

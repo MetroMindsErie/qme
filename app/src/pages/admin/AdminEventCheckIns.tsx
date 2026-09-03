@@ -450,7 +450,7 @@ export default function AdminEventCheckIns({
       setEventbritePendingFile(fileData);
       setEventbritePreview(preview);
       setEventbriteImportStatus(preview.invalidRows.length > 0
-        ? `File recognized with ${preview.invalidRows.length} invalid row(s). Review before importing.`
+        ? `File recognized with ${preview.invalidRows.length} invalid order(s). Review before importing.`
         : 'Preview ready. Review recognized fields before importing.');
     } catch (e) {
       console.error('Eventbrite preview failed', e);
@@ -475,7 +475,7 @@ export default function AdminEventCheckIns({
       setEventbriteImportResult(result);
       setEventbritePreview(null);
       setEventbritePendingFile(null);
-      setEventbriteImportStatus(`Imported ${result.insertedCount}; skipped ${result.skippedExistingCount}; invalid ${result.invalidRows.length}.`);
+      setEventbriteImportStatus(`Imported ${result.insertedCount}; skipped ${result.skippedExistingCount}; invalid orders ${result.invalidRows.length}.`);
     } catch (e) {
       console.error('Eventbrite import failed', e);
       const message = e instanceof Error ? e.message : 'Unknown error';
@@ -810,20 +810,21 @@ export default function AdminEventCheckIns({
                     Eventbrite registration file recognized
                   </div>
                   <div style={{ display: 'grid', gap: '0.25rem', color: '#475467', fontSize: '0.82rem', lineHeight: 1.4 }}>
-                    <div>Rows found: {eventbritePreview.rowCount}</div>
+                    <div>Source rows: {eventbritePreview.sourceRowCount ?? eventbritePreview.rowCount}</div>
+                    <div>Registrations / orders found: {eventbritePreview.canonicalRegistrationCount ?? eventbritePreview.rows.length + eventbritePreview.invalidRows.length}</div>
                     <div>First Name: {eventbritePreview.recognized.firstName ? 'recognized' : 'missing'}</div>
                     <div>Last Name: {eventbritePreview.recognized.lastName ? 'recognized' : 'missing'}</div>
                     <div>Email: {eventbritePreview.recognized.email ? 'recognized' : 'missing'}</div>
                     <div>Order ID: {eventbritePreview.recognized.orderId ? 'recognized' : 'missing'}</div>
                     <div>Tickets / party size: {eventbritePreview.recognized.tickets ? 'recognized' : 'missing'}</div>
-                    <div>Total guests represented: {eventbritePreview.totalGuestsRepresented}</div>
+                    <div>Total registered guests represented: {eventbritePreview.totalGuestsRepresented}</div>
                     <div>New registrations: {eventbritePreview.newRegistrationCount}</div>
                     <div>Already imported/skipped: {eventbritePreview.skippedExistingCount}</div>
-                    <div>Invalid rows: {eventbritePreview.invalidRows.length}</div>
+                    <div>Invalid orders: {eventbritePreview.invalidRows.length}</div>
                   </div>
                   {eventbritePreview.invalidRows.length > 0 && (
                     <div style={{ color: '#B71C1C', fontSize: '0.8rem', fontWeight: 800, lineHeight: 1.35, marginTop: '0.65rem' }}>
-                      First invalid row: row {eventbritePreview.invalidRows[0].sourceRowNumber}, {eventbritePreview.invalidRows[0].reason}.
+                      First invalid order: row {eventbritePreview.invalidRows[0].sourceRowNumber}, {eventbritePreview.invalidRows[0].reason}.
                     </div>
                   )}
                   <button
@@ -839,7 +840,7 @@ export default function AdminEventCheckIns({
               )}
               {eventbriteImportResult && (
                 <div style={{ color: '#475467', fontSize: '0.82rem', lineHeight: 1.45, marginTop: '0.5rem' }}>
-                  Rows processed: {eventbriteImportResult.processedCount}. New registrations: {eventbriteImportResult.insertedCount}. Existing Order IDs skipped: {eventbriteImportResult.skippedExistingCount}. Invalid rows: {eventbriteImportResult.invalidRows.length}.
+                  Source rows processed: {eventbriteImportResult.sourceRowCount ?? eventbriteImportResult.rowCount}. Registrations/orders processed: {eventbriteImportResult.processedCount}. New registrations: {eventbriteImportResult.insertedCount}. Existing Order IDs skipped: {eventbriteImportResult.skippedExistingCount}. Invalid orders: {eventbriteImportResult.invalidRows.length}.
                 </div>
               )}
             </div>

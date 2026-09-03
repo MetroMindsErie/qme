@@ -40,6 +40,17 @@ const newEventbriteRows = [
   ['1004', 'Pat', 'Four', 'pat@example.com', '4', 'General Admission'],
 ];
 
+const ticketRowEventbriteRows = [
+  ['Order ID', 'Attendee first name', 'Attendee last name', 'Attendee email', 'Ticket quantity', 'Ticket Class'],
+  ['15545403573', 'Mourad', 'Krifa', 'mourad.krifa@gmail.com', '1', 'General Admission'],
+  ['15545403573', 'Mourad', 'Krifa', 'mourad.krifa@gmail.com', '1', 'General Admission'],
+  ['15545403573', 'Mourad', 'Krifa', 'mourad.krifa@gmail.com', '1', 'General Admission'],
+  ['15563970373', 'Terica', 'Lacey', 'terica@example.com', '1', 'General Admission'],
+  ['15563970373', 'Terica', 'Lacey', 'terica@example.com', '1', 'General Admission'],
+  ['15563970373', 'Terica', 'Lacey', 'terica@example.com', '1', 'General Admission'],
+  ['15563970373', 'Terica', 'Lacey', 'terica@example.com', '1', 'General Admission'],
+];
+
 const untouchedUarfEventbriteCsvWithExtraColumns = [
   'Order Date,Last Name,Registration Answers,Email Address,Tickets,Company,Order ID,First Name,Attendee Status,Ticket Class',
   '2026-08-31,One,"How did you hear?,Partner",paul@example.com,1,UARF,1001,Paul,Attending,General Admission',
@@ -105,6 +116,11 @@ describe('Eventbrite registration import', () => {
       expect.objectContaining({ orderId: '1004', firstName: 'Pat', ticketCount: 4 }),
     ]);
     expect(parsed.rows).toHaveLength(3);
+    expect(parsed).toMatchObject({
+      rowCount: 3,
+      sourceRowCount: 3,
+      canonicalRegistrationCount: 3,
+    });
     expect(parsed.invalidRows).toHaveLength(0);
   });
 
@@ -253,6 +269,140 @@ describe('Eventbrite registration import', () => {
     });
   });
 
+  it('consolidates three compatible ticket rows for Mourad into one canonical order with party size 3', () => {
+    const parsed = parseEventbriteRegistrationsRows([
+      ticketRowEventbriteRows[0],
+      ticketRowEventbriteRows[1],
+      ticketRowEventbriteRows[2],
+      ticketRowEventbriteRows[3],
+    ]);
+
+    expect(parsed).toMatchObject({
+      rowCount: 3,
+      sourceRowCount: 3,
+      canonicalRegistrationCount: 1,
+    });
+    expect(parsed.rows).toHaveLength(1);
+    expect(parsed.invalidRows).toHaveLength(0);
+    expect(parsed.rows[0]).toMatchObject({
+      sourceRowNumber: 2,
+      sourceRowNumbers: [2, 3, 4],
+      sourceRowCount: 3,
+      orderId: '15545403573',
+      firstName: 'Mourad',
+      lastName: 'Krifa',
+      normalizedEmail: 'mourad.krifa@gmail.com',
+      ticketCount: 3,
+      sourceMetadata: expect.objectContaining({
+        order_id: '15545403573',
+        tickets: 3,
+        party_size: 3,
+        additional_guests: 2,
+        source_row_count: 3,
+        source_row_numbers: '2,3,4',
+        source_export_shape: 'ticket_rows_consolidated',
+        summed_ticket_quantity: 3,
+      }),
+    });
+  });
+
+  it('consolidates mixed compatible quantities for the same Order ID into one party size', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      'SUM-3,Sam,Sum,sam@example.com,2',
+      'SUM-3,Sam,Sum,sam@example.com,1',
+    ].join('\n'));
+
+    expect(parsed.rows).toHaveLength(1);
+    expect(parsed.rows[0]).toMatchObject({
+      orderId: 'SUM-3',
+      ticketCount: 3,
+      sourceRowNumbers: [2, 3],
+      sourceRowCount: 2,
+    });
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('consolidates Terica-style four repeated ticket rows into party size 4', () => {
+    const parsed = parseEventbriteRegistrationsRows(ticketRowEventbriteRows);
+
+    expect(parsed.rows).toEqual([
+      expect.objectContaining({ orderId: '15545403573', ticketCount: 3 }),
+      expect.objectContaining({ orderId: '15563970373', firstName: 'Terica', ticketCount: 4 }),
+    ]);
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
+  it('does not emit duplicate_order_id_in_file for compatible repeated ticket rows', () => {
+    const parsed = parseEventbriteRegistrationsRows(ticketRowEventbriteRows);
+
+    expect(parsed.invalidRows.map((row) => row.reason)).not.toContain('duplicate_order_id_in_file');
+  });
+
+  it('flags a repeated Order ID group invalid when first names conflict', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      'CONFLICT-1,Alex,Guest,alex@example.com,1',
+      'CONFLICT-1,Avery,Guest,alex@example.com,1',
+    ].join('\n'));
+
+    expect(parsed.rows).toHaveLength(0);
+    expect(parsed.invalidRows).toEqual([
+      expect.objectContaining({
+        orderId: 'CONFLICT-1',
+        sourceRowNumbers: [2, 3],
+        reason: 'conflicting_order_rows',
+      }),
+    ]);
+  });
+
+  it('flags a repeated Order ID group invalid when last names conflict', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      'CONFLICT-2,Alex,Guest,alex@example.com,1',
+      'CONFLICT-2,Alex,Other,alex@example.com,1',
+    ].join('\n'));
+
+    expect(parsed.rows).toHaveLength(0);
+    expect(parsed.invalidRows[0]).toMatchObject({
+      orderId: 'CONFLICT-2',
+      reason: 'conflicting_order_rows',
+    });
+  });
+
+  it('flags a repeated Order ID group invalid when emails conflict', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      'CONFLICT-3,Alex,Guest,alex@example.com,1',
+      'CONFLICT-3,Alex,Guest,other@example.com,1',
+    ].join('\n'));
+
+    expect(parsed.rows).toHaveLength(0);
+    expect(parsed.invalidRows[0]).toMatchObject({
+      orderId: 'CONFLICT-3',
+      reason: 'conflicting_order_rows',
+    });
+  });
+
+  it('does not falsely conflict on harmless primary identity case and whitespace differences', () => {
+    const parsed = parseEventbriteRegistrationsCsv([
+      'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
+      'CASE-1, Alex , Guest , Alex@Example.com ,1',
+      'CASE-1,alex,guest,alex@example.com,1',
+    ].join('\n'));
+
+    expect(parsed.rows).toHaveLength(1);
+    expect(parsed.rows[0]).toMatchObject({
+      orderId: 'CASE-1',
+      firstName: 'Alex',
+      lastName: 'Guest',
+      email: 'Alex@Example.com',
+      normalizedEmail: 'alex@example.com',
+      ticketCount: 2,
+    });
+    expect(parsed.invalidRows).toHaveLength(0);
+  });
+
   it('preserves string Order IDs exactly from Excel workbooks', () => {
     const rows = [
       ['Order ID', 'Tickets', 'First Name', 'Last Name', 'Email'],
@@ -267,29 +417,34 @@ describe('Eventbrite registration import', () => {
     });
   });
 
-  it('normalizes Tickets to a minimum party size of 1 and rejects non-numeric quantities', () => {
+  it('rejects non-positive and non-numeric ticket quantities', () => {
     const parsed = parseEventbriteRegistrationsCsv([
       'Order ID,Tickets,First Name,Last Name,Email',
       '1000,0,Zero,Guest,zero@example.com',
       '100x,nope,Bad,Guest,bad@example.com',
     ].join('\n'));
 
-    expect(parsed.rows[0]).toMatchObject({ orderId: '1000', ticketCount: 1 });
     expect(parsed.invalidRows).toEqual([
+      expect.objectContaining({ orderId: '1000', reason: 'invalid_tickets' }),
       expect.objectContaining({ orderId: '100x', reason: 'invalid_tickets' }),
     ]);
   });
 
-  it('applies Ticket quantity with the same registered party-size semantics as Tickets', () => {
+  it('invalidates a grouped order when any ticket quantity is invalid', () => {
     const parsed = parseEventbriteRegistrationsCsv([
       'Order ID,Attendee first name,Attendee last name,Attendee email,Ticket quantity',
-      '1000,Quantity,Guest,quantity@example.com,0',
-      '100x,Bad,Guest,bad@example.com,nope',
+      'BAD-GROUP,Quantity,Guest,quantity@example.com,1',
+      'BAD-GROUP,Quantity,Guest,quantity@example.com,nope',
     ].join('\n'));
 
-    expect(parsed.rows[0]).toMatchObject({ orderId: '1000', ticketCount: 1 });
+    expect(parsed.rows).toHaveLength(0);
     expect(parsed.invalidRows).toEqual([
-      expect.objectContaining({ orderId: '100x', reason: 'invalid_tickets' }),
+      expect.objectContaining({
+        orderId: 'BAD-GROUP',
+        sourceRowNumbers: [2, 3],
+        sourceRowNumber: 3,
+        reason: 'invalid_tickets',
+      }),
     ]);
   });
 
@@ -403,6 +558,114 @@ describe('Eventbrite registration import', () => {
     expect(calls).not.toContain('event_check_ins');
   });
 
+  it('skips an existing repeated-row Order ID once after canonical consolidation', async () => {
+    const calls: string[] = [];
+    mockFrom.mockImplementation((table: string) => {
+      calls.push(table);
+      if (table === 'event_imported_registrations') {
+        return thenableQuery({ data: [{ external_order_id: '15545403573' }] });
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const preview = await previewEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      fileData: {
+        sourceFileName: 'ticket-row-eventbrite.xlsx',
+        format: 'xlsx',
+        rows: [
+          ticketRowEventbriteRows[0],
+          ticketRowEventbriteRows[1],
+          ticketRowEventbriteRows[2],
+          ticketRowEventbriteRows[3],
+        ],
+        worksheetName: 'Attendees',
+      },
+    });
+
+    expect(preview).toMatchObject({
+      rowCount: 3,
+      sourceRowCount: 3,
+      canonicalRegistrationCount: 1,
+      totalGuestsRepresented: 3,
+      newRegistrationCount: 0,
+      skippedExistingCount: 1,
+      skippedExistingOrderIds: ['15545403573'],
+    });
+  });
+
+  it('imports a new repeated-row Order ID once with summed registered party size', async () => {
+    const calls: string[] = [];
+    mockFrom.mockImplementation((table: string) => {
+      calls.push(table);
+      if (table === 'event_imported_registrations' && calls.filter((name) => name === table).length === 1) {
+        return thenableQuery({ data: [] });
+      }
+      if (table === 'event_import_batches') {
+        const proxy: Record<string, unknown> = {};
+        proxy.insert = vi.fn((batch) => {
+          expect(batch).toMatchObject({
+            row_count: 3,
+            imported_count: 1,
+            report: expect.objectContaining({
+              source_row_count: 3,
+              canonical_registration_count: 1,
+            }),
+          });
+          return proxy;
+        });
+        proxy.select = vi.fn(() => proxy);
+        proxy.single = vi.fn(() => Promise.resolve({ data: { id: 'batch-1' }, error: null }));
+        return proxy;
+      }
+      if (table === 'event_imported_registrations') {
+        const proxy: Record<string, unknown> = {};
+        proxy.insert = vi.fn((rows) => {
+          expect(rows).toHaveLength(1);
+          expect(rows[0]).toMatchObject({
+            external_order_id: '15545403573',
+            external_attendee_id: '15545403573',
+            party_size: 3,
+            source_row_number: 2,
+            source_metadata: expect.objectContaining({
+              tickets: 3,
+              source_row_count: 3,
+              source_export_shape: 'ticket_rows_consolidated',
+              summed_ticket_quantity: 3,
+            }),
+          });
+          return Promise.resolve({ error: null });
+        });
+        return proxy;
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const result = await importEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      sourceFileName: 'ticket-row-eventbrite.xlsx',
+      fileData: {
+        sourceFileName: 'ticket-row-eventbrite.xlsx',
+        format: 'xlsx',
+        rows: [
+          ticketRowEventbriteRows[0],
+          ticketRowEventbriteRows[1],
+          ticketRowEventbriteRows[2],
+          ticketRowEventbriteRows[3],
+        ],
+        worksheetName: 'Attendees',
+      },
+    });
+
+    expect(result).toMatchObject({
+      processedCount: 1,
+      insertedCount: 1,
+      skippedExistingCount: 0,
+      sourceRowCount: 3,
+      canonicalRegistrationCount: 1,
+    });
+  });
+
   it('previews recognized concepts and counts without committing rows', async () => {
     const calls: string[] = [];
     mockFrom.mockImplementation((table: string) => {
@@ -428,11 +691,46 @@ describe('Eventbrite registration import', () => {
     });
     expect(preview).toMatchObject({
       rowCount: 2,
+      sourceRowCount: 2,
+      canonicalRegistrationCount: 2,
       totalGuestsRepresented: 5,
       newRegistrationCount: 1,
       skippedExistingCount: 1,
       skippedExistingOrderIds: ['1001'],
     });
+    expect(calls).toEqual(['event_imported_registrations']);
+  });
+
+  it('previews source-row count separately from canonical registrations and total guests', async () => {
+    const calls: string[] = [];
+    mockFrom.mockImplementation((table: string) => {
+      calls.push(table);
+      if (table === 'event_imported_registrations') {
+        return thenableQuery({ data: [] });
+      }
+      throw new Error(`Unexpected table ${table}`);
+    });
+
+    const preview = await previewEventbriteRegistrationsForEvent({
+      eventId: 'event-1',
+      fileData: parseEventbriteRegistrationsWorkbookData(
+        workbookData(ticketRowEventbriteRows, 'xlsx', [[['Report generated'], ['Not attendee data']]]),
+        'ticket-row-eventbrite.xlsx'
+      ),
+    });
+
+    expect(preview).toMatchObject({
+      rowCount: 7,
+      sourceRowCount: 7,
+      canonicalRegistrationCount: 2,
+      totalGuestsRepresented: 7,
+      newRegistrationCount: 2,
+      skippedExistingCount: 0,
+    });
+    expect(preview.rows).toEqual([
+      expect.objectContaining({ orderId: '15545403573', ticketCount: 3 }),
+      expect.objectContaining({ orderId: '15563970373', ticketCount: 4 }),
+    ]);
     expect(calls).toEqual(['event_imported_registrations']);
   });
 
@@ -453,6 +751,8 @@ describe('Eventbrite registration import', () => {
 
     expect(preview).toMatchObject({
       rowCount: 2,
+      sourceRowCount: 2,
+      canonicalRegistrationCount: 2,
       totalGuestsRepresented: 5,
       newRegistrationCount: 1,
       skippedExistingCount: 1,

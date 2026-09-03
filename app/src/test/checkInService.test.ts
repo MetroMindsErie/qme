@@ -19,11 +19,16 @@ vi.mock('../lib/eventService', () => ({
   getEvent: (...args: unknown[]) => mockGetEvent(...args),
 }));
 
-import { createEventCheckIn, recoverEventCheckInForGuest, searchImportedRegistrationsForGuest } from '../lib/checkInService';
+import { createEventCheckIn, createImportedRegistrationCheckInForGuest, recoverEventCheckInForGuest, searchImportedRegistrationsForGuest } from '../lib/checkInService';
 
 describe('checkInService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRpc.mockReset();
+    mockFrom.mockReset();
+    mockChannel.mockReset();
+    mockRemoveChannel.mockReset();
+    mockGetEvent.mockReset();
     localStorage.clear();
     mockGetEvent.mockResolvedValue({
       id: 'event-1',
@@ -193,6 +198,36 @@ describe('checkInService', () => {
 
       await expect(searchImportedRegistrationsForGuest('event-1', 'Ada')).rejects.toThrow('Check-In is not open yet.');
       expect(mockRpc).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createImportedRegistrationCheckInForGuest', () => {
+    it('passes named additional attendees to the Eventbrite check-in RPC without changing the primary imported registration id', async () => {
+      const row = { id: 'check-in-1', event_id: 'event-1', status: 'completed' };
+      mockRpc.mockResolvedValueOnce({ data: row, error: null });
+
+      const result = await createImportedRegistrationCheckInForGuest({
+        eventId: 'event-1',
+        importedRegistrationId: 'registration-1',
+        bypassAvailability: true,
+        additionalAttendees: [
+          { position: 1, first_name: 'Ava', last_name: 'One' },
+          { position: 3, first_name: 'Zed', last_name: 'Three' },
+        ],
+      });
+
+      expect(result).toEqual(row);
+      expect(mockRpc).toHaveBeenCalledWith('create_event_check_in_from_imported_registration_for_guest', {
+        p_event_id: 'event-1',
+        p_guest_token: expect.any(String),
+        p_imported_registration_id: 'registration-1',
+        p_email_confirmation: null,
+        p_phone: null,
+        p_additional_attendees: [
+          { position: 1, first_name: 'Ava', last_name: 'One' },
+          { position: 3, first_name: 'Zed', last_name: 'Three' },
+        ],
+      });
     });
   });
 

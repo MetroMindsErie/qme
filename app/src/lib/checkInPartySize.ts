@@ -16,7 +16,8 @@ function normalizeInteger(value: unknown): number | null {
 export function getCheckInPartySize(checkIn: EventCheckIn | null | undefined): number {
   const metadata = asRecord(checkIn?.metadata);
   const importedRegistration = asRecord(metadata.imported_registration);
-  return normalizeInteger(metadata.party_size)
+  return normalizeInteger(metadata.actual_party_size)
+    ?? normalizeInteger(metadata.party_size)
     ?? normalizeInteger(metadata.tickets)
     ?? normalizeInteger(importedRegistration.party_size)
     ?? normalizeInteger(importedRegistration.tickets)

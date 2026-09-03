@@ -21,7 +21,7 @@ import { getEventBySlug } from '../../lib/eventService';
 import { buildGuestEventThemeStyle, getGuestEventTheme, hasGuestEventTheme } from '../../lib/eventTheme';
 import { clearGuestSessionToken } from '../../lib/guestSessionService';
 import { isSotcEventSlug } from '../../lib/sotc';
-import type { EventCheckIn, ImportedRegistrationSearchResult, QEvent } from '../../types';
+import type { EventCheckIn, EventCheckInAdditionalAttendeeInput, ImportedRegistrationSearchResult, QEvent } from '../../types';
 import '../../styles/shared.css';
 import '../../styles/guest.css';
 
@@ -69,6 +69,25 @@ type StoredEventCheckIn = {
   ts?: number;
 };
 
+type AdditionalGuestDraft = {
+  position: number;
+  firstName: string;
+  lastName: string;
+};
+
+type PendingImportedRegistration = {
+  result: ImportedRegistrationSearchResult;
+  input: {
+    eventId: string;
+    importedRegistrationId: string;
+    emailConfirmation: string | null;
+    phone: string | null;
+    bypassAvailability: boolean;
+  };
+  registeredPartySize: number;
+  normalizedPhone: string;
+};
+
 function getStoredImportedRegistrationId(saved: StoredEventCheckIn) {
   return saved.importedRegistrationId || saved.imported_registration_id || '';
 }
@@ -101,6 +120,9 @@ export default function GuestEventCheckIn({
   const [registrationSearching, setRegistrationSearching] = useState(false);
   const [registrationEmailConfirmation, setRegistrationEmailConfirmation] = useState<Record<string, string>>({});
   const [registrationHasSearched, setRegistrationHasSearched] = useState(false);
+  const [pendingImportedRegistration, setPendingImportedRegistration] = useState<PendingImportedRegistration | null>(null);
+  const [additionalGuests, setAdditionalGuests] = useState<AdditionalGuestDraft[]>([]);
+  const [additionalGuestError, setAdditionalGuestError] = useState('');
   const [selfRegistrationEmailError, setSelfRegistrationEmailError] = useState('');
   const [sharedDeviceResetSeconds, setSharedDeviceResetSeconds] = useState(SHARED_DEVICE_RESET_SECONDS);
   const checkInConfig = getEventCheckInConfig(event);
@@ -329,7 +351,7 @@ export default function GuestEventCheckIn({
   }, [adminTestAllowed, event, useSelfRegistrationFallback]);
 
   useEffect(() => {
-    if (!event || submitted || !useImportedRegistrationLookup) return;
+    if (!event || submitted || pendingImportedRegistration || !useImportedRegistrationLookup) return;
     const query = registrationQuery.trim();
     if (query.length < 2) {
       setRegistrationResults([]);
@@ -346,6 +368,7 @@ export default function GuestEventCheckIn({
     registrationQuery,
     searchImportedRegistrations,
     submitted,
+    pendingImportedRegistration,
     useImportedRegistrationLookup,
   ]);
 
@@ -422,17 +445,39 @@ export default function GuestEventCheckIn({
       };
       const row = result.already_checked_in
         ? await reconnectImportedRegistrationCheckInForGuest(input)
-        : await createImportedRegistrationCheckInForGuest(input);
+        : null;
       const resultPartySize = getSearchResultPartySize(result);
-      const displayRow = resultPartySize > 1 && getCheckInPartySize(row) === 1
-        ? { ...row, metadata: { ...(row.metadata ?? {}), party_size: resultPartySize } }
-        : row;
-      setFirstName(row.first_name);
-      setLastName(row.last_name);
+      setFirstName(result.first_name);
+      setLastName(result.last_name);
+
+      if (!row && resultPartySize > 1) {
+        setPendingImportedRegistration({
+          result,
+          input,
+          registeredPartySize: resultPartySize,
+          normalizedPhone,
+        });
+        setAdditionalGuests(Array.from({ length: resultPartySize - 1 }, (_item, index) => ({
+          position: index + 1,
+          firstName: '',
+          lastName: '',
+        })));
+        setRegistrationResults([]);
+        setAdditionalGuestError('');
+        return;
+      }
+
+      const nextRow = row ?? await createImportedRegistrationCheckInForGuest({
+        ...input,
+        additionalAttendees: [],
+      });
+      const displayRow = resultPartySize > 1 && getCheckInPartySize(nextRow) === 1
+        ? { ...nextRow, metadata: { ...(nextRow.metadata ?? {}), registered_party_size: resultPartySize, actual_party_size: 1, party_size: 1, tickets: resultPartySize } }
+        : nextRow;
       localStorage.setItem(storageKey(event.id), JSON.stringify({
-        id: row.id,
-        firstName: row.first_name,
-        lastName: row.last_name,
+        id: nextRow.id,
+        firstName: nextRow.first_name,
+        lastName: nextRow.last_name,
         phone: normalizedPhone,
         partySize: getCheckInPartySize(displayRow),
         importedRegistrationId: result.id,
@@ -452,6 +497,83 @@ export default function GuestEventCheckIn({
         setError('This registration is already checked in. Use Reconnect to My Event if this is you, or see the event team.');
       } else if (message.toLowerCase().includes('removed')) {
         setError('This check-in was removed by the event team. Please check in again or see the event team.');
+      } else {
+        setError('Check-in could not be saved. Please see the event team.');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function completeImportedRegistrationParty(e: FormEvent) {
+    e.preventDefault();
+    if (!event || !pendingImportedRegistration) return;
+
+    const attendingGuests: EventCheckInAdditionalAttendeeInput[] = [];
+    for (const guest of additionalGuests) {
+      const first = guest.firstName.trim();
+      const last = guest.lastName.trim();
+      if (!first || !last) {
+        setAdditionalGuestError('First and last name are required for each additional guest who is attending.');
+        return;
+      }
+      attendingGuests.push({
+        position: guest.position,
+        first_name: first,
+        last_name: last,
+      });
+    }
+
+    setSaving(true);
+    setError('');
+    setAdditionalGuestError('');
+    try {
+      const row = await createImportedRegistrationCheckInForGuest({
+        ...pendingImportedRegistration.input,
+        additionalAttendees: attendingGuests,
+      });
+      const actualPartySize = 1 + attendingGuests.length;
+      const originalOrderId = pendingImportedRegistration.result.external_order_id || pendingImportedRegistration.result.id;
+      const displayRow = {
+        ...row,
+        metadata: {
+          ...(row.metadata ?? {}),
+          registered_party_size: pendingImportedRegistration.registeredPartySize,
+          actual_party_size: actualPartySize,
+          party_size: actualPartySize,
+          tickets: pendingImportedRegistration.registeredPartySize,
+          additional_attendees: attendingGuests.map((guest) => ({
+            role: 'additional_attendee',
+            position: guest.position,
+            external_order_id: `${originalOrderId}-${guest.position}`,
+            first_name: guest.first_name,
+            last_name: guest.last_name,
+            source: 'eventbrite_party_check_in',
+          })),
+        },
+      };
+      localStorage.setItem(storageKey(event.id), JSON.stringify({
+        id: row.id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        phone: pendingImportedRegistration.normalizedPhone,
+        partySize: actualPartySize,
+        importedRegistrationId: pendingImportedRegistration.result.id,
+        ts: Date.now(),
+      }));
+      setFirstName(row.first_name);
+      setLastName(row.last_name);
+      setCheckIn(displayRow);
+      setPendingImportedRegistration(null);
+      setAdditionalGuests([]);
+      setSubmitted(true);
+    } catch (err) {
+      console.error('Imported registration party check-in failed', err);
+      const message = err && typeof err === 'object' && 'message' in err
+        ? String((err as { message?: unknown }).message || '')
+        : '';
+      if (message.toLowerCase().includes('already been checked in')) {
+        setError('This registration is already checked in. Use Reconnect to My Event if this is you, or see the event team.');
       } else {
         setError('Check-in could not be saved. Please see the event team.');
       }
@@ -498,6 +620,9 @@ export default function GuestEventCheckIn({
     setRegistrationSearching(false);
     setRegistrationEmailConfirmation({});
     setRegistrationHasSearched(false);
+    setPendingImportedRegistration(null);
+    setAdditionalGuests([]);
+    setAdditionalGuestError('');
     setSelfRegistrationEmailError('');
     setSharedDeviceResetSeconds(SHARED_DEVICE_RESET_SECONDS);
   }
@@ -681,6 +806,88 @@ export default function GuestEventCheckIn({
               </div>
             )}
           </>
+        ) : pendingImportedRegistration ? (
+          <form onSubmit={completeImportedRegistrationParty}>
+            {(error || additionalGuestError) && (
+              <div style={{ background: '#FFEBEE', borderRadius: 8, padding: '0.75rem', marginBottom: '0.9rem', color: '#B71C1C', fontWeight: 700 }}>
+                {additionalGuestError || error}
+              </div>
+            )}
+            <div style={{ border: '1px solid #e2e8f0', borderRadius: 10, padding: '0.9rem', margin: '1rem 0', background: '#f8fafc' }}>
+              <div style={{ color: '#223247', fontWeight: 900 }}>
+                {pendingImportedRegistration.result.first_name} {pendingImportedRegistration.result.last_name}
+              </div>
+              <div style={{ color: '#64748b', fontSize: '0.82rem', fontWeight: 800, marginTop: 4 }}>
+                Registered tickets: {pendingImportedRegistration.registeredPartySize}
+              </div>
+            </div>
+
+            <div style={{ color: '#2f3e4f', fontWeight: 900, marginBottom: '0.35rem' }}>
+              Additional guests attending
+            </div>
+            {additionalGuests.length === 0 ? (
+              <div style={{ border: '1px solid #bbf7d0', borderRadius: 8, padding: '0.75rem', marginBottom: '0.9rem', color: '#047857', background: '#f0fdf4', fontWeight: 800 }}>
+                No additional guests are attending.
+              </div>
+            ) : additionalGuests.map((guest) => (
+              <div
+                key={guest.position}
+                style={{ border: '1px solid #e0e0e0', borderRadius: 10, padding: '0.85rem', marginBottom: '0.75rem', background: '#fff' }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.75rem', marginBottom: '0.65rem' }}>
+                  <div style={{ color: '#223247', fontWeight: 900 }}>
+                    Guest {guest.position}
+                  </div>
+                  <button
+                    type="button"
+                    className="actionBtn actionBtn-secondary"
+                    style={{ margin: 0, width: 'auto', padding: '0.4rem 0.65rem', background: '#fff', border: '1px solid #fecaca', color: '#dc2626' }}
+                    onClick={() => {
+                      setAdditionalGuests((current) => current.filter((item) => item.position !== guest.position));
+                      setAdditionalGuestError('');
+                    }}
+                  >
+                    Remove guest
+                  </button>
+                </div>
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+                  First name
+                </label>
+                <input
+                  value={guest.firstName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAdditionalGuests((current) => current.map((item) => (
+                      item.position === guest.position ? { ...item, firstName: value } : item
+                    )));
+                    if (additionalGuestError) setAdditionalGuestError('');
+                  }}
+                  aria-label={`Guest ${guest.position} first name`}
+                  required
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd', marginBottom: '0.9rem' }}
+                />
+                <label style={{ display: 'block', fontWeight: 700, marginBottom: 6 }}>
+                  Last name
+                </label>
+                <input
+                  value={guest.lastName}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setAdditionalGuests((current) => current.map((item) => (
+                      item.position === guest.position ? { ...item, lastName: value } : item
+                    )));
+                    if (additionalGuestError) setAdditionalGuestError('');
+                  }}
+                  aria-label={`Guest ${guest.position} last name`}
+                  required
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '0.75rem', borderRadius: 8, border: '1px solid #ddd' }}
+                />
+              </div>
+            ))}
+            <button className="actionBtn actionBtn-primary" type="submit" style={{ margin: '0.4rem 0 0' }} disabled={saving}>
+              {saving ? 'Checking In...' : 'Check In'}
+            </button>
+          </form>
         ) : useImportedRegistrationLookup ? (
           <div>
             {error && (

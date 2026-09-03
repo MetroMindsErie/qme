@@ -273,6 +273,12 @@ export interface ImportedRegistrationSearchResult {
   requires_email_confirmation: boolean;
 }
 
+export interface EventCheckInAdditionalAttendeeInput {
+  position: number;
+  first_name: string;
+  last_name: string;
+}
+
 export type CreateEventGroupOrderItemInput = Pick<
   EventGroupOrderItem,
   'event_id' | 'check_in_id' | 'item_name' | 'quantity'

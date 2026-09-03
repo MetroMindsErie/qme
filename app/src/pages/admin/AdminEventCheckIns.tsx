@@ -224,7 +224,10 @@ export default function AdminEventCheckIns({
       { header: 'registration_source', value: (row) => getCheckInRegistrationSource(row) },
       { header: 'external_order_id', value: (row) => asCsvString(asRecord(row.metadata).external_order_id || asRecord(row.metadata).eventbrite_order_id) },
       { header: 'party_size', value: (row) => getCheckInPartySize(row) },
+      { header: 'actual_party_size', value: (row) => getCheckInPartySize(row) },
+      { header: 'registered_party_size', value: (row) => asCsvString(asRecord(row.metadata).registered_party_size || asRecord(row.metadata).tickets || asRecord(asRecord(row.metadata).imported_registration).tickets) },
       { header: 'guests_represented', value: (row) => getCheckInPartySize(row) },
+      { header: 'additional_attendees', value: (row) => JSON.stringify(asRecord(row.metadata).additional_attendees ?? []) },
       { header: 'needs_help', value: (row) => asRecord(row.metadata).needs_help === true ? 'yes' : 'no' },
       {
         header: 'headshot_credit_status',

@@ -379,10 +379,114 @@ describe('GuestEventCheckIn', () => {
     fireEvent.change(searchInput, { target: { value: 'Paul' } });
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: 'This is me' }));
+    if (partySize > 1) {
+      for (let position = 1; position < partySize; position += 1) {
+        expect(await screen.findByLabelText(`Guest ${position} first name`)).toBeInTheDocument();
+        fireEvent.change(screen.getByLabelText(`Guest ${position} first name`), { target: { value: `Guest${position}` } });
+        fireEvent.change(screen.getByLabelText(`Guest ${position} last name`), { target: { value: 'Friend' } });
+      }
+      await user.click(screen.getByRole('button', { name: 'Check In' }));
+    }
 
     expect(await screen.findByText(new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')))).toBeInTheDocument();
     expect(screen.getByText(/Please go to the check-in desk to receive your event package./)).toBeInTheDocument();
     expect(screen.getByText(totalGuests)).toBeInTheDocument();
+  });
+
+  it('captures named additional attendees with stable child identities and actual party size after removing an absent guest', async () => {
+    const user = userEvent.setup();
+    mockSearchImportedRegistrationsForGuest.mockResolvedValue([{
+      id: 'registration-party',
+      first_name: 'Mourad',
+      last_name: 'Krifa',
+      email_hint: 'mo**@example.com',
+      ticket_hint: 'General Admission',
+      party_size: 4,
+      external_order_id: '123456789',
+      headshot_entitled: false,
+      already_checked_in: false,
+      requires_email_confirmation: false,
+    }]);
+    mockCreateImportedRegistrationCheckInForGuest.mockImplementation(async (input) => ({
+      ...completedCheckIn,
+      first_name: 'Mourad',
+      last_name: 'Krifa',
+      metadata: {
+        imported_registration_id: 'registration-party',
+        external_order_id: '123456789',
+        registered_party_size: 4,
+        actual_party_size: 1 + input.additionalAttendees.length,
+        party_size: 1 + input.additionalAttendees.length,
+        tickets: 4,
+        additional_attendees: input.additionalAttendees.map((guest: { position: number; first_name: string; last_name: string }) => ({
+          position: guest.position,
+          external_order_id: `123456789-${guest.position}`,
+          first_name: guest.first_name,
+          last_name: guest.last_name,
+        })),
+      },
+    }));
+    mockGetEventCheckIn.mockImplementation(async () => mockCreateImportedRegistrationCheckInForGuest.mock.results.at(-1)?.value ?? completedCheckIn);
+
+    renderCheckIn();
+
+    fireEvent.change(await screen.findByPlaceholderText('First name, last name, or email'), { target: { value: 'Mourad' } });
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.click(await screen.findByRole('button', { name: 'This is me' }));
+
+    expect(await screen.findByLabelText('Guest 1 first name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Guest 2 first name')).toBeInTheDocument();
+    expect(screen.getByLabelText('Guest 3 first name')).toBeInTheDocument();
+
+    const removeButtons = screen.getAllByRole('button', { name: 'Remove guest' });
+    await user.click(removeButtons[1]);
+    expect(screen.queryByLabelText('Guest 2 first name')).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText('Guest 1 first name'), { target: { value: 'Ava' } });
+    fireEvent.change(screen.getByLabelText('Guest 1 last name'), { target: { value: 'One' } });
+    fireEvent.change(screen.getByLabelText('Guest 3 first name'), { target: { value: 'Zed' } });
+    fireEvent.change(screen.getByLabelText('Guest 3 last name'), { target: { value: 'Three' } });
+    await user.click(screen.getByRole('button', { name: 'Check In' }));
+
+    await waitFor(() => {
+      expect(mockCreateImportedRegistrationCheckInForGuest).toHaveBeenCalledWith(expect.objectContaining({
+        importedRegistrationId: 'registration-party',
+        additionalAttendees: [
+          { position: 1, first_name: 'Ava', last_name: 'One' },
+          { position: 3, first_name: 'Zed', last_name: 'Three' },
+        ],
+      }));
+    });
+    expect(await screen.findByText(/Thanks, Mourad! You and your 2 guests are checked in./)).toBeInTheDocument();
+    expect(screen.getByText('Total guests: 3')).toBeInTheDocument();
+  });
+
+  it('blocks whitespace-only additional guest names before completing the imported check-in', async () => {
+    const user = userEvent.setup();
+    mockSearchImportedRegistrationsForGuest.mockResolvedValue([{
+      id: 'registration-whitespace',
+      first_name: 'Pat',
+      last_name: 'Party',
+      email_hint: 'pa**@example.com',
+      ticket_hint: 'General Admission',
+      party_size: 2,
+      external_order_id: 'order-whitespace',
+      headshot_entitled: false,
+      already_checked_in: false,
+      requires_email_confirmation: false,
+    }]);
+
+    renderCheckIn();
+
+    fireEvent.change(await screen.findByPlaceholderText('First name, last name, or email'), { target: { value: 'Pat' } });
+    await user.click(screen.getByRole('button', { name: 'Search' }));
+    await user.click(await screen.findByRole('button', { name: 'This is me' }));
+    fireEvent.change(await screen.findByLabelText('Guest 1 first name'), { target: { value: '   ' } });
+    fireEvent.change(screen.getByLabelText('Guest 1 last name'), { target: { value: 'Guest' } });
+    await user.click(screen.getByRole('button', { name: 'Check In' }));
+
+    expect(await screen.findByText('First and last name are required for each additional guest who is attending.')).toBeInTheDocument();
+    expect(mockCreateImportedRegistrationCheckInForGuest).not.toHaveBeenCalled();
   });
 
   it('uses kiosk-specific completion wording with shared imported party-size confirmation', async () => {
@@ -426,6 +530,9 @@ describe('GuestEventCheckIn', () => {
     fireEvent.change(searchInput, { target: { value: 'Meredith' } });
     await user.click(screen.getByRole('button', { name: 'Search' }));
     await user.click(await screen.findByRole('button', { name: 'This is me' }));
+    fireEvent.change(await screen.findByLabelText('Guest 1 first name'), { target: { value: 'Alex' } });
+    fireEvent.change(screen.getByLabelText('Guest 1 last name'), { target: { value: 'Guest' } });
+    await user.click(screen.getByRole('button', { name: 'Check In' }));
 
     expect(await screen.findByText(/Thanks, Meredith! You and your 1 guest are checked in./)).toBeInTheDocument();
     expect(screen.getByText(/Please show this confirmation to the person at the desk to receive your evening's event package./)).toBeInTheDocument();

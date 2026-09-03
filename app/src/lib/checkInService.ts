@@ -5,7 +5,7 @@ import { supabase } from './supabase';
 import { getEvent } from './eventService';
 import { getEventCheckInAvailability } from './eventConfig';
 import { getGuestSessionToken } from './guestSessionService';
-import type { CreateEventCheckInInput, EventCheckIn, ImportedRegistrationSearchResult } from '../types';
+import type { CreateEventCheckInInput, EventCheckIn, EventCheckInAdditionalAttendeeInput, ImportedRegistrationSearchResult } from '../types';
 
 export interface StoredEventCheckInRecoveryHint {
   id?: string | null;
@@ -104,16 +104,33 @@ export async function createImportedRegistrationCheckInForGuest(input: {
   importedRegistrationId: string;
   emailConfirmation?: string | null;
   phone?: string | null;
+  additionalAttendees?: EventCheckInAdditionalAttendeeInput[];
   bypassAvailability?: boolean;
 }): Promise<EventCheckIn> {
   await assertEventCheckInAvailable(input.eventId, input.bypassAvailability);
-  const { data, error } = await supabase.rpc('create_event_check_in_from_imported_registration_for_guest', {
+  const rpcInput = {
     p_event_id: input.eventId,
     p_guest_token: getGuestSessionToken(input.eventId),
     p_imported_registration_id: input.importedRegistrationId,
     p_email_confirmation: input.emailConfirmation?.trim() || null,
     p_phone: input.phone?.trim() || null,
-  });
+    p_additional_attendees: input.additionalAttendees ?? [],
+  };
+  const { data, error } = await supabase.rpc('create_event_check_in_from_imported_registration_for_guest', rpcInput);
+  if (error && isMissingRpc(error) && (input.additionalAttendees ?? []).length === 0) {
+    const { data: legacyData, error: legacyError } = await supabase.rpc('create_event_check_in_from_imported_registration_for_guest', {
+      p_event_id: input.eventId,
+      p_guest_token: getGuestSessionToken(input.eventId),
+      p_imported_registration_id: input.importedRegistrationId,
+      p_email_confirmation: input.emailConfirmation?.trim() || null,
+      p_phone: input.phone?.trim() || null,
+    });
+    if (!legacyError) return legacyData as EventCheckIn;
+    throw legacyError;
+  }
+  if (error && isMissingRpc(error)) {
+    throw new Error('Named additional guest check-in is still being set up. Please see the event team.');
+  }
   if (error) throw error;
   return data as EventCheckIn;
 }
